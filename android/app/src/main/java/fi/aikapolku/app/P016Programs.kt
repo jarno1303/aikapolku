@@ -36,14 +36,69 @@ internal data class AP16Step(
     val clock: String = "08:00",
     val voicePath: String = "",
     val autoPlayVoice: Boolean = false,
-    val subSteps: List<String> = emptyList()
+    val subSteps: List<String> = emptyList(),
+    /** P0-23: kellonaikatilassa toiminto on lukittu kellonaikaan [clock]. */
+    val fixedClock: Boolean = false
 )
 
 internal data class AP16Program(
     val id: String,
     val name: String,
-    val steps: List<AP16Step>
+    val steps: List<AP16Step>,
+    /** P0-23: ProgramTiming.FREE / DURATION / CLOCK. Tyhjä = vanha ohjelma, päätellään. */
+    val timeMode: String = "",
+    val startClock: String = ProgramTiming.DEFAULT_START
 )
+
+internal fun ap16StepToJson(step: AP16Step): JSONObject = JSONObject().apply {
+    put("id", step.id)
+    put("name", step.name)
+    put("photo", step.photo)
+    put("description", step.description)
+    put("mode", step.mode)
+    put("minutes", step.minutes)
+    put("clock", step.clock)
+    put("voicePath", step.voicePath)
+    put("autoPlayVoice", step.autoPlayVoice)
+    put("subSteps", p021WriteSubSteps(step.subSteps))
+    put("fixedClock", step.fixedClock)
+}
+
+internal fun ap16StepFromJson(s: JSONObject): AP16Step = AP16Step(
+    id = s.optString("id"),
+    name = s.optString("name"),
+    photo = s.optString("photo"),
+    description = s.optString("description"),
+    mode = s.optString("mode", "manual"),
+    minutes = s.optInt("minutes", 5),
+    clock = s.optString("clock", "08:00"),
+    voicePath = s.optString("voicePath"),
+    autoPlayVoice = s.optBoolean("autoPlayVoice", false),
+    subSteps = p021ReadSubSteps(s),
+    fixedClock = s.optBoolean("fixedClock", false)
+)
+
+internal fun ap16ProgramToJson(program: AP16Program): JSONObject = JSONObject().apply {
+    put("id", program.id)
+    put("name", program.name)
+    put("steps", JSONArray().also { arr -> program.steps.forEach { arr.put(ap16StepToJson(it)) } })
+    put("timeMode", program.timeMode)
+    put("startClock", program.startClock)
+}
+
+internal fun ap16ProgramFromJson(obj: JSONObject): AP16Program {
+    val stepsArray = obj.optJSONArray("steps") ?: JSONArray()
+    val steps = (0 until stepsArray.length()).mapNotNull { j ->
+        stepsArray.optJSONObject(j)?.let(::ap16StepFromJson)
+    }
+    return AP16Program(
+        id = obj.optString("id"),
+        name = obj.optString("name"),
+        steps = steps,
+        timeMode = obj.optString("timeMode", ""),
+        startClock = obj.optString("startClock", ProgramTiming.DEFAULT_START)
+    )
+}
 
 internal class AP16Store(context: Context) {
     private val prefs = context.getSharedPreferences(
@@ -56,73 +111,14 @@ internal class AP16Store(context: Context) {
             JSONArray(prefs.getString("programs", "[]") ?: "[]")
         }.getOrElse { JSONArray() }
 
-        return buildList {
-            for (i in 0 until array.length()) {
-                val obj = array.optJSONObject(i) ?: continue
-                val stepsArray = obj.optJSONArray("steps") ?: JSONArray()
-
-                val steps = buildList {
-                    for (j in 0 until stepsArray.length()) {
-                        val s = stepsArray.optJSONObject(j) ?: continue
-                        add(
-                            AP16Step(
-                                id = s.optString("id"),
-                                name = s.optString("name"),
-                                photo = s.optString("photo"),
-                                description = s.optString("description"),
-                                mode = s.optString("mode", "manual"),
-                                minutes = s.optInt("minutes", 5),
-                                clock = s.optString("clock", "08:00"),
-                                voicePath = s.optString("voicePath"),
-                                autoPlayVoice = s.optBoolean("autoPlayVoice", false),
-                                subSteps = p021ReadSubSteps(s)
-                            )
-                        )
-                    }
-                }
-
-                add(
-                    AP16Program(
-                        id = obj.optString("id"),
-                        name = obj.optString("name"),
-                        steps = steps
-                    )
-                )
-            }
+        return (0 until array.length()).mapNotNull { i ->
+            array.optJSONObject(i)?.let(::ap16ProgramFromJson)
         }
     }
 
     private fun write(programs: List<AP16Program>) {
         val array = JSONArray()
-
-        programs.forEach { program ->
-            val steps = JSONArray()
-
-            program.steps.forEach { step ->
-                steps.put(
-                    JSONObject().apply {
-                        put("id", step.id)
-                        put("name", step.name)
-                        put("photo", step.photo)
-                        put("description", step.description)
-                        put("mode", step.mode)
-                        put("minutes", step.minutes)
-                        put("clock", step.clock)
-                        put("voicePath", step.voicePath)
-                        put("autoPlayVoice", step.autoPlayVoice)
-                        put("subSteps", p021WriteSubSteps(step.subSteps))
-                    }
-                )
-            }
-
-            array.put(
-                JSONObject().apply {
-                    put("id", program.id)
-                    put("name", program.name)
-                    put("steps", steps)
-                }
-            )
-        }
+        programs.forEach { array.put(ap16ProgramToJson(it)) }
 
         prefs.edit()
             .putString("programs", array.toString())
@@ -167,55 +163,13 @@ private val ap17ProgramSaver = Saver<AP16Program, String>(
     restore = { p017ParseDraft(it) }
 )
 
-internal fun p017SerializeDraft(program: AP16Program): String {
-    val steps = JSONArray()
-    program.steps.forEach { step ->
-        steps.put(JSONObject().apply {
-            put("id", step.id)
-            put("name", step.name)
-            put("photo", step.photo)
-            put("description", step.description)
-            put("mode", step.mode)
-            put("minutes", step.minutes)
-            put("clock", step.clock)
-            put("voicePath", step.voicePath)
-            put("autoPlayVoice", step.autoPlayVoice)
-            put("subSteps", p021WriteSubSteps(step.subSteps))
-        })
-    }
-    return JSONObject().apply {
-        put("id", program.id)
-        put("name", program.name)
-        put("steps", steps)
-    }.toString()
-}
+internal fun p017SerializeDraft(program: AP16Program): String =
+    ap16ProgramToJson(program).toString()
 
-internal fun p017ParseDraft(encoded: String): AP16Program {
-    return runCatching {
-        val obj = JSONObject(encoded)
-        val jsonSteps = obj.optJSONArray("steps") ?: JSONArray()
-        val steps = buildList {
-            for (i in 0 until jsonSteps.length()) {
-                val step = jsonSteps.optJSONObject(i) ?: continue
-                add(AP16Step(
-                    id = step.optString("id"),
-                    name = step.optString("name"),
-                    photo = step.optString("photo"),
-                    description = step.optString("description"),
-                    mode = step.optString("mode", "manual"),
-                    minutes = step.optInt("minutes", 5),
-                    clock = step.optString("clock", "08:00"),
-                    voicePath = step.optString("voicePath"),
-                    autoPlayVoice = step.optBoolean("autoPlayVoice", false),
-                    subSteps = p021ReadSubSteps(step)
-                ))
-            }
-        }
-        AP16Program(obj.optString("id"), obj.optString("name"), steps)
-    }.getOrElse {
+internal fun p017ParseDraft(encoded: String): AP16Program =
+    runCatching { ap16ProgramFromJson(JSONObject(encoded)) }.getOrElse {
         AP16Program(UUID.randomUUID().toString(), "", emptyList())
     }
-}
 
 @Composable
 internal fun P016ProgramsScreen() {
@@ -240,7 +194,6 @@ internal fun P016ProgramsScreen() {
         )
     }
 
-    var addCard by remember { mutableStateOf(false) }
     var showFullProgram by rememberSaveable { mutableStateOf(false) }
     var showRunActions by remember { mutableStateOf(false) }
 
@@ -460,6 +413,21 @@ internal fun P016ProgramsScreen() {
                     onMore = { showRunActions = true }
                 )
             }
+        } else if (view == "edit") {
+            // P0-23: nelivaiheinen muokkain (ProgramEditor.kt) omana näkymänään.
+            ProgramEditorScreen(
+                draft = draft,
+                onDraftChange = { draft = it },
+                otherProgramNames = programs.filter { it.id != draft.id }.map { it.name },
+                onSave = { edited ->
+                    store.save(ProgramTiming.apply(edited).copy(name = edited.name.trim()))
+                    programs = store.load()
+                    view = "list"
+                    // Kerran: "Käyttääkö tätä laitetta myös joku muu?"
+                    caregiver.offerLockOnce()
+                },
+                onCancel = { view = "list" }
+            )
         } else {
         Column(
             modifier = Modifier
@@ -486,7 +454,8 @@ internal fun P016ProgramsScreen() {
                     draft = AP16Program(
                         UUID.randomUUID().toString(),
                         "",
-                        emptyList()
+                        emptyList(),
+                        timeMode = ProgramTiming.FREE
                     )
                     view = "edit"
                 },
@@ -510,7 +479,7 @@ internal fun P016ProgramsScreen() {
                         row.forEach { template ->
                             OutlinedButton(
                                 onClick = {
-                                    draft = P020RoutineTemplates.create(template)
+                                    draft = ProgramTiming.infer(P020RoutineTemplates.create(template))
                                     view = "edit"
                                 },
                                 modifier = Modifier.weight(1f).heightIn(min = 60.dp)
@@ -569,7 +538,7 @@ internal fun P016ProgramsScreen() {
                             if (canEditPrograms) {
                                 TextButton(
                                     onClick = {
-                                        draft = program
+                                        draft = ProgramTiming.infer(program)
                                         view = "edit"
                                     }
                                 ) {
@@ -587,100 +556,7 @@ internal fun P016ProgramsScreen() {
             }
         }
 
-        "edit" -> {
-            Text(
-                "Päiväohjelman muokkaus",
-                fontSize = 25.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            OutlinedTextField(
-                value = draft.name,
-                onValueChange = {
-                    draft = draft.copy(name = it.take(80))
-                },
-                label = { Text("Ohjelman nimi") },
-                placeholder = { Text("Esim. Aamurutiini") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            draft.steps.forEachIndexed { index, step ->
-                P016StepEditor(
-                    number = index + 1,
-                    step = step,
-                    canUp = index > 0,
-                    canDown = index < draft.steps.lastIndex,
-                    onUpdate = { updated ->
-                        val list = draft.steps.toMutableList()
-                        list[index] = updated
-                        draft = draft.copy(steps = list)
-                    },
-                    onUp = {
-                        val list = draft.steps.toMutableList()
-                        val item = list.removeAt(index)
-                        list.add(index - 1, item)
-                        draft = draft.copy(steps = list)
-                    },
-                    onDown = {
-                        val list = draft.steps.toMutableList()
-                        val item = list.removeAt(index)
-                        list.add(index + 1, item)
-                        draft = draft.copy(steps = list)
-                    },
-                    onDelete = {
-                        draft = draft.copy(
-                            steps = draft.steps.filterNot {
-                                it.id == step.id
-                            }
-                        )
-                    }
-                )
-            }
-
-            OutlinedButton(
-                onClick = { addCard = true },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp)
-            ) {
-                Text("+ Lisää toiminto")
-            }
-
-            val validTimes = draft.steps.all {
-                it.mode != "clock" ||
-                    Regex("""(?:[01]\d|2[0-3]):[0-5]\d""")
-                        .matches(it.clock)
-            }
-
-            if (!validTimes) {
-                Text(
-                    "Kellonaika annetaan muodossa 08:30.",
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-
-            Button(
-                enabled = draft.name.isNotBlank() &&
-                    draft.steps.isNotEmpty() &&
-                    validTimes,
-                onClick = {
-                    store.save(draft.copy(name = draft.name.trim()))
-                    programs = store.load()
-                    view = "list"
-                    // Kerran: "Käyttääkö tätä laitetta myös joku muu?"
-                    caregiver.offerLockOnce()
-                },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
-            ) {
-                Text("Tallenna päiväohjelma")
-            }
-
-            TextButton(
-                onClick = { view = "list" },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Peruuta")
-            }
-        }
+        "edit" -> Unit // Muokkain piirretään yllä (ProgramEditorScreen).
 
         "run" -> Unit // Suoritus piirretään yllä omana näkymänään (RunStepScreen).
 
@@ -823,73 +699,6 @@ internal fun P016ProgramsScreen() {
         )
     }
 
-    if (addCard) {
-        val customCards = P015CardStore(context).loadCards()
-
-        val defaults = AikaCardArt.templates.map { template ->
-            P015Card(
-                id = "basic_${template.id}",
-                name = template.name,
-                description = "",
-                photoPath = "builtin:${template.id}"
-            )
-        }
-
-        val choices = (customCards + defaults)
-            .distinctBy { it.name.lowercase() }
-
-        AlertDialog(
-            onDismissRequest = { addCard = false },
-            title = { Text("Lisää toiminto") },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .heightIn(max = 400.dp)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    choices.forEach { card ->
-                        TextButton(
-                            onClick = {
-                                draft = draft.copy(
-                                    steps = draft.steps + AP16Step(
-                                        id = UUID.randomUUID().toString(),
-                                        name = card.name,
-                                        photo = card.photoPath,
-                                        description = card.description,
-                                        voicePath = card.voicePath,
-                                        autoPlayVoice = card.autoPlayVoice,
-                                        subSteps = P021SubstepDefaults.forCard(card.name)
-                                    )
-                                )
-                                addCard = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                P011Photo(
-                                    name = card.name,
-                                    imagePath = card.photoPath,
-                                    modifier = Modifier.size(46.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                )
-                                Text(card.name, fontSize = 16.sp)
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { addCard = false }) {
-                    Text("Sulje")
-                }
-            }
-        )
-    }
-
     val target = deleteTarget
     if (target != null) {
         AlertDialog(
@@ -993,156 +802,6 @@ private fun P019ProgramOverview(
                         )
                     }
                 }
-            }
-        }
-    }
-}
-@Composable
-private fun P016StepEditor(
-    number: Int,
-    step: AP16Step,
-    canUp: Boolean,
-    canDown: Boolean,
-    onUpdate: (AP16Step) -> Unit,
-    onUp: () -> Unit,
-    onDown: () -> Unit,
-    onDelete: () -> Unit
-) {
-    var minutesMenu by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                P011Photo(
-                    step.name,
-                    step.photo,
-                    Modifier.size(60.dp)
-                )
-
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        "$number. ${step.name}",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp
-                    )
-                    if (step.description.isNotBlank()) {
-                        Text(step.description, fontSize = 12.sp)
-                    }
-                }
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                OutlinedButton(
-                    onClick = onUp,
-                    enabled = canUp
-                ) { Text("↑") }
-
-                OutlinedButton(
-                    onClick = onDown,
-                    enabled = canDown
-                ) { Text("↓") }
-
-                TextButton(onClick = onDelete) {
-                    Text("Poista")
-                }
-            }
-
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                listOf(
-                    "manual" to "Käsin",
-                    "duration" to "Kesto",
-                    "clock" to "Kellonaika"
-                ).forEach { (value, title) ->
-                    FilterChip(
-                        selected = step.mode == value,
-                        onClick = {
-                            onUpdate(step.copy(mode = value))
-                        },
-                        label = { Text(title) }
-                    )
-                }
-            }
-
-            if (step.mode == "duration") {
-                Box {
-                    OutlinedButton(
-                        onClick = { minutesMenu = true }
-                    ) {
-                        Text("Kesto: ${step.minutes} min")
-                    }
-
-                    DropdownMenu(
-                        expanded = minutesMenu,
-                        onDismissRequest = { minutesMenu = false }
-                    ) {
-                        listOf(1,2,5,10,15,20,30,45,60).forEach { min ->
-                            DropdownMenuItem(
-                                text = { Text("$min min") },
-                                onClick = {
-                                    onUpdate(step.copy(minutes = min))
-                                    minutesMenu = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
-            P021SubstepEditor(
-                step = step,
-                onUpdate = onUpdate
-            )
-
-            if (step.mode == "clock") {
-                val timeContext = LocalContext.current
-
-                OutlinedButton(
-                    onClick = {
-                        val hour = step.clock
-                            .substringBefore(":")
-                            .toIntOrNull()
-                            ?.coerceIn(0, 23) ?: 8
-
-                        val minute = step.clock
-                            .substringAfter(":", "00")
-                            .toIntOrNull()
-                            ?.coerceIn(0, 59) ?: 0
-
-                        android.app.TimePickerDialog(
-                            timeContext,
-                            { _, selectedHour, selectedMinute ->
-                                val formatted = String.format(
-                                    java.util.Locale.ROOT,
-                                    "%02d:%02d",
-                                    selectedHour,
-                                    selectedMinute
-                                )
-                                onUpdate(step.copy(clock = formatted))
-                            },
-                            hour,
-                            minute,
-                            true
-                        ).show()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 56.dp)
-                ) {
-                    Text("Klo ${step.clock} – muuta")
-                }
-
             }
         }
     }

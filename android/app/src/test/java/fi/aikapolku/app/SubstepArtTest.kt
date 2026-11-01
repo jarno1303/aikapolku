@@ -1,6 +1,7 @@
 package fi.aikapolku.app
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -49,8 +50,12 @@ class SubstepArtTest {
     }
 
     @Test
-    fun `taukoviestilla on kuva ja apuviesti kayttaa toistaiseksi kuvaketta`() {
-        assertNotNull(SubstepArt.messageImageRes("Tarvitsen tauon"))
-        assertNull(SubstepArt.messageImageRes("Tarvitsen apua"))
+    fun `tauko- ja apuviestilla on omat kuvat`() {
+        val tauko = SubstepArt.messageImageRes("Tarvitsen tauon")
+        val apu = SubstepArt.messageImageRes("Tarvitsen apua")
+        assertNotNull(tauko)
+        assertNotNull(apu)
+        assertNotEquals(tauko, apu)
+        assertNull(SubstepArt.messageImageRes("Jokin muu viesti"))
     }
 }

@@ -199,3 +199,12 @@
 - Puhelintestin korjaus: näkymä mahtuu ruudulle suurellakin fontilla; apu/tauko kuvake tekstin yllä.
 - Ensin–Sitten lukittuna: 🔒 kuvakkeena, Muokkaa piilossa.
 - Puhelintesti odottaa hyväksyntää.
+- Kuvasarja valmis: 31 yhtenäistä kuvaa (kortit, osavaiheet, apu- ja taukoviesti).
+
+## P0-23 – Päiväohjelman luonti vaiheittain
+- 1 Valitse: kuvaruudukko luokittain, napautusjärjestys = ohjelman järjestys.
+- 2 Järjestä: veto kahvasta, poisto ja Kumoa, osavaiheet avattavissa.
+- 3 Ajat: omaan tahtiin, kestot tai aloitusaika + kestot; kiinteät kellonajat.
+- 4 Tallenna: esikatselu ja nimiehdotus.
+- Vanhat ohjelmat toimivat ennallaan; uudet testit (ProgramTimingTest, tallennus).
+- Puhelintesti odottaa hyväksyntää.

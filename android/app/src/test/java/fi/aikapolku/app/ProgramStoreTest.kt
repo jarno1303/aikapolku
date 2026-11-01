@@ -166,4 +166,29 @@ class ProgramStoreTest {
         assertEquals(listOf("Sukat", "x".repeat(72)), subSteps)
         assertTrue(subSteps.none { it.isBlank() })
     }
+
+    @Test
+    fun `P0-23 aikatapa aloitusaika ja kiintea aika sailyvat`() {
+        val program = AP16Program(
+            "p23", "Koulupäivä",
+            listOf(step("a"), step("b").copy(fixedClock = true, clock = "11:00")),
+            timeMode = ProgramTiming.CLOCK,
+            startClock = "07:45"
+        )
+        store.save(program)
+        assertEquals(listOf(program), AP16Store(context).load())
+    }
+
+    @Test
+    fun `vanha tallennus ilman uusia kenttia latautuu oletusarvoilla`() {
+        rawPrefs().edit().putString(
+            "programs",
+            """[{"id":"v","name":"Vanha","steps":[{"id":"s","name":"Aamupala","mode":"clock","clock":"07:15","minutes":15}]}]"""
+        ).commit()
+        val loaded = store.load().single()
+        assertEquals("", loaded.timeMode)
+        assertEquals(ProgramTiming.DEFAULT_START, loaded.startClock)
+        assertEquals(false, loaded.steps.single().fixedClock)
+        assertEquals("07:15", ProgramTiming.apply(ProgramTiming.infer(loaded)).steps.single().clock)
+    }
 }

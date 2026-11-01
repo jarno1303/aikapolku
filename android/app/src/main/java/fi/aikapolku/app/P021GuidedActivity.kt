@@ -30,11 +30,15 @@ internal fun P021SubstepEditor(
 ) {
     var expanded by remember(step.id) { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        OutlinedButton(
+        // P0-23: tiivis avaus, jotta Järjestä-vaiheen rivit pysyvät matalina.
+        TextButton(
             onClick = { expanded = !expanded },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp)
+            modifier = Modifier.heightIn(min = 48.dp)
         ) {
-            Text("Osavaiheet (${step.subSteps.size})  ${if (expanded) "−" else "+"}")
+            Text(
+                if (step.subSteps.isEmpty()) "+ Osavaiheet" else "Osavaiheet (${step.subSteps.size})  ${if (expanded) "⌃" else "›"}",
+                fontSize = 15.sp
+            )
         }
         if (expanded) {
             Text(

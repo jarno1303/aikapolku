@@ -210,7 +210,7 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 
 **Kaikki mahtuu aina ruudulle pystytilassa:** kuva joustaa ja pienenee tarvittaessa, jotta apu, tauko, Valmis, Seuraavaksi sekä Ohita ja Lisää näkyvät ilman vieritystä myös suurella fonttikoolla. Vieritys vain vaakatilassa tai hyvin matalalla näytöllä (kuva 160 dp).
 
-**Kuvat (työversiot):** osavaiheet Sukat, Housut, Paita, Takki, Kengät, Ota hammasharja, Pese hampaat, Laita hammasharja takaisin sekä Tarvitsen tauon -kuva ja uudet Aamupala, Ruokailu ja Välipala. Luotu kuvageneraattorilla yhteisellä tyyliohjeella ja hahmokortilla. Lopulliset kuvat luodaan yksittäisinä 1024 px kuvina ennen julkaisua ja vaihdetaan samoilla tiedostonimillä. Apupyynnön kuva puuttuu tarkoituksella (luonnos näytti tervehdykseltä); tilalla kuvake.
+**Kuvat:** koko sarja (31 kuvaa: 21 korttia, 8 osavaihetta, Tarvitsen tauon ja Tarvitsen apua) luotu yksittäisinä neliökuvina yhteisellä tyyliohjeella ja hahmokortilla, tarkistettu ja hyväksytty 1.11.2026. Kuvista poistettu kuvageneraattorin alkuperämerkinnät (C2PA); sovelluksessa 640 px, alkuperäiset 1254 px tallessa. Apupyynnön kuva: hahmo ei saa purkkia auki.
 
 **Osavaiheen kuva** haetaan nimen perusteella (`SubstepArt`); tallennusmuoto ei muutu. Ilman omaa kuvaa käytetään tehtävän kuvaa. Oletusosavaihe "Laita välineet takaisin" → **"Laita hammasharja takaisin"**; vanha nimi saa saman kuvan.
 
@@ -225,6 +225,33 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 - [ ] Vaakatila: kaikki painikkeet saavutettavissa vierittämällä.
 - [ ] Ensin–Sitten lukittuna: otsikko ENSIN → SITTEN ei katkea, 🔒 näkyy kuvakkeena, Muokkaa ei näy.
 - [ ] Lisää-valikko: koko ohjelma, +5 min, asetukset ja lopetus toimivat lukituksen mukaan.
+
+## 4E. P0-23 – Päiväohjelman luonti neljässä vaiheessa (päätös 1.11.2026)
+
+**Tausta:** vanhassa muokkaimessa jokainen toiminto lisättiin erikseen ponnahdusikkunasta, ja jokaisella oli oma iso kortti nuolineen, kolmine aikatiloineen ja osavaiheineen. Kellonaika valittiin jokaiselle erikseen, ja nimi kysyttiin ensin.
+
+**Vaiheet** (ylhäällä 1 Valitse · 2 Järjestä · 3 Ajat · 4 Tallenna; vaiheeseen voi hypätä napauttamalla):
+1. **Valitse** – kuvaruudukko luokittain (omat kortit ensin). Napautusjärjestys = ohjelman järjestys, kortin kulmaan tulee järjestysnumero. Uusi napautus poistaa, pitkä painallus lisää saman toiminnon uudelleen. Alareunassa valittujen kuvanauha.
+2. **Järjestä** – järjestys vetämällä ≡-kahvasta (TalkBack: Siirrä ylemmäs / alemmas), poisto ✕ + Kumoa, osavaiheet avattavissa.
+3. **Ajat** – koko ohjelmalle yksi aikatapa:
+   - *Omaan tahtiin*: ei aikoja.
+   - *Kestot*: jokaiselle kesto pikavalinnoilla tai "Ei aikaa".
+   - *Kellonajat*: aloitusaika + kestot, kellonajat lasketaan. Yksittäisen toiminnon voi lukita **kiinteään aikaan** (esim. ruokailu 11.00); seuraavat ajat lasketaan sen jälkeen. Päällekkäisyydestä varoitetaan, tallentaa voi silti.
+4. **Tallenna** – esikatselu ja nimi; nimi ehdotetaan aloitusajan mukaan (Aamurutiini / Päiväohjelma / Iltarutiini), ei toista olemassa olevaa.
+
+Uusi ohjelma avautuu vaiheeseen 1, valmis pohja ja muokattava ohjelma vaiheeseen 2. Peruutus kysyy vahvistuksen, jos muutoksia on.
+
+**Tietomalli:** ohjelmaan `timeMode` ja `startClock`, toimintoon `fixedClock`. Tallennettaessa aikatapa kirjoitetaan toimintojen omiin kenttiin (`ProgramTiming.apply`), joten suoritus, tulostus ja vanhat ohjelmat toimivat ennallaan. Vanhan ohjelman aikatapa päätellään avattaessa; sen kellonajat säilyvät lukittuina.
+
+**Hyväksymistestit puhelimella:**
+- [ ] Uusi ohjelma: kuusi korttia napautuksin oikeaan järjestykseen alle puolessa minuutissa.
+- [ ] Uusi napautus poistaa, pitkä painallus lisää saman kortin toiseen kertaan (numerot esim. "2,5").
+- [ ] Järjestä: veto kahvasta siirtää, ✕ poistaa ja Kumoa palauttaa.
+- [ ] Kellonajat: aloitus 7.30 + kestot → ajat lasketaan; keston muutos siirtää seuraavia.
+- [ ] Kiinteä aika 11.00 keskellä ohjelmaa; seuraavat jatkuvat siitä. Liian aikainen kiinteä aika näyttää varoituksen.
+- [ ] Tallennettu ohjelma käynnistyy ja näyttää "Klo hh:mm" / kestoajastimen kuten ennenkin.
+- [ ] Vanha ohjelma aukeaa muokattavaksi ja säilyttää aikansa.
+- [ ] Peruuta muutosten jälkeen kysyy vahvistuksen; Takaisin-ele palaa edelliseen vaiheeseen.
 
 ## 5. Jatkokehitys ja priorisointi
 
@@ -348,6 +375,8 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 | 1.11.2026 | Kortti- ja osavaihekuvat uusitaan yhtenäiseksi sarjaksi (kuvageneraattori, tyyliohje + hahmokortti, nuori aikuinen); työkuvat käyttöön kehitysversiossa. |
 | 1.11.2026 | Osavaihe "Laita välineet takaisin" → "Laita hammasharja takaisin". |
 | 1.11.2026 | Puhelintesti (suuri fontti): suoritusnäkymä mahtuu aina ruudulle pystytilassa, apu-/taukopainikkeissa kuvake tekstin yllä; Ensin–Sittenin lukko kuvakkeeksi ja Muokkaa piiloon lukittuna. |
+| 1.11.2026 | Kuvasarja valmis (31 kuvaa), apupyyntö saa kuvan. |
+| 1.11.2026 | P0-23: päiväohjelman luonti vaiheittain (Valitse, Järjestä, Ajat, Tallenna). Aikatapa koko ohjelmalle; kellonaikatilassa myös kiinteät ajat (käyttäjien tarpeet vaihtelevat, molemmat tuetaan). |
 
 ---
 

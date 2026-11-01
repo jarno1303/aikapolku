@@ -29,6 +29,7 @@ internal object SubstepArt {
     /** Viestinäkymän kuva, jos sellainen on. Apupyynnön kuva puuttuu vielä tarkoituksella. */
     fun messageImageRes(message: String): Int? = when (message) {
         "Tarvitsen tauon" -> R.drawable.ap_msg_break
+        "Tarvitsen apua" -> R.drawable.ap_msg_help
         else -> null
     }
 }
