@@ -1,6 +1,6 @@
 # --- Varmuuskopiot (ei versionhallintaan) ---
 varmuuskopiot/
-*-varmuuskopiot/
+*varmuuskopiot*/
 *.zip
 *.bak-*
 
