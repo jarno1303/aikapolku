@@ -8,6 +8,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -22,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -454,15 +457,22 @@ private fun CaregiverOpenBanner(remainingMs: Long, onLock: () -> Unit) {
 
 /** Pieni lukkopainike lukittujen ohjaajan toimintojen tilalle. */
 @Composable
-internal fun CaregiverLockButton(modifier: Modifier = Modifier, label: String = "Ohjaaja") {
+internal fun CaregiverLockButton(
+    modifier: Modifier = Modifier,
+    label: String = "Ohjaaja",
+    /** Ahtaisiin paikkoihin (esim. Ensin–Sitten-otsikko): pelkkä 🔒, ei tekstiä. */
+    iconOnly: Boolean = false
+) {
     val caregiver = LocalCaregiver.current
     TextButton(
         onClick = { caregiver.unlock() },
         modifier = modifier
             .heightIn(min = 48.dp)
-            .semantics { contentDescription = "Ohjaajan toiminnot, lukittu. Avaa PIN-koodilla." }
+            .then(if (iconOnly) Modifier.widthIn(min = 48.dp) else Modifier)
+            .semantics { contentDescription = "Ohjaajan toiminnot, lukittu. Avaa PIN-koodilla." },
+        contentPadding = if (iconOnly) PaddingValues(4.dp) else ButtonDefaults.TextButtonContentPadding
     ) {
-        Text("🔒 $label", color = LockTeal, fontSize = 14.sp)
+        Text(if (iconOnly) "🔒" else "🔒 $label", color = LockTeal, fontSize = if (iconOnly) 20.sp else 14.sp)
     }
 }
 

@@ -110,7 +110,7 @@ internal fun EnhancedFirstThenScreen(
         )
 
         if (!canEditCards) {
-            CaregiverLockButton()
+            CaregiverLockButton(iconOnly = true)
         }
 
         IconButton(
@@ -157,6 +157,7 @@ internal fun EnhancedFirstThenScreen(
             description = firstDescription,
             imagePath = firstPhoto,
             modifier = Modifier.weight(1f),
+            editable = canEditCards,
             onClick = { if (canEditCards) choosing = "first" }
         )
         P011EditableCard(
@@ -165,6 +166,7 @@ internal fun EnhancedFirstThenScreen(
             description = nextDescription,
             imagePath = nextPhoto,
             modifier = Modifier.weight(1f),
+            editable = canEditCards,
             onClick = { if (canEditCards) choosing = "next" }
         )
     }

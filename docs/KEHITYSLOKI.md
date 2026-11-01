@@ -196,4 +196,6 @@
 - Apu- ja taukopyyntö koko näytön viestinä; Jatka palauttaa ajan.
 - Osavaiheiden työkuvat (pukeutuminen, hampaiden pesu) ja uudet ruokakuvat.
 - Osavaihe Laita hammasharja takaisin (vanha nimi tunnistetaan).
+- Puhelintestin korjaus: näkymä mahtuu ruudulle suurellakin fontilla; apu/tauko kuvake tekstin yllä.
+- Ensin–Sitten lukittuna: 🔒 kuvakkeena, Muokkaa piilossa.
 - Puhelintesti odottaa hyväksyntää.

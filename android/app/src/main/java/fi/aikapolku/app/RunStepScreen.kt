@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -123,14 +124,16 @@ internal fun RunStepScreen(
     val title = currentSubStep ?: taskName
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize().background(RunColors.background)) {
-        // Matala näyttö (vaakatila, iso fontti): vieritettävä asettelu kiinteällä kuvalla.
-        val compact = maxHeight < 620.dp
+        // Pystytilassa kaikki mahtuu aina ruudulle: kuva joustaa, jotta apu, tauko ja
+        // Valmis näkyvät myös suurella fonttikoolla (puhelintesti 1.11.2026).
+        // Vieritys vain vaakatilassa tai hyvin matalalla näytöllä.
+        val compact = maxWidth > maxHeight || maxHeight < 440.dp
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .then(if (compact) Modifier.verticalScroll(rememberScrollState()) else Modifier)
                 .padding(bottom = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             RunHeader(
                 hasSubSteps = hasSubSteps,
@@ -154,14 +157,15 @@ internal fun RunStepScreen(
                 Column(
                     modifier = Modifier
                         .then(if (compact) Modifier.fillMaxWidth() else Modifier.fillMaxSize())
-                        .padding(horizontal = 18.dp, vertical = 18.dp),
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically)
                 ) {
                     val imageModifier = if (compact) {
-                        Modifier.size(180.dp)
+                        Modifier.size(160.dp)
                     } else {
-                        // Kuva täyttää vapaan tilan, enintään 340 dp, aina neliönä.
+                        // Kuva täyttää vapaan tilan (enintään 340 dp, aina neliönä) ja pienenee
+                        // tarvittaessa, jotta painikkeet mahtuvat näkyviin.
                         Modifier
                             .weight(1f, fill = false)
                             .sizeIn(maxWidth = 340.dp, maxHeight = 340.dp)
@@ -176,12 +180,12 @@ internal fun RunStepScreen(
                     Text(
                         title,
                         modifier = Modifier.semantics { heading() },
-                        fontSize = if (title.length > 18) 30.sp else 36.sp,
-                        lineHeight = if (title.length > 18) 35.sp else 41.sp,
+                        fontSize = if (title.length > 14) 26.sp else 30.sp,
+                        lineHeight = if (title.length > 14) 31.sp else 35.sp,
                         fontWeight = FontWeight.Bold,
                         color = RunColors.ink,
                         textAlign = TextAlign.Center,
-                        maxLines = 3
+                        maxLines = 2
                     )
                     if (!hasSubSteps && description.isNotBlank()) {
                         Text(
@@ -276,7 +280,8 @@ private fun RunHeader(
             if (hasSubSteps) {
                 Text(
                     taskName,
-                    fontSize = 20.sp,
+                    fontSize = 18.sp,
+                    lineHeight = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = RunColors.ink,
                     maxLines = 2
@@ -443,24 +448,32 @@ private fun RunSupportButton(
     onClick: () -> Unit,
     modifier: Modifier
 ) {
+    // Kuvake tekstin yläpuolella: teksti mahtuu kahdelle riville myös suurella fontilla.
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.heightIn(min = 56.dp),
+        modifier = modifier.heightIn(min = 64.dp),
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.5.dp, RunColors.border),
+        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 6.dp),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = RunColors.card,
             contentColor = RunColors.ink
         )
     ) {
-        icon()
-        Text(
-            "  $label",
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center,
-            maxLines = 2
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            icon()
+            Text(
+                label,
+                fontSize = 15.sp,
+                lineHeight = 18.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
+        }
     }
 }
 
@@ -573,7 +586,7 @@ internal fun SupportMessageScreen(
     val image = SubstepArt.messageImageRes(message)
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize().background(RunColors.background)) {
-        val compact = maxHeight < 560.dp
+        val compact = maxWidth > maxHeight || maxHeight < 440.dp
         Column(
             modifier = Modifier
                 .fillMaxSize()

@@ -208,7 +208,7 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 
 **Tarvitsen apua / tauon:** koko näytön viestinäkymä (iso kuva tai kuvake, iso teksti, Toista viesti valitulla äänellä, Jatka). Ajastin pysäytetään; Jatka palauttaa sen käyntiin, jos se oli käynnissä (käyttäjän nimenomainen painallus, ei automaattinen jatko). Takaisin-ele sulkee viestin poistumatta ohjelmasta.
 
-**Matala näyttö** (vaakatila, suuri fontti): sama järjestys vieritettävänä, kuva 180 dp.
+**Kaikki mahtuu aina ruudulle pystytilassa:** kuva joustaa ja pienenee tarvittaessa, jotta apu, tauko, Valmis, Seuraavaksi sekä Ohita ja Lisää näkyvät ilman vieritystä myös suurella fonttikoolla. Vieritys vain vaakatilassa tai hyvin matalalla näytöllä (kuva 160 dp).
 
 **Kuvat (työversiot):** osavaiheet Sukat, Housut, Paita, Takki, Kengät, Ota hammasharja, Pese hampaat, Laita hammasharja takaisin sekä Tarvitsen tauon -kuva ja uudet Aamupala, Ruokailu ja Välipala. Luotu kuvageneraattorilla yhteisellä tyyliohjeella ja hahmokortilla. Lopulliset kuvat luodaan yksittäisinä 1024 px kuvina ennen julkaisua ja vaihdetaan samoilla tiedostonimillä. Apupyynnön kuva puuttuu tarkoituksella (luonnos näytti tervehdykseltä); tilalla kuvake.
 
@@ -221,7 +221,9 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 - [ ] Numerot / rengas / rauhallinen -näyttötapa näkyy aikamerkissä oikein.
 - [ ] Tarvitsen tauon: koko näytön viesti, ajastin pysähtyy, Jatka käynnistää ajan uudelleen; toimii lukittuna ilman PIN-koodia.
 - [ ] Takaisin-ele viestissä sulkee viestin.
-- [ ] Vaakatila ja suuri fontti: kaikki painikkeet saavutettavissa vierittämällä.
+- [ ] Suuri fonttikoko pystytilassa: apu, tauko, Valmis, Seuraavaksi, Ohita ja Lisää näkyvät ilman vieritystä; apu- ja taukopainikkeen teksti näkyy kokonaan.
+- [ ] Vaakatila: kaikki painikkeet saavutettavissa vierittämällä.
+- [ ] Ensin–Sitten lukittuna: otsikko ENSIN → SITTEN ei katkea, 🔒 näkyy kuvakkeena, Muokkaa ei näy.
 - [ ] Lisää-valikko: koko ohjelma, +5 min, asetukset ja lopetus toimivat lukituksen mukaan.
 
 ## 5. Jatkokehitys ja priorisointi
@@ -345,6 +347,7 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 | 1.11.2026 | P0-22a: suoritusnäkymässä kuva pääosassa; apu ja tauko heti kuvan alla, sitten Valmis, sitten Seuraavaksi. |
 | 1.11.2026 | Kortti- ja osavaihekuvat uusitaan yhtenäiseksi sarjaksi (kuvageneraattori, tyyliohje + hahmokortti, nuori aikuinen); työkuvat käyttöön kehitysversiossa. |
 | 1.11.2026 | Osavaihe "Laita välineet takaisin" → "Laita hammasharja takaisin". |
+| 1.11.2026 | Puhelintesti (suuri fontti): suoritusnäkymä mahtuu aina ruudulle pystytilassa, apu-/taukopainikkeissa kuvake tekstin yllä; Ensin–Sittenin lukko kuvakkeeksi ja Muokkaa piiloon lukittuna. |
 
 ---
 

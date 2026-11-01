@@ -22,6 +22,8 @@ internal fun P011EditableCard(
     description: String,
     imagePath: String,
     modifier: Modifier,
+    /** false = ohjaajan lukitus päällä: "Muokkaa" piilotetaan. */
+    editable: Boolean = true,
     onClick: () -> Unit
 ) {
     Card(
@@ -75,11 +77,13 @@ internal fun P011EditableCard(
                 )
             }
 
-            Text(
-                "Muokkaa ↗",
-                color = P011Colors.teal,
-                fontSize = 12.sp
-            )
+            if (editable) {
+                Text(
+                    "Muokkaa ↗",
+                    color = P011Colors.teal,
+                    fontSize = 12.sp
+                )
+            }
         }
     }
 }
