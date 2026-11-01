@@ -62,18 +62,10 @@ internal fun P017LandscapeTimer(
                 Text("Ajastin", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 if (canAdjust) {
                     Text(
-                        "Valitse aika pyörittämällä kellotaulua. " +
+                        "Valitse aika vetämällä kellotaulua. " +
                             "Käynnissä olevan ajastimen aika on lukittu.",
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                        listOf(1, 5, 10).forEach { min ->
-                            OutlinedButton(
-                                onClick = { if (canAdjust) onPreset(min) },
-                                contentPadding = PaddingValues(horizontal = 7.dp)
-                            ) { Text("$min min", fontSize = 12.sp) }
-                        }
-                    }
                 }
             }
         }

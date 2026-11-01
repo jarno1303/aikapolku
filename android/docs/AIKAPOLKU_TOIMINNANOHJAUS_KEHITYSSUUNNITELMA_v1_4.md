@@ -158,7 +158,7 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 
 **Lukituksen takana (kun lukitus on päällä):** käynnissä olevan ajastimen tauko ja muu pysäytys (Tauko-painike, Ensin–Sitten-ajastimen Takaisin, ajastimen korvaaminen uudella), ajan muuttaminen (pikavalinnat, kellotaulun säätö, +5 min lisäaikaa), ajastimen nollaus, päiväohjelman lopetus, päiväohjelmien ja korttien luonti/muokkaus/poisto, Ensin–Sitten-korttien valinta ja "+ Lisää vaihe" sekä kaikki asetukset. Lukittuna nämä piilotetaan; tilalla on pieni 🔒-painike.
 
-**Ilman lukitustakin:** minuuttipikavalinnat ja kellotaulun säätö näkyvät vain, kun ajastin on pysähdyksissä.
+**Ajan valinta:** minuuttipikavalinnat on poistettu kokonaan (puhelintesti 1.11.2026: päällekkäisiä kellotaulun kanssa ja näkymä hyppi). Aika valitaan kellotaulua vetämällä, vain ajastimen ollessa pysähdyksissä.
 
 **PIN-koodi ja turvallisuus:**
 - 4 numeroa; liian helpot (esim. 1111, 1234, 4321) hylätään.
@@ -176,7 +176,8 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 **Rajaukset:** muokkausnäkymä jätetään auki, jos lukko menee päälle kesken muokkauksen, jotta tallentamattomat muutokset eivät katoa. Sovelluksesta poistumista ei estetä (ks. näytön kiinnitys). Ohita osavaihe pysyy käyttäjän oikeutena; lukittavuus arvioidaan piloteissa.
 
 **Hyväksymistestit puhelimella:**
-- [ ] Ilman lukitusta: pikavalinnat katoavat ajastimen käynnistyessä ja palaavat pysäytettäessä.
+- [ ] Ajastimessa ei ole minuuttipikavalintoja; aika säädetään kellotaulua vetämällä vain pysäytettynä.
+- [ ] Yläpalkki ja ‹ Takaisin ovat tilarivin alapuolella eivätkä peitä kelloa tai kuvakkeita.
 - [ ] Ota lukitus käyttöön (heikko PIN hylätään, eri PIN-koodit huomataan).
 - [ ] Lukittuna: ajastimessa ei pikavalintoja, kellotaulun säätöä, Nollaa- eikä Asetukset-painiketta; 🔒 avaa PIN-kyselyn.
 - [ ] Lukittuna ajastimen käydessä: Tauko-painikkeessa näkyy 🔒 ja se kysyy PIN-koodin; Ensin–Sitten-ajastimen Takaisin kysyy PIN-koodin. Päiväohjelman Tarvitsen tauon pysäyttää ajastimen ilman PIN-koodia.
@@ -304,6 +305,7 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 | 1.11.2026 | Yksikkötestit (Robolectric) ja korjaus: ajastin ei kaadu eikä esty, jos hälytys- tai ilmoituslupa puuttuu. |
 | 1.11.2026 | P0-21e: ohjaajan lukitus (PIN). Apu, Tarvitsen tauon, Valmis, ohitus ja Aloita/Jatka eivät ole koskaan lukossa. Oletuksena pois; kerran kysytään ensimmäisen ohjelman tallennuksen jälkeen. |
 | 1.11.2026 | Ajan pikavalinnat ja kellotaulun säätö näkyvät vain ajastimen ollessa pysähdyksissä. |
+| 1.11.2026 | Ajan minuuttipikavalinnat poistettu; yläpalkki ja Takaisin-painike tilarivin alle, Takaisin tasattu sisällön reunaan. |
 | 1.11.2026 | Puhelintestin perusteella: ajastimen Tauko vaatii lukittuna PIN-koodin. Tarvitsen tauon pysyy aina vapaana – käyttäjän itsemääräämisoikeutta kunnioitetaan. |
 | 1.11.2026 | Puhelintestin perusteella: kosketukset eivät pidennä avausta (kiinteä 2 min), lukko päälle heti PIN-koodin asettamisen jälkeen, avauksen ajan näkyvä yläpalkki. |
 

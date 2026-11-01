@@ -8,7 +8,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -92,6 +97,7 @@ internal val LocalCaregiver = compositionLocalOf {
 private val LockTeal = Color(0xFF0F766E)
 
 @Suppress("DEPRECATION") // createConfirmDeviceCredentialIntent: ei vaadi lisäriippuvuuksia.
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun CaregiverLockHost(content: @Composable () -> Unit) {
     val context = LocalContext.current
@@ -173,13 +179,23 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalCaregiver provides access) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Näkyvä muistutus aina, kun ohjaajan toiminnot ovat auki.
-            if (enabled && sessionOpen) {
+            val bannerVisible = enabled && sessionOpen
+            if (bannerVisible) {
                 CaregiverOpenBanner(
                     remainingMs = (openUntil - now).coerceAtLeast(0L),
                     onLock = { CaregiverSession.close() }
                 )
             }
-            Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            // Palkki ottaa tilarivin tilan; sisältö ei lisää sitä uudelleen.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .then(
+                        if (bannerVisible) Modifier.consumeWindowInsets(WindowInsets.statusBars)
+                        else Modifier
+                    )
+            ) {
                 content()
             }
         }
@@ -415,14 +431,16 @@ private fun CaregiverOpenBanner(remainingMs: Long, onLock: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding() // tilarivin alapuolelle
                 .heightIn(min = 48.dp)
                 .padding(start = 16.dp, end = 4.dp)
                 .semantics(mergeDescendants = true) {},
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "🔓 Ohjaajan toiminnot auki · $time",
+                "🔓 Ohjaaja auki · $time",
                 modifier = Modifier.weight(1f),
+                maxLines = 1,
                 color = Color(0xFF713F12),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp

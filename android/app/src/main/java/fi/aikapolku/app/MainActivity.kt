@@ -210,15 +210,23 @@ private fun AikaPolkuApp() {
         containerColor = Background,
         topBar = {
             if (page != "home") {
+                // Tilarivin alapuolella; teksti tasattu sisällön ja otsikoiden reunaan (12 dp).
                 Surface(color = Background) {
-                    TextButton(
-                        onClick = goBack,
-                        modifier = Modifier.padding(
-                            start = 12.dp,
-                            top = 6.dp
-                        )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                            .padding(start = 4.dp)
+                            .heightIn(min = 52.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("‹ Takaisin", color = Teal)
+                        TextButton(
+                            onClick = goBack,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                            modifier = Modifier.heightIn(min = 48.dp)
+                        ) {
+                            Text("‹ Takaisin", color = Teal, fontSize = 17.sp)
+                        }
                     }
                 }
             }

@@ -184,6 +184,7 @@
 - Avaus kiinteät 2 min PIN-koodista (kosketukset eivät pidennä); yläpalkki avauksen ajan.
 - Lukko heti päälle PIN-koodin asettamisen jälkeen.
 - Unohtunut PIN nollataan puhelimen omalla näytön lukituksella.
-- Pikavalinnat ja kellotaulun säätö vain pysäytettynä.
+- Minuuttipikavalinnat poistettu; kellotaulun säätö vain pysäytettynä.
+- Yläpalkki ja Takaisin-painike tilarivin alle (Android 15+ reunasta reunaan -näkymä).
 - Ohjaajan asetukset aloitussivulta; kertakysymys ensimmäisen ohjelman jälkeen.
 - Puhelintesti odottaa hyväksyntää.

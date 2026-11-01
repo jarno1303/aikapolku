@@ -175,21 +175,8 @@ internal fun P013TimerScreen(
                 color = DialInk
             )
 
-            // Pikavalinnat näkyvät vain, kun ajastin on pysähdyksissä ja ajan saa muuttaa.
-            if (canAdjust) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(7.dp)
-                ) {
-                    listOf(1,2,5,10,15,20,30,60).forEach { min ->
-                        OutlinedButton(onClick = { onPreset(min) }) {
-                            Text("$min min")
-                        }
-                    }
-                }
-            }
+            // Pikavalinnat poistettu (puhelintesti 1.11.2026): aika valitaan kellotaulua
+            // vetämällä, eikä näkymä hypi ajastimen tilan tai lukituksen mukana.
         }
 
         val secs = ((remaining + 999L) / 1000L)
