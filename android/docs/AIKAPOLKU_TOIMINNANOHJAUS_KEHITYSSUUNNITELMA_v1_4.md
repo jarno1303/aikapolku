@@ -164,7 +164,9 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 - 4 numeroa; liian helpot (esim. 1111, 1234, 4321) hylätään.
 - Tallennetaan vain suolattu PBKDF2-tiiviste sovelluksen yksityisiin asetuksiin.
 - Viisi väärää yritystä → esto 30 s; toistuvat estot pitenevät (60 s, 2 min …, enintään 15 min). Kellon siirto ei pidennä estoa yli enimmäisajan.
-- Avaus voimassa 2 minuuttia viimeisestä kosketuksesta; lukko menee päälle aina, kun sovellus siirtyy taustalle. Poikkeus: ohjaajan itse avaama valokuvanvalitsin ei lukitse (2 minuutin raja on silti voimassa).
+- Avaus on voimassa kiinteät 2 minuuttia PIN-koodin syöttämisestä; kosketukset eivät pidennä sitä (muuten asiakkaan käyttö pitäisi lukon auki). Avauksen ajan kaikkien näkymien yläreunassa näkyy palkki "🔓 Ohjaajan toiminnot auki · m:ss – Lukitse".
+- Lukko menee päälle myös aina, kun sovellus siirtyy taustalle. Poikkeus: ohjaajan itse avaama valokuvanvalitsin ei lukitse (2 minuutin raja on silti voimassa).
+- PIN-koodin asettamisen jälkeen lukko on heti päällä.
 - Unohtunut PIN nollataan puhelimen omalla näytön lukituksella (PIN, kuvio, sormenjälki). Jos puhelimessa ei ole näytön lukitusta, siitä varoitetaan jo PIN-koodia asetettaessa.
 
 **Käyttöönotto:** oletuksena pois. Kun ensimmäinen päiväohjelma tallennetaan, kysytään kerran: "Käyttääkö tätä laitetta myös joku muu?" Lukituksen voi ottaa käyttöön, vaihtaa tai poistaa aloitussivun kohdasta Ohjaajan asetukset. Asetussivulla on vinkki Androidin näytön kiinnityksestä.
@@ -181,7 +183,9 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 - [ ] Lukittuna: päiväohjelmia ei voi luoda, muokata eikä poistaa; Käynnistä ja Tulosta toimivat.
 - [ ] Lukittuna ajossa: Lisää-valikossa vain Ohita ja Näytä koko ohjelma sekä 🔒 Ohjaajan toiminnot; apu, tauko ja Valmis toimivat.
 - [ ] Viisi väärää PIN-koodia → esto ja odotusaika näkyvät.
-- [ ] Avaus lukittuu 2 minuutin käyttämättömyyden jälkeen ja kun sovellus siirretään taustalle.
+- [ ] Avauksen aikana yläpalkki näkyy ja laskee aikaa; Lukitse lukitsee heti.
+- [ ] Avaus lukittuu 2 minuutin kuluttua myös jatkuvassa käytössä sekä kun sovellus siirretään taustalle.
+- [ ] PIN-koodin asettamisen jälkeen Nollaa ja Asetukset eivät ole käytettävissä ilman PIN-koodia.
 - [ ] Unohditko PIN-koodin? → puhelimen oma lukitus → lukitus poistuu, ohjelmat säilyvät.
 - [ ] Ensimmäisen päiväohjelman tallennuksen jälkeen kysymys näytetään kerran.
 
@@ -299,6 +303,7 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 | 1.11.2026 | Yksikkötestit (Robolectric) ja korjaus: ajastin ei kaadu eikä esty, jos hälytys- tai ilmoituslupa puuttuu. |
 | 1.11.2026 | P0-21e: ohjaajan lukitus (PIN). Apu, tauko, Valmis, ohitus ja Aloita/Tauko eivät ole koskaan lukossa. Oletuksena pois; kerran kysytään ensimmäisen ohjelman tallennuksen jälkeen. |
 | 1.11.2026 | Ajan pikavalinnat ja kellotaulun säätö näkyvät vain ajastimen ollessa pysähdyksissä. |
+| 1.11.2026 | Puhelintestin perusteella: kosketukset eivät pidennä avausta (kiinteä 2 min), lukko päälle heti PIN-koodin asettamisen jälkeen, avauksen ajan näkyvä yläpalkki. |
 
 ---
 

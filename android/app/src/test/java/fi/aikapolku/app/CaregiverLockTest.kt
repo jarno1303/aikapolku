@@ -258,23 +258,19 @@ class CaregiverLockTest {
     }
 
     @Test
-    fun `kosketus jatkaa avausta`() {
+    fun `avaus ei pitene kaytossa vaan paattyy 2 minuutin kuluttua PIN-koodista`() {
+        // Puhelintesti 1.11.2026: kosketukset pitivät lukon auki. Avaus on nyt kiinteä.
         CaregiverSession.open(0L)
 
-        CaregiverSession.touch(100_000L)
-
-        assertTrue(CaregiverSession.isOpen(200_000L))
-        assertFalse(CaregiverSession.isOpen(220_000L))
+        assertEquals(60_000L, CaregiverSession.remainingMs(60_000L))
+        assertFalse(CaregiverSession.isOpen(CaregiverSession.TIMEOUT_MS))
+        assertEquals(0L, CaregiverSession.remainingMs(CaregiverSession.TIMEOUT_MS + 1))
     }
 
     @Test
-    fun `kosketus ei avaa suljettua lukkoa`() {
-        CaregiverSession.touch(10L)
-        assertFalse(CaregiverSession.isOpen(11L))
-
-        CaregiverSession.open(0L)
-        CaregiverSession.touch(130_000L) // jo vanhentunut
-        assertFalse(CaregiverSession.isOpen(130_001L))
+    fun `lukko on oletuksena kiinni`() {
+        assertFalse(CaregiverSession.isOpen(0L))
+        assertEquals(0L, CaregiverSession.remainingMs(0L))
     }
 
     @Test

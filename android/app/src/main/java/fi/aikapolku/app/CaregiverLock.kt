@@ -182,27 +182,24 @@ internal class CaregiverLockStore(
 }
 
 /**
- * Ohjaajan avaus on voimassa sovelluksen käynnistyskerran ajan muistissa: 2 minuuttia
- * viimeisestä kosketuksesta, ja se suljetaan aina, kun sovellus siirtyy taustalle.
- * Tila on Compose-tilaa, joten näkymät päivittyvät avauksen ja sulkemisen mukana.
+ * Ohjaajan avaus on muistissa ja voimassa kiinteät 2 minuuttia PIN-koodin syöttämisestä.
+ * Kosketukset EIVÄT jatka avausta: muuten asiakkaan oma käyttö pitäisi ohjaajan
+ * toiminnot auki loputtomiin (puhelintesti 1.11.2026). Avaus suljetaan myös aina,
+ * kun sovellus siirtyy taustalle. Tila on Compose-tilaa, joten näkymät päivittyvät.
  */
 internal object CaregiverSession {
     const val TIMEOUT_MS = 120_000L
-    /** Kosketus jatkaa avausta vasta, kun edellisestä jatkosta on kulunut tämän verran. */
-    private const val TOUCH_GRANULARITY_MS = 5_000L
 
     private val openUntilState = mutableLongStateOf(0L)
     val openUntil: Long get() = openUntilState.longValue
 
     fun isOpen(now: Long): Boolean = openUntilState.longValue > now
 
+    /** Avaa ohjaajan toiminnot 2 minuutiksi. Kutsutaan vain oikean PIN-koodin jälkeen. */
     fun open(now: Long) { openUntilState.longValue = now + TIMEOUT_MS }
 
-    /** Jatkaa avausta käytön aikana; ei avaa suljettua. */
-    fun touch(now: Long) {
-        val until = openUntilState.longValue
-        if (until > now && until - now < TIMEOUT_MS - TOUCH_GRANULARITY_MS) open(now)
-    }
+    /** Jäljellä oleva avausaika (0, kun lukossa). */
+    fun remainingMs(now: Long): Long = (openUntilState.longValue - now).coerceAtLeast(0L)
 
     fun close() { openUntilState.longValue = 0L }
 

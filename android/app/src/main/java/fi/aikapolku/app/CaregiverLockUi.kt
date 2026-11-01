@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -21,6 +22,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,12 +34,11 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -101,11 +102,11 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
     var enabled by remember { mutableStateOf(store.isEnabled) }
     var now by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     val openUntil = CaregiverSession.openUntil
+    // Päivittää kellon sekunnin välein avauksen aikana (yläpalkin laskuri ja aikakatkaisu).
     LaunchedEffect(openUntil) {
         now = SystemClock.elapsedRealtime()
-        val wait = openUntil - now
-        if (wait > 0) {
-            delay(wait + 50L)
+        while (openUntil > now) {
+            delay(minOf(1_000L, openUntil - now + 50L))
             now = SystemClock.elapsedRealtime()
         }
     }
@@ -170,20 +171,17 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
     )
 
     CompositionLocalProvider(LocalCaregiver provides access) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                // Jokainen kosketus jatkaa avausta (2 min viimeisestä kosketuksesta).
-                .pointerInput(Unit) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            awaitPointerEvent(PointerEventPass.Initial)
-                            CaregiverSession.touch(SystemClock.elapsedRealtime())
-                        }
-                    }
-                }
-        ) {
-            content()
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Näkyvä muistutus aina, kun ohjaajan toiminnot ovat auki.
+            if (enabled && sessionOpen) {
+                CaregiverOpenBanner(
+                    remainingMs = (openUntil - now).coerceAtLeast(0L),
+                    onLock = { CaregiverSession.close() }
+                )
+            }
+            Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                content()
+            }
         }
 
         if (askPin) {
@@ -213,10 +211,15 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
                     store.enable(pin)
                     enabled = true
                     setupOpen = false
-                    CaregiverSession.open(SystemClock.elapsedRealtime())
-                    info = if (wasEnabled) "PIN-koodi on vaihdettu." else
-                        "Ohjaajan lukitus on käytössä. Ohjaajan toiminnot lukittuvat 2 minuutin " +
-                            "kuluttua viimeisestä kosketuksesta tai kun sovellus suljetaan."
+                    if (wasEnabled) {
+                        // PIN vaihdettiin ohjaajana: avaus jatkuu entisellään.
+                        info = "PIN-koodi on vaihdettu."
+                    } else {
+                        // Käyttöönoton jälkeen lukko on heti päällä.
+                        CaregiverSession.close()
+                        info = "Ohjaajan lukitus on nyt päällä. Ohjaajan toiminnot avataan " +
+                            "🔒-painikkeella ja PIN-koodilla. Ne ovat auki 2 minuuttia kerrallaan."
+                    }
                 },
                 onDismiss = { setupOpen = false }
             )
@@ -403,6 +406,34 @@ private fun CaregiverPinSetupDialog(
     )
 }
 
+/** Yläpalkki: ohjaajan toiminnot ovat auki. Näkyy kaikissa näkymissä avauksen ajan. */
+@Composable
+private fun CaregiverOpenBanner(remainingMs: Long, onLock: () -> Unit) {
+    val seconds = ((remainingMs + 999L) / 1000L).toInt()
+    val time = "%d:%02d".format(seconds / 60, seconds % 60)
+    Surface(color = Color(0xFFFDE68A), modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .padding(start = 16.dp, end = 4.dp)
+                .semantics(mergeDescendants = true) {},
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "🔓 Ohjaajan toiminnot auki · $time",
+                modifier = Modifier.weight(1f),
+                color = Color(0xFF713F12),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp
+            )
+            TextButton(onClick = onLock, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text("Lukitse", color = Color(0xFF713F12), fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
 /** Pieni lukkopainike lukittujen ohjaajan toimintojen tilalle. */
 @Composable
 internal fun CaregiverLockButton(modifier: Modifier = Modifier, label: String = "Ohjaaja") {
@@ -449,8 +480,9 @@ internal fun CaregiverSettingsScreen() {
                     "sekä ajastimen Aloita ja Tauko."
             )
             Text(
-                "Avaus on voimassa 2 minuuttia viimeisestä kosketuksesta. Lukitus menee päälle " +
-                    "myös, kun sovellus suljetaan tai siirtyy taustalle.",
+                "PIN-koodilla avatut ohjaajan toiminnot ovat auki 2 minuuttia, minkä ajan " +
+                    "yläreunassa näkyy muistutus. Lukitus menee päälle myös, kun sovellus " +
+                    "suljetaan tai siirtyy taustalle.",
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

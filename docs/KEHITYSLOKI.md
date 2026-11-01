@@ -179,7 +179,9 @@
 - PIN-koodi (4 numeroa, suolattu tiiviste, heikot hylätään).
 - Ohjaajan toiminnot piilossa lukittuna: ajan muutos, nollaus, lisäaika, lopetus, muokkaus, asetukset.
 - Apu, tauko, Valmis, ohitus ja Aloita/Tauko aina käytössä.
-- Väärien yritysten esto kasvavalla viiveellä; avaus 2 min, lukko taustalle siirryttäessä.
+- Väärien yritysten esto kasvavalla viiveellä; lukko taustalle siirryttäessä.
+- Avaus kiinteät 2 min PIN-koodista (kosketukset eivät pidennä); yläpalkki avauksen ajan.
+- Lukko heti päälle PIN-koodin asettamisen jälkeen.
 - Unohtunut PIN nollataan puhelimen omalla näytön lukituksella.
 - Pikavalinnat ja kellotaulun säätö vain pysäytettynä.
 - Ohjaajan asetukset aloitussivulta; kertakysymys ensimmäisen ohjelman jälkeen.
