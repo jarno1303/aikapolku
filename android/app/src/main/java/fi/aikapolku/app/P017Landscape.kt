@@ -34,6 +34,8 @@ internal fun P017LandscapeTimer(
     nextPhoto: String,
     onPreset: (Int) -> Unit,
     onStartPause: () -> Unit,
+    /** P0-21e: Tauko on lukittu (näytetään 🔒; painallus kysyy PIN-koodin). */
+    pauseLocked: Boolean,
     onResetClick: () -> Unit,
     onSettingsClick: () -> Unit,
     /** P0-21e: ajan saa muuttaa (pysähdyksissä ja ohjaajana). */
@@ -134,9 +136,13 @@ internal fun P017LandscapeTimer(
                         .background(P017Ink)
                 ) {
                     Text(
-                        if (running) "Ⅱ" else "▶",
+                        when {
+                            pauseLocked -> "🔒"
+                            running -> "Ⅱ"
+                            else -> "▶"
+                        },
                         color = Color.White,
-                        fontSize = 26.sp
+                        fontSize = if (pauseLocked) 22.sp else 26.sp
                     )
                 }
                 if (showSettings) {

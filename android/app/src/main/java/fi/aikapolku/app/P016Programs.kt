@@ -648,9 +648,19 @@ internal fun P016ProgramsScreen() {
                                 )
                             }
 
+                            val pauseLocked = running && !caregiver.allows(AppAction.PAUSE_TIMER)
                             Button(
                                 onClick = {
-                                    if (running) {
+                                    if (pauseLocked) {
+                                        // Tauko lukittuna vain PIN-koodilla. Tarvitsen tauon toimii aina.
+                                        caregiver.run(AppAction.PAUSE_TIMER) {
+                                            if (running) {
+                                                remaining = P018Timer.remaining(context, "program", remaining)
+                                                P018Timer.stop(context, "program", remaining)
+                                                running = false
+                                            }
+                                        }
+                                    } else if (running) {
                                         remaining = P018Timer.remaining(context, "program", remaining)
                                         P018Timer.stop(context, "program", remaining)
                                         running = false
@@ -671,7 +681,8 @@ internal fun P016ProgramsScreen() {
                                 modifier = Modifier.weight(1f).heightIn(min = 52.dp)
                             ) {
                                 Text(
-                                    if (running) "Tauko"
+                                    if (pauseLocked) "🔒 Tauko"
+                                    else if (running) "Tauko"
                                     else if (remaining == 0L) "Aloita uudelleen"
                                     else if (remaining < step.minutes * 60_000L) "Jatka"
                                     else "Aloita"

@@ -175,16 +175,23 @@ private fun AikaPolkuApp() {
         }
     }
 
+    // P0-21e: käynnissä olevan ajastimen pysäyttäminen on lukittuna ohjaajan toiminto.
+    val guardTimerStop: (() -> Unit) -> Unit = { action ->
+        if (running && caregiver.isLocked) caregiver.run(AppAction.PAUSE_TIMER, action) else action()
+    }
+
     val goBack: () -> Unit = {
         if (page == "timer" && activeTask.isNotBlank()) {
-            if (running) {
-                remaining = (
-                    deadline - SystemClock.elapsedRealtime()
-                ).coerceAtLeast(0L)
-                running = false
+            guardTimerStop {
+                if (running) {
+                    remaining = (
+                        deadline - SystemClock.elapsedRealtime()
+                    ).coerceAtLeast(0L)
+                    running = false
+                }
+                P018Timer.stop(context, "timer", remaining)
+                page = "firstthen"
             }
-            P018Timer.stop(context, "timer", remaining)
-            page = "firstthen"
         } else if (page == "manual") {
             page = "firstthen"
         } else {
@@ -326,23 +333,27 @@ private fun AikaPolkuApp() {
                         nextVoiceAuto = auto
                     },
                     onDone = {
-                        running = false
-                        P018Timer.stop(context, "timer", remaining)
-                        activeTask = ""
-                        page = "manual"
-                        if (firstVoiceAuto) P017VoicePlayer.play(context, firstVoice)
+                        guardTimerStop {
+                            running = false
+                            P018Timer.stop(context, "timer", remaining)
+                            activeTask = ""
+                            page = "manual"
+                            if (firstVoiceAuto) P017VoicePlayer.play(context, firstVoice)
+                        }
                     },
                     onStartTimer = { minutes ->
-                        running = false
-                        P018Timer.stop(context, "timer", minutes * 60_000L)
-                        duration = minutes * 60_000L
-                        originalDuration = duration
-                        remaining = duration
-                        activeTask = first
-                        deadline = 0L
-                        running = false
-                        page = "timer"
-                        voiceStartedForTimer = false
+                        guardTimerStop {
+                            running = false
+                            P018Timer.stop(context, "timer", minutes * 60_000L)
+                            duration = minutes * 60_000L
+                            originalDuration = duration
+                            remaining = duration
+                            activeTask = first
+                            deadline = 0L
+                            running = false
+                            page = "timer"
+                            voiceStartedForTimer = false
+                        }
                     }
                 )
 

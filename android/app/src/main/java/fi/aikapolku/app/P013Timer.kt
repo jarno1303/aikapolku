@@ -72,6 +72,16 @@ internal fun P013TimerScreen(
     val canAdjust = !running && caregiver.allows(AppAction.ADJUST_TIME)
     val showReset = caregiver.allows(AppAction.RESET_TIMER)
     val showSettings = caregiver.allows(AppAction.SETTINGS)
+    // Tauko vaatii lukittuna PIN-koodin; Aloita ja Jatka ovat aina vapaita.
+    val pauseLocked = running && !caregiver.allows(AppAction.PAUSE_TIMER)
+    val currentRunning by rememberUpdatedState(running)
+    val startPause: () -> Unit = {
+        if (pauseLocked) {
+            caregiver.run(AppAction.PAUSE_TIMER) { if (currentRunning) onStartPause() }
+        } else {
+            onStartPause()
+        }
+    }
 
 
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
@@ -111,7 +121,8 @@ internal fun P013TimerScreen(
             nextActivity = nextActivity,
             nextPhoto = nextPhoto,
             onPreset = onPreset,
-            onStartPause = onStartPause,
+            onStartPause = startPause,
+            pauseLocked = pauseLocked,
             onResetClick = { confirmReset = true },
             onSettingsClick = { settingsOpen = true },
             canAdjust = canAdjust,
@@ -274,15 +285,19 @@ internal fun P013TimerScreen(
                 }
             }
             androidx.compose.material3.IconButton(
-                onClick = onStartPause,
+                onClick = startPause,
                 modifier = Modifier
                     .size(72.dp)
                     .clip(CircleShape)
                     .background(DialInk)
             ) {
                 Text(
-                    if (running) "Ⅱ" else "▶",
-                    fontSize = if (running) 39.sp else 30.sp,
+                    when {
+                        pauseLocked -> "🔒"
+                        running -> "Ⅱ"
+                        else -> "▶"
+                    },
+                    fontSize = if (pauseLocked) 28.sp else if (running) 39.sp else 30.sp,
                     color = Color.White
                 )
             }

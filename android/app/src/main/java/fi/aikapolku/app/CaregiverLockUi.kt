@@ -472,12 +472,12 @@ internal fun CaregiverSettingsScreen() {
                 color = LockTeal
             )
             Text(
-                "Lukitus piilottaa PIN-koodin taakse ajan muuttamisen, ajastimen nollauksen, " +
+                "Lukitus piilottaa PIN-koodin taakse ajan muuttamisen, ajastimen tauon ja nollauksen, " +
                     "lisäajan, päiväohjelman lopettamisen, ohjelmien ja korttien muokkauksen sekä asetukset."
             )
             Text(
                 "Aina käytettävissä: Tarvitsen apua, Tarvitsen tauon, Valmis, osavaiheen ohitus " +
-                    "sekä ajastimen Aloita ja Tauko."
+                    "sekä ajastimen Aloita ja Jatka."
             )
             Text(
                 "PIN-koodilla avatut ohjaajan toiminnot ovat auki 2 minuuttia, minkä ajan " +

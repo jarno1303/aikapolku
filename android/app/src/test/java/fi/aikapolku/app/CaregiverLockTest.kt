@@ -35,10 +35,10 @@ class CaregiverLockTest {
     // --- Linjaus: käyttäjän omat toiminnot eivät ole koskaan lukossa ---
 
     @Test
-    fun `apu tauko valmis ohitus ja aloita-tauko eivat ole koskaan ohjaajan toimintoja`() {
+    fun `apu tarvitsen tauon valmis ohitus ja aloita-jatka eivat ole koskaan ohjaajan toimintoja`() {
         val alwaysFree = listOf(
             AppAction.HELP, AppAction.BREAK, AppAction.DONE, AppAction.SKIP_STEP,
-            AppAction.START_PAUSE, AppAction.START_PROGRAM, AppAction.VIEW_PROGRAM, AppAction.PRINT
+            AppAction.START_RESUME, AppAction.START_PROGRAM, AppAction.VIEW_PROGRAM, AppAction.PRINT
         )
         alwaysFree.forEach { assertFalse("$it ei saa olla lukittu", it.caregiverOnly) }
     }
@@ -54,14 +54,24 @@ class CaregiverLockTest {
     }
 
     @Test
-    fun `ohjaajan toiminnot ovat ajan muutos nollaus lisaaika lopetus muokkaus ja asetukset`() {
+    fun `ohjaajan toiminnot ovat ajan muutos tauko nollaus lisaaika lopetus muokkaus ja asetukset`() {
         assertEquals(
             setOf(
-                AppAction.ADJUST_TIME, AppAction.RESET_TIMER, AppAction.EXTEND_TIME,
+                AppAction.ADJUST_TIME, AppAction.PAUSE_TIMER, AppAction.RESET_TIMER, AppAction.EXTEND_TIME,
                 AppAction.END_PROGRAM, AppAction.EDIT_PROGRAMS, AppAction.EDIT_CARDS, AppAction.SETTINGS
             ),
             AppAction.values().filter { it.caregiverOnly }.toSet()
         )
+    }
+
+    @Test
+    fun `lukittuna tauko vaatii PIN-koodin mutta Tarvitsen tauon toimii aina`() {
+        // Itsemääräämisoikeus: käyttäjän oma taukopyyntö ei ole koskaan lukossa (päätös 1.11.2026).
+        val locked = CaregiverAccessState(lockEnabled = true, sessionOpen = false)
+
+        assertFalse(locked.allows(AppAction.PAUSE_TIMER))
+        assertTrue(locked.allows(AppAction.BREAK))
+        assertTrue(locked.allows(AppAction.START_RESUME))
     }
 
     @Test

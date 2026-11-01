@@ -154,9 +154,9 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 
 **Tausta:** käyttäjätestissä havaittiin, että ajastimen minuuttipikavalinnat olivat näkyvissä ajastimen käydessä ja painallus muutti käynnissä olevan ajan. Ajan muuttaminen, ohjelmien muokkaus ja asetukset kuuluvat ohjaajalle.
 
-**Aina käyttäjän käytössä, ei koskaan lukittu:** Tarvitsen apua, Tarvitsen tauon, Valmis / seuraava osavaihe, Ohita osavaihe, ajastimen Aloita/Tauko/Jatka, päiväohjelman käynnistys, koko ohjelman katselu ja tulostus.
+**Aina käyttäjän käytössä, ei koskaan lukittu:** Tarvitsen apua, Tarvitsen tauon, Valmis / seuraava osavaihe, Ohita osavaihe, ajastimen Aloita/Jatka, päiväohjelman käynnistys, koko ohjelman katselu ja tulostus.
 
-**Lukituksen takana (kun lukitus on päällä):** ajan muuttaminen (pikavalinnat, kellotaulun säätö, +5 min lisäaikaa), ajastimen nollaus, päiväohjelman lopetus, päiväohjelmien ja korttien luonti/muokkaus/poisto, Ensin–Sitten-korttien valinta ja "+ Lisää vaihe" sekä kaikki asetukset. Lukittuna nämä piilotetaan; tilalla on pieni 🔒-painike.
+**Lukituksen takana (kun lukitus on päällä):** käynnissä olevan ajastimen tauko ja muu pysäytys (Tauko-painike, Ensin–Sitten-ajastimen Takaisin, ajastimen korvaaminen uudella), ajan muuttaminen (pikavalinnat, kellotaulun säätö, +5 min lisäaikaa), ajastimen nollaus, päiväohjelman lopetus, päiväohjelmien ja korttien luonti/muokkaus/poisto, Ensin–Sitten-korttien valinta ja "+ Lisää vaihe" sekä kaikki asetukset. Lukittuna nämä piilotetaan; tilalla on pieni 🔒-painike.
 
 **Ilman lukitustakin:** minuuttipikavalinnat ja kellotaulun säätö näkyvät vain, kun ajastin on pysähdyksissä.
 
@@ -179,6 +179,7 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 - [ ] Ilman lukitusta: pikavalinnat katoavat ajastimen käynnistyessä ja palaavat pysäytettäessä.
 - [ ] Ota lukitus käyttöön (heikko PIN hylätään, eri PIN-koodit huomataan).
 - [ ] Lukittuna: ajastimessa ei pikavalintoja, kellotaulun säätöä, Nollaa- eikä Asetukset-painiketta; 🔒 avaa PIN-kyselyn.
+- [ ] Lukittuna ajastimen käydessä: Tauko-painikkeessa näkyy 🔒 ja se kysyy PIN-koodin; Ensin–Sitten-ajastimen Takaisin kysyy PIN-koodin. Päiväohjelman Tarvitsen tauon pysäyttää ajastimen ilman PIN-koodia.
 - [ ] Lukittuna: Ensin–Sitten-kortit eivät avaudu muokattaviksi; "+ Lisää vaihe" ei näy.
 - [ ] Lukittuna: päiväohjelmia ei voi luoda, muokata eikä poistaa; Käynnistä ja Tulosta toimivat.
 - [ ] Lukittuna ajossa: Lisää-valikossa vain Ohita ja Näytä koko ohjelma sekä 🔒 Ohjaajan toiminnot; apu, tauko ja Valmis toimivat.
@@ -301,8 +302,9 @@ Jokaiselle viestille (**Tarvitsen apua**, **Tarvitsen tauon**) asetetaan eriksee
 | 1.11.2026 | Premium-hinta alustavasti 9,99 € kertamaksu; hinta tarkistetaan myöhemmin. |
 | 1.11.2026 | Projekti Git-versionhallintaan: github.com/jarno1303/aikapolku. |
 | 1.11.2026 | Yksikkötestit (Robolectric) ja korjaus: ajastin ei kaadu eikä esty, jos hälytys- tai ilmoituslupa puuttuu. |
-| 1.11.2026 | P0-21e: ohjaajan lukitus (PIN). Apu, tauko, Valmis, ohitus ja Aloita/Tauko eivät ole koskaan lukossa. Oletuksena pois; kerran kysytään ensimmäisen ohjelman tallennuksen jälkeen. |
+| 1.11.2026 | P0-21e: ohjaajan lukitus (PIN). Apu, Tarvitsen tauon, Valmis, ohitus ja Aloita/Jatka eivät ole koskaan lukossa. Oletuksena pois; kerran kysytään ensimmäisen ohjelman tallennuksen jälkeen. |
 | 1.11.2026 | Ajan pikavalinnat ja kellotaulun säätö näkyvät vain ajastimen ollessa pysähdyksissä. |
+| 1.11.2026 | Puhelintestin perusteella: ajastimen Tauko vaatii lukittuna PIN-koodin. Tarvitsen tauon pysyy aina vapaana – käyttäjän itsemääräämisoikeutta kunnioitetaan. |
 | 1.11.2026 | Puhelintestin perusteella: kosketukset eivät pidennä avausta (kiinteä 2 min), lukko päälle heti PIN-koodin asettamisen jälkeen, avauksen ajan näkyvä yläpalkki. |
 
 ---
