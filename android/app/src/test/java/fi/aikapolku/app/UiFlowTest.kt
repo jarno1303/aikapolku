@@ -131,4 +131,29 @@ class UiFlowTest {
         compose.onNodeWithText(t(R.string.support_continue)).performClick()
         assertTrue(continued)
     }
+
+    @Test
+    fun `kuva vaihtuu kun kortti vaihtuu samassa nakymassa`() {
+        // Puhelintesti 1.11.2026: Ensin–Sitten-kortin kuva vaihtui vasta näkymästä poistuttaessa.
+        // Molemmat kuvat ladataan ensin välimuistiin, jotta testi ei riipu taustasäikeestä.
+        val cache = fi.aikapolku.app.cards.CardImageCache
+        val firstRes = fi.aikapolku.app.cards.CardArt.templates[0].drawable
+        val secondRes = fi.aikapolku.app.cards.CardArt.templates[1].drawable
+        val firstImage = kotlinx.coroutines.runBlocking { cache.load(context, null, firstRes) }
+        val secondImage = kotlinx.coroutines.runBlocking { cache.load(context, null, secondRes) }
+        org.junit.Assume.assumeTrue("kuvien purku ei käytettävissä tässä ympäristössä",
+            firstImage != null && secondImage != null && firstImage !== secondImage)
+
+        var res by mutableStateOf(firstRes)
+        var shown: androidx.compose.ui.graphics.ImageBitmap? = null
+        compose.setContent {
+            shown = fi.aikapolku.app.cards.rememberCachedImage(null, res).image
+        }
+        compose.waitForIdle()
+        assertTrue("ensimmäinen kuva näkyy", shown === firstImage)
+
+        res = secondRes
+        compose.waitForIdle()
+        assertTrue("kuva vaihtuu heti eikä vanha jää näkyviin", shown === secondImage)
+    }
 }

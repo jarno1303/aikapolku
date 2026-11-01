@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -66,7 +68,24 @@ internal object CardImageCache {
     }.getOrNull()
 }
 
-private class PhotoState(val done: Boolean, val image: ImageBitmap?)
+/** Kuvan lataustila: [done] = lataus päättynyt (kuva tai ei kuvaa). */
+internal class PhotoState(val done: Boolean, val image: ImageBitmap?)
+
+/**
+ * Kuva välimuistista; puuttuessa puretaan taustalla. Kun [path] tai [res] vaihtuu (esim. kortti tai
+ * osavaihe vaihtuu samassa näkymässä), tila alkaa alusta – vanha kuva ei jää näkyviin.
+ */
+@Composable
+internal fun rememberCachedImage(path: String?, res: Int?): PhotoState {
+    val context = LocalContext.current
+    val state = remember(path, res) {
+        mutableStateOf(CardImageCache.peek(path, res).let { PhotoState(it != null, it) })
+    }
+    LaunchedEffect(path, res) {
+        if (!state.value.done) state.value = PhotoState(true, CardImageCache.load(context, path, res))
+    }
+    return state.value
+}
 
 /**
  * Kortin kuva: oma valokuva, muuten valmis kuva nimen perusteella, muuten tunnus ◇.
@@ -81,12 +100,7 @@ internal fun CardPhoto(
     val context = LocalContext.current
     val path = imagePath.takeIf { it.isNotBlank() && !it.startsWith("builtin:") }
     val res = CardArt.imageRes(name, imagePath) { context.getString(it) }
-    val state by produceState(
-        initialValue = CardImageCache.peek(path, res).let { PhotoState(it != null, it) },
-        path, res
-    ) {
-        if (!value.done) value = PhotoState(true, CardImageCache.load(context, path, res))
-    }
+    val state = rememberCachedImage(path, res)
 
     val image = state.image
     when {
@@ -114,11 +128,7 @@ internal fun ResourceImage(
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop
 ) {
-    val context = LocalContext.current
-    val image by produceState(initialValue = CardImageCache.peek(null, res), res) {
-        if (value == null) value = CardImageCache.load(context, null, res)
-    }
-    val loaded = image
+    val loaded = rememberCachedImage(null, res).image
     if (loaded != null) {
         Image(bitmap = loaded, contentDescription = null, contentScale = contentScale, modifier = modifier)
     } else {
