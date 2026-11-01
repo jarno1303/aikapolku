@@ -237,3 +237,12 @@
 - Pitkä otsikko pienenee (22–30 sp, enintään 2 riviä), jotta kuva saa enemmän tilaa.
 - Seuraavaksi-rivi yhdellä rivillä pienellä kuvalla; "Seuraava tehtävä" ja "Seuraavaksi" yhdistetty.
 - Kaikki valmista -näkymä: iso merkki, ohjelman nimi ja tehdyt tehtävät pikkukuvina.
+
+## Vaihe 1: käyttäjäprofiilit
+- Jokaisella profiililla on omat päiväohjelmat, kortit, Ensin–Sitten-valinnat, suoritus- ja ääniasetukset sekä ajastimen näyttötapa. Ohjaajan lukitus on laitekohtainen.
+- Vanha data kuuluu sellaisenaan ensimmäiseen profiiliin (oletusprofiili käyttää vanhoja tiedostonimiä), joten siirtoa ei tarvita eikä mitään katoa.
+- Profiilit hallitaan ohjaajan asetuksissa: lisäys, nimi ja kuva, käyttöönotto ja poisto. Poisto poistaa profiilin tiedot ja omat kuvat, joita muut profiilit eivät käytä.
+- Aloitusnäkymässä näkyy nykyinen profiili, kun profiileja on useampi. Vaihto vaatii PIN-koodin, ellei ohjaaja ole sallinut käyttäjän valita profiilia itse.
+- Vaihdettaessa käynnissä olevat ajastimet pysäytetään.
+- Korjaus: ajastimen tallennusavaimet eivät enää tule käännettävistä teksteistä (endElapsed, endWall).
+- Uudet testit: ProfilesTest (7), ProfileFilesTest (4; myös Windows-polut).

@@ -1,5 +1,6 @@
 package fi.aikapolku.app.timer
 
+import fi.aikapolku.app.data.ProfileScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -73,10 +74,7 @@ internal fun TimerScreen(
 
     val context = LocalContext.current
     val preferences = remember(context) {
-        context.applicationContext.getSharedPreferences(
-            "aikapolku_timer_preferences",
-            android.content.Context.MODE_PRIVATE
-        )
+        ProfileScope.prefs(context, ProfileScope.TIMER_PREFS)
     }
 
     var endSound by rememberSaveable {

@@ -18,6 +18,11 @@ import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.ui.AppColors
+import androidx.compose.ui.platform.LocalContext
+import fi.aikapolku.app.data.ProfileStore
+import fi.aikapolku.app.profiles.CurrentProfileRow
+import fi.aikapolku.app.profiles.ProfilePickerDialog
+import fi.aikapolku.app.profiles.ProfileSession
 
 @Composable
 internal fun HomeScreen(open: (AppPage) -> Unit) {
@@ -37,6 +42,32 @@ internal fun HomeScreen(open: (AppPage) -> Unit) {
             Text("AikaPolku", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink)
             Text(stringResource(R.string.selkeytta_arkeen_askel_kerrallaan), fontSize = 14.sp, color = AppColors.Muted)
         }
+    }
+
+    // Profiilit: kuka käyttää nyt. Vaihto vaatii ohjaajan PIN-koodin, ellei ohjaaja ole sallinut omaa valintaa.
+    val context = LocalContext.current
+    val caregiverAccess = LocalCaregiver.current
+    val revision = ProfileSession.revision
+    val profiles = remember(revision) { ProfileStore.list(context) }
+    val currentId = remember(revision) { ProfileStore.currentId(context) }
+    var choosing by remember { mutableStateOf(false) }
+    if (profiles.size > 1) {
+        Spacer(Modifier.height(12.dp))
+        CurrentProfileRow(profiles.first { it.id == currentId }) {
+            if (ProfileStore.selfSelect(context)) choosing = true
+            else caregiverAccess.run(AppAction.SETTINGS) { choosing = true }
+        }
+    }
+    if (choosing) {
+        ProfilePickerDialog(
+            profiles = profiles,
+            currentId = currentId,
+            onPick = {
+                choosing = false
+                ProfileSession.switchTo(context, it.id)
+            },
+            onDismiss = { choosing = false }
+        )
     }
 
     Spacer(Modifier.height(18.dp))

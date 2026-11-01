@@ -31,10 +31,8 @@ internal data class FirstThenSelection(
 
 internal class CardStore(context: Context) {
     private val appContext = context.applicationContext
-    private val prefs = context.getSharedPreferences(
-        "aikapolku_cards_v1",
-        Context.MODE_PRIVATE
-    )
+    // Nykyisen profiilin kortit ja Ensin–Sitten-valinnat.
+    private val prefs = ProfileScope.prefs(context, ProfileScope.CARDS)
 
     fun loadCards(): List<CardItem> {
         val array = runCatching {

@@ -103,8 +103,6 @@
     <string name="ei_vahenevia_numeroita">Ei väheneviä numeroita.</string>
     <string name="ei_viela_paivaohjelmia_luo_ensimmainen">Ei vielä päiväohjelmia. Luo ensimmäinen ohjelma.</string>
     <string name="ei_viela_tallennettuja_kortteja_luo">Ei vielä tallennettuja kortteja. Luo ensimmäinen kortti.</string>
-    <string name="endelapsed">endElapsed</string>
-    <string name="endwall">endWall</string>
     <string name="ensin_sitten">Ensin – Sitten</string>
     <string name="erillisia_suomenkielisia_aania_ei_loytynyt">Erillisiä suomenkielisiä ääniä ei löytynyt. Kokeile laitteen oletusääntä.</string>
     <string name="extend_5_min">+ 5 min lisäaikaa</string>
@@ -377,4 +375,26 @@
     <string name="voice_listen">▶ Kuuntele</string>
     <string name="voice_needs_network">vaatii verkon</string>
     <string name="voice_offline">offline</string>
+
+    <!-- Profiilit -->
+    <string name="profiles_title">Profiilit</string>
+    <string name="profiles_info">Jokaisella profiililla on omat päiväohjelmat, kortit ja asetukset. Ohjaajan lukitus on yhteinen kaikille profiileille.</string>
+    <string name="profile_unnamed">Nimetön profiili</string>
+    <string name="profile_in_use">Käytössä nyt</string>
+    <string name="profile_add">+ Lisää profiili</string>
+    <string name="profile_new_title">Uusi profiili</string>
+    <string name="profile_edit_title">Muokkaa profiilia</string>
+    <string name="profile_name_label">Nimi</string>
+    <string name="profile_name_needed">Anna profiilille nimi.</string>
+    <string name="profile_photo_remove">Poista kuva</string>
+    <string name="profile_use">Ota käyttöön</string>
+    <string name="profile_delete">Poista profiili</string>
+    <string name="profile_delete_title">Poistetaanko %1$s?</string>
+    <string name="profile_delete_text">Profiilin päiväohjelmat, kortit, asetukset ja omat kuvat poistetaan pysyvästi. Tätä ei voi perua.</string>
+    <string name="profile_self_select">Käyttäjä voi valita profiilin itse</string>
+    <string name="profile_self_select_on">Profiilin voi vaihtaa aloitusnäkymästä ilman PIN-koodia.</string>
+    <string name="profile_self_select_off">Profiilin vaihto vaatii ohjaajan PIN-koodin.</string>
+    <string name="profile_choose_title">Kuka käyttää?</string>
+    <string name="profile_switch">Vaihda</string>
+    <string name="profile_switch_a11y">Profiili: %1$s. Vaihda profiilia</string>
 </resources>

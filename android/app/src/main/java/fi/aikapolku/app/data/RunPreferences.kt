@@ -19,9 +19,7 @@ internal object RunPreferences {
     const val HELP = "help"
     const val BREAK = "break"
 
-    private const val NAME = "aikapolku_p021c_preferences"
-    private fun prefs(context: Context) = context.applicationContext
-        .getSharedPreferences(NAME, Context.MODE_PRIVATE)
+    private fun prefs(context: Context) = ProfileScope.prefs(context, ProfileScope.RUN_PREFS)
 
     fun nextMode(context: Context): String =
         (prefs(context).getString("next_mode", NEXT_CARD) ?: NEXT_CARD)

@@ -1,5 +1,6 @@
 package fi.aikapolku.app.programs.run
 
+import fi.aikapolku.app.data.ProfileScope
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
@@ -222,7 +223,7 @@ internal class ProgramRunController(
 /** [RunProgress] SharedPreferencesissa (avaimet ennallaan vanhoista versioista). */
 internal class PrefsRunProgress(private val prefs: SharedPreferences) : RunProgress {
     constructor(context: Context) : this(
-        context.getSharedPreferences("aikapolku_program_progress_v1", Context.MODE_PRIVATE)
+        ProfileScope.prefs(context, ProfileScope.PROGRESS)
     )
 
     override val programId: String get() = prefs.getString("program_id", "") ?: ""

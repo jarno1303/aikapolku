@@ -8,6 +8,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import fi.aikapolku.app.caregiver.CaregiverLockHost
 import fi.aikapolku.app.caregiver.CaregiverSession
+import androidx.compose.ui.platform.LocalContext
+import fi.aikapolku.app.data.ProfileStore
+import fi.aikapolku.app.profiles.ProfileSession
 import fi.aikapolku.app.ui.theme.AikapolkuTheme
 
 class MainActivity : ComponentActivity() {
@@ -16,7 +19,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             AikapolkuTheme {
                 CaregiverLockHost {
-                    AikaPolkuApp()
+                    // Profiilin vaihtuessa koko sovelluksen tila luodaan uudelleen uuden profiilin tiedoilla.
+                    val context = LocalContext.current
+                    val revision = ProfileSession.revision
+                    val profileId = remember(revision) { ProfileStore.currentId(context) }
+                    key(profileId) {
+                        AikaPolkuApp()
+                    }
                 }
             }
         }

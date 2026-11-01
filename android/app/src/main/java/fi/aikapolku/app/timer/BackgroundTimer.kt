@@ -1,5 +1,6 @@
 package fi.aikapolku.app.timer
 
+import fi.aikapolku.app.data.ProfileScope
 import android.Manifest
 import android.app.Activity
 import android.app.AlarmManager
@@ -42,7 +43,7 @@ internal object BackgroundTimer {
     fun remaining(c: Context, owner: String, default: Long): Long {
         val p = prefs(c)
         return if (p.getBoolean(key(owner, "running"), false)) {
-            (p.getLong(key(owner, c.getString(R.string.endelapsed)), 0L) -
+            (p.getLong(key(owner, "endElapsed"), 0L) -
                 SystemClock.elapsedRealtime()).coerceAtLeast(0L)
         } else p.getLong(key(owner, "remaining"), default).coerceAtLeast(0L)
     }
@@ -105,8 +106,8 @@ internal object BackgroundTimer {
         val endWall = System.currentTimeMillis() + delayMs
         val p = prefs(c)
         p.edit().putBoolean(key(owner, "running"), true)
-            .putLong(key(owner, c.getString(R.string.endelapsed)), endElapsed)
-            .putLong(key(owner, c.getString(R.string.endwall)), endWall)
+            .putLong(key(owner, "endElapsed"), endElapsed)
+            .putLong(key(owner, "endWall"), endWall)
             .putLong(key(owner, "remaining"), delayMs)
             .putString(key(owner, "title"), title)
             .commit()
@@ -146,7 +147,7 @@ internal object BackgroundTimer {
     fun complete(c: Context, owner: String): Boolean {
         val p = prefs(c)
         if (!p.getBoolean(key(owner, "running"), false)) return false
-        val end = p.getLong(key(owner, c.getString(R.string.endelapsed)), 0L)
+        val end = p.getLong(key(owner, "endElapsed"), 0L)
         if (SystemClock.elapsedRealtime() < end) return false
         p.edit().putBoolean(key(owner, "running"), false)
             .putLong(key(owner, "remaining"), 0L).commit()
@@ -155,9 +156,7 @@ internal object BackgroundTimer {
         return true
     }
 
-    fun selectedSound(c: Context): String = c.getSharedPreferences(
-        "aikapolku_timer_preferences", Context.MODE_PRIVATE
-    ).getString("end_sound", "off") ?: "off"
+    fun selectedSound(c: Context): String = ProfileScope.prefs(c, ProfileScope.TIMER_PREFS).getString("end_sound", "off") ?: "off"
 
     private fun showNotification(c: Context, owner: String, title: String) {
         if (Build.VERSION.SDK_INT >= 33 &&
@@ -185,7 +184,7 @@ internal object BackgroundTimer {
         for (owner in listOf("timer", "program")) {
             val p = prefs(c)
             if (!p.getBoolean(key(owner, "running"), false)) continue
-            val left = (p.getLong(key(owner, c.getString(R.string.endwall)), 0L) -
+            val left = (p.getLong(key(owner, "endWall"), 0L) -
                 System.currentTimeMillis()).coerceAtLeast(1L)
             // Palautetaan aina: start toimii myös ilman lupia.
             start(c, owner, left,

@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.MainActivity
 import fi.aikapolku.app.R
 import fi.aikapolku.app.ui.AppColors
+import fi.aikapolku.app.profiles.ProfilesSettingsCard
 
 /** Ohjaajan asetukset -sivu. Sivulle pääsee vain ohjaajana (ks. MainActivity). */
 @Composable
@@ -36,6 +37,8 @@ internal fun CaregiverSettingsScreen() {
     var confirmDisable by remember { mutableStateOf(false) }
 
     Text(stringResource(R.string.caregiver_settings_title), fontSize = 28.sp, fontWeight = FontWeight.Bold)
+
+    ProfilesSettingsCard()
 
     Card(
         modifier = Modifier.fillMaxWidth(),

@@ -4,10 +4,8 @@ import android.content.Context
 import org.json.JSONArray
 
 internal class ProgramStore(context: Context) {
-    private val prefs = context.getSharedPreferences(
-        "aikapolku_programs_v1",
-        Context.MODE_PRIVATE
-    )
+    // Nykyisen profiilin päiväohjelmat.
+    private val prefs = ProfileScope.prefs(context, ProfileScope.PROGRAMS)
 
     fun load(): List<DayProgram> {
         val array = runCatching {

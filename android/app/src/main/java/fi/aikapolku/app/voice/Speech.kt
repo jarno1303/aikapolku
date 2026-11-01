@@ -1,5 +1,6 @@
 package fi.aikapolku.app.voice
 
+import fi.aikapolku.app.data.ProfileScope
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -15,8 +16,7 @@ import java.util.Locale
  * Android Voice has no reliable gender field. Users choose by listening.
  */
 internal object VoicePrefs {
-    private const val NAME = "aikapolku_p021c_preferences"
-    private fun prefs(ctx: Context) = ctx.applicationContext.getSharedPreferences(NAME, Context.MODE_PRIVATE)
+    private fun prefs(ctx: Context) = ProfileScope.prefs(ctx, ProfileScope.RUN_PREFS)
     fun voiceId(ctx: Context) = prefs(ctx).getString("tts_voice_name", "") ?: ""
     fun setVoiceId(ctx: Context, value: String) = prefs(ctx).edit().putString("tts_voice_name", value).apply()
     fun speed(ctx: Context): Float = prefs(ctx).getFloat("tts_rate", 1.0f).coerceIn(0.8f, 1.2f)
