@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import fi.aikapolku.app.cards.CardArt
 import fi.aikapolku.app.data.RoutineTemplates
+import fi.aikapolku.app.data.StepMode
 import fi.aikapolku.app.data.SubstepDefaults
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -61,9 +62,9 @@ class RoutineTemplatesTest {
     fun `kestolliset vaiheet ovat kestotilassa ja muut kasin edettavia`() {
         val aamu = aamu()
 
-        assertEquals("duration", aamu.steps[0].mode)
+        assertEquals(StepMode.DURATION, aamu.steps[0].mode)
         assertEquals(15, aamu.steps[0].minutes)
-        assertEquals("manual", aamu.steps.last().mode) // Lähtö: ei kestoa
+        assertEquals(StepMode.MANUAL, aamu.steps.last().mode) // Lähtö: ei kestoa
     }
 
     @Test

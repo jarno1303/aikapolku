@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.ProgramStep
+import fi.aikapolku.app.data.StepMode
 
 @Composable
 internal fun ProgramOverview(
@@ -81,12 +82,12 @@ internal fun ProgramOverview(
                         )
                     }
 
-                    if (item.mode == "clock") {
+                    if (item.mode == StepMode.CLOCK) {
                         Text(
                             item.clock,
                             fontSize = 14.sp
                         )
-                    } else if (item.mode == "duration") {
+                    } else if (item.mode == StepMode.DURATION) {
                         Text(
                             stringResource(R.string.min, item.minutes),
                             fontSize = 14.sp

@@ -6,7 +6,10 @@ import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramStep
 import fi.aikapolku.app.data.ProgramStore
 import fi.aikapolku.app.data.ProgramTiming
+import fi.aikapolku.app.data.StepMode
+import fi.aikapolku.app.data.TimeMode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -37,7 +40,7 @@ class ProgramStoreTest {
         name = name,
         photo = "builtin:dress",
         description = "Kuvaus $id",
-        mode = "duration",
+        mode = StepMode.DURATION,
         minutes = 12,
         clock = "09:30",
         voicePath = "/data/voice_$id.m4a",
@@ -122,7 +125,7 @@ class ProgramStoreTest {
         assertEquals(1, loaded.size)
         val s = loaded[0].steps.single()
         assertEquals("Ruokailu", s.name)
-        assertEquals("manual", s.mode)
+        assertEquals(StepMode.MANUAL, s.mode)
         assertEquals(5, s.minutes)
         assertEquals("08:00", s.clock)
         assertEquals("", s.voicePath)
@@ -176,7 +179,7 @@ class ProgramStoreTest {
         val program = DayProgram(
             "p23", "Koulupäivä",
             listOf(step("a"), step("b").copy(fixedClock = true, clock = "11:00")),
-            timeMode = ProgramTiming.CLOCK,
+            timeMode = TimeMode.CLOCK,
             startClock = "07:45"
         )
         store.save(program)
@@ -190,9 +193,18 @@ class ProgramStoreTest {
             """[{"id":"v","name":"Vanha","steps":[{"id":"s","name":"Aamupala","mode":"clock","clock":"07:15","minutes":15}]}]"""
         ).commit()
         val loaded = store.load().single()
-        assertEquals("", loaded.timeMode)
+        assertNull(loaded.timeMode)
         assertEquals(ProgramTiming.DEFAULT_START, loaded.startClock)
         assertEquals(false, loaded.steps.single().fixedClock)
         assertEquals("07:15", ProgramTiming.apply(ProgramTiming.infer(loaded)).steps.single().clock)
+    }
+
+    @Test
+    fun `aikatilojen tallennusarvot pysyvat ennallaan`() {
+        // Nämä merkkijonot ovat tallennusmuodossa; niiden muuttaminen rikkoisi vanhat ohjelmat.
+        assertEquals(listOf("manual", "duration", "clock"), StepMode.entries.map { it.key })
+        assertEquals(listOf("free", "duration", "clock"), TimeMode.entries.map { it.key })
+        assertEquals(StepMode.MANUAL, StepMode.fromKey("tuntematon"))
+        assertNull(TimeMode.fromKey(""))
     }
 }

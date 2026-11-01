@@ -19,6 +19,7 @@ import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramTiming
+import fi.aikapolku.app.data.TimeMode
 import fi.aikapolku.app.ui.AppColors
 
 @Composable
@@ -40,17 +41,17 @@ internal fun SavePage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
 
         Text(stringResource(R.string.nain_ohjelma_nakyy), fontSize = 18.sp, fontWeight = FontWeight.Bold)
         val summary = when (draft.timeMode) {
-            ProgramTiming.CLOCK -> {
+            TimeMode.CLOCK -> {
                 val end = ProgramTiming.endOf(draft.startClock, draft.steps)
                 stringResource(R.string.kellonajat_alkaa_klo, draft.startClock) +
                     (end?.let { stringResource(R.string.paattyy_noin_klo, ProgramTiming.format(it)) } ?: "")
             }
-            ProgramTiming.DURATION -> stringResource(R.string.kestot_jokaisella_toiminnolla_oma_ajastin)
+            TimeMode.DURATION -> stringResource(R.string.kestot_jokaisella_toiminnolla_oma_ajastin)
             else -> stringResource(R.string.omaan_tahtiin_ei_aikoja)
         }
         Text(summary, fontSize = 14.sp, color = AppColors.Muted)
 
-        val slots = if (draft.timeMode == ProgramTiming.CLOCK)
+        val slots = if (draft.timeMode == TimeMode.CLOCK)
             ProgramTiming.schedule(draft.startClock, draft.steps) else emptyList()
         if (slots.any { it.overlap }) {
             Text(
@@ -71,7 +72,7 @@ internal fun SavePage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                     .padding(8.dp)
             ) {
                 val label = ProgramTiming.label(draft, index) { minutes -> minutesText.format(minutes) }
-                if (draft.timeMode != ProgramTiming.FREE) {
+                if (draft.timeMode != TimeMode.FREE) {
                     Text(
                         label,
                         fontSize = 15.sp,

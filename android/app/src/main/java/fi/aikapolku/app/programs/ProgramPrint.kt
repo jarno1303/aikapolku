@@ -25,6 +25,7 @@ import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardArt
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramStep
+import fi.aikapolku.app.data.StepMode
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -375,8 +376,8 @@ private class ProgramPrintAdapter(
         )
 
         val detail = when (step.mode) {
-            "clock" -> context.getString(R.string.klo, step.clock)
-            "duration" -> context.getString(R.string.min, step.minutes)
+            StepMode.CLOCK -> context.getString(R.string.klo, step.clock)
+            StepMode.DURATION -> context.getString(R.string.min, step.minutes)
             else -> ""
         }
 

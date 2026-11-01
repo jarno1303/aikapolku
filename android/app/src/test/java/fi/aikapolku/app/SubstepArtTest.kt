@@ -3,8 +3,8 @@ package fi.aikapolku.app
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import fi.aikapolku.app.cards.SubstepArt
-import fi.aikapolku.app.data.RunPreferences
 import fi.aikapolku.app.data.SubstepDefaults
+import fi.aikapolku.app.data.SupportKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -62,12 +62,11 @@ class SubstepArtTest {
 
     @Test
     fun `tauko- ja apuviestilla on omat kuvat`() {
-        val tauko = SubstepArt.messageImageRes(RunPreferences.BREAK)
-        val apu = SubstepArt.messageImageRes(RunPreferences.HELP)
+        val tauko = SubstepArt.messageImageRes(SupportKind.BREAK)
+        val apu = SubstepArt.messageImageRes(SupportKind.HELP)
         assertNotNull(tauko)
         assertNotNull(apu)
         assertNotEquals(tauko, apu)
-        assertNull(SubstepArt.messageImageRes("other"))
     }
 
     @Test

@@ -2,6 +2,7 @@ package fi.aikapolku.app
 
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramStep
+import fi.aikapolku.app.data.StepMode
 import fi.aikapolku.app.data.parseDraft
 import fi.aikapolku.app.data.serializeDraft
 import org.junit.Assert.assertEquals
@@ -22,9 +23,9 @@ class DraftSaverTest {
         val draft = DayProgram(
             "d1", "Iltatoimet äö",
             listOf(
-                ProgramStep("s1", "Pukeutuminen", "builtin:dress", "Yöpuku", "manual", 5, "20:00",
+                ProgramStep("s1", "Pukeutuminen", "builtin:dress", "Yöpuku", StepMode.MANUAL, 5, "20:00",
                     "/v.m4a", true, listOf("Paita", "Housut")),
-                ProgramStep("s2", "Nukkumaan", "/kuva.image", "", "clock", 1, "21:15")
+                ProgramStep("s2", "Nukkumaan", "/kuva.image", "", StepMode.CLOCK, 1, "21:15")
             )
         )
 

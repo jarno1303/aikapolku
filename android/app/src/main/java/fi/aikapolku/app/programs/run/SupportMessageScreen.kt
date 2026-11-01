@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.SubstepArt
 import fi.aikapolku.app.data.RunPreferences
+import fi.aikapolku.app.data.SupportKind
 import fi.aikapolku.app.voice.Speech
 import fi.aikapolku.app.voice.VoicePlayer
 
@@ -55,16 +56,16 @@ import fi.aikapolku.app.voice.VoicePlayer
  */
 @Composable
 internal fun SupportMessageScreen(
-    kind: String,
+    kind: SupportKind,
     timerPaused: Boolean,
     onContinue: () -> Unit,
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
-    // kind = RunPreferences.HELP tai RunPreferences.BREAK; teksti tulee käännettävistä resursseista.
-    val message = stringResource(if (kind == RunPreferences.BREAK) R.string.tarvitsen_tauon else R.string.tarvitsen_apua)
-    val voiceMode = remember(kind) { RunPreferences.voiceMode(context, kind) }
-    val recording = remember(kind) { RunPreferences.recording(context, kind) }
+    // Teksti tulee käännettävistä resursseista.
+    val message = stringResource(if (kind == SupportKind.BREAK) R.string.tarvitsen_tauon else R.string.tarvitsen_apua)
+    val voiceMode = remember(kind) { RunPreferences.voiceMode(context, kind.key) }
+    val recording = remember(kind) { RunPreferences.recording(context, kind.key) }
     val speech = remember(context) { Speech(context.applicationContext) }
     DisposableEffect(speech) {
         onDispose {
@@ -124,20 +125,16 @@ internal fun SupportMessageScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
                 ) {
-                    if (image != null) {
-                        Image(
-                            painter = painterResource(image),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = (if (compact) Modifier.size(160.dp) else Modifier
-                                .weight(1f, fill = false)
-                                .sizeIn(maxWidth = 320.dp, maxHeight = 320.dp)
-                                .aspectRatio(1f))
-                                .clip(RoundedCornerShape(24.dp))
-                        )
-                    } else {
-                        RunHelpIcon(iconSize = 120, color = RunColors.teal)
-                    }
+                    Image(
+                        painter = painterResource(image),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = (if (compact) Modifier.size(160.dp) else Modifier
+                            .weight(1f, fill = false)
+                            .sizeIn(maxWidth = 320.dp, maxHeight = 320.dp)
+                            .aspectRatio(1f))
+                            .clip(RoundedCornerShape(24.dp))
+                    )
                     Text(
                         message,
                         modifier = Modifier.semantics { heading() },

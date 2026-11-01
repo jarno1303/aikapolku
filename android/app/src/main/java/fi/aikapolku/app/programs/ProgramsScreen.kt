@@ -22,7 +22,10 @@ import fi.aikapolku.app.data.ProgramStore
 import fi.aikapolku.app.data.ProgramTiming
 import fi.aikapolku.app.data.RoutineTemplates
 import fi.aikapolku.app.data.RunPreferences
+import fi.aikapolku.app.data.StepMode
+import fi.aikapolku.app.data.SupportKind
 import fi.aikapolku.app.data.TimeDisplayPrefs
+import fi.aikapolku.app.data.TimeMode
 import fi.aikapolku.app.data.parseDraft
 import fi.aikapolku.app.data.serializeDraft
 import fi.aikapolku.app.programs.editor.ProgramEditorScreen
@@ -46,6 +49,9 @@ private val programDraftSaver = Saver<DayProgram, String>(
     restore = { parseDraft(it) }
 )
 
+/** Päiväohjelmien näkymät. */
+internal enum class ProgramsView { LIST, EDIT, RUN, DONE }
+
 @Composable
 internal fun ProgramsScreen() {
     val context = LocalContext.current
@@ -60,7 +66,7 @@ internal fun ProgramsScreen() {
     val initialPrograms = remember(store) { store.load() }
     var programs by remember { mutableStateOf(initialPrograms) }
     var view by rememberSaveable {
-        mutableStateOf(if (storedProgramId.isNotBlank()) "run" else "list")
+        mutableStateOf(if (storedProgramId.isNotBlank()) ProgramsView.RUN else ProgramsView.LIST)
     }
 
     var draft by rememberSaveable(stateSaver = programDraftSaver) {
@@ -101,7 +107,7 @@ internal fun ProgramsScreen() {
 
     var stepIndex by rememberSaveable { mutableIntStateOf(p018Prefs.getInt("step_index", 0)) }
     var subStepIndex by rememberSaveable { mutableIntStateOf(p018Prefs.getInt("sub_step_index", 0)) }
-    var supportMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var supportMessage by rememberSaveable { mutableStateOf<SupportKind?>(null) }
     // Oliko ajastin käynnissä, kun apua tai taukoa pyydettiin? Jatka palauttaa sen.
     var resumeAfterSupport by rememberSaveable { mutableStateOf(false) }
     var running by rememberSaveable { mutableStateOf(BackgroundTimer.running(context, "program")) }
@@ -126,8 +132,8 @@ internal fun ProgramsScreen() {
         remaining = program.steps.first().minutes * 60_000L
         p018Prefs.edit().putString("program_id", program.id)
             .putInt("step_index", 0).putInt("sub_step_index", 0).apply()
-        view = "run"
-        stepVoicePlayed = program.steps.first().mode != "duration"
+        view = ProgramsView.RUN
+        stepVoicePlayed = program.steps.first().mode != StepMode.DURATION
         if (stepVoicePlayed && program.steps.first().autoPlayVoice) {
             VoicePlayer.play(context, program.steps.first().voicePath)
         }
@@ -139,7 +145,7 @@ internal fun ProgramsScreen() {
         if (stepIndex + 1 >= draft.steps.size) {
             p018Prefs.edit().remove("program_id").remove("step_index")
                 .remove("sub_step_index").apply()
-            view = "done"
+            view = ProgramsView.DONE
         } else {
             stepIndex += 1
             subStepIndex = 0
@@ -148,7 +154,7 @@ internal fun ProgramsScreen() {
             remaining = draft.steps[stepIndex].minutes * 60_000L
             deadline = 0L
             val newStep = draft.steps[stepIndex]
-            stepVoicePlayed = newStep.mode != "duration"
+            stepVoicePlayed = newStep.mode != StepMode.DURATION
             if (stepVoicePlayed && newStep.autoPlayVoice) {
                 VoicePlayer.play(context, newStep.voicePath)
             }
@@ -199,14 +205,14 @@ internal fun ProgramsScreen() {
     }
 
     // Tarvitsen apua / tauon: aina vapaa, pysäyttää ajan ja näyttää viestin.
-    fun requestSupport(message: String) {
+    fun requestSupport(kind: SupportKind) {
         resumeAfterSupport = running
         pauseStepTimer()
-        supportMessage = message
+        supportMessage = kind
     }
 
     LaunchedEffect(view, running, deadline, stepIndex) {
-        if (view == "run" && running) {
+        if (view == ProgramsView.RUN && running) {
             while (true) {
                 val left = (
                     deadline - SystemClock.elapsedRealtime()
@@ -235,7 +241,7 @@ internal fun ProgramsScreen() {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        val runStep = if (view == "run") draft.steps.getOrNull(stepIndex) else null
+        val runStep = if (view == ProgramsView.RUN) draft.steps.getOrNull(stepIndex) else null
         if (runStep != null) {
             val message = supportMessage
             if (message != null) {
@@ -264,14 +270,14 @@ internal fun ProgramsScreen() {
                     taskIndex = stepIndex,
                     taskCount = draft.steps.size,
                     time = when (runStep.mode) {
-                        "duration" -> RunTime.Countdown(
+                        StepMode.DURATION -> RunTime.Countdown(
                             remainingMs = remaining,
                             durationMs = maxOf(runStep.minutes * 60_000L, remaining),
                             running = running,
                             displayMode = timeMode,
                             pauseLocked = running && caregiver.isLocked
                         )
-                        "clock" -> RunTime.Clock(runStep.clock)
+                        StepMode.CLOCK -> RunTime.Clock(runStep.clock)
                         else -> null
                     },
                     // Esikatselu: ensin seuraava osavaihe, viimeisessä osavaiheessa seuraava tehtävä.
@@ -282,14 +288,14 @@ internal fun ProgramsScreen() {
                     },
                     nextMode = nextPreviewMode,
                     onToggleTimer = { toggleStepTimer(runStep) },
-                    onHelp = { requestSupport(RunPreferences.HELP) },
-                    onBreak = { requestSupport(RunPreferences.BREAK) },
+                    onHelp = { requestSupport(SupportKind.HELP) },
+                    onBreak = { requestSupport(SupportKind.BREAK) },
                     onDone = { nextSubstepOrActivity() },
                     onSkip = { nextSubstepOrActivity() },
                     onMore = { showRunActions = true }
                 )
             }
-        } else if (view == "edit") {
+        } else if (view == ProgramsView.EDIT) {
             // P0-23: nelivaiheinen muokkain (ProgramEditor.kt) omana näkymänään.
             ProgramEditorScreen(
                 draft = draft,
@@ -298,11 +304,11 @@ internal fun ProgramsScreen() {
                 onSave = { edited ->
                     store.save(ProgramTiming.apply(edited).copy(name = edited.name.trim()))
                     programs = store.load()
-                    view = "list"
+                    view = ProgramsView.LIST
                     // Kerran: "Käyttääkö tätä laitetta myös joku muu?"
                     caregiver.offerLockOnce()
                 },
-                onCancel = { view = "list" }
+                onCancel = { view = ProgramsView.LIST }
             )
         } else {
         Column(
@@ -313,41 +319,41 @@ internal fun ProgramsScreen() {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
     when (view) {
-        "list" -> ProgramListView(
+        ProgramsView.LIST -> ProgramListView(
             programs = programs,
             canEdit = canEditPrograms,
             onNew = {
-                draft = DayProgram(UUID.randomUUID().toString(), "", emptyList(), timeMode = ProgramTiming.FREE)
-                view = "edit"
+                draft = DayProgram(UUID.randomUUID().toString(), "", emptyList(), timeMode = TimeMode.FREE)
+                view = ProgramsView.EDIT
             },
             onTemplate = { template ->
                 draft = ProgramTiming.infer(RoutineTemplates.create(template) { context.getString(it) })
-                view = "edit"
+                view = ProgramsView.EDIT
             },
             onStart = { startProgram(it) },
             onPrint = { ProgramPrint.open(context, it) },
             onEdit = {
                 draft = ProgramTiming.infer(it)
-                view = "edit"
+                view = ProgramsView.EDIT
             },
             onDelete = { deleteTarget = it }
         )
 
-        "edit" -> Unit // Muokkain piirretään yllä (ProgramEditorScreen).
+        ProgramsView.EDIT -> Unit // Muokkain piirretään yllä (ProgramEditorScreen).
 
-        "run" -> Unit // Suoritus piirretään yllä omana näkymänään (RunStepScreen).
+        ProgramsView.RUN -> Unit // Suoritus piirretään yllä omana näkymänään (RunStepScreen).
 
-        "done" -> ProgramDoneView(draft.name, onBack = { view = "list" })
+        ProgramsView.DONE -> ProgramDoneView(draft.name, onBack = { view = ProgramsView.LIST })
     }
         } // Scrollable Column
 
         } // Ei suoritusta
     } // Content Box
 
-    if (showRunActions && view == "run") {
+    if (showRunActions && view == ProgramsView.RUN) {
         val current = draft.steps.getOrNull(stepIndex)
         RunActionsDialog(
-            canExtend = current?.mode == "duration" && caregiver.allows(AppAction.EXTEND_TIME),
+            canExtend = current?.mode == StepMode.DURATION && caregiver.allows(AppAction.EXTEND_TIME),
             canChangeSettings = caregiver.allows(AppAction.SETTINGS),
             canEnd = caregiver.allows(AppAction.END_PROGRAM),
             onExtend = {
@@ -369,7 +375,7 @@ internal fun ProgramsScreen() {
         )
     }
 
-    if (showFullProgram && view == "run") {
+    if (showFullProgram && view == ProgramsView.RUN) {
         AlertDialog(
             onDismissRequest = { showFullProgram = false },
             title = { Text(stringResource(R.string.koko_paivaohjelma)) },
@@ -393,7 +399,7 @@ internal fun ProgramsScreen() {
                         .remove("sub_step_index").apply()
                     supportMessage = null
                     showExitConfirmation = false
-                    view = "list"
+                    view = ProgramsView.LIST
                 }) { Text(stringResource(R.string.lopeta)) }
             },
             dismissButton = {

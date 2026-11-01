@@ -1,7 +1,7 @@
 package fi.aikapolku.app.cards
 
 import fi.aikapolku.app.R
-import fi.aikapolku.app.data.RunPreferences
+import fi.aikapolku.app.data.SupportKind
 import java.util.Locale
 
 /**
@@ -45,10 +45,9 @@ internal object SubstepArt {
         return finnish[key] ?: texts?.let { t -> entries.firstOrNull { norm(t(it.first)) == key }?.second }
     }
 
-    /** Viestinäkymän kuva: [kind] on RunPreferences.HELP tai RunPreferences.BREAK. */
-    fun messageImageRes(kind: String): Int? = when (kind) {
-        RunPreferences.BREAK -> R.drawable.ap_msg_break
-        RunPreferences.HELP -> R.drawable.ap_msg_help
-        else -> null
+    /** Viestinäkymän kuva. */
+    fun messageImageRes(kind: SupportKind): Int = when (kind) {
+        SupportKind.BREAK -> R.drawable.ap_msg_break
+        SupportKind.HELP -> R.drawable.ap_msg_help
     }
 }

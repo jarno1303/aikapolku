@@ -20,7 +20,7 @@ import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.ui.AppColors
 
 @Composable
-internal fun HomeScreen(open: (String) -> Unit) {
+internal fun HomeScreen(open: (AppPage) -> Unit) {
     Spacer(Modifier.height(10.dp))
 
     Row(
@@ -48,24 +48,24 @@ internal fun HomeScreen(open: (String) -> Unit) {
         symbol = "timer",
         title = stringResource(R.string.ajastin),
         subtitle = stringResource(R.string.aseta_aika_ja_keskity),
-        onClick = { open("timer") }
+        onClick = { open(AppPage.TIMER) }
     )
     HomeCard(
         symbol = "flow",
         title = stringResource(R.string.ensin_sitten),
         subtitle = stringResource(R.string.suunnittele_kaksi_askelta),
-        onClick = { open("firstthen") }
+        onClick = { open(AppPage.FIRST_THEN) }
     )
     HomeCard(
         symbol = "programs",
         title = stringResource(R.string.paivaohjelmat),
         subtitle = stringResource(R.string.nae_paivan_kulku),
-        onClick = { open("programs") }
+        onClick = { open(AppPage.PROGRAMS) }
     )
 
     val caregiver = LocalCaregiver.current
     TextButton(
-        onClick = { caregiver.run(AppAction.SETTINGS) { open("caregiver") } },
+        onClick = { caregiver.run(AppAction.SETTINGS) { open(AppPage.CAREGIVER) } },
         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
     ) {
         Text(

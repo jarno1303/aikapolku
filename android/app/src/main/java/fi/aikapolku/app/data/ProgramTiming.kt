@@ -17,10 +17,6 @@ import java.util.Locale
  * tulostus ja vanhat tallennetut ohjelmat toimivat ennallaan. Puhdasta Kotlinia, testattavissa JVM:llä.
  */
 internal object ProgramTiming {
-    const val FREE = "free"
-    const val DURATION = "duration"
-    const val CLOCK = "clock"
-
     const val DEFAULT_START = "08:00"
     val durationChoices = listOf(2, 5, 10, 15, 20, 30, 45, 60)
 
@@ -69,23 +65,22 @@ internal object ProgramTiming {
     /** Kirjoittaa aikatavan toimintojen omiin kenttiin ennen tallennusta. */
     fun apply(program: DayProgram): DayProgram {
         val steps = when (program.timeMode) {
-            CLOCK -> {
+            TimeMode.CLOCK -> {
                 val slots = schedule(program.startClock, program.steps)
                 program.steps.mapIndexed { i, step ->
                     step.copy(
-                        mode = "clock",
+                        mode = StepMode.CLOCK,
                         clock = format(slots[i].start),
                         fixedClock = i > 0 && step.fixedClock
                     )
                 }
             }
-            DURATION -> program.steps.map {
-                it.copy(mode = if (it.mode == "manual") "manual" else "duration", fixedClock = false)
+            TimeMode.DURATION -> program.steps.map {
+                it.copy(mode = if (it.mode == StepMode.MANUAL) StepMode.MANUAL else StepMode.DURATION, fixedClock = false)
             }
-            else -> program.steps.map { it.copy(mode = "manual", fixedClock = false) }
+            TimeMode.FREE, null -> program.steps.map { it.copy(mode = StepMode.MANUAL, fixedClock = false) }
         }
-        val mode = if (program.timeMode in listOf(FREE, DURATION, CLOCK)) program.timeMode else FREE
-        return program.copy(timeMode = mode, steps = steps)
+        return program.copy(timeMode = program.timeMode ?: TimeMode.FREE, steps = steps)
     }
 
     /**
@@ -93,38 +88,38 @@ internal object ProgramTiming {
      * toimintojen kentistä. Vanhan ohjelman kellonajat säilyvät lukittuina.
      */
     fun infer(program: DayProgram): DayProgram {
-        if (program.timeMode in listOf(FREE, DURATION, CLOCK)) return program
+        if (program.timeMode != null) return program
         val steps = program.steps
         return when {
-            steps.any { it.mode == "clock" } -> {
+            steps.any { it.mode == StepMode.CLOCK } -> {
                 val first = steps.first()
-                val start = if (first.mode == "clock" && parse(first.clock) != null) first.clock else DEFAULT_START
+                val start = if (first.mode == StepMode.CLOCK && parse(first.clock) != null) first.clock else DEFAULT_START
                 program.copy(
-                    timeMode = CLOCK,
+                    timeMode = TimeMode.CLOCK,
                     startClock = start,
-                    steps = steps.mapIndexed { i, s -> s.copy(fixedClock = i > 0 && s.mode == "clock") }
+                    steps = steps.mapIndexed { i, s -> s.copy(fixedClock = i > 0 && s.mode == StepMode.CLOCK) }
                 )
             }
-            steps.any { it.mode == "duration" } -> program.copy(timeMode = DURATION)
-            else -> program.copy(timeMode = FREE)
+            steps.any { it.mode == StepMode.DURATION } -> program.copy(timeMode = TimeMode.DURATION)
+            else -> program.copy(timeMode = TimeMode.FREE)
         }
     }
 
     /** Aikatavan vaihto muokkaimessa. */
-    fun switchMode(program: DayProgram, mode: String): DayProgram = when (mode) {
+    fun switchMode(program: DayProgram, mode: TimeMode): DayProgram = when (mode) {
         // Kestoihin siirryttäessä jokainen toiminto saa ajastimen; "Ei aikaa" valitaan erikseen.
-        DURATION -> program.copy(timeMode = DURATION, steps = program.steps.map { it.copy(mode = "duration") })
-        CLOCK -> program.copy(timeMode = CLOCK)
-        else -> program.copy(timeMode = FREE)
+        TimeMode.DURATION -> program.copy(timeMode = TimeMode.DURATION, steps = program.steps.map { it.copy(mode = StepMode.DURATION) })
+        TimeMode.CLOCK -> program.copy(timeMode = TimeMode.CLOCK)
+        TimeMode.FREE -> program.copy(timeMode = TimeMode.FREE)
     }
 
     /** Lyhyt aikateksti esikatseluun ja listaan. */
     fun label(program: DayProgram, index: Int, minutesText: (Int) -> String): String {
         val step = program.steps.getOrNull(index) ?: return ""
         return when (program.timeMode) {
-            CLOCK -> format(schedule(program.startClock, program.steps)[index].start)
-            DURATION -> if (step.mode == "manual") "" else minutesText(step.minutes)
-            else -> ""
+            TimeMode.CLOCK -> format(schedule(program.startClock, program.steps)[index].start)
+            TimeMode.DURATION -> if (step.mode == StepMode.MANUAL) "" else minutesText(step.minutes)
+            TimeMode.FREE, null -> ""
         }
     }
 
@@ -132,7 +127,7 @@ internal object ProgramTiming {
     enum class DayPart { MORNING, DAY, EVENING }
 
     fun dayPart(program: DayProgram): DayPart {
-        if (program.timeMode != CLOCK) return DayPart.DAY
+        if (program.timeMode != TimeMode.CLOCK) return DayPart.DAY
         val start = parse(program.startClock) ?: parse(DEFAULT_START)!!
         return when {
             start < 10 * 60 -> DayPart.MORNING

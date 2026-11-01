@@ -3,6 +3,12 @@ package fi.aikapolku.app.data
 import android.content.Context
 
 /** P0-21c: Local presentation and support-message settings; no account or network. */
+/** Apu- ja taukopyyntö. [key] on asetusten tallennusavain (RunPreferences.HELP / BREAK). */
+internal enum class SupportKind(val key: String) {
+    HELP(RunPreferences.HELP),
+    BREAK(RunPreferences.BREAK)
+}
+
 internal object RunPreferences {
     const val NEXT_HIDDEN = "hidden"
     const val NEXT_TEXT = "text"

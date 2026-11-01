@@ -4,12 +4,38 @@ import java.util.UUID
 import org.json.JSONArray
 import org.json.JSONObject
 
+/** Toiminnon ajan esitys suorituksessa. [key] on tallennusmuodon arvo – älä muuta. */
+internal enum class StepMode(val key: String) {
+    /** Ei aikaa: Valmis siirtää seuraavaan. */
+    MANUAL("manual"),
+    /** Oma ajastin (ProgramStep.minutes). */
+    DURATION("duration"),
+    /** Kellonaika (ProgramStep.clock). */
+    CLOCK("clock");
+
+    companion object {
+        fun fromKey(key: String?): StepMode = entries.firstOrNull { it.key == key } ?: MANUAL
+    }
+}
+
+/** Koko ohjelman aikatapa (P0-23). [key] on tallennusmuodon arvo – älä muuta. */
+internal enum class TimeMode(val key: String) {
+    FREE("free"),
+    DURATION("duration"),
+    CLOCK("clock");
+
+    companion object {
+        /** null = vanha ohjelma ilman aikatapaa; päätellään (ProgramTiming.infer). */
+        fun fromKey(key: String?): TimeMode? = entries.firstOrNull { it.key == key }
+    }
+}
+
 internal data class ProgramStep(
     val id: String,
     val name: String,
     val photo: String,
     val description: String,
-    val mode: String = "manual",
+    val mode: StepMode = StepMode.MANUAL,
     val minutes: Int = 5,
     val clock: String = "08:00",
     val voicePath: String = "",
@@ -23,8 +49,8 @@ internal data class DayProgram(
     val id: String,
     val name: String,
     val steps: List<ProgramStep>,
-    /** P0-23: ProgramTiming.FREE / DURATION / CLOCK. Tyhjä = vanha ohjelma, päätellään. */
-    val timeMode: String = "",
+    /** P0-23: koko ohjelman aikatapa; null = vanha ohjelma, päätellään. */
+    val timeMode: TimeMode? = null,
     val startClock: String = ProgramTiming.DEFAULT_START
 )
 
@@ -33,7 +59,7 @@ internal fun stepToJson(step: ProgramStep): JSONObject = JSONObject().apply {
     put("name", step.name)
     put("photo", step.photo)
     put("description", step.description)
-    put("mode", step.mode)
+    put("mode", step.mode.key)
     put("minutes", step.minutes)
     put("clock", step.clock)
     put("voicePath", step.voicePath)
@@ -47,7 +73,7 @@ internal fun stepFromJson(s: JSONObject): ProgramStep = ProgramStep(
     name = s.optString("name"),
     photo = s.optString("photo"),
     description = s.optString("description"),
-    mode = s.optString("mode", "manual"),
+    mode = StepMode.fromKey(s.optString("mode", StepMode.MANUAL.key)),
     minutes = s.optInt("minutes", 5),
     clock = s.optString("clock", "08:00"),
     voicePath = s.optString("voicePath"),
@@ -60,7 +86,7 @@ internal fun programToJson(program: DayProgram): JSONObject = JSONObject().apply
     put("id", program.id)
     put("name", program.name)
     put("steps", JSONArray().also { arr -> program.steps.forEach { arr.put(stepToJson(it)) } })
-    put("timeMode", program.timeMode)
+    put("timeMode", program.timeMode?.key ?: "")
     put("startClock", program.startClock)
 }
 
@@ -73,7 +99,7 @@ internal fun programFromJson(obj: JSONObject): DayProgram {
         id = obj.optString("id"),
         name = obj.optString("name"),
         steps = steps,
-        timeMode = obj.optString("timeMode", ""),
+        timeMode = TimeMode.fromKey(obj.optString("timeMode", "")),
         startClock = obj.optString("startClock", ProgramTiming.DEFAULT_START)
     )
 }

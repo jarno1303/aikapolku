@@ -26,6 +26,8 @@ import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramStep
 import fi.aikapolku.app.data.ProgramTiming
+import fi.aikapolku.app.data.StepMode
+import fi.aikapolku.app.data.TimeMode
 import fi.aikapolku.app.ui.AppColors
 
 @Composable
@@ -41,26 +43,26 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
     ) {
         Text(stringResource(R.string.miten_aika_kulkee), fontSize = 18.sp, fontWeight = FontWeight.Bold)
         ModeOption(
-            selected = draft.timeMode == ProgramTiming.FREE,
+            selected = draft.timeMode == TimeMode.FREE,
             title = stringResource(R.string.omaan_tahtiin),
             description = stringResource(R.string.ei_aikoja_valmis_painike_siirtaa),
-            onSelect = { onDraftChange(ProgramTiming.switchMode(draft, ProgramTiming.FREE)) }
+            onSelect = { onDraftChange(ProgramTiming.switchMode(draft, TimeMode.FREE)) }
         )
         ModeOption(
-            selected = draft.timeMode == ProgramTiming.DURATION,
+            selected = draft.timeMode == TimeMode.DURATION,
             title = stringResource(R.string.kestot),
             description = stringResource(R.string.jokaisella_toiminnolla_on_oma_ajastin),
-            onSelect = { onDraftChange(ProgramTiming.switchMode(draft, ProgramTiming.DURATION)) }
+            onSelect = { onDraftChange(ProgramTiming.switchMode(draft, TimeMode.DURATION)) }
         )
         ModeOption(
-            selected = draft.timeMode == ProgramTiming.CLOCK,
+            selected = draft.timeMode == TimeMode.CLOCK,
             title = stringResource(R.string.kellonajat),
             description = stringResource(R.string.anna_aloitusaika_ja_kestot_kellonajat),
-            onSelect = { onDraftChange(ProgramTiming.switchMode(draft, ProgramTiming.CLOCK)) }
+            onSelect = { onDraftChange(ProgramTiming.switchMode(draft, TimeMode.CLOCK)) }
         )
 
         when (draft.timeMode) {
-            ProgramTiming.DURATION -> {
+            TimeMode.DURATION -> {
                 HorizontalDivider()
                 draft.steps.forEach { step ->
                     TimeRowCard {
@@ -70,8 +72,8 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                             allowNone = true,
                             onPick = { minutes ->
                                 updateStep(
-                                    if (minutes == null) step.copy(mode = "manual")
-                                    else step.copy(mode = "duration", minutes = minutes)
+                                    if (minutes == null) step.copy(mode = StepMode.MANUAL)
+                                    else step.copy(mode = StepMode.DURATION, minutes = minutes)
                                 )
                             }
                         )
@@ -79,7 +81,7 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                 }
             }
 
-            ProgramTiming.CLOCK -> {
+            TimeMode.CLOCK -> {
                 HorizontalDivider()
                 OutlinedButton(
                     onClick = {
@@ -209,7 +211,7 @@ private fun StepHeader(step: ProgramStep, timeLabel: String?) {
 @Composable
 private fun DurationChips(step: ProgramStep, allowNone: Boolean, onPick: (Int?) -> Unit) {
     val options = (ProgramTiming.durationChoices + step.minutes).filter { it > 0 }.distinct().sorted()
-    val none = allowNone && step.mode == "manual"
+    val none = allowNone && step.mode == StepMode.MANUAL
     Row(
         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(6.dp)

@@ -31,6 +31,9 @@ import fi.aikapolku.app.voice.VoicePlayer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/** Sovelluksen näkymät. */
+internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE }
+
 /** Sovelluksen navigointi ja Ensin–Sitten-kulun yhteinen tila. */
 @Composable
 internal fun AikaPolkuApp() {
@@ -41,7 +44,7 @@ internal fun AikaPolkuApp() {
     val savedSelection = remember(cardStore) {
         cardStore.loadSelection()
     }
-    var page by rememberSaveable { mutableStateOf("home") }
+    var page by rememberSaveable { mutableStateOf(AppPage.HOME) }
     val caregiver = LocalCaregiver.current
 
     var duration by rememberSaveable {
@@ -149,7 +152,7 @@ internal fun AikaPolkuApp() {
     }
 
     val goBack: () -> Unit = {
-        if (page == "timer" && activeTask.isNotBlank()) {
+        if (page == AppPage.TIMER && activeTask.isNotBlank()) {
             guardTimerStop {
                 if (running) {
                     remaining = (
@@ -158,16 +161,16 @@ internal fun AikaPolkuApp() {
                     running = false
                 }
                 BackgroundTimer.stop(context, "timer", remaining)
-                page = "firstthen"
+                page = AppPage.FIRST_THEN
             }
-        } else if (page == "manual") {
-            page = "firstthen"
+        } else if (page == AppPage.MANUAL) {
+            page = AppPage.FIRST_THEN
         } else {
-            page = "home"
+            page = AppPage.HOME
         }
     }
 
-    BackHandler(enabled = page != "home") {
+    BackHandler(enabled = page != AppPage.HOME) {
         goBack()
     }
 
@@ -177,7 +180,7 @@ internal fun AikaPolkuApp() {
     Scaffold(
         containerColor = AppColors.Background,
         topBar = {
-            if (page != "home") {
+            if (page != AppPage.HOME) {
                 // Tilarivin alapuolella; teksti tasattu sisällön ja otsikoiden reunaan (12 dp).
                 Surface(color = AppColors.Background) {
                     Row(
@@ -205,17 +208,17 @@ internal fun AikaPolkuApp() {
                 .fillMaxSize()
                 .padding(padding)
                 // The programmes screen owns its scrolling and keeps action buttons visible.
-                .then(if (page == "programs") Modifier else Modifier.verticalScroll(rootScroll))
+                .then(if (page == AppPage.PROGRAMS) Modifier else Modifier.verticalScroll(rootScroll))
                 .padding(horizontal = 12.dp, vertical = 9.dp),
             verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {
             when (page) {
-                "home" -> HomeScreen { destination ->
+                AppPage.HOME -> HomeScreen { destination ->
                     page = destination
-                    if (destination == "timer") activeTask = ""
+                    if (destination == AppPage.TIMER) activeTask = ""
                 }
 
-                "timer" -> TimerScreen(
+                AppPage.TIMER -> TimerScreen(
                     remaining = remaining,
                     duration = duration,
                     running = running,
@@ -235,10 +238,10 @@ internal fun AikaPolkuApp() {
                             firstDescription = nextDescription
                             firstVoice = nextVoice
                             firstVoiceAuto = nextVoiceAuto
-                            page = "last"
+                            page = AppPage.LAST
                             if (firstVoiceAuto) VoicePlayer.play(context, firstVoice)
                         } else {
-                            page = "done"
+                            page = AppPage.DONE
                         }
                     },
                     onShowLastTen = { showLastTen = it },
@@ -283,7 +286,7 @@ internal fun AikaPolkuApp() {
                     }
                 )
 
-                "firstthen" -> FirstThenScreen(
+                AppPage.FIRST_THEN -> FirstThenScreen(
                     first = first,
                     next = next,
                     firstPhoto = firstPhoto,
@@ -313,7 +316,7 @@ internal fun AikaPolkuApp() {
                             running = false
                             BackgroundTimer.stop(context, "timer", remaining)
                             activeTask = ""
-                            page = "manual"
+                            page = AppPage.MANUAL
                             if (firstVoiceAuto) VoicePlayer.play(context, firstVoice)
                         }
                     },
@@ -327,17 +330,17 @@ internal fun AikaPolkuApp() {
                             activeTask = first
                             deadline = 0L
                             running = false
-                            page = "timer"
+                            page = AppPage.TIMER
                             voiceStartedForTimer = false
                         }
                     }
                 )
 
-                "programs" -> ProgramsScreen()
+                AppPage.PROGRAMS -> ProgramsScreen()
 
-                "caregiver" -> CaregiverSettingsScreen()
+                AppPage.CAREGIVER -> CaregiverSettingsScreen()
 
-                "manual" -> ManualFlowScreen(
+                AppPage.MANUAL -> ManualFlowScreen(
                     first = first,
                     firstPhoto = firstPhoto,
                     next = next,
@@ -350,18 +353,18 @@ internal fun AikaPolkuApp() {
                             firstDescription = nextDescription
                             firstVoice = nextVoice
                             firstVoiceAuto = nextVoiceAuto
-                            page = "last"
+                            page = AppPage.LAST
                             if (firstVoiceAuto) VoicePlayer.play(context, firstVoice)
                         }
                     }
                 )
 
-                "last" -> LastActivityScreen(
+                AppPage.LAST -> LastActivityScreen(
                     name = first,
                     imagePath = firstPhoto,
                     onFinish = {
                         running = false
-                        page = "done"
+                        page = AppPage.DONE
                     },
                     onAddNext = if (caregiver.allows(AppAction.EDIT_CARDS)) {
                         {
@@ -370,25 +373,25 @@ internal fun AikaPolkuApp() {
                             nextDescription = ""
                             nextVoice = ""
                             nextVoiceAuto = false
-                            page = "firstthen"
+                            page = AppPage.FIRST_THEN
                         }
                     } else null
                 )
 
-                "done" -> FlowDoneScreen(
+                AppPage.DONE -> FlowDoneScreen(
                     onHome = {
                         activeTask = ""
-                        page = "home"
+                        page = AppPage.HOME
                     }
                 )
             }
 
-            if (page != "home" &&
-                page != "firstthen" &&
-                page != "programs" &&
-                page != "last" &&
-                page != "done" &&
-                !(page == "timer" && activeTask.isNotBlank())) {
+            if (page != AppPage.HOME &&
+                page != AppPage.FIRST_THEN &&
+                page != AppPage.PROGRAMS &&
+                page != AppPage.LAST &&
+                page != AppPage.DONE &&
+                !(page == AppPage.TIMER && activeTask.isNotBlank())) {
                 TextButton(
                     onClick = goBack,
                     modifier = Modifier
@@ -396,7 +399,7 @@ internal fun AikaPolkuApp() {
                         .heightIn(min = 56.dp)
                 ) {
                     Text(
-    if (page == "timer" && activeTask.isNotBlank())
+    if (page == AppPage.TIMER && activeTask.isNotBlank())
         stringResource(R.string.takaisin_ensin_sitten)
     else stringResource(R.string.takaisin_aloitukseen),
     fontSize = 16.sp

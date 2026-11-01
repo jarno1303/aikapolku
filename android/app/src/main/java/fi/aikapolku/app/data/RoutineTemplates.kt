@@ -56,7 +56,7 @@ internal object RoutineTemplates {
                 name = texts(card.nameRes),
                 photo = "builtin:${card.id}",
                 description = "",
-                mode = if (selected.durationMinutes == null) "manual" else "duration",
+                mode = if (selected.durationMinutes == null) StepMode.MANUAL else StepMode.DURATION,
                 minutes = selected.durationMinutes ?: 5,
                 subSteps = SubstepDefaults.forCardId(card.id, texts)
             )
