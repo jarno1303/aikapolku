@@ -1,6 +1,17 @@
 package fi.aikapolku.app.programs
 
 import androidx.compose.foundation.layout.*
+import fi.aikapolku.app.ui.AppColors
+import fi.aikapolku.app.cards.CardPhoto
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -130,15 +141,54 @@ internal fun ProgramListView(
 }
 
 /** Ohjelma suoritettu loppuun. */
+/** Lopetusnäkymä: iso merkki, ohjelman nimi ja tehdyt tehtävät pikkukuvina. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun ProgramDoneView(programName: String, onBack: () -> Unit) {
-    Spacer(Modifier.height(30.dp))
-    Text(stringResource(R.string.program_all_done), fontSize = 29.sp, fontWeight = FontWeight.Bold)
-    Text(stringResource(R.string.on_paattynyt, programName))
-    Button(
-        onClick = onBack,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+internal fun ProgramDoneView(program: DayProgram, onBack: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text(stringResource(R.string.takaisin_paivaohjelmiin))
+        Box(
+            modifier = Modifier.size(104.dp).clip(CircleShape).background(AppColors.Teal),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("✓", fontSize = 60.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        }
+        Text(
+            stringResource(R.string.program_all_done),
+            modifier = Modifier.semantics { heading() },
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            stringResource(R.string.on_paattynyt, program.name),
+            fontSize = 18.sp,
+            textAlign = TextAlign.Center
+        )
+        if (program.steps.isNotEmpty()) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth().clearAndSetSemantics { },
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                program.steps.forEach { step ->
+                    CardPhoto(
+                        step.name,
+                        step.photo,
+                        Modifier.size(64.dp).clip(RoundedCornerShape(14.dp))
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(6.dp))
+        Button(
+            onClick = onBack,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+        ) {
+            Text(stringResource(R.string.takaisin_paivaohjelmiin), fontSize = 18.sp)
+        }
     }
 }

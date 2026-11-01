@@ -246,7 +246,7 @@ internal fun ProgramsScreen() {
 
         ProgramsView.RUN -> Unit // Suoritus piirretään yllä omana näkymänään (RunStepScreen).
 
-        ProgramsView.DONE -> ProgramDoneView(run.program.name, onBack = { view = ProgramsView.LIST })
+        ProgramsView.DONE -> ProgramDoneView(run.program, onBack = { view = ProgramsView.LIST })
     }
         } // Scrollable Column
 

@@ -218,7 +218,7 @@
     <string name="omaan_tahtiin_ei_aikoja">Omaan tahtiin · ei aikoja</string>
     <string name="omat_kortit">Omat kortit</string>
     <string name="omat_toimintokortit">Omat toimintokortit</string>
-    <string name="on_paattynyt">%1$s on päättynyt.</string>
+    <string name="on_paattynyt">%1$s on tehty. Hienoa!</string>
     <string name="osavaihe">Osavaihe %1$s</string>
     <string name="ota_lukitus_kayttoon">Ota lukitus käyttöön</string>
     <string name="ota_ohjaajan_lukitus_kayttoon">Ota ohjaajan lukitus käyttöön</string>
@@ -246,7 +246,7 @@
     <string name="poistetaanko_ohjaajan_lukitus">Poistetaanko ohjaajan lukitus?</string>
     <string name="poistetaanko_paivaohjelma">Poistetaanko päiväohjelma?</string>
     <string name="poistettu">Poistettu: %1$s</string>
-    <string name="program_all_done">✓ Kaikki valmista!</string>
+    <string name="program_all_done">Kaikki valmista!</string>
     <string name="program_new_button">+ Uusi päiväohjelma</string>
     <string name="program_summary_ends">Päättyy noin klo %1$s</string>
     <string name="puheaanet_tulevat_puhelimen_android_puhemoottorista">Puheäänet tulevat puhelimen Android-puhemoottorista. Valikoima vaihtelee laitteittain.</string>
@@ -264,7 +264,7 @@
     <string name="rauhallinen">Rauhallinen</string>
     <string name="run_done_button">✓  Valmis</string>
     <string name="run_more">Lisää</string>
-    <string name="run_next_label">Seuraavaksi</string>
+    <string name="run_next_line">Seuraavaksi: %1$s</string>
     <string name="salli_aikapolkun_ilmoitukset">Salli AikaPolkun ilmoitukset.</string>
     <string name="salli_aikapolkun_tarkat_halytykset_ja">Salli AikaPolkun tarkat hälytykset ja palaa sovellukseen.</string>
     <string name="save">Tallenna</string>
@@ -272,7 +272,6 @@
     <string name="selkea_piippaus">Selkeä piippaus</string>
     <string name="selkeytta_arkeen_askel_kerrallaan">Selkeyttä arkeen, askel kerrallaan</string>
     <string name="selva">Selvä</string>
-    <string name="seuraava_tehtava">Seuraava tehtävä</string>
     <string name="seuraavaksi">SEURAAVAKSI</string>
     <string name="seuraavan_vaiheen_esikatselu">Seuraavan vaiheen esikatselu</string>
     <string name="siirra">Siirrä: %1$s</string>

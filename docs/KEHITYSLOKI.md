@@ -231,3 +231,9 @@
 - Napautus kellotaululla asettaa ajan lähimpään 5 minuuttiin (esim. 45 kohdalle = 45 min); veto säätää minuutin tarkkuudella.
 - Samat lukitussäännöt kuin vedolla: vain pysäytettynä ja ohjaajan sallimana. 4 uutta testiä.
 - Korjaus (puhelintesti): kortin ja osavaiheen kuva vaihtuu heti samassa näkymässä.
+
+## Suoritusnäkymän tiivistys (puhelintesti)
+- Otsake yhdellä rivillä ("NYT · Hampaiden pesu") ja eteneminen palloina sen alla; "Vaihe x / n" ja "Tehtävä x / n" vain ruudunlukijalle.
+- Pitkä otsikko pienenee (22–30 sp, enintään 2 riviä), jotta kuva saa enemmän tilaa.
+- Seuraavaksi-rivi yhdellä rivillä pienellä kuvalla; "Seuraava tehtävä" ja "Seuraavaksi" yhdistetty.
+- Kaikki valmista -näkymä: iso merkki, ohjelman nimi ja tehdyt tehtävät pikkukuvina.

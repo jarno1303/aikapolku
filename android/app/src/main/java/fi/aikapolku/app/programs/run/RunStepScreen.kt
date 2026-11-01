@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
@@ -120,15 +121,16 @@ internal fun RunStepScreen(
             RunHeader(
                 hasSubSteps = hasSubSteps,
                 taskName = taskName,
-                taskIndex = taskIndex,
-                taskCount = taskCount,
                 time = time,
-                onToggleTimer = onToggleTimer
+                onToggleTimer = onToggleTimer,
+                dots = {
+                    if (hasSubSteps) {
+                        RunProgressDots(index = safeIndex, count = subSteps.size, labelRes = R.string.vaihe)
+                    } else {
+                        RunProgressDots(index = taskIndex, count = taskCount, labelRes = R.string.tehtava)
+                    }
+                }
             )
-
-            if (hasSubSteps) {
-                RunProgressDots(index = safeIndex, count = subSteps.size)
-            }
 
             Card(
                 modifier = if (compact) Modifier.fillMaxWidth() else Modifier.fillMaxWidth().weight(1f),
@@ -159,15 +161,22 @@ internal fun RunStepScreen(
                         subStepName = currentSubStep,
                         modifier = imageModifier.clip(RoundedCornerShape(24.dp))
                     )
+                    // Pitkä otsikko pienenee, jotta se mahtuu kahdelle riville eikä vie kuvan tilaa.
+                    val titleSize = when {
+                        title.length > 24 -> 22
+                        title.length > 14 -> 26
+                        else -> 30
+                    }
                     Text(
                         title,
                         modifier = Modifier.semantics { heading() },
-                        fontSize = if (title.length > 14) 26.sp else 30.sp,
-                        lineHeight = if (title.length > 14) 31.sp else 35.sp,
+                        fontSize = titleSize.sp,
+                        lineHeight = (titleSize + 5).sp,
                         fontWeight = FontWeight.Bold,
                         color = RunColors.ink,
                         textAlign = TextAlign.Center,
-                        maxLines = 2
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                     if (!hasSubSteps && description.isNotBlank()) {
                         Text(
@@ -176,7 +185,8 @@ internal fun RunStepScreen(
                             lineHeight = 24.sp,
                             color = RunColors.secondary,
                             textAlign = TextAlign.Center,
-                            maxLines = 3
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -241,40 +251,41 @@ internal fun RunStepScreen(
 private fun RunHeader(
     hasSubSteps: Boolean,
     taskName: String,
-    taskIndex: Int,
-    taskCount: Int,
     time: RunTime?,
-    onToggleTimer: () -> Unit
+    onToggleTimer: () -> Unit,
+    dots: @Composable () -> Unit
 ) {
+    // Tiivis otsake: "NYT · tehtävä" samalla rivillä ja eteneminen palloina sen alla.
+    // Ilman osavaiheita tehtävän nimi näkyy jo kortissa, joten sitä ei toisteta tässä.
     Row(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                stringResource(R.string.now_label),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.2.sp,
-                color = RunColors.secondary
-            )
-            if (hasSubSteps) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    taskName,
-                    fontSize = 18.sp,
-                    lineHeight = 22.sp,
+                    stringResource(R.string.now_label),
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = RunColors.ink,
-                    maxLines = 2
-                )
-            } else {
-                Text(
-                    stringResource(R.string.tehtava, taskIndex + 1, taskCount),
-                    fontSize = 15.sp,
+                    letterSpacing = 1.2.sp,
                     color = RunColors.secondary
                 )
+                if (hasSubSteps) {
+                    Text(
+                        "  ·  $taskName",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = RunColors.ink,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
+            dots()
         }
         when (time) {
             is RunTime.Clock -> RunClockPill(time.time)
@@ -284,66 +295,70 @@ private fun RunHeader(
     }
 }
 
-/** Eteneminen palloina ja tekstinä: ei vaadi numeroiden ymmärtämistä. */
+/**
+ * Eteneminen palloina: ei vaadi numeroiden ymmärtämistä. Teksti ("Vaihe 2 / 5") on
+ * ruudunlukijalle. Hyvin pitkä lista näytetään tekstinä, jotta pallot mahtuvat riville.
+ */
 @Composable
-private fun RunProgressDots(index: Int, count: Int) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+private fun RunProgressDots(index: Int, count: Int, labelRes: Int) {
+    val label = stringResource(labelRes, index + 1, count)
+    if (count <= 1) return
+    if (count > 12) {
+        Text(label, fontSize = 15.sp, color = RunColors.secondary)
+        return
+    }
     Row(
-        modifier = Modifier.semantics(mergeDescendants = true) {
-            contentDescription = context.getString(R.string.vaihe, index + 1, count)
-        },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = label },
+        horizontalArrangement = Arrangement.spacedBy(if (count > 8) 5.dp else 7.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(if (count > 10) 4.dp else 7.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            repeat(count) { i ->
-                val shape = RoundedCornerShape(5.dp)
-                val base = Modifier
-                    .height(10.dp)
-                    .width(if (i == index) 22.dp else 10.dp)
-                    .clip(shape)
-                Box(
-                    modifier = if (i <= index) base.background(RunColors.teal)
-                        else base.border(2.dp, RunColors.dotOutline, shape)
-                )
-            }
+        repeat(count) { i ->
+            val shape = RoundedCornerShape(5.dp)
+            val base = Modifier
+                .height(10.dp)
+                .width(if (i == index) 22.dp else 10.dp)
+                .clip(shape)
+            Box(
+                modifier = if (i <= index) base.background(RunColors.teal)
+                    else base.border(2.dp, RunColors.dotOutline, shape)
+            )
         }
-        Text(stringResource(R.string.vaihe, index + 1, count), fontSize = 15.sp, color = RunColors.secondary)
     }
 }
 
-/** Seuraava vaihe himmennettynä Valmiin jälkeen. Ei painettavissa. Näkyvyys käyttäjän valinnan mukaan. */
+/** Seuraava vaihe himmennettynä yhdellä rivillä. Ei painettavissa. Näkyvyys käyttäjän valinnan mukaan. */
 @Composable
 private fun RunNextRow(next: RunNext, mode: String) {
     if (mode == RunPreferences.NEXT_HIDDEN) return
-    val label = if (next.isSubStep) stringResource(R.string.run_next_label) else stringResource(R.string.seuraava_tehtava)
+    val text = stringResource(R.string.run_next_line, next.name)
     Surface(
         color = RunColors.nextSurface,
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .semantics(mergeDescendants = true) { contentDescription = "$label: ${next.name}" }
+            .semantics(mergeDescendants = true) { contentDescription = text }
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp).heightIn(min = 36.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             if (mode == RunPreferences.NEXT_CARD) {
                 RunImage(
                     taskName = next.taskName,
                     taskPhoto = next.taskPhoto,
                     subStepName = if (next.isSubStep) next.name else null,
-                    modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).alpha(0.55f)
+                    modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).alpha(0.55f)
                 )
             }
-            Column {
-                Text(label, fontSize = 13.sp, color = RunColors.secondary)
-                Text(next.name, fontSize = 17.sp, fontWeight = FontWeight.Medium, color = RunColors.secondary)
-            }
+            Text(
+                text,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = RunColors.secondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
