@@ -299,7 +299,7 @@ P2:
 
 Suunniteltu hinnoittelu:
 - Free: ilmainen
-- Premium: 14,99 euroa kertamaksu
+- Premium: 9,99 euroa kertamaksu (alustava, päätös 1.11.2026; tarkistetaan myöhemmin)
 - Premium-kokeilu: 7 päivää
 - Organisaatiolisenssi: erikseen määritettävä
 
