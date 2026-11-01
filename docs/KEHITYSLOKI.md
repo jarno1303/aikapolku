@@ -188,3 +188,12 @@
 - Yläpalkki ja Takaisin-painike tilarivin alle (Android 15+ reunasta reunaan -näkymä).
 - Ohjaajan asetukset aloitussivulta; kertakysymys ensimmäisen ohjelman jälkeen.
 - Puhelintesti odottaa hyväksyntää.
+
+## P0-22a – Kuvakeskeinen suoritusnäkymä
+- Iso kuva ja nimi; eteneminen palloina ja tekstinä.
+- Tarvitsen apua / tauon heti kuvan alla, sitten Valmis, sitten Seuraavaksi.
+- Aikamerkki on samalla Aloita/Tauko-painike; Tauko lukittuna PIN-koodilla.
+- Apu- ja taukopyyntö koko näytön viestinä; Jatka palauttaa ajan.
+- Osavaiheiden työkuvat (pukeutuminen, hampaiden pesu) ja uudet ruokakuvat.
+- Osavaihe Laita hammasharja takaisin (vanha nimi tunnistetaan).
+- Puhelintesti odottaa hyväksyntää.

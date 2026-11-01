@@ -124,50 +124,7 @@ private class P021cRecorder(private val context: Context) {
     }
 }
 
-/** Muted preview, NOT blurred: keeps recognition and contrast readable. */
-@Composable
-internal fun P021cNextPreview(
-    name: String,
-    photo: String,
-    mode: String,
-    isSubStep: Boolean
-) {
-    if (mode == P021cPreferences.NEXT_HIDDEN) return
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.68f),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (mode == P021cPreferences.NEXT_CARD) {
-                P011Photo(name, photo, Modifier.size(96.dp))
-            }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                Text(
-                    "SEURAAVAKSI${if (isSubStep) " · osavaihe" else ""}",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    name,
-                    fontSize = if (mode == P021cPreferences.NEXT_CARD) 21.sp else 19.sp,
-                    lineHeight = 25.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.82f)
-                )
-                if (mode == P021cPreferences.NEXT_CARD) {
-                    Text("Ei vielä aktiivinen", fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-    }
-}
+// P0-22a: Seuraavan vaiheen esikatselu siirtyi tiedostoon RunStepScreen.kt (RunNextRow).
 
 @Composable
 internal fun P021cSettingsDialog(

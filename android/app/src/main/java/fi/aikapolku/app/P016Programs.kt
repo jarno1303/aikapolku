@@ -273,6 +273,8 @@ internal fun P016ProgramsScreen() {
     var stepIndex by rememberSaveable { mutableIntStateOf(p018Prefs.getInt("step_index", 0)) }
     var subStepIndex by rememberSaveable { mutableIntStateOf(p018Prefs.getInt("sub_step_index", 0)) }
     var supportMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    // Oliko ajastin käynnissä, kun apua tai taukoa pyydettiin? Jatka palauttaa sen.
+    var resumeAfterSupport by rememberSaveable { mutableStateOf(false) }
     var running by rememberSaveable { mutableStateOf(P018Timer.running(context, "program")) }
     var stepVoicePlayed by rememberSaveable { mutableStateOf(false) }
     var deadline by rememberSaveable {
@@ -335,12 +337,42 @@ internal fun P016ProgramsScreen() {
         }
     }
 
-    fun requestSupport(message: String) {
+    fun pauseStepTimer() {
         if (running) {
             remaining = P018Timer.remaining(context, "program", remaining)
             P018Timer.stop(context, "program", remaining)
             running = false
         }
+    }
+
+    fun startStepTimer(step: AP16Step) {
+        if (!P018Timer.allowed(context)) {
+            P018Timer.requestPermissions(context)
+            return
+        }
+        if (remaining <= 0L) remaining = step.minutes * 60_000L
+        deadline = P018Timer.start(context, "program", remaining, step.name)
+        running = true
+        if (!stepVoicePlayed) {
+            stepVoicePlayed = true
+            if (step.autoPlayVoice) P017VoicePlayer.play(context, step.voicePath)
+        }
+    }
+
+    // Aloita ja Jatka ovat aina vapaita; Tauko lukittuna vain PIN-koodilla.
+    fun toggleStepTimer(step: AP16Step) {
+        when {
+            running && caregiver.isLocked ->
+                caregiver.run(AppAction.PAUSE_TIMER) { pauseStepTimer() }
+            running -> pauseStepTimer()
+            else -> startStepTimer(step)
+        }
+    }
+
+    // Tarvitsen apua / tauon: aina vapaa, pysäyttää ajan ja näyttää viestin.
+    fun requestSupport(message: String) {
+        resumeAfterSupport = running
+        pauseStepTimer()
         supportMessage = message
     }
 
@@ -374,11 +406,66 @@ internal fun P016ProgramsScreen() {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        val runStep = if (view == "run") draft.steps.getOrNull(stepIndex) else null
+        if (runStep != null) {
+            val message = supportMessage
+            if (message != null) {
+                SupportMessageScreen(
+                    message = message,
+                    timerPaused = resumeAfterSupport,
+                    onContinue = {
+                        supportMessage = null
+                        if (resumeAfterSupport && remaining > 0L) startStepTimer(runStep)
+                        resumeAfterSupport = false
+                    },
+                    onClose = {
+                        supportMessage = null
+                        resumeAfterSupport = false
+                    }
+                )
+            } else {
+                val nextSubStep = runStep.subSteps.getOrNull(subStepIndex + 1)
+                val nextTask = draft.steps.getOrNull(stepIndex + 1)
+                RunStepScreen(
+                    taskName = runStep.name,
+                    taskPhoto = runStep.photo,
+                    description = runStep.description,
+                    subSteps = runStep.subSteps,
+                    subStepIndex = subStepIndex,
+                    taskIndex = stepIndex,
+                    taskCount = draft.steps.size,
+                    time = when (runStep.mode) {
+                        "duration" -> RunTime.Countdown(
+                            remainingMs = remaining,
+                            durationMs = maxOf(runStep.minutes * 60_000L, remaining),
+                            running = running,
+                            displayMode = timeMode,
+                            pauseLocked = running && caregiver.isLocked
+                        )
+                        "clock" -> RunTime.Clock(runStep.clock)
+                        else -> null
+                    },
+                    // Esikatselu: ensin seuraava osavaihe, viimeisessä osavaiheessa seuraava tehtävä.
+                    next = when {
+                        nextSubStep != null -> RunNext(nextSubStep, runStep.name, runStep.photo, isSubStep = true)
+                        nextTask != null -> RunNext(nextTask.name, nextTask.name, nextTask.photo, isSubStep = false)
+                        else -> null
+                    },
+                    nextMode = nextPreviewMode,
+                    onToggleTimer = { toggleStepTimer(runStep) },
+                    onHelp = { requestSupport("Tarvitsen apua") },
+                    onBreak = { requestSupport("Tarvitsen tauon") },
+                    onDone = { nextSubstepOrActivity() },
+                    onSkip = { nextSubstepOrActivity() },
+                    onMore = { showRunActions = true }
+                )
+            }
+        } else {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(programmeScroll)
-                .padding(bottom = if (view == "run") 166.dp else 12.dp),
+                .padding(bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
     when (view) {
@@ -595,130 +682,7 @@ internal fun P016ProgramsScreen() {
             }
         }
 
-        "run" -> {
-            val step = draft.steps.getOrNull(stepIndex)
-            if (step != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        draft.name,
-                        modifier = Modifier.weight(1f),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2
-                    )
-                    Text(
-                        "${stepIndex + 1}/${draft.steps.size}",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                P021FocusedActivityCard(
-                    title = step.name,
-                    photo = step.photo,
-                    subSteps = step.subSteps,
-                    currentIndex = subStepIndex
-                )
-
-                when (step.mode) {
-                    "duration" -> {
-                        val seconds = (remaining + 999L) / 1000L
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            if (timeMode == P020TimeDisplay.NUMBERS) {
-                                Text(
-                                    "%02d:%02d".format(seconds / 60, seconds % 60),
-                                    fontSize = 31.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            } else {
-                                P020TimeVisual(
-                                    remaining = remaining,
-                                    duration = maxOf(step.minutes * 60_000L, remaining),
-                                    mode = timeMode,
-                                    running = running,
-                                    modifier = Modifier.size(105.dp)
-                                )
-                            }
-
-                            val pauseLocked = running && !caregiver.allows(AppAction.PAUSE_TIMER)
-                            Button(
-                                onClick = {
-                                    if (pauseLocked) {
-                                        // Tauko lukittuna vain PIN-koodilla. Tarvitsen tauon toimii aina.
-                                        caregiver.run(AppAction.PAUSE_TIMER) {
-                                            if (running) {
-                                                remaining = P018Timer.remaining(context, "program", remaining)
-                                                P018Timer.stop(context, "program", remaining)
-                                                running = false
-                                            }
-                                        }
-                                    } else if (running) {
-                                        remaining = P018Timer.remaining(context, "program", remaining)
-                                        P018Timer.stop(context, "program", remaining)
-                                        running = false
-                                    } else if (!P018Timer.allowed(context)) {
-                                        P018Timer.requestPermissions(context)
-                                    } else {
-                                        if (remaining <= 0L) remaining = step.minutes * 60_000L
-                                        deadline = P018Timer.start(context, "program", remaining, step.name)
-                                        running = true
-                                        if (!stepVoicePlayed) {
-                                            stepVoicePlayed = true
-                                            if (step.autoPlayVoice) {
-                                                P017VoicePlayer.play(context, step.voicePath)
-                                            }
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.weight(1f).heightIn(min = 52.dp)
-                            ) {
-                                Text(
-                                    if (pauseLocked) "🔒 Tauko"
-                                    else if (running) "Tauko"
-                                    else if (remaining == 0L) "Aloita uudelleen"
-                                    else if (remaining < step.minutes * 60_000L) "Jatka"
-                                    else "Aloita"
-                                )
-                            }
-                        }
-                        if (remaining == 0L) {
-                            Text("Aika päättyi", color = ap16Teal, fontWeight = FontWeight.SemiBold)
-                        }
-                    }
-                    "clock" -> Text("Klo ${step.clock}", fontSize = 17.sp)
-                    else -> Unit // No deadline: don't add an unnecessary text line.
-                }
-
-                // Preview only the next SUBSTEP until the last substep, then the next activity.
-                // The preview never accepts clicks, and can be hidden for sensory comfort.
-                val nextSubStep = step.subSteps.getOrNull(subStepIndex + 1)
-                if (nextSubStep != null) {
-                    P021cNextPreview(
-                        name = nextSubStep,
-                        photo = step.photo,
-                        mode = nextPreviewMode,
-                        isSubStep = true
-                    )
-                } else {
-                    draft.steps.getOrNull(stepIndex + 1)?.let { nextStep ->
-                        P021cNextPreview(
-                            name = nextStep.name,
-                            photo = nextStep.photo,
-                            mode = nextPreviewMode,
-                            isSubStep = false
-                        )
-                    }
-                }
-            }
-        }
+        "run" -> Unit // Suoritus piirretään yllä omana näkymänään (RunStepScreen).
 
         "done" -> {
             Spacer(Modifier.height(30.dp))
@@ -741,40 +705,7 @@ internal fun P016ProgramsScreen() {
     }
         } // Scrollable Column
 
-    // This surface stays visible even if the content above is long.
-    if (view == "run" && draft.steps.getOrNull(stepIndex) != null) {
-        Surface(
-            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 3.dp,
-            shadowElevation = 5.dp,
-            shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                P021SupportButtons(
-                    onHelp = { requestSupport("Tarvitsen apua") },
-                    onBreak = { requestSupport("Tarvitsen tauon") }
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Button(
-                        onClick = { nextSubstepOrActivity() },
-                        modifier = Modifier.weight(1f).heightIn(min = 56.dp)
-                    ) { Text("Valmis", fontSize = 18.sp) }
-                    OutlinedButton(
-                        onClick = { showRunActions = true },
-                        modifier = Modifier.heightIn(min = 56.dp)
-                    ) { Text("Lisää") }
-                }
-            }
-        }
-    }
+        } // Ei suoritusta
     } // Content Box
 
     if (showRunActions && view == "run") {
@@ -784,12 +715,6 @@ internal fun P016ProgramsScreen() {
             title = { Text("Muut toiminnot") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    TextButton(onClick = {
-                        showRunActions = false
-                        nextSubstepOrActivity()
-                    }, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (current?.subSteps?.isNotEmpty() == true) "Ohita osavaihe" else "Ohita tehtävä")
-                    }
                     if (current?.mode == "duration" && caregiver.allows(AppAction.EXTEND_TIME)) {
                         TextButton(onClick = {
                             val left = if (running)
@@ -895,13 +820,6 @@ internal fun P016ProgramsScreen() {
             currentNextMode = nextPreviewMode,
             onNextModeChange = { nextPreviewMode = it },
             onDismiss = { showP021cSettings = false }
-        )
-    }
-
-    supportMessage?.let { message ->
-        P021SupportMessageDialog(
-            message = message,
-            onDismiss = { supportMessage = null }
         )
     }
 
