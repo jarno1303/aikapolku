@@ -1,0 +1,25 @@
+# --- Varmuuskopiot (ei versionhallintaan) ---
+varmuuskopiot/
+*-varmuuskopiot/
+*.zip
+*.bak-*
+
+# --- Android / Gradle ---
+.gradle/
+.kotlin/
+**/build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+
+# --- IDE ---
+.idea/
+*.iml
+
+# --- Allekirjoitusavaimet: EI KOSKAAN gittiin ---
+*.jks
+*.keystore
+keystore.properties
