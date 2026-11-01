@@ -6,10 +6,10 @@ import android.app.Application
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -36,6 +36,7 @@ class BackgroundTimerTest {
         alarms = app.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         ShadowAlarmManager.setCanScheduleExactAlarms(true)
         shadowOf(app).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        P018Timer.resetPermissionPrompts()
     }
 
     private fun scheduledAlarmCount() = shadowOf(alarms).scheduledAlarms.size
@@ -51,7 +52,7 @@ class BackgroundTimerTest {
     }
 
     @Test
-    fun `ilman tarkkojen halytysten lupaa ajastinta ei sallita`() {
+    fun `puuttuvaa tarkkojen halytysten lupaa kysytaan ennen kaynnistysta`() {
         ShadowAlarmManager.setCanScheduleExactAlarms(false)
 
         assertFalse(P018Timer.allowed(app))
@@ -222,18 +223,80 @@ class BackgroundTimerTest {
         assertEquals(0, notificationCount())
     }
 
-    /**
-     * TUNNETTU RISKI (koodiarvio 1.11.2026): start() heittää poikkeuksen, jos tarkkojen
-     * hälytysten lupa on peruttu. Kutsukohdat (+1 min, ajan vähennys) eivät tarkista
-     * lupaa ennen kutsua, joten sovellus voi kaatua. Tämä testi dokumentoi nykyisen
-     * käytöksen; kun riski korjataan, testi päivitetään odottamaan hallittua käsittelyä.
-     */
+    // --- Luvat puuttuvat: ajastimen pitää silti toimia (korjattu 1.11.2026) ---
+
     @Test
-    fun `TUNNETTU RISKI - kaynnistys ilman lupaa heittaa poikkeuksen`() {
+    fun `kaynnistys ilman tarkkojen halytysten lupaa ei kaada ja asettaa halytyksen`() {
         ShadowAlarmManager.setCanScheduleExactAlarms(false)
 
-        assertThrows(IllegalStateException::class.java) {
-            P018Timer.start(app, "timer", 60_000L, "Askartelu")
-        }
+        P018Timer.start(app, "timer", 60_000L, "Askartelu")
+
+        assertTrue(P018Timer.running(app, "timer"))
+        assertEquals(60_000L, P018Timer.remaining(app, "timer", 0L))
+        assertEquals(1, scheduledAlarmCount())
+    }
+
+    @Test
+    fun `lisaaika kesken ajon ei kaada vaikka lupa on peruttu`() {
+        P018Timer.start(app, "program", 60_000L, "Ulkoilu")
+        ShadowAlarmManager.setCanScheduleExactAlarms(false) // käyttäjä perui luvan
+
+        // +5 min / +1 min / -1 min käynnistävät ajastimen uudelleen
+        P018Timer.start(app, "program", 360_000L, "Ulkoilu")
+
+        assertTrue(P018Timer.running(app, "program"))
+        assertEquals(360_000L, P018Timer.remaining(app, "program", 0L))
+        assertEquals(1, scheduledAlarmCount())
+    }
+
+    @Test
+    fun `ilman ilmoituslupaa ajastin toimii mutta ilmoitusta ei nayteta`() {
+        shadowOf(app).denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
+
+        P018Timer.start(app, "timer", 1_000L, "Askartelu")
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(2))
+
+        assertTrue(P018Timer.complete(app, "timer"))
+        assertFalse(P018Timer.running(app, "timer"))
+        assertEquals(0, notificationCount())
+    }
+
+    @Test
+    fun `ilmoituslupaa kysytaan kerran ja sen jalkeen ajastin sallitaan`() {
+        shadowOf(app).denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        assertFalse(P018Timer.allowed(app))
+
+        P018Timer.requestPermissions(app) // käyttäjä kieltää
+
+        assertTrue("Epääminen ei saa estää ajastinta", P018Timer.allowed(app))
+    }
+
+    @Test
+    fun `tarkkojen halytysten lupaa kysytaan kerran ja sen jalkeen ajastin sallitaan`() {
+        ShadowAlarmManager.setCanScheduleExactAlarms(false)
+        assertFalse(P018Timer.allowed(app))
+
+        P018Timer.requestPermissions(app)
+
+        assertEquals(
+            Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+            shadowOf(app).nextStartedActivity?.action
+        )
+        assertTrue("Epääminen ei saa estää ajastinta", P018Timer.allowed(app))
+    }
+
+    @Test
+    fun `uudelleenkaynnistys palauttaa ajastimen myos ilman lupia`() {
+        ShadowAlarmManager.setCanScheduleExactAlarms(false)
+        shadowOf(app).denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        timerPrefs().edit()
+            .putBoolean("timer_running", true)
+            .putLong("timer_endWall", Long.MAX_VALUE / 2)
+            .commit()
+
+        P018Timer.restoreAfterBoot(app)
+
+        assertTrue(P018Timer.running(app, "timer"))
+        assertEquals(1, scheduledAlarmCount())
     }
 }

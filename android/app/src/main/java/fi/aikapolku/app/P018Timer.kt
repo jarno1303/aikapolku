@@ -49,33 +49,56 @@ internal object P018Timer {
     fun running(c: Context, owner: String): Boolean =
         prefs(c).getBoolean(key(owner, "running"), false)
 
-    fun allowed(c: Context): Boolean {
-        val exact = Build.VERSION.SDK_INT < 31 || service(c).canScheduleExactAlarms()
-        val notification = Build.VERSION.SDK_INT < 33 ||
+    /** Tarkat hälytykset: ilman niitä Android voi viivästyttää taustahälytystä. */
+    fun exactAlarmsAllowed(c: Context): Boolean =
+        Build.VERSION.SDK_INT < 31 || service(c).canScheduleExactAlarms()
+
+    /** Ilmoitukset: ilman niitä taustalla päättynyt ajastin ei näy ilmoituksena. */
+    fun notificationsAllowed(c: Context): Boolean =
+        Build.VERSION.SDK_INT < 33 ||
             c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        return exact && notification
-    }
+
+    // Kumpaakin lupaa pyydetään enintään kerran sovelluksen käynnistyskertaa kohden.
+    // Luvan epääminen ei saa estää ajastimen käyttöä.
+    @Volatile private var exactPrompted = false
+    @Volatile private var notificationPrompted = false
+
+    /**
+     * Voiko ajastimen käynnistää pyytämättä ensin lupaa? Palauttaa false vain, jos
+     * jokin lupa puuttuu eikä sitä ole vielä tällä käynnistyskerralla pyydetty.
+     * Ajastin toimii myös ilman lupia (ks. start).
+     */
+    fun allowed(c: Context): Boolean =
+        (exactAlarmsAllowed(c) || exactPrompted) &&
+            (notificationsAllowed(c) || notificationPrompted)
 
     fun requestPermissions(c: Context) {
-        if (Build.VERSION.SDK_INT >= 31 && !service(c).canScheduleExactAlarms()) {
+        if (!exactAlarmsAllowed(c) && !exactPrompted) {
+            exactPrompted = true
             Toast.makeText(c, "Salli AikaPolkun tarkat hälytykset ja palaa sovellukseen.", Toast.LENGTH_LONG).show()
             val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
                 Uri.parse("package:${c.packageName}"))
-            c.startActivity(intent)
+            if (c !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            runCatching { c.startActivity(intent) }
             return
         }
-        if (Build.VERSION.SDK_INT >= 33 &&
-            c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+        if (!notificationsAllowed(c) && !notificationPrompted) {
+            notificationPrompted = true
             Toast.makeText(c, "Salli AikaPolkun ilmoitukset.", Toast.LENGTH_LONG).show()
             (c as? Activity)?.requestPermissions(
                 arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1803)
         }
     }
 
+    /** Vain testejä varten: nollaa käynnistyskertakohtaiset lupakyselymerkinnät. */
+    internal fun resetPermissionPrompts() {
+        exactPrompted = false
+        notificationPrompted = false
+    }
+
     /** Returns a monotonic clock deadline for display in Compose. */
     @Synchronized
     fun start(c: Context, owner: String, remainingMs: Long, title: String): Long {
-        check(allowed(c)) { "Ajastimen käyttöoikeuksia ei ole myönnetty." }
         val delayMs = remainingMs.coerceAtLeast(1L)
         val endElapsed = SystemClock.elapsedRealtime() + delayMs
         val endWall = System.currentTimeMillis() + delayMs
@@ -86,9 +109,27 @@ internal object P018Timer {
             .putLong(key(owner, "remaining"), delayMs)
             .putString(key(owner, "title"), title)
             .commit()
-        service(c).setExactAndAllowWhileIdle(
-            AlarmManager.ELAPSED_REALTIME_WAKEUP, endElapsed, alarmIntent(c, owner))
+        scheduleAlarm(c, owner, endElapsed)
         return endElapsed
+    }
+
+    /**
+     * Tarkka hälytys, jos lupa on. Muuten (tai jos lupa perutaan juuri nyt) tavallinen
+     * hälytys, jota Android voi viivästyttää taustalla. Näkymässä aika lasketaan
+     * joka tapauksessa tarkasti, eikä sovellus kaadu.
+     */
+    private fun scheduleAlarm(c: Context, owner: String, endElapsed: Long) {
+        val am = service(c)
+        val intent = alarmIntent(c, owner)
+        if (exactAlarmsAllowed(c)) {
+            try {
+                am.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, endElapsed, intent)
+                return
+            } catch (e: SecurityException) {
+                // Lupa peruttiin tarkistuksen jälkeen: jatketaan tavallisella hälytyksellä.
+            }
+        }
+        am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, endElapsed, intent)
     }
 
     @Synchronized
@@ -145,10 +186,9 @@ internal object P018Timer {
             if (!p.getBoolean(key(owner, "running"), false)) continue
             val left = (p.getLong(key(owner, "endWall"), 0L) -
                 System.currentTimeMillis()).coerceAtLeast(1L)
-            if (allowed(c)) {
-                start(c, owner, left,
-                    p.getString(key(owner, "title"), "Ajastin") ?: "Ajastin")
-            }
+            // Palautetaan aina: start toimii myös ilman lupia.
+            start(c, owner, left,
+                p.getString(key(owner, "title"), "Ajastin") ?: "Ajastin")
         }
     }
 }
