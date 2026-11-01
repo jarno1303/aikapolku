@@ -50,9 +50,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             AikapolkuTheme {
-                AikaPolkuApp()
+                CaregiverLockHost {
+                    AikaPolkuApp()
+                }
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // P0-21e: ohjaajan toiminnot lukittuvat aina, kun sovellus siirtyy taustalle.
+        CaregiverSession.onAppBackground()
     }
 }
 
@@ -66,6 +74,7 @@ private fun AikaPolkuApp() {
         cardStore.loadSelection()
     }
     var page by rememberSaveable { mutableStateOf("home") }
+    val caregiver = LocalCaregiver.current
 
     var duration by rememberSaveable {
         mutableLongStateOf(300_000L)
@@ -288,27 +297,6 @@ private fun AikaPolkuApp() {
                         voiceStartedForTimer = false
                         duration = originalDuration
                         remaining = originalDuration
-                    },
-                    onAddMinute = {
-                        duration += 60_000L
-                        remaining = if (running) P018Timer.remaining(context, "timer", remaining) + 60_000L
-                                    else remaining + 60_000L
-                        if (running) deadline = P018Timer.start(context, "timer", remaining,
-                            if (activeTask.isBlank()) "Ajastin" else activeTask)
-                        else P018Timer.stop(context, "timer", remaining)
-                    },
-                    onSubtractMinute = {
-                        if (running) remaining = P018Timer.remaining(context, "timer", remaining)
-                        val reduction = minOf(60_000L, remaining)
-                        remaining -= reduction
-                        duration = (duration - reduction).coerceAtLeast(1L)
-                        if (running && remaining > 0L) {
-                            deadline = P018Timer.start(context, "timer", remaining,
-                                if (activeTask.isBlank()) "Ajastin" else activeTask)
-                        } else {
-                            if (remaining == 0L) running = false
-                            P018Timer.stop(context, "timer", remaining)
-                        }
                     }
                 )
 
@@ -360,6 +348,8 @@ private fun AikaPolkuApp() {
 
                 "programs" -> P016ProgramsScreen()
 
+                "caregiver" -> CaregiverSettingsScreen()
+
                 "manual" -> P014ManualScreen(
                     first = first,
                     firstPhoto = firstPhoto,
@@ -386,14 +376,16 @@ private fun AikaPolkuApp() {
                         running = false
                         page = "done"
                     },
-                    onAddNext = {
-                        next = "Valitse toiminto"
-                        nextPhoto = ""
-                        nextDescription = ""
-                        nextVoice = ""
-                        nextVoiceAuto = false
-                        page = "firstthen"
-                    }
+                    onAddNext = if (caregiver.allows(AppAction.EDIT_CARDS)) {
+                        {
+                            next = "Valitse toiminto"
+                            nextPhoto = ""
+                            nextDescription = ""
+                            nextVoice = ""
+                            nextVoiceAuto = false
+                            page = "firstthen"
+                        }
+                    } else null
                 )
 
                 "done" -> P011DoneScreen(
@@ -471,6 +463,18 @@ private fun HomeScreen(open: (String) -> Unit) {
         subtitle = "Näe päivän kulku",
         onClick = { open("programs") }
     )
+
+    val caregiver = LocalCaregiver.current
+    TextButton(
+        onClick = { caregiver.run(AppAction.SETTINGS) { open("caregiver") } },
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+    ) {
+        Text(
+            if (caregiver.isLocked) "🔒 Ohjaajan asetukset" else "⚙ Ohjaajan asetukset",
+            color = Teal,
+            fontSize = 15.sp
+        )
+    }
 
     Spacer(Modifier.height(14.dp))
     Surface(

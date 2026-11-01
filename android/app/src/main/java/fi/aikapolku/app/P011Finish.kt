@@ -18,7 +18,8 @@ internal fun P011LastActivityScreen(
     name: String,
     imagePath: String,
     onFinish: () -> Unit,
-    onAddNext: () -> Unit
+    /** null = piilotettu (ohjaajan lukitus päällä). */
+    onAddNext: (() -> Unit)?
 ) {
     Spacer(Modifier.height(10.dp))
 
@@ -47,13 +48,15 @@ internal fun P011LastActivityScreen(
                 ) {
                     Text("✓ Valmis", fontSize = 15.sp)
                 }
-                OutlinedButton(
-                    onClick = onAddNext,
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 56.dp)
-                ) {
-                    Text("+ Lisää vaihe", fontSize = 14.sp)
+                if (onAddNext != null) {
+                    OutlinedButton(
+                        onClick = onAddNext,
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 56.dp)
+                    ) {
+                        Text("+ Lisää vaihe", fontSize = 14.sp)
+                    }
                 }
             }
         } else {
@@ -66,13 +69,15 @@ internal fun P011LastActivityScreen(
                 ) {
                     Text("✓ Valmis")
                 }
-                OutlinedButton(
-                    onClick = onAddNext,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 56.dp)
-                ) {
-                    Text("+ Lisää vaihe")
+                if (onAddNext != null) {
+                    OutlinedButton(
+                        onClick = onAddNext,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 56.dp)
+                    ) {
+                        Text("+ Lisää vaihe")
+                    }
                 }
             }
         }

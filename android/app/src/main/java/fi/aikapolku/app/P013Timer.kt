@@ -62,12 +62,16 @@ internal fun P013TimerScreen(
     onShowLastTen: (Boolean) -> Unit,
     onPreset: (Int) -> Unit,
     onStartPause: () -> Unit,
-    onReset: () -> Unit,
-    onAddMinute: () -> Unit,
-    onSubtractMinute: () -> Unit
+    onReset: () -> Unit
 ) {
     val guided = activeTask.isNotBlank()
     val finished = guided && remaining == 0L
+
+    // P0-21e: ajan säätö vain pysäytettynä ja ohjaajana; nollaus ja asetukset ohjaajalle.
+    val caregiver = LocalCaregiver.current
+    val canAdjust = !running && caregiver.allows(AppAction.ADJUST_TIME)
+    val showReset = caregiver.allows(AppAction.RESET_TIMER)
+    val showSettings = caregiver.allows(AppAction.SETTINGS)
 
 
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
@@ -109,7 +113,10 @@ internal fun P013TimerScreen(
             onPreset = onPreset,
             onStartPause = onStartPause,
             onResetClick = { confirmReset = true },
-            onSettingsClick = { settingsOpen = true }
+            onSettingsClick = { settingsOpen = true },
+            canAdjust = canAdjust,
+            showReset = showReset,
+            showSettings = showSettings
         )
     } else if (finished) {
         P011CompletedCard(
@@ -157,15 +164,18 @@ internal fun P013TimerScreen(
                 color = DialInk
             )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                listOf(1,2,5,10,15,20,30,60).forEach { min ->
-                    OutlinedButton(onClick = { onPreset(min) }) {
-                        Text("$min min")
+            // Pikavalinnat näkyvät vain, kun ajastin on pysähdyksissä ja ajan saa muuttaa.
+            if (canAdjust) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    listOf(1,2,5,10,15,20,30,60).forEach { min ->
+                        OutlinedButton(onClick = { onPreset(min) }) {
+                            Text("$min min")
+                        }
                     }
                 }
             }
@@ -199,7 +209,7 @@ internal fun P013TimerScreen(
                         remaining = remaining,
                         seconds = secs,
                         lastTen = lastTen,
-                        onAdjustMinutes = { minutes -> if (!running) onPreset(minutes) },
+                        onAdjustMinutes = { minutes -> if (canAdjust) onPreset(minutes) },
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
@@ -243,21 +253,25 @@ internal fun P013TimerScreen(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                IconButton(
-                    onClick = { confirmReset = true },
-                    modifier = Modifier.size(48.dp)
-                ) {
+                if (showReset) {
+                    IconButton(
+                        onClick = { confirmReset = true },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Text(
+                            "↺",
+                            fontSize = 32.sp,
+                            color = DialInk
+                        )
+                    }
                     Text(
-                        "↺",
-                        fontSize = 32.sp,
-                        color = DialInk
+                        "Nollaa",
+                        fontSize = 12.sp,
+                        color = DialMuted
                     )
+                } else {
+                    CaregiverLockButton()
                 }
-                Text(
-                    "Nollaa",
-                    fontSize = 12.sp,
-                    color = DialMuted
-                )
             }
             androidx.compose.material3.IconButton(
                 onClick = onStartPause,
@@ -277,23 +291,31 @@ internal fun P013TimerScreen(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                TextButton(
-                    onClick = { settingsOpen = true },
-                    modifier = Modifier.size(48.dp)
-                ) {
+                if (showSettings) {
+                    TextButton(
+                        onClick = { settingsOpen = true },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Text(
+                            "⚙",
+                            fontSize = 25.sp,
+                            color = DialInk
+                        )
+                    }
                     Text(
-                        "⚙",
-                        fontSize = 25.sp,
-                        color = DialInk
+                        "Asetukset",
+                        fontSize = 11.sp,
+                        color = DialMuted
                     )
                 }
-                Text(
-                    "Asetukset",
-                    fontSize = 11.sp,
-                    color = DialMuted
-                )
             }
         }
+    }
+
+    // Jos lukitus menee päälle ikkunan ollessa auki, ikkuna suljetaan.
+    LaunchedEffect(showSettings, showReset) {
+        if (!showSettings) settingsOpen = false
+        if (!showReset) confirmReset = false
     }
 
     if (settingsOpen) {

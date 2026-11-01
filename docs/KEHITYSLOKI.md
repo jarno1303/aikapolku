@@ -169,3 +169,18 @@
 - Selkea piippaus toistetaan kolme kertaa.
 - Aaniasetus sailyy oletuksena pois paalta.
 - Puhelintesti odottaa hyvaksyntaa.
+
+## 1.11.2026 – Versionhallinta, testit ja korjaukset
+- Projekti GitHubiin (jarno1303/aikapolku), .gitignore ja README.
+- 74 yksikkötestiä (Robolectric): tallennus, ajastin, kellotaulu, rutiinipohjat, asetukset.
+- Korjaus: ajastin ei kaadu eikä esty, jos hälytys- tai ilmoituslupa puuttuu.
+
+## P0-21e – Ohjaajan lukitus
+- PIN-koodi (4 numeroa, suolattu tiiviste, heikot hylätään).
+- Ohjaajan toiminnot piilossa lukittuna: ajan muutos, nollaus, lisäaika, lopetus, muokkaus, asetukset.
+- Apu, tauko, Valmis, ohitus ja Aloita/Tauko aina käytössä.
+- Väärien yritysten esto kasvavalla viiveellä; avaus 2 min, lukko taustalle siirryttäessä.
+- Unohtunut PIN nollataan puhelimen omalla näytön lukituksella.
+- Pikavalinnat ja kellotaulun säätö vain pysäytettynä.
+- Ohjaajan asetukset aloitussivulta; kertakysymys ensimmäisen ohjelman jälkeen.
+- Puhelintesti odottaa hyväksyntää.

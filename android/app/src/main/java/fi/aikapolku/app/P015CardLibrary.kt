@@ -461,6 +461,7 @@ internal fun P015CardLibraryDialog(
 
                     OutlinedButton(
                         onClick = {
+                            CaregiverSession.keepOpenForOwnPicker()
                             picker.launch(
                                 PickVisualMediaRequest(
                                     ActivityResultContracts

@@ -71,6 +71,17 @@ internal fun EnhancedFirstThenScreen(
     var minutes by rememberSaveable { mutableIntStateOf(5) }
     var showCardHelp by rememberSaveable { mutableStateOf(false) }
 
+    // P0-21e: korttien valinta ja muokkaus kuuluvat ohjaajalle, kun lukitus on päällä.
+    val caregiver = LocalCaregiver.current
+    val canEditCards = caregiver.allows(AppAction.EDIT_CARDS)
+    LaunchedEffect(canEditCards) {
+        if (!canEditCards) {
+            choosing = null
+            editing = null
+            showLibrary = false
+        }
+    }
+
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
@@ -97,6 +108,10 @@ internal fun EnhancedFirstThenScreen(
             modifier = Modifier.weight(1f),
             compact = true
         )
+
+        if (!canEditCards) {
+            CaregiverLockButton()
+        }
 
         IconButton(
             onClick = { showCardHelp = true },
@@ -142,7 +157,7 @@ internal fun EnhancedFirstThenScreen(
             description = firstDescription,
             imagePath = firstPhoto,
             modifier = Modifier.weight(1f),
-            onClick = { choosing = "first" }
+            onClick = { if (canEditCards) choosing = "first" }
         )
         P011EditableCard(
             label = "SITTEN",
@@ -150,7 +165,7 @@ internal fun EnhancedFirstThenScreen(
             description = nextDescription,
             imagePath = nextPhoto,
             modifier = Modifier.weight(1f),
-            onClick = { choosing = "next" }
+            onClick = { if (canEditCards) choosing = "next" }
         )
     }
 
@@ -265,6 +280,7 @@ internal fun EnhancedFirstThenScreen(
                         onClick = {
                             photoTarget = choosing ?: "first"
                             choosing = null
+                            CaregiverSession.keepOpenForOwnPicker()
                             photoPicker.launch(
                                 PickVisualMediaRequest(
                                     ActivityResultContracts.PickVisualMedia.ImageOnly

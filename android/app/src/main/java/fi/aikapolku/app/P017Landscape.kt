@@ -35,7 +35,11 @@ internal fun P017LandscapeTimer(
     onPreset: (Int) -> Unit,
     onStartPause: () -> Unit,
     onResetClick: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    /** P0-21e: ajan saa muuttaa (pysähdyksissä ja ohjaajana). */
+    canAdjust: Boolean,
+    showReset: Boolean,
+    showSettings: Boolean
 ) {
     val guided = activeTask.isNotBlank()
     val seconds = ((remaining + 999L) / 1000L).coerceAtLeast(0L).toInt()
@@ -54,18 +58,19 @@ internal fun P017LandscapeTimer(
                 P017SmallActivity("SITTEN", nextActivity, nextPhoto)
             } else {
                 Text("Ajastin", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                Text(
-                    "Valitse aika pyörittämällä kellotaulua. " +
-                        "Käynnissä olevan ajastimen aika on lukittu.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                    listOf(1, 5, 10).forEach { min ->
-                        OutlinedButton(
-                            onClick = { if (!running) onPreset(min) },
-                            enabled = !running,
-                            contentPadding = PaddingValues(horizontal = 7.dp)
-                        ) { Text("$min min", fontSize = 12.sp) }
+                if (canAdjust) {
+                    Text(
+                        "Valitse aika pyörittämällä kellotaulua. " +
+                            "Käynnissä olevan ajastimen aika on lukittu.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        listOf(1, 5, 10).forEach { min ->
+                            OutlinedButton(
+                                onClick = { if (canAdjust) onPreset(min) },
+                                contentPadding = PaddingValues(horizontal = 7.dp)
+                            ) { Text("$min min", fontSize = 12.sp) }
+                        }
                     }
                 }
             }
@@ -87,7 +92,7 @@ internal fun P017LandscapeTimer(
                         seconds = seconds,
                         lastTen = showLastTen && seconds in 1..10,
                         onAdjustMinutes = { minutes ->
-                            if (!running) onPreset(minutes)
+                            if (canAdjust) onPreset(minutes)
                         },
                         modifier = Modifier.size(dialSize)
                     )
@@ -114,8 +119,12 @@ internal fun P017LandscapeTimer(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                IconButton(onClick = onResetClick, modifier = Modifier.size(48.dp)) {
-                    Text("↺", fontSize = 29.sp, color = P017Ink)
+                if (showReset) {
+                    IconButton(onClick = onResetClick, modifier = Modifier.size(48.dp)) {
+                        Text("↺", fontSize = 29.sp, color = P017Ink)
+                    }
+                } else {
+                    CaregiverLockButton()
                 }
                 IconButton(
                     onClick = onStartPause,
@@ -130,8 +139,12 @@ internal fun P017LandscapeTimer(
                         fontSize = 26.sp
                     )
                 }
-                IconButton(onClick = onSettingsClick, modifier = Modifier.size(48.dp)) {
-                    Text("⚙", fontSize = 25.sp, color = P017Ink)
+                if (showSettings) {
+                    IconButton(onClick = onSettingsClick, modifier = Modifier.size(48.dp)) {
+                        Text("⚙", fontSize = 25.sp, color = P017Ink)
+                    }
+                } else {
+                    Spacer(Modifier.size(48.dp))
                 }
             }
         }

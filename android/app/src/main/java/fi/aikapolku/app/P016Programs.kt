@@ -243,6 +243,10 @@ internal fun P016ProgramsScreen() {
     var addCard by remember { mutableStateOf(false) }
     var showFullProgram by rememberSaveable { mutableStateOf(false) }
     var showRunActions by remember { mutableStateOf(false) }
+
+    // P0-21e: ohjaajan lukitus. Käynnistys, tulostus, apu, tauko, Valmis ja ohitus ovat aina vapaita.
+    val caregiver = LocalCaregiver.current
+    val canEditPrograms = caregiver.allows(AppAction.EDIT_PROGRAMS)
     var showExitConfirmation by remember { mutableStateOf(false) }
     var showP021cSettings by remember { mutableStateOf(false) }
     var nextPreviewMode by rememberSaveable {
@@ -251,6 +255,17 @@ internal fun P016ProgramsScreen() {
     val programmeScroll = rememberScrollState()
     var deleteTarget by remember { mutableStateOf<AP16Program?>(null) }
     var timeSettingsOpen by remember { mutableStateOf(false) }
+
+    // Jos lukitus menee päälle, ohjaajan ikkunat suljetaan. Muokkausnäkymä jätetään
+    // tarkoituksella auki, jotta tallentamattomat muutokset eivät katoa.
+    LaunchedEffect(caregiver.isLocked) {
+        if (caregiver.isLocked) {
+            timeSettingsOpen = false
+            showP021cSettings = false
+            showExitConfirmation = false
+            deleteTarget = null
+        }
+    }
     var timeMode by rememberSaveable {
         mutableStateOf(P020TimeDisplay.load(context))
     }
@@ -374,6 +389,11 @@ internal fun P016ProgramsScreen() {
                 fontWeight = FontWeight.Bold
             )
 
+            if (!canEditPrograms) {
+                CaregiverLockButton(label = "Ohjaaja: luo ja muokkaa ohjelmia")
+            }
+
+            if (canEditPrograms) {
             Button(
                 onClick = {
                     draft = AP16Program(
@@ -415,6 +435,7 @@ internal fun P016ProgramsScreen() {
                     }
                 }
             }
+            } // canEditPrograms
 
             if (programs.isEmpty()) {
                 Text(
@@ -458,18 +479,20 @@ internal fun P016ProgramsScreen() {
                             ) {
                                 Text("Käynnistä")
                             }
-                            TextButton(
-                                onClick = {
-                                    draft = program
-                                    view = "edit"
+                            if (canEditPrograms) {
+                                TextButton(
+                                    onClick = {
+                                        draft = program
+                                        view = "edit"
+                                    }
+                                ) {
+                                    Text("Muokkaa")
                                 }
-                            ) {
-                                Text("Muokkaa")
-                            }
-                            TextButton(
-                                onClick = { deleteTarget = program }
-                            ) {
-                                Text("Poista")
+                                TextButton(
+                                    onClick = { deleteTarget = program }
+                                ) {
+                                    Text("Poista")
+                                }
                             }
                         }
                     }
@@ -556,6 +579,8 @@ internal fun P016ProgramsScreen() {
                     store.save(draft.copy(name = draft.name.trim()))
                     programs = store.load()
                     view = "list"
+                    // Kerran: "Käyttääkö tätä laitetta myös joku muu?"
+                    caregiver.offerLockOnce()
                 },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
             ) {
@@ -754,7 +779,7 @@ internal fun P016ProgramsScreen() {
                     }, modifier = Modifier.fillMaxWidth()) {
                         Text(if (current?.subSteps?.isNotEmpty() == true) "Ohita osavaihe" else "Ohita tehtävä")
                     }
-                    if (current?.mode == "duration") {
+                    if (current?.mode == "duration" && caregiver.allows(AppAction.EXTEND_TIME)) {
                         TextButton(onClick = {
                             val left = if (running)
                                 P018Timer.remaining(context, "program", remaining)
@@ -769,23 +794,32 @@ internal fun P016ProgramsScreen() {
                             showRunActions = false
                         }, modifier = Modifier.fillMaxWidth()) { Text("+ 5 min lisäaikaa") }
                     }
-                    TextButton(onClick = {
-                        showRunActions = false
-                        timeSettingsOpen = true
-                    }, modifier = Modifier.fillMaxWidth()) { Text("Ajan näyttötapa") }
-                    TextButton(onClick = {
-                        showRunActions = false
-                        showP021cSettings = true
-                    }, modifier = Modifier.fillMaxWidth()) { Text("Näkymä ja viestiäänet") }
+                    if (caregiver.allows(AppAction.SETTINGS)) {
+                        TextButton(onClick = {
+                            showRunActions = false
+                            timeSettingsOpen = true
+                        }, modifier = Modifier.fillMaxWidth()) { Text("Ajan näyttötapa") }
+                        TextButton(onClick = {
+                            showRunActions = false
+                            showP021cSettings = true
+                        }, modifier = Modifier.fillMaxWidth()) { Text("Näkymä ja viestiäänet") }
+                    }
                     TextButton(onClick = {
                         showRunActions = false
                         showFullProgram = true
                     }, modifier = Modifier.fillMaxWidth()) { Text("Näytä koko ohjelma") }
                     HorizontalDivider()
-                    TextButton(onClick = {
-                        showRunActions = false
-                        showExitConfirmation = true
-                    }, modifier = Modifier.fillMaxWidth()) { Text("Lopeta ohjelma") }
+                    if (caregiver.allows(AppAction.END_PROGRAM)) {
+                        TextButton(onClick = {
+                            showRunActions = false
+                            showExitConfirmation = true
+                        }, modifier = Modifier.fillMaxWidth()) { Text("Lopeta ohjelma") }
+                    } else {
+                        CaregiverLockButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            label = "Ohjaajan toiminnot"
+                        )
+                    }
                 }
             },
             confirmButton = {
