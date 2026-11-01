@@ -13,12 +13,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.cards.CardPhoto
-
-private val ModeTeal = Color(0xFF0F766E)
-
-private val ModeInk = Color(0xFF1F2937)
-
-private val ModeMuted = Color(0xFF526773)
+import fi.aikapolku.app.ui.AppColors
+import fi.aikapolku.app.ui.FlowColors
 
 @Composable
 internal fun FlowModePicker(
@@ -62,7 +58,7 @@ private fun FlowModeChoice(
         shape = RoundedCornerShape(18.dp),
         border = BorderStroke(
             if (selected) 2.dp else 1.dp,
-            if (selected) ModeTeal
+            if (selected) AppColors.Teal
             else Color(0xFFD9E2E3)
         ),
         colors = CardDefaults.cardColors(
@@ -88,13 +84,13 @@ private fun FlowModeChoice(
                     title,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    color = ModeInk
+                    color = AppColors.Ink
                 )
                 Text(
                     description,
                     fontSize = 13.sp,
                     lineHeight = 17.sp,
-                    color = ModeMuted
+                    color = FlowColors.muted
                 )
             }
 
@@ -118,14 +114,14 @@ internal fun ManualFlowScreen(
         "Ilman aikarajaa",
         fontSize = 26.sp,
         fontWeight = FontWeight.Bold,
-        color = ModeInk
+        color = AppColors.Ink
     )
 
     Text(
         "NYT",
         fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
-        color = ModeTeal
+        color = AppColors.Teal
     )
 
     HeroCard(
@@ -162,13 +158,13 @@ internal fun ManualFlowScreen(
                     "SEURAAVAKSI",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = ModeTeal
+                    color = AppColors.Teal
                 )
                 Text(
                     next,
                     fontSize = 19.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = ModeInk
+                    color = AppColors.Ink
                 )
             }
         }
@@ -182,7 +178,7 @@ internal fun ManualFlowScreen(
             .fillMaxWidth()
             .heightIn(min = 60.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = ModeTeal
+            containerColor = AppColors.Teal
         )
     ) {
         Text(

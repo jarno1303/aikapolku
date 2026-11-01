@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.data.TimeDisplayPrefs
+import fi.aikapolku.app.ui.AppColors
 
 /** Same options are available in both the timer and the daily routine. */
 @Composable
@@ -53,8 +54,8 @@ internal fun TimeVisual(
     modifier: Modifier = Modifier
 ) {
     val done = remaining <= 0L
-    val teal = Color(0xFF0F766E)
-    val coral = Color(0xFFC2413A)
+    val teal = AppColors.Teal
+    val coral = AppColors.Coral
     val color = if (done) teal else coral
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {

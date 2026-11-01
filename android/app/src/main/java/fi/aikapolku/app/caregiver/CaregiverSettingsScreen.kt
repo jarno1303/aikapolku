@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.MainActivity
+import fi.aikapolku.app.ui.AppColors
 
 /** Ohjaajan asetukset -sivu. Sivulle pääsee vain ohjaajana (ks. MainActivity). */
 @Composable
@@ -47,7 +48,7 @@ internal fun CaregiverSettingsScreen() {
             Text(
                 if (caregiver.lockEnabled) "Tila: käytössä" else "Tila: ei käytössä",
                 fontWeight = FontWeight.SemiBold,
-                color = LockTeal
+                color = AppColors.Teal
             )
             Text(
                 "Lukitus piilottaa PIN-koodin taakse ajan muuttamisen, ajastimen tauon ja nollauksen, " +

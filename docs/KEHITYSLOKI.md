@@ -208,3 +208,11 @@
 - 4 Tallenna: esikatselu ja nimiehdotus.
 - Vanhat ohjelmat toimivat ennallaan; uudet testit (ProgramTimingTest, tallennus).
 - Puhelintesti odottaa hyväksyntää.
+
+## Siivous – rakenne, kuollut koodi ja optimointi
+- Kuollut koodi poistettu: vanhat ajastimet (P011/P012), MainActivityn vanhat näkymät, käyttämättömät korttinäkymät ja mallipohjan värit (~2 700 riviä).
+- Koodi jaettu alipaketteihin (data, timer, programs, programs.editor, programs.run, firstthen, cards, caregiver, voice, ui); tiedostot ja luokat nimetty sisällön mukaan (esim. P018Timer → BackgroundTimer, AP16Store → ProgramStore).
+- Päiväohjelmanäkymästä erotettu lista, valmis-näkymä ja Lisää-valikko omiksi osikseen.
+- Yhteiset värit yhteen paikkaan (AppColors); kaksi äänittäjää ja kaksi kuvan kopiointia yhdistetty.
+- Kuvat puretaan taustasäikeessä ja säilytetään välimuistissa (sujuvampi kuvaruudukko ja suoritusnäkymä).
+- Tallennetut tiedot, asetukset ja ulkoasu ennallaan. Puhelintesti odottaa hyväksyntää.

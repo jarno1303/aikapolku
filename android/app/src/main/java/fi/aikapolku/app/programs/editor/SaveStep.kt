@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramTiming
+import fi.aikapolku.app.ui.AppColors
 
 @Composable
 internal fun SavePage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
@@ -43,7 +44,7 @@ internal fun SavePage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
             ProgramTiming.DURATION -> "Kestot · jokaisella toiminnolla oma ajastin"
             else -> "Omaan tahtiin · ei aikoja"
         }
-        Text(summary, fontSize = 14.sp, color = edMuted)
+        Text(summary, fontSize = 14.sp, color = AppColors.Muted)
 
         val slots = if (draft.timeMode == ProgramTiming.CLOCK)
             ProgramTiming.schedule(draft.startClock, draft.steps) else emptyList()
@@ -71,7 +72,7 @@ internal fun SavePage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                         label,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = edTeal,
+                        color = AppColors.Teal,
                         modifier = Modifier.width(62.dp)
                     )
                 }
@@ -79,7 +80,7 @@ internal fun SavePage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("${index + 1}. ${step.name}", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     if (step.subSteps.isNotEmpty()) {
-                        Text("${step.subSteps.size} osavaihetta", fontSize = 12.sp, color = edMuted)
+                        Text("${step.subSteps.size} osavaihetta", fontSize = 12.sp, color = AppColors.Muted)
                     }
                 }
             }

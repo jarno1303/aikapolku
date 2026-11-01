@@ -1,10 +1,7 @@
 package fi.aikapolku.app.programs
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
-import android.media.MediaRecorder
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -21,67 +18,7 @@ import androidx.core.content.ContextCompat
 import fi.aikapolku.app.data.RunPreferences
 import fi.aikapolku.app.voice.VoicePickerDialog
 import fi.aikapolku.app.voice.VoicePlayer
-import java.io.File
-import java.util.UUID
-
-/** Does not modify the card recorder. Files stay within the app's private directory. */
-private class SupportMessageRecorder(private val context: Context) {
-    private var recorder: MediaRecorder? = null
-    private var file: File? = null
-
-    fun start() {
-        cancel()
-        val dir = File(context.filesDir, "voice_messages")
-        check(dir.exists() || dir.mkdirs()) { "Tallennuskansiota ei voitu luoda" }
-        val output = File(dir, "support_${UUID.randomUUID()}.m4a")
-        @Suppress("DEPRECATION")
-        val next = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(context) else MediaRecorder()
-        try {
-            next.setAudioSource(MediaRecorder.AudioSource.MIC)
-            next.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            next.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            next.setAudioSamplingRate(22050)
-            next.setAudioEncodingBitRate(64000)
-            next.setOutputFile(output.absolutePath)
-            next.prepare()
-            next.start()
-            recorder = next
-            file = output
-        } catch (e: Exception) {
-            runCatching { next.reset() }
-            runCatching { next.release() }
-            output.delete()
-            throw e
-        }
-    }
-
-    fun finish(): String {
-        val current = recorder ?: error("Äänitys ei ole käynnissä")
-        val output = file ?: error("Tallennetiedosto puuttuu")
-        recorder = null
-        file = null
-        return try {
-            current.stop()
-            check(output.length() > 0L) { "Äänitallenne on tyhjä" }
-            output.absolutePath
-        } catch (e: Exception) {
-            output.delete()
-            throw e
-        } finally {
-            runCatching { current.release() }
-        }
-    }
-
-    fun cancel() {
-        recorder?.let { current ->
-            runCatching { current.stop() }
-            runCatching { current.release() }
-        }
-        recorder = null
-        file?.delete()
-        file = null
-    }
-}
+import fi.aikapolku.app.voice.VoiceRecorder
 
 @Composable
 internal fun RunSettingsDialog(
@@ -90,7 +27,7 @@ internal fun RunSettingsDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val recorder = remember(context) { SupportMessageRecorder(context.applicationContext) }
+    val recorder = remember(context) { VoiceRecorder(context.applicationContext, "support") }
     var recordingKind by remember { mutableStateOf<String?>(null) }
     var pendingKind by remember { mutableStateOf<String?>(null) }
     var message by remember { mutableStateOf("") }

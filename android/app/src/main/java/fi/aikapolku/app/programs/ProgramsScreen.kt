@@ -55,14 +55,15 @@ internal fun ProgramsScreen() {
         context.getSharedPreferences("aikapolku_program_progress_v1", Context.MODE_PRIVATE)
     }
     val storedProgramId = remember { p018Prefs.getString("program_id", "") ?: "" }
-    var programs by remember { mutableStateOf(store.load()) }
+    val initialPrograms = remember(store) { store.load() }
+    var programs by remember { mutableStateOf(initialPrograms) }
     var view by rememberSaveable {
         mutableStateOf(if (storedProgramId.isNotBlank()) "run" else "list")
     }
 
     var draft by rememberSaveable(stateSaver = programDraftSaver) {
         mutableStateOf(
-            store.load().firstOrNull { it.id == storedProgramId }
+            initialPrograms.firstOrNull { it.id == storedProgramId }
                 ?: DayProgram(UUID.randomUUID().toString(), "", emptyList())
         )
     }

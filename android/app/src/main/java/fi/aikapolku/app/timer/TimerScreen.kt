@@ -27,6 +27,7 @@ import fi.aikapolku.app.caregiver.CaregiverLockButton
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.data.TimeDisplayPrefs
 import fi.aikapolku.app.firstthen.CompletedCard
+import fi.aikapolku.app.ui.AppColors
 import java.util.Locale
 import kotlinx.coroutines.launch
 
@@ -123,7 +124,7 @@ internal fun TimerScreen(
                 .fillMaxWidth()
                 .heightIn(min = 56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = DialTeal
+                containerColor = AppColors.Teal
             )
         ) {
             Text(
@@ -153,7 +154,7 @@ internal fun TimerScreen(
                 "Ajastin",
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
-                color = DialInk
+                color = AppColors.Ink
             )
 
             // Pikavalinnat poistettu (puhelintesti 1.11.2026): aika valitaan kellotaulua
@@ -215,7 +216,7 @@ internal fun TimerScreen(
                             modifier = Modifier.padding(horizontal = 15.dp, vertical = 5.dp),
                             fontSize = 35.sp,
                             fontWeight = FontWeight.Bold,
-                            color = DialInk,
+                            color = AppColors.Ink,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -240,7 +241,7 @@ internal fun TimerScreen(
                         Text(
                             "↺",
                             fontSize = 32.sp,
-                            color = DialInk
+                            color = AppColors.Ink
                         )
                     }
                     Text(
@@ -257,7 +258,7 @@ internal fun TimerScreen(
                 modifier = Modifier
                     .size(72.dp)
                     .clip(CircleShape)
-                    .background(DialInk)
+                    .background(AppColors.Ink)
             ) {
                 Text(
                     when {
@@ -282,7 +283,7 @@ internal fun TimerScreen(
                         Text(
                             "⚙",
                             fontSize = 25.sp,
-                            color = DialInk
+                            color = AppColors.Ink
                         )
                     }
                     Text(
@@ -457,7 +458,7 @@ private fun TimerTaskCard(
             Surface(
                 shape = RoundedCornerShape(50.dp),
                 color = if (label == "ENSIN")
-                    DialTeal else Color(0xFFE7F5F1)
+                    AppColors.Teal else Color(0xFFE7F5F1)
             ) {
                 Text(
                     label,
@@ -468,7 +469,7 @@ private fun TimerTaskCard(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (label == "ENSIN")
-                        Color.White else DialTeal
+                        Color.White else AppColors.Teal
                 )
             }
 
@@ -484,7 +485,7 @@ private fun TimerTaskCard(
             Text(
                 name,
                 modifier = Modifier.fillMaxWidth(),
-                color = DialInk,
+                color = AppColors.Ink,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,

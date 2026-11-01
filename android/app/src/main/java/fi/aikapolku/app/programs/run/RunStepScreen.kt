@@ -1,6 +1,5 @@
 package fi.aikapolku.app.programs.run
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -33,8 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -43,19 +40,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.cards.CardPhoto
+import fi.aikapolku.app.cards.ResourceImage
 import fi.aikapolku.app.cards.SubstepArt
 import fi.aikapolku.app.data.RunPreferences
+import fi.aikapolku.app.ui.AppColors
 
 internal object RunColors {
-    val background = Color(0xFFF8FAFC)
+    val background = AppColors.Background
     val card = Color(0xFFFFFFFF)
-    val ink = Color(0xFF1F2937)
-    val secondary = Color(0xFF475569)
-    val border = Color(0xFFCBD5E1)
+    val ink = AppColors.Ink
+    val secondary = AppColors.Muted
+    val border = AppColors.Border
     val dotOutline = Color(0xFF94A3B8)
-    val teal = Color(0xFF0F766E)
+    val teal = AppColors.Teal
     val tealSoft = Color(0xFF5FA8A0)
-    val timer = Color(0xFFC2413A)
+    val timer = AppColors.Coral
     val timerTrack = Color(0xFFF1D9D6)
     val nextSurface = Color(0xFFEEF2F6)
 }
@@ -351,12 +350,7 @@ private fun RunNextRow(next: RunNext, mode: String) {
 internal fun RunImage(taskName: String, taskPhoto: String, subStepName: String?, modifier: Modifier) {
     val subStepImage = subStepName?.let { SubstepArt.imageRes(it) }
     if (subStepImage != null) {
-        Image(
-            painter = painterResource(subStepImage),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = modifier
-        )
+        ResourceImage(subStepImage, modifier)
     } else {
         CardPhoto(taskName, taskPhoto, modifier)
     }

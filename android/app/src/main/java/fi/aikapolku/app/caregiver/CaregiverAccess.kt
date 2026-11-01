@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.ui.AppColors
 import kotlinx.coroutines.delay
 
 /**
@@ -83,8 +84,6 @@ internal val LocalCaregiver = compositionLocalOf {
         deviceSecure = true
     )
 }
-
-internal val LockTeal = Color(0xFF0F766E)
 
 @Suppress("DEPRECATION") // createConfirmDeviceCredentialIntent: ei vaadi lisäriippuvuuksia.
 @OptIn(ExperimentalLayoutApi::class)
@@ -313,6 +312,6 @@ internal fun CaregiverLockButton(
             .semantics { contentDescription = "Ohjaajan toiminnot, lukittu. Avaa PIN-koodilla." },
         contentPadding = if (iconOnly) PaddingValues(4.dp) else ButtonDefaults.TextButtonContentPadding
     ) {
-        Text(if (iconOnly) "🔒" else "🔒 $label", color = LockTeal, fontSize = if (iconOnly) 20.sp else 14.sp)
+        Text(if (iconOnly) "🔒" else "🔒 $label", color = AppColors.Teal, fontSize = if (iconOnly) 20.sp else 14.sp)
     }
 }

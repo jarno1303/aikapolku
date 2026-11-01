@@ -25,6 +25,7 @@ import fi.aikapolku.app.programs.ProgramsScreen
 import fi.aikapolku.app.timer.BackgroundTimer
 import fi.aikapolku.app.timer.TimerScreen
 import fi.aikapolku.app.timer.playCompletionSound
+import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.voice.VoicePlayer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -173,11 +174,11 @@ internal fun AikaPolkuApp() {
     LaunchedEffect(page) { rootScroll.scrollTo(0) }
 
     Scaffold(
-        containerColor = Background,
+        containerColor = AppColors.Background,
         topBar = {
             if (page != "home") {
                 // Tilarivin alapuolella; teksti tasattu sisällön ja otsikoiden reunaan (12 dp).
-                Surface(color = Background) {
+                Surface(color = AppColors.Background) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -191,7 +192,7 @@ internal fun AikaPolkuApp() {
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                             modifier = Modifier.heightIn(min = 48.dp)
                         ) {
-                            Text("‹ Takaisin", color = Teal, fontSize = 17.sp)
+                            Text("‹ Takaisin", color = AppColors.Teal, fontSize = 17.sp)
                         }
                     }
                 }

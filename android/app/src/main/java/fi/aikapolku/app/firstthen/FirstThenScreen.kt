@@ -1,7 +1,5 @@
 package fi.aikapolku.app.firstthen
 
-import android.content.Context
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,7 +13,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -31,11 +28,8 @@ import fi.aikapolku.app.caregiver.CaregiverSession
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.data.CardItem
 import fi.aikapolku.app.data.CardStore
-import java.io.File
-
-private val CardTeal = Color(0xFF0F766E)
-
-private val CardInk = Color(0xFF1F2937)
+import fi.aikapolku.app.data.importCardPhoto
+import fi.aikapolku.app.ui.AppColors
 
 private val choices = CardArt.names
 
@@ -91,7 +85,7 @@ internal fun FirstThenScreen(
     ) { uri ->
         if (uri != null) {
             try {
-                val path = copyCardPhoto(context, uri)
+                val path = importCardPhoto(context, uri)
                 if (photoTarget == "first") {
                     onFirstPhoto(path)
                 } else {
@@ -125,7 +119,7 @@ internal fun FirstThenScreen(
                     contentDescription = "Korttien käyttöohje"
                 }
         ) {
-            Text("ⓘ", fontSize = 26.sp, color = CardTeal)
+            Text("ⓘ", fontSize = 26.sp, color = AppColors.Teal)
         }
     }
 
@@ -185,7 +179,7 @@ internal fun FirstThenScreen(
         "Miten haluat edetä?",
         fontSize = 19.sp,
         fontWeight = FontWeight.SemiBold,
-        color = CardInk
+        color = AppColors.Ink
     )
 
     FlowModePicker(
@@ -211,7 +205,7 @@ internal fun FirstThenScreen(
             .fillMaxWidth()
             .heightIn(min = 56.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = CardTeal
+            containerColor = AppColors.Teal
         )
     ) {
         Text(
@@ -338,7 +332,7 @@ internal fun FirstThenScreen(
                                     modifier = Modifier.size(48.dp)
                                         .clip(RoundedCornerShape(12.dp))
                                 )
-                                Text(name, fontSize = 16.sp, color = CardInk)
+                                Text(name, fontSize = 16.sp, color = AppColors.Ink)
                             }
                         }
                     }
@@ -377,7 +371,7 @@ internal fun FirstThenScreen(
     if (libraryNotice.isNotBlank()) {
         Text(
             libraryNotice,
-            color = CardTeal,
+            color = AppColors.Teal,
             fontSize = 13.sp
         )
     }
@@ -429,30 +423,3 @@ internal fun FirstThenScreen(
     }
 }
 
-private fun copyCardPhoto(context: Context, uri: Uri): String {
-    val directory = File(context.filesDir, "activity_images")
-    if (!directory.exists() && !directory.mkdirs()) {
-        error("Kuvakansiota ei voitu luoda")
-    }
-
-    val destination = File.createTempFile(
-        "aikapolku_",
-        ".image",
-        directory
-    )
-
-    try {
-        val input = context.contentResolver.openInputStream(uri)
-            ?: error("Kuvaa ei voitu avata")
-
-        input.use { source ->
-            destination.outputStream().use { output ->
-                source.copyTo(output)
-            }
-        }
-        return destination.absolutePath
-    } catch (e: Exception) {
-        destination.delete()
-        throw e
-    }
-}

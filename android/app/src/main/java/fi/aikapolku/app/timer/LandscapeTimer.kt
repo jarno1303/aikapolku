@@ -17,11 +17,10 @@ import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.caregiver.CaregiverLockButton
 import fi.aikapolku.app.data.TimeDisplayPrefs
+import fi.aikapolku.app.ui.AppColors
 import java.util.Locale
 
 private val LandscapeInk = Color(0xFF24282B)
-
-private val LandscapeTeal = Color(0xFF0F766E)
 
 /** On landscape the clock is placed at the top right, not after the picture cards. */
 @Composable
@@ -176,7 +175,7 @@ private fun LandscapeActivityCard(label: String, name: String, imagePath: String
                     label,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = LandscapeTeal
+                    color = AppColors.Teal
                 )
                 Text(
                     name,

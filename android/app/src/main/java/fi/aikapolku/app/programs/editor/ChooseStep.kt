@@ -27,6 +27,7 @@ import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.CardItem
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramStep
+import fi.aikapolku.app.ui.AppColors
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -47,7 +48,7 @@ internal fun ChoosePage(
         Text(
             "Uusi napautus poistaa. Pidä painettuna, jos sama toiminto tulee päivään useamman kerran.",
             fontSize = 13.sp,
-            color = edMuted
+            color = AppColors.Muted
         )
 
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
@@ -58,7 +59,7 @@ internal fun ChoosePage(
                     category,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = edMuted,
+                    color = AppColors.Muted,
                     modifier = Modifier.padding(top = 6.dp)
                 )
                 group.chunked(columns).forEach { row ->
@@ -106,8 +107,8 @@ private fun CardTile(
     val selected = positions.isNotEmpty()
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = if (selected) edTealSoft else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(if (selected) 3.dp else 1.dp, if (selected) edTeal else Color(0xFFCBD5E1)),
+        color = if (selected) AppColors.TealSoft else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(if (selected) 3.dp else 1.dp, if (selected) AppColors.Teal else Color(0xFFCBD5E1)),
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .combinedClickable(
@@ -139,7 +140,7 @@ private fun CardTile(
                             .padding(4.dp)
                             .defaultMinSize(minWidth = 28.dp, minHeight = 28.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(edTeal)
+                            .background(AppColors.Teal)
                             .padding(horizontal = 6.dp)
                     ) {
                         Text(
@@ -175,7 +176,7 @@ internal fun SelectedStrip(steps: List<ProgramStep>) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         steps.forEachIndexed { index, step ->
-            if (index > 0) Text("›", color = edMuted, fontSize = 16.sp)
+            if (index > 0) Text("›", color = AppColors.Muted, fontSize = 16.sp)
             Box {
                 CardPhoto(step.name, step.photo, Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)))
                 Text(
@@ -186,7 +187,7 @@ internal fun SelectedStrip(steps: List<ProgramStep>) {
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .clip(RoundedCornerShape(topEnd = 8.dp))
-                        .background(edTeal)
+                        .background(AppColors.Teal)
                         .padding(horizontal = 5.dp)
                 )
             }

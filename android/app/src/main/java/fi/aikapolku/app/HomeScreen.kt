@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.LocalCaregiver
+import fi.aikapolku.app.ui.AppColors
 
 @Composable
 internal fun HomeScreen(open: (String) -> Unit) {
@@ -32,14 +33,14 @@ internal fun HomeScreen(open: (String) -> Unit) {
             modifier = Modifier.size(66.dp).clip(RoundedCornerShape(17.dp))
         )
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text("AikaPolku", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Ink)
-            Text("Selkeyttä arkeen, askel kerrallaan", fontSize = 14.sp, color = Secondary)
+            Text("AikaPolku", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink)
+            Text("Selkeyttä arkeen, askel kerrallaan", fontSize = 14.sp, color = AppColors.Muted)
         }
     }
 
     Spacer(Modifier.height(18.dp))
     Text("Mitä haluat tehdä?", fontSize = 22.sp,
-        fontWeight = FontWeight.Bold, color = Ink)
+        fontWeight = FontWeight.Bold, color = AppColors.Ink)
     Spacer(Modifier.height(6.dp))
 
     HomeCard(
@@ -68,7 +69,7 @@ internal fun HomeScreen(open: (String) -> Unit) {
     ) {
         Text(
             if (caregiver.isLocked) "🔒 Ohjaajan asetukset" else "⚙ Ohjaajan asetukset",
-            color = Teal,
+            color = AppColors.Teal,
             fontSize = 15.sp
         )
     }
@@ -125,10 +126,10 @@ private fun HomeCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Ink)
-                Text(subtitle, fontSize = 14.sp, color = Secondary)
+                Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink)
+                Text(subtitle, fontSize = 14.sp, color = AppColors.Muted)
             }
-            Text("›", fontSize = 28.sp, color = Teal)
+            Text("›", fontSize = 28.sp, color = AppColors.Teal)
         }
     }
 }

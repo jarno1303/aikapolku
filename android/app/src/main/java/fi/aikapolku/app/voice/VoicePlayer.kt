@@ -3,13 +3,10 @@ package fi.aikapolku.app.voice
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.media.MediaRecorder
-import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import java.io.File
-import java.util.UUID
 
 /** Audio files remain on the device, in application-private storage. */
 internal object VoicePlayer {
@@ -139,61 +136,3 @@ internal object VoicePlayer {
     }
 }
 
-internal class CardVoiceRecorder(private val context: Context) {
-    private var recorder: MediaRecorder? = null
-    private var output: File? = null
-
-    fun start() {
-        cancel()
-        val folder = File(context.filesDir, "voice_messages")
-        if (!folder.exists() && !folder.mkdirs()) error("Äänikansiota ei voitu luoda")
-        val file = File(folder, "voice_${UUID.randomUUID()}.m4a")
-        @Suppress("DEPRECATION")
-        val r = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(context) else MediaRecorder()
-        try {
-            r.setAudioSource(MediaRecorder.AudioSource.MIC)
-            r.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            r.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            r.setAudioSamplingRate(22050)
-            r.setAudioEncodingBitRate(64000)
-            r.setOutputFile(file.absolutePath)
-            r.prepare()
-            r.start()
-            recorder = r
-            output = file
-        } catch (e: Exception) {
-            runCatching { r.reset() }
-            r.release()
-            file.delete()
-            throw e
-        }
-    }
-
-    fun finish(): String {
-        val r = recorder ?: error("Tallennus ei ole käynnissä")
-        val file = output ?: error("Tallennustiedosto puuttuu")
-        recorder = null
-        output = null
-        try {
-            r.stop()
-            if (file.length() <= 0L) error("Äänitallenne on tyhjä")
-            return file.absolutePath
-        } catch (e: Exception) {
-            file.delete()
-            throw e
-        } finally {
-            r.release()
-        }
-    }
-
-    fun cancel() {
-        val r = recorder
-        recorder = null
-        if (r != null) {
-            runCatching { r.stop() }
-            runCatching { r.release() }
-        }
-        output?.delete()
-        output = null
-    }
-}

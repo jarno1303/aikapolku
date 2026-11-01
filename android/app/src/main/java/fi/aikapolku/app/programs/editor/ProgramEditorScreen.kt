@@ -29,13 +29,8 @@ import fi.aikapolku.app.data.ProgramStep
 import fi.aikapolku.app.data.ProgramTiming
 import fi.aikapolku.app.data.SubstepDefaults
 import fi.aikapolku.app.data.serializeDraft
+import fi.aikapolku.app.ui.AppColors
 import java.util.UUID
-
-internal val edTeal = Color(0xFF0F766E)
-
-internal val edTealSoft = Color(0xFFE6F4F1)
-
-internal val edMuted = Color(0xFF475569)
 
 private val pageTitles = listOf("Valitse", "Järjestä", "Ajat", "Tallenna")
 
@@ -148,7 +143,7 @@ internal fun ProgramEditorScreen(
                     Button(
                         onClick = { goTo(page + 1) },
                         enabled = draft.steps.isNotEmpty(),
-                        colors = ButtonDefaults.buttonColors(containerColor = edTeal),
+                        colors = ButtonDefaults.buttonColors(containerColor = AppColors.Teal),
                         modifier = Modifier.weight(1f).heightIn(min = 56.dp)
                     ) {
                         Text(
@@ -161,7 +156,7 @@ internal fun ProgramEditorScreen(
                     Button(
                         onClick = { onSave(draft) },
                         enabled = draft.name.isNotBlank() && draft.steps.isNotEmpty(),
-                        colors = ButtonDefaults.buttonColors(containerColor = edTeal),
+                        colors = ButtonDefaults.buttonColors(containerColor = AppColors.Teal),
                         modifier = Modifier.weight(1f).heightIn(min = 56.dp)
                     ) { Text("Tallenna", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
                 }
@@ -210,11 +205,11 @@ private fun EditorProgress(page: Int, canJump: Boolean, onSelect: (Int) -> Unit)
                     modifier = Modifier
                         .size(28.dp)
                         .clip(CircleShape)
-                        .background(if (active || done) edTeal else Color(0xFFE2E8F0))
+                        .background(if (active || done) AppColors.Teal else Color(0xFFE2E8F0))
                 ) {
                     Text(
                         if (done) "✓" else "${index + 1}",
-                        color = if (active || done) Color.White else edMuted,
+                        color = if (active || done) Color.White else AppColors.Muted,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )
@@ -223,7 +218,7 @@ private fun EditorProgress(page: Int, canJump: Boolean, onSelect: (Int) -> Unit)
                     title,
                     fontSize = 13.sp,
                     fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
-                    color = if (active) edTeal else edMuted,
+                    color = if (active) AppColors.Teal else AppColors.Muted,
                     maxLines = 1
                 )
             }

@@ -377,6 +377,7 @@ Uusi ohjelma avautuu vaiheeseen 1, valmis pohja ja muokattava ohjelma vaiheeseen
 | 1.11.2026 | Puhelintesti (suuri fontti): suoritusnäkymä mahtuu aina ruudulle pystytilassa, apu-/taukopainikkeissa kuvake tekstin yllä; Ensin–Sittenin lukko kuvakkeeksi ja Muokkaa piiloon lukittuna. |
 | 1.11.2026 | Kuvasarja valmis (31 kuvaa), apupyyntö saa kuvan. |
 | 1.11.2026 | P0-23: päiväohjelman luonti vaiheittain (Valitse, Järjestä, Ajat, Tallenna). Aikatapa koko ohjelmalle; kellonaikatilassa myös kiinteät ajat (käyttäjien tarpeet vaihtelevat, molemmat tuetaan). |
+| 1.11.2026 | Siivousvaihe: kuollut koodi pois, koodi alipaketteihin ja sisällön mukaiset nimet, yhteiset värit, kuvien taustalataus ja välimuisti. Tallennusmuoto ja ulkoasu ennallaan. |
 
 ---
 

@@ -20,6 +20,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.ui.AppColors
 import kotlin.math.atan2
 import kotlin.math.ceil
 import kotlin.math.cos
@@ -27,11 +28,7 @@ import kotlin.math.sin
 
 private val DialRed = Color(0xFFF07868)
 
-internal val DialInk = Color(0xFF1F2937)
-
 internal val DialMuted = Color(0xFF64717A)
-
-internal val DialTeal = Color(0xFF0F766E)
 
 @Composable
 internal fun ClockDial(
@@ -167,7 +164,7 @@ internal fun ClockDial(
                 )
 
                 drawLine(
-                    color = if (major) DialInk
+                    color = if (major) AppColors.Ink
                         else Color(0xFFADB4B6),
                     start = markStart,
                     end = markEnd,
@@ -207,7 +204,7 @@ internal fun ClockDial(
                     "SEKUNTIA",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = DialInk
+                    color = AppColors.Ink
                 )
             }
         }

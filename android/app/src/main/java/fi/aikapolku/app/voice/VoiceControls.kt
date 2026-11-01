@@ -20,7 +20,7 @@ internal fun VoiceControls(
     onAutoPlayChange: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
-    val recorder = remember(context) { CardVoiceRecorder(context.applicationContext) }
+    val recorder = remember(context) { VoiceRecorder(context.applicationContext, "voice") }
     var recording by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
 

@@ -24,6 +24,7 @@ import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramStep
 import fi.aikapolku.app.data.ProgramTiming
+import fi.aikapolku.app.ui.AppColors
 
 @Composable
 internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
@@ -139,7 +140,7 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                         "Päättyy noin klo ${ProgramTiming.format(end)}",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = edMuted
+                        color = AppColors.Muted
                     )
                 }
             }
@@ -154,8 +155,8 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
 private fun ModeOption(selected: Boolean, title: String, description: String, onSelect: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = if (selected) edTealSoft else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) edTeal else Color(0xFFCBD5E1)),
+        color = if (selected) AppColors.TealSoft else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) AppColors.Teal else Color(0xFFCBD5E1)),
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
@@ -169,7 +170,7 @@ private fun ModeOption(selected: Boolean, title: String, description: String, on
             Spacer(Modifier.width(8.dp))
             Column {
                 Text(title, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                Text(description, fontSize = 13.sp, color = edMuted)
+                Text(description, fontSize = 13.sp, color = AppColors.Muted)
             }
         }
     }
@@ -194,7 +195,7 @@ private fun StepHeader(step: ProgramStep, timeLabel: String?) {
                 timeLabel,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = edTeal,
+                color = AppColors.Teal,
                 modifier = Modifier.widthIn(min = 64.dp)
             )
         }

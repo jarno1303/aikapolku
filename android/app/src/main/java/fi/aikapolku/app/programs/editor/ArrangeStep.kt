@@ -27,6 +27,7 @@ import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramStep
 import fi.aikapolku.app.programs.SubstepEditor
+import fi.aikapolku.app.ui.AppColors
 import kotlinx.coroutines.delay
 
 @Composable
@@ -87,7 +88,7 @@ internal fun ArrangePage(
         Text(
             "Vedä ≡-kahvasta muuttaaksesi järjestystä.",
             fontSize = 14.sp,
-            color = edMuted
+            color = AppColors.Muted
         )
 
         undo?.let { (index, step) ->
@@ -121,7 +122,7 @@ internal fun ArrangePage(
                     shape = RoundedCornerShape(18.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = if (dragging) 8.dp else 1.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (dragging) edTealSoft else MaterialTheme.colorScheme.surface
+                        containerColor = if (dragging) AppColors.TealSoft else MaterialTheme.colorScheme.surface
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -164,12 +165,12 @@ internal fun ArrangePage(
                                     }
                                     .semantics { contentDescription = "Siirrä: ${step.name}" }
                             ) {
-                                Text("≡", fontSize = 26.sp, color = edMuted)
+                                Text("≡", fontSize = 26.sp, color = AppColors.Muted)
                             }
                             Text(
                                 "${index + 1}.",
                                 fontWeight = FontWeight.Bold,
-                                color = edTeal,
+                                color = AppColors.Teal,
                                 fontSize = 17.sp,
                                 modifier = Modifier.width(30.dp)
                             )
@@ -192,7 +193,7 @@ internal fun ArrangePage(
                                     }
                                 },
                                 modifier = Modifier.semantics { contentDescription = "Poista ${step.name}" }
-                            ) { Text("✕", fontSize = 20.sp, color = edMuted) }
+                            ) { Text("✕", fontSize = 20.sp, color = AppColors.Muted) }
                         }
                         Box(modifier = Modifier.padding(start = 48.dp, end = 8.dp)) {
                             SubstepEditor(
