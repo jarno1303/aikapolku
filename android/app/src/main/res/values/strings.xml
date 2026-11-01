@@ -355,8 +355,8 @@
     <string name="vaihda_pin_koodi">Vaihda PIN-koodi</string>
     <string name="vaihe">Vaihe %1$s / %2$s</string>
     <string name="vain_rengas">Vain rengas</string>
-    <string name="valitse_aika_pyorittamalla_kellotaulua">Valitse aika pyörittämällä kellotaulua</string>
-    <string name="valitse_aika_vetamalla_kellotaulua_kaynnissa">Valitse aika vetämällä kellotaulua. Käynnissä olevan ajastimen aika on lukittu.</string>
+    <string name="valitse_aika_pyorittamalla_kellotaulua">Valitse aika napauttamalla tai pyörittämällä kellotaulua</string>
+    <string name="valitse_aika_vetamalla_kellotaulua_kaynnissa">Valitse aika napauttamalla tai vetämällä kellotaulua. Käynnissä olevan ajastimen aika on lukittu.</string>
     <string name="valitse_ja_kuuntele_haluamasi_suomenkielinen">Valitse ja kuuntele haluamasi suomenkielinen ääni.</string>
     <string name="valitse_ja_kuuntele_puheaani">Valitse ja kuuntele puheääni</string>
     <string name="valitse_laitteella_kaytettavissa_oleva_aani">Valitse laitteella käytettävissä oleva ääni kuuntelemalla. Oma tallenne toimii myös ilman puhemoottoria.</string>

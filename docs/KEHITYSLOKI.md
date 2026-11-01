@@ -226,3 +226,8 @@
 - Tilaluokat: ProgramRunController (päiväohjelman suoritus), FirstThenCards ja FlowTimer (Ensin–Sitten ja ajastin).
 - Uudet testit: suorituksen säännöt (15), Ensin–Sitten-kulku (8), käyttöliittymätestit (3), käännösten tunnistus.
 - Puhelintesti odottaa hyväksyntää.
+
+## Kellotaulun napautus
+- Napautus kellotaululla asettaa ajan lähimpään 5 minuuttiin (esim. 45 kohdalle = 45 min); veto säätää minuutin tarkkuudella.
+- Samat lukitussäännöt kuin vedolla: vain pysäytettynä ja ohjaajan sallimana. 4 uutta testiä.
+- Korjaus (puhelintesti): kortin ja osavaiheen kuva vaihtuu heti samassa näkymässä.

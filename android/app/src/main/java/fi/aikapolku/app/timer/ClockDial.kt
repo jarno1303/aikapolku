@@ -4,6 +4,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -45,6 +46,12 @@ internal fun ClockDial(
     Box(
         modifier = modifier
             .clip(CircleShape)
+            // Napautus asettaa ajan lähimpään 5 minuuttiin; veto siirtää minuutin tarkkuudella.
+            .pointerInput(Unit) {
+                detectTapGestures { position ->
+                    currentAdjust(dialTapMinute(position, size.width, size.height))
+                }
+            }
             .pointerInput(Unit) {
                 var previousMinute = -1
 
@@ -213,23 +220,35 @@ internal fun ClockDial(
     }
 }
 
+/** Kosketuskohdan asema kellotaululla minuutteina 0.0–60.0 (ylhäältä vastapäivään). */
+private fun dialPosition(position: Offset, width: Int, height: Int): Double {
+    val dx = position.x - width / 2f
+    val dy = position.y - height / 2f
+    val angle = Math.toDegrees(atan2(dy.toDouble(), dx.toDouble()))
+    val counterClockwise = ((270.0 - angle) % 360.0 + 360.0) % 360.0
+    return counterClockwise / 6.0
+}
+
+/** Veto: minuutin tarkkuus. */
 internal fun dialMinuteFromPoint(
     position: Offset,
     width: Int,
     height: Int
 ): Int {
-    val dx = position.x - width / 2f
-    val dy = position.y - height / 2f
-
-    val angle = Math.toDegrees(
-        atan2(dy.toDouble(), dx.toDouble())
-    )
-
-    val counterClockwise =
-        ((270.0 - angle) % 360.0 + 360.0) % 360.0
-
-    val minute = ceil(counterClockwise / 6.0).toInt()
-
+    val minute = ceil(dialPosition(position, width, height)).toInt()
     return if (minute == 0) 60
     else minute.coerceIn(1, 60)
+}
+
+/**
+ * Napautus: lähin 5 minuuttia, koska sormella on vaikea osua tarkasti.
+ * Esim. napautus 45 kohdalle = 45 min; ylin kohta = 60 min.
+ */
+internal fun dialTapMinute(
+    position: Offset,
+    width: Int,
+    height: Int
+): Int {
+    val rounded = (Math.round(dialPosition(position, width, height) / 5.0) * 5).toInt()
+    return if (rounded == 0) 60 else rounded.coerceIn(5, 60)
 }

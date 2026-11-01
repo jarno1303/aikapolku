@@ -2,6 +2,9 @@ package fi.aikapolku.app
 
 import androidx.compose.ui.geometry.Offset
 import fi.aikapolku.app.timer.dialMinuteFromPoint
+import fi.aikapolku.app.timer.dialTapMinute
+import kotlin.math.cos
+import kotlin.math.sin
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -61,5 +64,42 @@ class DialMinuteTest {
         val small = dialMinuteFromPoint(Offset(0f, 50f), 100, 100)
         val large = dialMinuteFromPoint(Offset(0f, 500f), 1000, 1000)
         assertEquals(small, large)
+    }
+
+    // --- Napautus: lähin 5 minuuttia ---
+
+    /** Piste kellotaululla kohdassa [minutes] (desimaaleina), säde 80 % reunasta. */
+    private fun tapAt(minutes: Double): Int {
+        val angle = Math.toRadians(270.0 - minutes * 6.0)
+        val r = c * 0.8f
+        return dialTapMinute(Offset(c + r * cos(angle).toFloat(), c + r * sin(angle).toFloat()), size, size)
+    }
+
+    @Test
+    fun `napautus 45 kohdalle asettaa 45 minuuttia vaikka osuma heittaa`() {
+        assertEquals(45, tapAt(45.0))
+        assertEquals(45, tapAt(43.0))
+        assertEquals(45, tapAt(47.2))
+    }
+
+    @Test
+    fun `napautus 15 kohdalle asettaa 15 minuuttia`() {
+        assertEquals(15, tapAt(15.0))
+        assertEquals(15, tapAt(13.6))
+        assertEquals(15, tapAt(16.9))
+    }
+
+    @Test
+    fun `napautus ylimpaan kohtaan on 60 minuuttia`() {
+        assertEquals(60, tapAt(0.3))
+        assertEquals(60, tapAt(59.0))
+    }
+
+    @Test
+    fun `napautus antaa aina 5 minuutin kerrannaisen valilta 5-60`() {
+        for (x in 0..size step 7) for (y in 0..size step 7) {
+            val m = dialTapMinute(Offset(x.toFloat(), y.toFloat()), size, size)
+            assertTrue("($x, $y) -> $m", m in 5..60 && m % 5 == 0)
+        }
     }
 }
