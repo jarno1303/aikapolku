@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.cards.ResourceImage
 import fi.aikapolku.app.cards.SubstepArt
@@ -186,13 +188,13 @@ internal fun RunStepScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 RunSupportButton(
-                    label = "Tarvitsen apua",
+                    label = stringResource(R.string.tarvitsen_apua),
                     icon = { RunHelpIcon() },
                     onClick = onHelp,
                     modifier = Modifier.weight(1f)
                 )
                 RunSupportButton(
-                    label = "Tarvitsen tauon",
+                    label = stringResource(R.string.tarvitsen_tauon),
                     icon = { RunPauseIcon(color = RunColors.ink) },
                     onClick = onBreak,
                     modifier = Modifier.weight(1f)
@@ -208,7 +210,7 @@ internal fun RunStepScreen(
                     contentColor = Color.White
                 )
             ) {
-                Text("✓  Valmis", fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.valmis_5), fontSize = 21.sp, fontWeight = FontWeight.Bold)
             }
 
             if (next != null) {
@@ -221,14 +223,14 @@ internal fun RunStepScreen(
             ) {
                 TextButton(onClick = onSkip, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(
-                        if (hasSubSteps) "Ohita vaihe" else "Ohita tehtävä",
+                        if (hasSubSteps) stringResource(R.string.ohita_vaihe) else stringResource(R.string.ohita_tehtava),
                         color = RunColors.teal,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
                 TextButton(onClick = onMore, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text("Lisää", color = RunColors.teal, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.lisaa), color = RunColors.teal, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 }
             }
         }
@@ -251,7 +253,7 @@ private fun RunHeader(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                "NYT",
+                stringResource(R.string.nyt),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.2.sp,
@@ -268,7 +270,7 @@ private fun RunHeader(
                 )
             } else {
                 Text(
-                    "Tehtävä ${taskIndex + 1} / $taskCount",
+                    stringResource(R.string.tehtava, taskIndex + 1, taskCount),
                     fontSize = 15.sp,
                     color = RunColors.secondary
                 )
@@ -285,9 +287,10 @@ private fun RunHeader(
 /** Eteneminen palloina ja tekstinä: ei vaadi numeroiden ymmärtämistä. */
 @Composable
 private fun RunProgressDots(index: Int, count: Int) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     Row(
         modifier = Modifier.semantics(mergeDescendants = true) {
-            contentDescription = "Vaihe ${index + 1} / $count"
+            contentDescription = context.getString(R.string.vaihe, index + 1, count)
         },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -308,7 +311,7 @@ private fun RunProgressDots(index: Int, count: Int) {
                 )
             }
         }
-        Text("Vaihe ${index + 1} / $count", fontSize = 15.sp, color = RunColors.secondary)
+        Text(stringResource(R.string.vaihe, index + 1, count), fontSize = 15.sp, color = RunColors.secondary)
     }
 }
 
@@ -316,7 +319,7 @@ private fun RunProgressDots(index: Int, count: Int) {
 @Composable
 private fun RunNextRow(next: RunNext, mode: String) {
     if (mode == RunPreferences.NEXT_HIDDEN) return
-    val label = if (next.isSubStep) "Seuraavaksi" else "Seuraava tehtävä"
+    val label = if (next.isSubStep) stringResource(R.string.seuraavaksi_2) else stringResource(R.string.seuraava_tehtava)
     Surface(
         color = RunColors.nextSurface,
         shape = RoundedCornerShape(18.dp),
@@ -348,7 +351,8 @@ private fun RunNextRow(next: RunNext, mode: String) {
 /** Osavaiheen oma kuva, jos sellainen on; muuten tehtävän kuva (oma valokuva tai valmis kortti). */
 @Composable
 internal fun RunImage(taskName: String, taskPhoto: String, subStepName: String?, modifier: Modifier) {
-    val subStepImage = subStepName?.let { SubstepArt.imageRes(it) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val subStepImage = subStepName?.let { SubstepArt.imageRes(it) { context.getString(it) } }
     if (subStepImage != null) {
         ResourceImage(subStepImage, modifier)
     } else {

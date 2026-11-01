@@ -99,7 +99,7 @@ class ProgramTimingTest {
 
     @Test
     fun `valmis pohja avautuu kestoina`() {
-        val template = ProgramTiming.infer(RoutineTemplates.create(RoutineTemplates.all.first()))
+        val template = ProgramTiming.infer(RoutineTemplates.create(RoutineTemplates.all.first()) { "T$it" })
         assertEquals(ProgramTiming.DURATION, template.timeMode)
         // Lähtö on pohjassa ilman aikaa ja pysyy sellaisena.
         assertEquals("manual", template.steps.last().mode)
@@ -111,12 +111,20 @@ class ProgramTimingTest {
         assertEquals(listOf("duration", "duration"), switched.steps.map { it.mode })
     }
 
+    private val partNames: (ProgramTiming.DayPart) -> String = {
+        when (it) {
+            ProgramTiming.DayPart.MORNING -> "Aamurutiini"
+            ProgramTiming.DayPart.DAY -> "Päiväohjelma"
+            ProgramTiming.DayPart.EVENING -> "Iltarutiini"
+        }
+    }
+
     @Test
     fun `nimiehdotus ei toista olemassa olevaa nimea`() {
         val morning = program(ProgramTiming.CLOCK, step("a"), start = "07:00")
-        assertEquals("Aamurutiini", ProgramTiming.suggestName(morning, emptyList()))
-        assertEquals("Aamurutiini 2", ProgramTiming.suggestName(morning, listOf("aamurutiini")))
-        assertEquals("Iltarutiini", ProgramTiming.suggestName(program(ProgramTiming.CLOCK, step("a"), start = "19:00"), emptyList()))
-        assertEquals("Päiväohjelma", ProgramTiming.suggestName(program(ProgramTiming.FREE, step("a")), emptyList()))
+        assertEquals("Aamurutiini", ProgramTiming.suggestName(morning, emptyList(), partNames))
+        assertEquals("Aamurutiini 2", ProgramTiming.suggestName(morning, listOf("aamurutiini"), partNames))
+        assertEquals("Iltarutiini", ProgramTiming.suggestName(program(ProgramTiming.CLOCK, step("a"), start = "19:00"), emptyList(), partNames))
+        assertEquals("Päiväohjelma", ProgramTiming.suggestName(program(ProgramTiming.FREE, step("a")), emptyList(), partNames))
     }
 }

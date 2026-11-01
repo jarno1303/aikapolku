@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -42,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.SubstepArt
 import fi.aikapolku.app.data.RunPreferences
 import fi.aikapolku.app.voice.Speech
@@ -53,15 +55,16 @@ import fi.aikapolku.app.voice.VoicePlayer
  */
 @Composable
 internal fun SupportMessageScreen(
-    message: String,
+    kind: String,
     timerPaused: Boolean,
     onContinue: () -> Unit,
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
-    val kind = if (message == "Tarvitsen tauon") RunPreferences.BREAK else RunPreferences.HELP
-    val voiceMode = remember(message) { RunPreferences.voiceMode(context, kind) }
-    val recording = remember(message) { RunPreferences.recording(context, kind) }
+    // kind = RunPreferences.HELP tai RunPreferences.BREAK; teksti tulee käännettävistä resursseista.
+    val message = stringResource(if (kind == RunPreferences.BREAK) R.string.tarvitsen_tauon else R.string.tarvitsen_apua)
+    val voiceMode = remember(kind) { RunPreferences.voiceMode(context, kind) }
+    val recording = remember(kind) { RunPreferences.recording(context, kind) }
     val speech = remember(context) { Speech(context.applicationContext) }
     DisposableEffect(speech) {
         onDispose {
@@ -82,7 +85,7 @@ internal fun SupportMessageScreen(
     // Takaisin-ele sulkee viestin eikä poistu päiväohjelmasta.
     BackHandler(onBack = onClose)
 
-    val image = SubstepArt.messageImageRes(message)
+    val image = SubstepArt.messageImageRes(kind)
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize().background(RunColors.background)) {
         val compact = maxWidth > maxHeight || maxHeight < 440.dp
@@ -95,14 +98,14 @@ internal fun SupportMessageScreen(
         ) {
             Column(modifier = Modifier.heightIn(min = 52.dp), verticalArrangement = Arrangement.Center) {
                 Text(
-                    "VIESTI",
+                    stringResource(R.string.viesti),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.2.sp,
                     color = RunColors.secondary
                 )
                 Text(
-                    if (timerPaused) "Ajastin on pysäytetty" else "Näytä viesti tarvittaessa toiselle",
+                    if (timerPaused) stringResource(R.string.ajastin_on_pysaytetty) else stringResource(R.string.nayta_viesti_tarvittaessa_toiselle),
                     fontSize = 15.sp,
                     color = RunColors.secondary
                 )
@@ -158,7 +161,7 @@ internal fun SupportMessageScreen(
                         contentColor = RunColors.ink
                     )
                 ) {
-                    Text("🔊  Toista viesti", fontSize = 17.sp, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.toista_viesti), fontSize = 17.sp, fontWeight = FontWeight.Medium)
                 }
             }
 
@@ -171,7 +174,7 @@ internal fun SupportMessageScreen(
                     contentColor = Color.White
                 )
             ) {
-                Text("▶  Jatka", fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.jatka), fontSize = 21.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

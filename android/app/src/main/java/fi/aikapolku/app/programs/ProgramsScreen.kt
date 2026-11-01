@@ -11,7 +11,9 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.data.DayProgram
@@ -238,7 +240,7 @@ internal fun ProgramsScreen() {
             val message = supportMessage
             if (message != null) {
                 SupportMessageScreen(
-                    message = message,
+                    kind = message,
                     timerPaused = resumeAfterSupport,
                     onContinue = {
                         supportMessage = null
@@ -280,8 +282,8 @@ internal fun ProgramsScreen() {
                     },
                     nextMode = nextPreviewMode,
                     onToggleTimer = { toggleStepTimer(runStep) },
-                    onHelp = { requestSupport("Tarvitsen apua") },
-                    onBreak = { requestSupport("Tarvitsen tauon") },
+                    onHelp = { requestSupport(RunPreferences.HELP) },
+                    onBreak = { requestSupport(RunPreferences.BREAK) },
                     onDone = { nextSubstepOrActivity() },
                     onSkip = { nextSubstepOrActivity() },
                     onMore = { showRunActions = true }
@@ -319,7 +321,7 @@ internal fun ProgramsScreen() {
                 view = "edit"
             },
             onTemplate = { template ->
-                draft = ProgramTiming.infer(RoutineTemplates.create(template))
+                draft = ProgramTiming.infer(RoutineTemplates.create(template) { context.getString(it) })
                 view = "edit"
             },
             onStart = { startProgram(it) },
@@ -352,7 +354,7 @@ internal fun ProgramsScreen() {
                 val left = if (running) BackgroundTimer.remaining(context, "program", remaining) else remaining
                 val extended = left + 5 * 60_000L
                 if (running) {
-                    deadline = BackgroundTimer.start(context, "program", extended, current?.name ?: "Ajastin")
+                    deadline = BackgroundTimer.start(context, "program", extended, current?.name ?: context.getString(R.string.ajastin))
                 } else {
                     BackgroundTimer.stop(context, "program", extended)
                 }
@@ -370,10 +372,10 @@ internal fun ProgramsScreen() {
     if (showFullProgram && view == "run") {
         AlertDialog(
             onDismissRequest = { showFullProgram = false },
-            title = { Text("Koko päiväohjelma") },
+            title = { Text(stringResource(R.string.koko_paivaohjelma)) },
             text = { ProgramOverview(draft.steps, stepIndex) },
             confirmButton = {
-                TextButton(onClick = { showFullProgram = false }) { Text("Sulje") }
+                TextButton(onClick = { showFullProgram = false }) { Text(stringResource(R.string.sulje)) }
             }
         )
     }
@@ -381,8 +383,8 @@ internal fun ProgramsScreen() {
     if (showExitConfirmation) {
         AlertDialog(
             onDismissRequest = { showExitConfirmation = false },
-            title = { Text("Lopetetaanko päiväohjelma?") },
-            text = { Text("Päiväohjelman suoritus päättyy.") },
+            title = { Text(stringResource(R.string.lopetetaanko_paivaohjelma)) },
+            text = { Text(stringResource(R.string.paivaohjelman_suoritus_paattyy)) },
             confirmButton = {
                 TextButton(onClick = {
                     running = false
@@ -392,10 +394,10 @@ internal fun ProgramsScreen() {
                     supportMessage = null
                     showExitConfirmation = false
                     view = "list"
-                }) { Text("Lopeta") }
+                }) { Text(stringResource(R.string.lopeta)) }
             },
             dismissButton = {
-                TextButton(onClick = { showExitConfirmation = false }) { Text("Peruuta") }
+                TextButton(onClick = { showExitConfirmation = false }) { Text(stringResource(R.string.peruuta)) }
             }
         )
     }
@@ -403,7 +405,7 @@ internal fun ProgramsScreen() {
     if (timeSettingsOpen) {
         AlertDialog(
             onDismissRequest = { timeSettingsOpen = false },
-            title = { Text("Ajan esitystapa") },
+            title = { Text(stringResource(R.string.ajan_esitystapa)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     TimeModeChoices(timeMode) { mode ->
@@ -413,7 +415,7 @@ internal fun ProgramsScreen() {
                 }
             },
             confirmButton = {
-                TextButton(onClick = { timeSettingsOpen = false }) { Text("Valmis") }
+                TextButton(onClick = { timeSettingsOpen = false }) { Text(stringResource(R.string.valmis_4)) }
             }
         )
     }
@@ -430,7 +432,7 @@ internal fun ProgramsScreen() {
     if (target != null) {
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
-            title = { Text("Poistetaanko päiväohjelma?") },
+            title = { Text(stringResource(R.string.poistetaanko_paivaohjelma)) },
             text = { Text(target.name) },
             confirmButton = {
                 TextButton(
@@ -440,12 +442,12 @@ internal fun ProgramsScreen() {
                         deleteTarget = null
                     }
                 ) {
-                    Text("Poista")
+                    Text(stringResource(R.string.poista))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { deleteTarget = null }) {
-                    Text("Peruuta")
+                    Text(stringResource(R.string.peruuta))
                 }
             }
         )

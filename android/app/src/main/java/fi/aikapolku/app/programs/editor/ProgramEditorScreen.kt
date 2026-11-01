@@ -15,13 +15,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardArt
+import fi.aikapolku.app.cards.Texts
 import fi.aikapolku.app.data.CardItem
 import fi.aikapolku.app.data.CardStore
 import fi.aikapolku.app.data.DayProgram
@@ -32,7 +35,7 @@ import fi.aikapolku.app.data.serializeDraft
 import fi.aikapolku.app.ui.AppColors
 import java.util.UUID
 
-private val pageTitles = listOf("Valitse", "Järjestä", "Ajat", "Tallenna")
+private val pageTitles = listOf(R.string.valitse, R.string.jarjesta, R.string.ajat, R.string.tallenna)
 
 /**
  * Valittavat kortit ryhmittäin: omat kortit ensin, sitten valmiit luokittain.
@@ -43,24 +46,24 @@ internal fun programEditorCardGroups(context: Context): List<Pair<String, List<C
         .distinctBy { it.name.trim().lowercase() }
     val customNames = custom.map { it.name.trim().lowercase() }.toSet()
     val builtIn = CardArt.templates
-        .filter { it.name.trim().lowercase() !in customNames }
-        .groupBy { it.category }
+        .filter { context.getString(it.nameRes).trim().lowercase() !in customNames }
+        .groupBy { it.categoryRes }
         .map { (category, items) ->
-            category to items.map { t ->
-                CardItem(id = "basic_${t.id}", name = t.name, description = "", photoPath = "builtin:${t.id}")
+            context.getString(category) to items.map { t ->
+                CardItem(id = "basic_${t.id}", name = context.getString(t.nameRes), description = "", photoPath = "builtin:${t.id}")
             }
         }
-    return (if (custom.isEmpty()) emptyList() else listOf("Omat kortit" to custom)) + builtIn
+    return (if (custom.isEmpty()) emptyList() else listOf(context.getString(R.string.omat_kortit) to custom)) + builtIn
 }
 
-internal fun stepFromCard(card: CardItem): ProgramStep = ProgramStep(
+internal fun stepFromCard(card: CardItem, texts: Texts): ProgramStep = ProgramStep(
     id = UUID.randomUUID().toString(),
     name = card.name,
     photo = card.photoPath,
     description = card.description,
     voicePath = card.voicePath,
     autoPlayVoice = card.autoPlayVoice,
-    subSteps = SubstepDefaults.forCard(card.name)
+    subSteps = SubstepDefaults.forCard(card.name, texts, card.photoPath)
 )
 
 internal class Ref<T>(var value: T)
@@ -87,7 +90,13 @@ internal fun ProgramEditorScreen(
     fun goTo(target: Int) {
         if (target > 0 && draft.steps.isEmpty()) return
         if (target == 3 && draft.name.isBlank()) {
-            onDraftChange(draft.copy(name = ProgramTiming.suggestName(draft, otherProgramNames)))
+            onDraftChange(draft.copy(name = ProgramTiming.suggestName(draft, otherProgramNames) { part ->
+                context.getString(when (part) {
+                    ProgramTiming.DayPart.MORNING -> R.string.name_suggestion_morning
+                    ProgramTiming.DayPart.DAY -> R.string.name_suggestion_day
+                    ProgramTiming.DayPart.EVENING -> R.string.name_suggestion_evening
+                })
+            }))
         }
         page = target.coerceIn(0, 3)
     }
@@ -100,13 +109,13 @@ internal fun ProgramEditorScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                if (isNew) "Uusi päiväohjelma" else "Muokkaa päiväohjelmaa",
+                if (isNew) stringResource(R.string.uusi_paivaohjelma_2) else stringResource(R.string.muokkaa_paivaohjelmaa),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f)
             )
             TextButton(onClick = { requestCancel() }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text("Peruuta")
+                Text(stringResource(R.string.peruuta))
             }
         }
 
@@ -137,7 +146,7 @@ internal fun ProgramEditorScreen(
                     OutlinedButton(
                         onClick = { page-- },
                         modifier = Modifier.weight(1f).heightIn(min = 56.dp)
-                    ) { Text("‹ Takaisin", fontSize = 16.sp) }
+                    ) { Text(stringResource(R.string.takaisin), fontSize = 16.sp) }
                 }
                 if (page < 3) {
                     Button(
@@ -147,7 +156,7 @@ internal fun ProgramEditorScreen(
                         modifier = Modifier.weight(1f).heightIn(min = 56.dp)
                     ) {
                         Text(
-                            if (page == 0 && draft.steps.isNotEmpty()) "Seuraava (${draft.steps.size}) ›" else "Seuraava ›",
+                            if (page == 0 && draft.steps.isNotEmpty()) stringResource(R.string.seuraava, draft.steps.size) else stringResource(R.string.seuraava_2),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -158,7 +167,7 @@ internal fun ProgramEditorScreen(
                         enabled = draft.name.isNotBlank() && draft.steps.isNotEmpty(),
                         colors = ButtonDefaults.buttonColors(containerColor = AppColors.Teal),
                         modifier = Modifier.weight(1f).heightIn(min = 56.dp)
-                    ) { Text("Tallenna", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+                    ) { Text(stringResource(R.string.tallenna), fontSize = 16.sp, fontWeight = FontWeight.Bold) }
                 }
             }
         }
@@ -167,13 +176,13 @@ internal fun ProgramEditorScreen(
     if (confirmDiscard) {
         AlertDialog(
             onDismissRequest = { confirmDiscard = false },
-            title = { Text("Hylätäänkö muutokset?") },
-            text = { Text("Tallentamattomat muutokset katoavat.") },
+            title = { Text(stringResource(R.string.hylataanko_muutokset)) },
+            text = { Text(stringResource(R.string.tallentamattomat_muutokset_katoavat)) },
             confirmButton = {
-                TextButton(onClick = { confirmDiscard = false; onCancel() }) { Text("Hylkää") }
+                TextButton(onClick = { confirmDiscard = false; onCancel() }) { Text(stringResource(R.string.hylkaa)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDiscard = false }) { Text("Jatka muokkausta") }
+                TextButton(onClick = { confirmDiscard = false }) { Text(stringResource(R.string.jatka_muokkausta)) }
             }
         )
     }
@@ -181,6 +190,7 @@ internal fun ProgramEditorScreen(
 
 @Composable
 private fun EditorProgress(page: Int, canJump: Boolean, onSelect: (Int) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -197,7 +207,7 @@ private fun EditorProgress(page: Int, canJump: Boolean, onSelect: (Int) -> Unit)
                     .clickable(enabled = enabled && !active, role = Role.Tab) { onSelect(index) }
                     .padding(vertical = 6.dp)
                     .semantics {
-                        stateDescription = if (active) "Nykyinen vaihe" else ""
+                        stateDescription = if (active) context.getString(R.string.nykyinen_vaihe) else ""
                     }
             ) {
                 Box(
@@ -215,7 +225,7 @@ private fun EditorProgress(page: Int, canJump: Boolean, onSelect: (Int) -> Unit)
                     )
                 }
                 Text(
-                    title,
+                    stringResource(title),
                     fontSize = 13.sp,
                     fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
                     color = if (active) AppColors.Teal else AppColors.Muted,

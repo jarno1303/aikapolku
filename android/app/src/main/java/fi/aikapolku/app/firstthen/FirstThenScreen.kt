@@ -14,11 +14,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardArt
 import fi.aikapolku.app.cards.CardLibraryDialog
 import fi.aikapolku.app.cards.CardPhoto
@@ -30,8 +32,6 @@ import fi.aikapolku.app.data.CardItem
 import fi.aikapolku.app.data.CardStore
 import fi.aikapolku.app.data.importCardPhoto
 import fi.aikapolku.app.ui.AppColors
-
-private val choices = CardArt.names
 
 @Composable
 internal fun FirstThenScreen(
@@ -93,7 +93,7 @@ internal fun FirstThenScreen(
                 }
                 photoError = ""
             } catch (e: Exception) {
-                photoError = "Kuvan lisaaminen epaonnistui."
+                photoError = context.getString(R.string.kuvan_lisaaminen_epaonnistui)
             }
         }
     }
@@ -116,7 +116,7 @@ internal fun FirstThenScreen(
             modifier = Modifier
                 .size(48.dp)
                 .semantics {
-                    contentDescription = "Korttien käyttöohje"
+                    contentDescription = context.getString(R.string.korttien_kayttoohje)
                 }
         ) {
             Text("ⓘ", fontSize = 26.sp, color = AppColors.Teal)
@@ -126,20 +126,17 @@ internal fun FirstThenScreen(
     if (showCardHelp) {
         AlertDialog(
             onDismissRequest = { showCardHelp = false },
-            title = { Text("Korttien käyttö") },
+            title = { Text(stringResource(R.string.korttien_kaytto)) },
             text = {
                 Text(
-                    "Napauta Ensin- tai Sitten-korttia " +
-                    "vaihtaaksesi toiminnon, lisätäksesi " +
-                    "oman valokuvan tai muokataksesi kuvausta. " +
-                    "Ajastimen päätyttyä siirtyminen vahvistetaan erikseen."
+                    stringResource(R.string.napauta_ensin_tai_sitten_korttia)
                 )
             },
             confirmButton = {
                 TextButton(
                     onClick = { showCardHelp = false }
                 ) {
-                    Text("Selvä")
+                    Text(stringResource(R.string.selva))
                 }
             }
         )
@@ -150,7 +147,7 @@ internal fun FirstThenScreen(
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         EditableCard(
-            label = "ENSIN",
+            label = stringResource(R.string.ensin),
             name = first,
             description = firstDescription,
             imagePath = firstPhoto,
@@ -159,7 +156,7 @@ internal fun FirstThenScreen(
             onClick = { if (canEditCards) choosing = "first" }
         )
         EditableCard(
-            label = "SITTEN",
+            label = stringResource(R.string.sitten),
             name = next,
             description = nextDescription,
             imagePath = nextPhoto,
@@ -176,7 +173,7 @@ internal fun FirstThenScreen(
     }
 
     Text(
-        "Miten haluat edetä?",
+        stringResource(R.string.miten_haluat_edeta),
         fontSize = 19.sp,
         fontWeight = FontWeight.SemiBold,
         color = AppColors.Ink
@@ -198,9 +195,9 @@ internal fun FirstThenScreen(
         },
         enabled =
             first.isNotBlank() &&
-            first != "Valitse toiminto" &&
+            first != stringResource(R.string.valitse_toiminto) &&
             next.isNotBlank() &&
-            next != "Valitse toiminto",
+            next != stringResource(R.string.valitse_toiminto),
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp),
@@ -209,8 +206,8 @@ internal fun FirstThenScreen(
         )
     ) {
         Text(
-            if (timerMode) "Siirry kellotauluun"
-            else "Aloita toiminto",
+            if (timerMode) stringResource(R.string.siirry_kellotauluun)
+            else stringResource(R.string.aloita_toiminto),
             fontSize = 18.sp
         )
     }
@@ -221,7 +218,7 @@ internal fun FirstThenScreen(
     if (choosing != null) {
         AlertDialog(
             onDismissRequest = { choosing = null },
-            title = { Text("Valitse toiminto") },
+            title = { Text(stringResource(R.string.valitse_toiminto)) },
             text = {
                 Column(
                     modifier = Modifier
@@ -236,7 +233,7 @@ internal fun FirstThenScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Omat toimintokortit")
+                        Text(stringResource(R.string.omat_toimintokortit))
                     }
 
                     TextButton(
@@ -250,7 +247,7 @@ internal fun FirstThenScreen(
 
                             if (
                                 currentName.isNotBlank() &&
-                                currentName != "Valitse toiminto"
+                                currentName != context.getString(R.string.valitse_toiminto)
                             ) {
                                 CardStore(
                                     context.applicationContext
@@ -265,13 +262,13 @@ internal fun FirstThenScreen(
                                     )
                                 )
                                 libraryNotice =
-                                    "Kortti tallennettu: $currentName"
+                                    context.getString(R.string.kortti_tallennettu, currentName)
                             }
                             choosing = null
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Tallenna nykyinen kortti kirjastoon")
+                        Text(stringResource(R.string.tallenna_nykyinen_kortti_kirjastoon))
                     }
 
                     TextButton(
@@ -286,7 +283,7 @@ internal fun FirstThenScreen(
                             )
                         }
                     ) {
-                        Text("📷 Valitse oma valokuva")
+                        Text(stringResource(R.string.valitse_oma_valokuva))
                     }
 
                     TextButton(
@@ -298,12 +295,12 @@ internal fun FirstThenScreen(
                             choosing = null
                         }
                     ) {
-                        Text("✏ Muokkaa nimea ja kuvausta")
+                        Text(stringResource(R.string.muokkaa_nimea_ja_kuvausta))
                     }
 
                     HorizontalDivider()
 
-                    choices.forEach { name ->
+                    CardArt.templates.map { stringResource(it.nameRes) }.forEach { name ->
                         TextButton(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = {
@@ -340,7 +337,7 @@ internal fun FirstThenScreen(
             },
             confirmButton = {
                 TextButton(onClick = { choosing = null }) {
-                    Text("Sulje")
+                    Text(stringResource(R.string.sulje))
                 }
             }
         )
@@ -362,7 +359,7 @@ internal fun FirstThenScreen(
                     onNextVoice(card.voicePath, card.autoPlayVoice)
                 }
 
-                libraryNotice = "Valittu: ${card.name}"
+                libraryNotice = context.getString(R.string.valittu, card.name)
                 showLibrary = false
             }
         )
@@ -379,19 +376,19 @@ internal fun FirstThenScreen(
     if (editing != null) {
         AlertDialog(
             onDismissRequest = { editing = null },
-            title = { Text("Muokkaa toimintoa") },
+            title = { Text(stringResource(R.string.muokkaa_toimintoa)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
                         value = editName,
                         onValueChange = { editName = it },
-                        label = { Text("Toiminnon nimi") },
+                        label = { Text(stringResource(R.string.toiminnon_nimi)) },
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = editDescription,
                         onValueChange = { editDescription = it },
-                        label = { Text("Lyhyt kuvaus") },
+                        label = { Text(stringResource(R.string.lyhyt_kuvaus)) },
                         minLines = 2,
                         maxLines = 3
                     )
@@ -411,12 +408,12 @@ internal fun FirstThenScreen(
                         editing = null
                     }
                 ) {
-                    Text("Tallenna")
+                    Text(stringResource(R.string.tallenna))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { editing = null }) {
-                    Text("Peruuta")
+                    Text(stringResource(R.string.peruuta))
                 }
             }
         )

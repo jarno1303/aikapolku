@@ -8,6 +8,7 @@ import android.speech.tts.Voice
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import fi.aikapolku.app.R
 import java.util.Locale
 
 /** P0-21d: Only exposes voices actually returned by the Android TTS engine.
@@ -30,7 +31,7 @@ internal class Speech(private val context: Context) {
     private var pending: Pair<String, String>? = null
     var ready by mutableStateOf(false)
         private set
-    var status by mutableStateOf("Ladataan laitteen puheääniä…")
+    var status by mutableStateOf(context.getString(R.string.ladataan_laitteen_puheaania))
         private set
     var finnishVoices by mutableStateOf<List<Voice>>(emptyList())
         private set
@@ -41,9 +42,9 @@ internal class Speech(private val context: Context) {
                 if (!closed) {
                     val speaker = engine
                     if (result != TextToSpeech.SUCCESS || speaker == null) {
-                        status = "Puheääniä ei voitu avata. Tarkista Androidin puheasetukset."
+                        status = context.getString(R.string.puheaania_ei_voitu_avata_tarkista)
                     } else {
-                        runCatching { speaker.language = Locale.forLanguageTag("fi-FI") }
+                        runCatching { speaker.language = Locale.forLanguageTag(context.getString(R.string.tts_locale)) }
                         finnishVoices = runCatching {
                             speaker.voices.orEmpty()
                                 .filter { it.locale.language.equals("fi", ignoreCase = true) }
@@ -51,8 +52,8 @@ internal class Speech(private val context: Context) {
                         }.getOrDefault(emptyList())
                         ready = true
                         status = if (finnishVoices.isEmpty())
-                            "Erillisiä suomenkielisiä ääniä ei löytynyt. Kokeile laitteen oletusääntä."
-                        else "Valitse ja kuuntele haluamasi suomenkielinen ääni."
+                            context.getString(R.string.erillisia_suomenkielisia_aania_ei_loytynyt)
+                        else context.getString(R.string.valitse_ja_kuuntele_haluamasi_suomenkielinen)
                         val request = pending
                         pending = null
                         if (request != null) speak(request.first, request.second)
@@ -72,12 +73,12 @@ internal class Speech(private val context: Context) {
         val voice = finnishVoices.firstOrNull { it.name == selectedId }
         val configured = runCatching {
             if (voice != null) speaker.voice = voice
-            else speaker.language = Locale.forLanguageTag("fi-FI")
+            else speaker.language = Locale.forLanguageTag(context.getString(R.string.tts_locale))
             speaker.setSpeechRate(VoicePrefs.speed(context))
             speaker.speak(text, TextToSpeech.QUEUE_FLUSH, null, "aikapolku_support")
         }.getOrNull()
         if (configured != TextToSpeech.SUCCESS) {
-            status = "Puhetta ei voitu toistaa. Kokeile toista ääntä tai laitteen oletusääntä."
+            status = context.getString(R.string.puhetta_ei_voitu_toistaa_kokeile)
         }
     }
 

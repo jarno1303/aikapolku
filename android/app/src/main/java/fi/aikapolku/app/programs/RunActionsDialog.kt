@@ -9,7 +9,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.caregiver.CaregiverLockButton
 
 /** Suorituksen Lisää-valikko. Ohjaajan toiminnot näkyvät vain avattuna (P0-21e). */
@@ -27,27 +29,27 @@ internal fun RunActionsDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Muut toiminnot") },
+        title = { Text(stringResource(R.string.muut_toiminnot)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 if (canExtend) {
-                    TextButton(onClick = onExtend, modifier = Modifier.fillMaxWidth()) { Text("+ 5 min lisäaikaa") }
+                    TextButton(onClick = onExtend, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.extend_5_min)) }
                 }
                 if (canChangeSettings) {
-                    TextButton(onClick = onTimeSettings, modifier = Modifier.fillMaxWidth()) { Text("Ajan näyttötapa") }
-                    TextButton(onClick = onViewSettings, modifier = Modifier.fillMaxWidth()) { Text("Näkymä ja viestiäänet") }
+                    TextButton(onClick = onTimeSettings, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ajan_nayttotapa)) }
+                    TextButton(onClick = onViewSettings, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.nakyma_ja_viestiaanet)) }
                 }
-                TextButton(onClick = onShowProgram, modifier = Modifier.fillMaxWidth()) { Text("Näytä koko ohjelma") }
+                TextButton(onClick = onShowProgram, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.nayta_koko_ohjelma)) }
                 HorizontalDivider()
                 if (canEnd) {
-                    TextButton(onClick = onEnd, modifier = Modifier.fillMaxWidth()) { Text("Lopeta ohjelma") }
+                    TextButton(onClick = onEnd, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.lopeta_ohjelma)) }
                 } else {
-                    CaregiverLockButton(modifier = Modifier.fillMaxWidth(), label = "Ohjaajan toiminnot")
+                    CaregiverLockButton(modifier = Modifier.fillMaxWidth(), label = stringResource(R.string.ohjaajan_toiminnot_2))
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Sulje") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.sulje)) }
         }
     )
 }

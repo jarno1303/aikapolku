@@ -15,11 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramStep
@@ -37,23 +39,23 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text("Miten aika kulkee?", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.miten_aika_kulkee), fontSize = 18.sp, fontWeight = FontWeight.Bold)
         ModeOption(
             selected = draft.timeMode == ProgramTiming.FREE,
-            title = "Omaan tahtiin",
-            description = "Ei aikoja. Valmis-painike siirtää seuraavaan.",
+            title = stringResource(R.string.omaan_tahtiin),
+            description = stringResource(R.string.ei_aikoja_valmis_painike_siirtaa),
             onSelect = { onDraftChange(ProgramTiming.switchMode(draft, ProgramTiming.FREE)) }
         )
         ModeOption(
             selected = draft.timeMode == ProgramTiming.DURATION,
-            title = "Kestot",
-            description = "Jokaisella toiminnolla on oma ajastin.",
+            title = stringResource(R.string.kestot),
+            description = stringResource(R.string.jokaisella_toiminnolla_on_oma_ajastin),
             onSelect = { onDraftChange(ProgramTiming.switchMode(draft, ProgramTiming.DURATION)) }
         )
         ModeOption(
             selected = draft.timeMode == ProgramTiming.CLOCK,
-            title = "Kellonajat",
-            description = "Anna aloitusaika ja kestot – kellonajat lasketaan. Toiminnon voi myös lukita kiinteään aikaan.",
+            title = stringResource(R.string.kellonajat),
+            description = stringResource(R.string.anna_aloitusaika_ja_kestot_kellonajat),
             onSelect = { onDraftChange(ProgramTiming.switchMode(draft, ProgramTiming.CLOCK)) }
         )
 
@@ -85,7 +87,7 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                     },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
                 ) {
-                    Text("Aloitus klo ${draft.startClock} – muuta", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.aloitus_klo_muuta, draft.startClock), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
                 }
                 val slots = ProgramTiming.schedule(draft.startClock, draft.steps)
                 draft.steps.forEachIndexed { index, step ->
@@ -114,7 +116,7 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                                             else step.copy(fixedClock = true, clock = ProgramTiming.format(slot.start))
                                         )
                                     },
-                                    label = { Text("Kiinteä aika") }
+                                    label = { Text(stringResource(R.string.kiintea_aika)) }
                                 )
                                 if (step.fixedClock) {
                                     OutlinedButton(
@@ -122,13 +124,13 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                                             showClockPicker(context, step.clock) { updateStep(step.copy(clock = it)) }
                                         },
                                         modifier = Modifier.heightIn(min = 48.dp)
-                                    ) { Text("Klo ${step.clock} – muuta") }
+                                    ) { Text(stringResource(R.string.klo_muuta, step.clock)) }
                                 }
                             }
                         }
                         if (slot.overlap) {
                             Text(
-                                "Alkaa ennen kuin edellinen päättyy (klo ${ProgramTiming.format(slot.previousEnd)}).",
+                                stringResource(R.string.alkaa_ennen_kuin_edellinen_paattyy, ProgramTiming.format(slot.previousEnd)),
                                 color = MaterialTheme.colorScheme.error,
                                 fontSize = 13.sp
                             )
@@ -137,7 +139,7 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                 }
                 ProgramTiming.endOf(draft.startClock, draft.steps)?.let { end ->
                     Text(
-                        "Päättyy noin klo ${ProgramTiming.format(end)}",
+                        stringResource(R.string.paattyy_noin_klo_2, ProgramTiming.format(end)),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = AppColors.Muted
@@ -213,13 +215,13 @@ private fun DurationChips(step: ProgramStep, allowNone: Boolean, onPick: (Int?) 
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         if (allowNone) {
-            FilterChip(selected = none, onClick = { onPick(null) }, label = { Text("Ei aikaa") })
+            FilterChip(selected = none, onClick = { onPick(null) }, label = { Text(stringResource(R.string.ei_aikaa)) })
         }
         options.forEach { minutes ->
             FilterChip(
                 selected = !none && step.minutes == minutes,
                 onClick = { onPick(minutes) },
-                label = { Text("$minutes min") }
+                label = { Text(stringResource(R.string.min, minutes)) }
             )
         }
     }

@@ -17,6 +17,7 @@ import android.provider.Settings
 import android.widget.Toast
 import fi.aikapolku.app.MainActivity
 import fi.aikapolku.app.P018AlarmReceiver
+import fi.aikapolku.app.R
 
 /** Two independent user-started timers: the dial and a day-programme step. */
 internal object BackgroundTimer {
@@ -41,7 +42,7 @@ internal object BackgroundTimer {
     fun remaining(c: Context, owner: String, default: Long): Long {
         val p = prefs(c)
         return if (p.getBoolean(key(owner, "running"), false)) {
-            (p.getLong(key(owner, "endElapsed"), 0L) -
+            (p.getLong(key(owner, c.getString(R.string.endelapsed)), 0L) -
                 SystemClock.elapsedRealtime()).coerceAtLeast(0L)
         } else p.getLong(key(owner, "remaining"), default).coerceAtLeast(0L)
     }
@@ -75,7 +76,7 @@ internal object BackgroundTimer {
     fun requestPermissions(c: Context) {
         if (!exactAlarmsAllowed(c) && !exactPrompted) {
             exactPrompted = true
-            Toast.makeText(c, "Salli AikaPolkun tarkat hälytykset ja palaa sovellukseen.", Toast.LENGTH_LONG).show()
+            Toast.makeText(c, c.getString(R.string.salli_aikapolkun_tarkat_halytykset_ja), Toast.LENGTH_LONG).show()
             val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
                 Uri.parse("package:${c.packageName}"))
             if (c !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -84,7 +85,7 @@ internal object BackgroundTimer {
         }
         if (!notificationsAllowed(c) && !notificationPrompted) {
             notificationPrompted = true
-            Toast.makeText(c, "Salli AikaPolkun ilmoitukset.", Toast.LENGTH_LONG).show()
+            Toast.makeText(c, c.getString(R.string.salli_aikapolkun_ilmoitukset), Toast.LENGTH_LONG).show()
             (c as? Activity)?.requestPermissions(
                 arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1803)
         }
@@ -104,8 +105,8 @@ internal object BackgroundTimer {
         val endWall = System.currentTimeMillis() + delayMs
         val p = prefs(c)
         p.edit().putBoolean(key(owner, "running"), true)
-            .putLong(key(owner, "endElapsed"), endElapsed)
-            .putLong(key(owner, "endWall"), endWall)
+            .putLong(key(owner, c.getString(R.string.endelapsed)), endElapsed)
+            .putLong(key(owner, c.getString(R.string.endwall)), endWall)
             .putLong(key(owner, "remaining"), delayMs)
             .putString(key(owner, "title"), title)
             .commit()
@@ -145,12 +146,12 @@ internal object BackgroundTimer {
     fun complete(c: Context, owner: String): Boolean {
         val p = prefs(c)
         if (!p.getBoolean(key(owner, "running"), false)) return false
-        val end = p.getLong(key(owner, "endElapsed"), 0L)
+        val end = p.getLong(key(owner, c.getString(R.string.endelapsed)), 0L)
         if (SystemClock.elapsedRealtime() < end) return false
         p.edit().putBoolean(key(owner, "running"), false)
             .putLong(key(owner, "remaining"), 0L).commit()
         service(c).cancel(alarmIntent(c, owner))
-        showNotification(c, owner, p.getString(key(owner, "title"), "Aika on päättynyt") ?: "Aika on päättynyt")
+        showNotification(c, owner, p.getString(key(owner, "title"), c.getString(R.string.aika_on_paattynyt)) ?: c.getString(R.string.aika_on_paattynyt))
         return true
     }
 
@@ -162,7 +163,7 @@ internal object BackgroundTimer {
         if (Build.VERSION.SDK_INT >= 33 &&
             c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         val nm = c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channel = NotificationChannel(CHANNEL, "Ajastimen valmistuminen", NotificationManager.IMPORTANCE_HIGH)
+        val channel = NotificationChannel(CHANNEL, c.getString(R.string.ajastimen_valmistuminen), NotificationManager.IMPORTANCE_HIGH)
         channel.setSound(null, null) // Custom sound plays once through playCompletionSound.
         nm.createNotificationChannel(channel)
         val open = PendingIntent.getActivity(c, requestCode(owner),
@@ -171,7 +172,7 @@ internal object BackgroundTimer {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val note = Notification.Builder(c, CHANNEL)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("AikaPolku – aika päättyi")
+            .setContentTitle(c.getString(R.string.aikapolku_aika_paattyi))
             .setContentText(title)
             .setAutoCancel(true)
             .setContentIntent(open)
@@ -184,11 +185,11 @@ internal object BackgroundTimer {
         for (owner in listOf("timer", "program")) {
             val p = prefs(c)
             if (!p.getBoolean(key(owner, "running"), false)) continue
-            val left = (p.getLong(key(owner, "endWall"), 0L) -
+            val left = (p.getLong(key(owner, c.getString(R.string.endwall)), 0L) -
                 System.currentTimeMillis()).coerceAtLeast(1L)
             // Palautetaan aina: start toimii myös ilman lupia.
             start(c, owner, left,
-                p.getString(key(owner, "title"), "Ajastin") ?: "Ajastin")
+                p.getString(key(owner, "title"), c.getString(R.string.ajastin)) ?: c.getString(R.string.ajastin))
         }
     }
 }

@@ -6,59 +6,71 @@ import android.graphics.BitmapFactory
 import fi.aikapolku.app.R
 import java.util.Locale
 
-/** UI Refresh 1.0: one built-in picture source across screens and PDF. */
+/** Resurssitekstin haku (Androidissa `{ context.getString(it) }`, testeissä mikä tahansa funktio). Pitää tietokerroksen erillään Contextista. */
+internal typealias Texts = (Int) -> String
+
+/**
+ * Valmiit korttikuvat. Nimi ja luokka ovat käännettäviä resursseja ([nameRes], [categoryRes]).
+ * [legacyName] on suomenkielinen nimi, jolla vanhat tallennetut ohjelmat ja kortit tunnistetaan
+ * kielestä riippumatta – sitä ei näytetä käyttäjälle eikä käännetä.
+ */
 internal object CardArt {
     internal data class Template(
         val id: String,
-        val name: String,
-        val category: String,
+        val legacyName: String,
+        val nameRes: Int,
+        val categoryRes: Int,
         val drawable: Int
     )
 
     val templates: List<Template> = listOf(
-        Template("breakfast", "Aamupala", "Ruokailu", R.drawable.ap_card_breakfast),
-        Template("lunch", "Ruokailu", "Ruokailu", R.drawable.ap_card_lunch),
-        Template("snack", "Välipala", "Ruokailu", R.drawable.ap_card_snack),
-        Template("dress", "Pukeutuminen", "Omat toimet", R.drawable.ap_card_dress),
-        Template("wash_hands", "Käsienpesu", "Omat toimet", R.drawable.ap_card_wash_hands),
-        Template("toilet", "WC", "Omat toimet", R.drawable.ap_card_toilet),
-        Template("brush_teeth", "Hampaiden pesu", "Omat toimet", R.drawable.ap_card_brush_teeth),
-        Template("outdoors", "Ulkoilu", "Liikunta", R.drawable.ap_card_outdoors),
-        Template("exercise", "Liikunta", "Liikunta", R.drawable.ap_card_exercise),
-        Template("crafts", "Askartelu", "Tekeminen", R.drawable.ap_card_crafts),
-        Template("gaming", "Pelaaminen", "Tekeminen", R.drawable.ap_card_gaming),
-        Template("reading", "Lukeminen", "Tekeminen", R.drawable.ap_card_reading),
-        Template("music", "Musiikki", "Tekeminen", R.drawable.ap_card_music),
-        Template("schoolwork", "Koulutyö", "Koulu", R.drawable.ap_card_schoolwork),
-        Template("homework", "Kotitehtävät", "Koulu", R.drawable.ap_card_homework),
-        Template("break", "Tauko", "Siirtymät", R.drawable.ap_card_break),
-        Template("waiting", "Odota", "Siirtymät", R.drawable.ap_card_waiting),
-        Template("leaving", "Lähtö", "Siirtymät", R.drawable.ap_card_leaving),
-        Template("rest", "Lepo", "Lepo", R.drawable.ap_card_rest),
-        Template("sleep", "Nukkumaan", "Lepo", R.drawable.ap_card_sleep),
-        Template("morning_meeting", "Aamukokous", "Ryhmätoiminta", R.drawable.ap_card_morning_meeting)
+        Template("breakfast", "Aamupala", R.string.card_breakfast, R.string.card_category_meals, R.drawable.ap_card_breakfast),
+        Template("lunch", "Ruokailu", R.string.card_lunch, R.string.card_category_meals, R.drawable.ap_card_lunch),
+        Template("snack", "Välipala", R.string.card_snack, R.string.card_category_meals, R.drawable.ap_card_snack),
+        Template("dress", "Pukeutuminen", R.string.card_dress, R.string.card_category_self_care, R.drawable.ap_card_dress),
+        Template("wash_hands", "Käsienpesu", R.string.card_wash_hands, R.string.card_category_self_care, R.drawable.ap_card_wash_hands),
+        Template("toilet", "WC", R.string.card_toilet, R.string.card_category_self_care, R.drawable.ap_card_toilet),
+        Template("brush_teeth", "Hampaiden pesu", R.string.card_brush_teeth, R.string.card_category_self_care, R.drawable.ap_card_brush_teeth),
+        Template("outdoors", "Ulkoilu", R.string.card_outdoors, R.string.card_category_movement, R.drawable.ap_card_outdoors),
+        Template("exercise", "Liikunta", R.string.card_exercise, R.string.card_category_movement, R.drawable.ap_card_exercise),
+        Template("crafts", "Askartelu", R.string.card_crafts, R.string.card_category_activities, R.drawable.ap_card_crafts),
+        Template("gaming", "Pelaaminen", R.string.card_gaming, R.string.card_category_activities, R.drawable.ap_card_gaming),
+        Template("reading", "Lukeminen", R.string.card_reading, R.string.card_category_activities, R.drawable.ap_card_reading),
+        Template("music", "Musiikki", R.string.card_music, R.string.card_category_activities, R.drawable.ap_card_music),
+        Template("schoolwork", "Koulutyö", R.string.card_schoolwork, R.string.card_category_school, R.drawable.ap_card_schoolwork),
+        Template("homework", "Kotitehtävät", R.string.card_homework, R.string.card_category_school, R.drawable.ap_card_homework),
+        Template("break", "Tauko", R.string.card_break, R.string.card_category_transitions, R.drawable.ap_card_break),
+        Template("waiting", "Odota", R.string.card_waiting, R.string.card_category_transitions, R.drawable.ap_card_waiting),
+        Template("leaving", "Lähtö", R.string.card_leaving, R.string.card_category_transitions, R.drawable.ap_card_leaving),
+        Template("rest", "Lepo", R.string.card_rest, R.string.card_category_rest, R.drawable.ap_card_rest),
+        Template("sleep", "Nukkumaan", R.string.card_sleep, R.string.card_category_rest, R.drawable.ap_card_sleep),
+        Template("morning_meeting", "Aamukokous", R.string.card_morning_meeting, R.string.card_category_group, R.drawable.ap_card_morning_meeting)
     )
 
-    val names: List<String> get() = templates.map { it.name }
+    private val legacyAliases = mapOf(
+        "tehtävät" to "schoolwork", // Vanha korttinimi.
+        "aamupiiri" to "morning_meeting",
+        "nukkuminen" to "sleep"
+    )
 
-    fun imageRes(name: String, imagePath: String = ""): Int? {
-        val key = if (imagePath.startsWith("builtin:")) {
-            imagePath.removePrefix("builtin:")
-        } else name
-        val normalized = key.trim().lowercase(Locale.ROOT)
-        val alternative = when (normalized) {
-            "tehtävät" -> "schoolwork" // Legacy card label.
-            "aamupiiri" -> "morning_meeting"
-            "nukkuminen" -> "sleep"
-            else -> normalized
-        }
-        return templates.firstOrNull {
-            it.name.lowercase(Locale.ROOT) == alternative || it.id == alternative
-        }?.drawable
+    private fun norm(text: String) = text.trim().lowercase(Locale.ROOT)
+
+    /**
+     * Valmis kortti nimen tai "builtin:id"-polun perusteella. Tunnistaa tunnuksen, suomenkielisen
+     * (myös vanhan) nimen sekä – kun [texts] annetaan – nimen sovelluksen nykyisellä kielellä.
+     */
+    fun find(name: String, imagePath: String = "", texts: Texts? = null): Template? {
+        val key = norm(if (imagePath.startsWith("builtin:")) imagePath.removePrefix("builtin:") else name)
+        val alias = legacyAliases[key] ?: key
+        return templates.firstOrNull { it.id == alias || norm(it.legacyName) == alias }
+            ?: texts?.let { t -> templates.firstOrNull { norm(t(it.nameRes)) == key } }
     }
 
+    fun imageRes(name: String, imagePath: String = "", texts: Texts? = null): Int? =
+        find(name, imagePath, texts)?.drawable
+
     fun bitmap(context: Context, name: String, imagePath: String = ""): Bitmap? {
-        val res = imageRes(name, imagePath) ?: return null
+        val res = imageRes(name, imagePath) { context.getString(it) } ?: return null
         return BitmapFactory.decodeResource(context.resources, res)
     }
 }

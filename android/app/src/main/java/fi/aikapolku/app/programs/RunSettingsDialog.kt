@@ -11,10 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import fi.aikapolku.app.R
 import fi.aikapolku.app.data.RunPreferences
 import fi.aikapolku.app.voice.VoicePickerDialog
 import fi.aikapolku.app.voice.VoicePlayer
@@ -42,10 +44,10 @@ internal fun RunSettingsDialog(
             VoicePlayer.stop()
             recorder.start()
             recordingKind = kind
-            message = "Äänitys käynnissä. Paina Lopeta tallennus."
+            message = context.getString(R.string.aanitys_kaynnissa_paina_lopeta_tallennus)
         } catch (e: Exception) {
             recordingKind = null
-            message = "Äänitys ei käynnistynyt. Tarkista mikrofonin käyttöoikeus."
+            message = context.getString(R.string.aanitys_ei_kaynnistynyt_tarkista_mikrofonin)
         }
     }
 
@@ -55,7 +57,7 @@ internal fun RunSettingsDialog(
         val kind = pendingKind
         pendingKind = null
         if (granted && kind != null) start(kind)
-        else message = "Mikrofonin käyttöoikeutta ei annettu."
+        else message = context.getString(R.string.mikrofonin_kayttooikeutta_ei_annettu)
     }
     DisposableEffect(recorder) {
         onDispose { recorder.cancel() }
@@ -80,9 +82,9 @@ internal fun RunSettingsDialog(
             RunPreferences.setVoiceMode(context, kind, RunPreferences.AUDIO_RECORDED)
             if (kind == RunPreferences.HELP) helpMode = RunPreferences.AUDIO_RECORDED
             else breakMode = RunPreferences.AUDIO_RECORDED
-            message = "Oma ääni tallennettu."
+            message = context.getString(R.string.oma_aani_tallennettu)
         } catch (_: Exception) {
-            message = "Tallennus epäonnistui."
+            message = context.getString(R.string.tallennus_epaonnistui)
         }
         recordingKind = null
     }
@@ -92,21 +94,21 @@ internal fun RunSettingsDialog(
     } else {
         AlertDialog(
             onDismissRequest = { if (recordingKind == null) onDismiss() },
-            title = { Text("Näkymä ja viestiäänet") },
+            title = { Text(stringResource(R.string.nakyma_ja_viestiaanet)) },
             text = {
                 Column(
                     modifier = Modifier.heightIn(max = 490.dp).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Seuraavan vaiheen esikatselu", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.seuraavan_vaiheen_esikatselu), fontWeight = FontWeight.Bold)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
                         listOf(
-                            RunPreferences.NEXT_HIDDEN to "Ei",
-                            RunPreferences.NEXT_TEXT to "Teksti",
-                            RunPreferences.NEXT_CARD to "Kuva"
+                            RunPreferences.NEXT_HIDDEN to stringResource(R.string.ei),
+                            RunPreferences.NEXT_TEXT to stringResource(R.string.teksti),
+                            RunPreferences.NEXT_CARD to stringResource(R.string.kuva)
                         ).forEach { (value, label) ->
                             FilterChip(
                                 selected = currentNextMode == value,
@@ -120,9 +122,9 @@ internal fun RunSettingsDialog(
                         }
                     }
                     HorizontalDivider()
-                    Text("Viestipainikkeiden ääni", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.viestipainikkeiden_aani), fontWeight = FontWeight.Bold)
                     CompactVoiceRow(
-                        label = "Tarvitsen apua",
+                        label = stringResource(R.string.tarvitsen_apua),
                         selection = helpMode,
                         path = helpFile,
                         recording = recordingKind == RunPreferences.HELP,
@@ -137,7 +139,7 @@ internal fun RunSettingsDialog(
                     )
                     HorizontalDivider()
                     CompactVoiceRow(
-                        label = "Tarvitsen tauon",
+                        label = stringResource(R.string.tarvitsen_tauon),
                         selection = breakMode,
                         path = breakFile,
                         recording = recordingKind == RunPreferences.BREAK,
@@ -155,17 +157,17 @@ internal fun RunSettingsDialog(
                         onClick = { showVoicePicker = true },
                         enabled = recordingKind == null,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                    ) { Text("Valitse ja kuuntele puheääni") }
+                    ) { Text(stringResource(R.string.valitse_ja_kuuntele_puheaani)) }
                     if (message.isNotBlank()) {
                         Text(message, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Text("Valitse laitteella käytettävissä oleva ääni kuuntelemalla. Oma tallenne toimii myös ilman puhemoottoria.",
+                    Text(stringResource(R.string.valitse_laitteella_kaytettavissa_oleva_aani),
                         fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
             confirmButton = {
                 TextButton(enabled = recordingKind == null, onClick = onDismiss) {
-                    Text("Valmis")
+                    Text(stringResource(R.string.valmis_4))
                 }
             }
         )
@@ -191,9 +193,9 @@ private fun CompactVoiceRow(
             horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             listOf(
-                RunPreferences.AUDIO_SILENT to "Ei ääntä",
-                RunPreferences.AUDIO_TTS to "Puheääni",
-                RunPreferences.AUDIO_RECORDED to "Oma ääni"
+                RunPreferences.AUDIO_SILENT to stringResource(R.string.ei_aanta),
+                RunPreferences.AUDIO_TTS to stringResource(R.string.puheaani),
+                RunPreferences.AUDIO_RECORDED to stringResource(R.string.oma_aani)
             ).forEach { (value, title) ->
                 FilterChip(
                     selected = selection == value,
@@ -206,7 +208,7 @@ private fun CompactVoiceRow(
         }
         if (recording) {
             Button(onClick = onFinish, modifier = Modifier.fillMaxWidth()) {
-                Text("Lopeta tallennus")
+                Text(stringResource(R.string.lopeta_tallennus))
             }
         } else {
             Row(
@@ -217,9 +219,9 @@ private fun CompactVoiceRow(
                     onClick = onStart,
                     enabled = canStart,
                     modifier = Modifier.weight(1f)
-                ) { Text(if (path.isEmpty()) "Äänitä oma viesti" else "Äänitä uudelleen", fontSize = 12.sp) }
+                ) { Text(if (path.isEmpty()) stringResource(R.string.aanita_oma_viesti) else stringResource(R.string.aanita_uudelleen), fontSize = 12.sp) }
                 if (path.isNotBlank()) {
-                    TextButton(onClick = onPlay) { Text("Kuuntele", fontSize = 12.sp) }
+                    TextButton(onClick = onPlay) { Text(stringResource(R.string.kuuntele), fontSize = 12.sp) }
                 }
             }
         }

@@ -10,10 +10,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.caregiver.CaregiverLockButton
 import fi.aikapolku.app.data.TimeDisplayPrefs
@@ -58,14 +60,13 @@ internal fun LandscapeTimer(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (guided) {
-                LandscapeActivityCard("ENSIN", activeTask, firstPhoto)
-                LandscapeActivityCard("SITTEN", nextActivity, nextPhoto)
+                LandscapeActivityCard(stringResource(R.string.ensin), activeTask, firstPhoto)
+                LandscapeActivityCard(stringResource(R.string.sitten), nextActivity, nextPhoto)
             } else {
-                Text("Ajastin", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ajastin), fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 if (canAdjust) {
                     Text(
-                        "Valitse aika vetämällä kellotaulua. " +
-                            "Käynnissä olevan ajastimen aika on lukittu.",
+                        stringResource(R.string.valitse_aika_vetamalla_kellotaulua_kaynnissa),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

@@ -80,7 +80,7 @@ internal fun CardPhoto(
 ) {
     val context = LocalContext.current
     val path = imagePath.takeIf { it.isNotBlank() && !it.startsWith("builtin:") }
-    val res = CardArt.imageRes(name, imagePath)
+    val res = CardArt.imageRes(name, imagePath) { context.getString(it) }
     val state by produceState(
         initialValue = CardImageCache.peek(path, res).let { PhotoState(it != null, it) },
         path, res

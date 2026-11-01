@@ -7,9 +7,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.ui.FlowColors
 
 @Composable
@@ -22,9 +24,9 @@ internal fun FlowHeader(
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        FlowStage("1  ENSIN", true, compact)
+        FlowStage(stringResource(R.string.flow_stage_first), true, compact)
         Text("→", fontSize = 18.sp, color = FlowColors.muted)
-        FlowStage("2  SITTEN", false, compact)
+        FlowStage(stringResource(R.string.flow_stage_then), false, compact)
     }
 }
 

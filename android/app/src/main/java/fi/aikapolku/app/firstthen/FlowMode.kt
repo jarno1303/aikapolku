@@ -9,9 +9,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.ui.FlowColors
@@ -28,16 +30,16 @@ internal fun FlowModePicker(
     ) {
         FlowModeChoice(
             symbol = "⏱",
-            title = "Ajastimella",
-            description = "Valitse aika pyörittämällä kellotaulua",
+            title = stringResource(R.string.ajastimella),
+            description = stringResource(R.string.valitse_aika_pyorittamalla_kellotaulua),
             selected = timerSelected,
             onClick = onTimer
         )
 
         FlowModeChoice(
             symbol = "✋",
-            title = "Ilman aikarajaa",
-            description = "Siirry eteenpäin, kun olet valmis",
+            title = stringResource(R.string.ilman_aikarajaa),
+            description = stringResource(R.string.siirry_eteenpain_kun_olet_valmis),
             selected = !timerSelected,
             onClick = onNoLimit
         )
@@ -111,21 +113,21 @@ internal fun ManualFlowScreen(
     onNext: () -> Unit
 ) {
     Text(
-        "Ilman aikarajaa",
+        stringResource(R.string.ilman_aikarajaa),
         fontSize = 26.sp,
         fontWeight = FontWeight.Bold,
         color = AppColors.Ink
     )
 
     Text(
-        "NYT",
+        stringResource(R.string.nyt),
         fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
         color = AppColors.Teal
     )
 
     HeroCard(
-        label = "NYT",
+        label = stringResource(R.string.nyt),
         name = first,
         imagePath = firstPhoto,
         large = false
@@ -155,7 +157,7 @@ internal fun ManualFlowScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    "SEURAAVAKSI",
+                    stringResource(R.string.seuraavaksi),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = AppColors.Teal
@@ -182,7 +184,7 @@ internal fun ManualFlowScreen(
         )
     ) {
         Text(
-            "Valmis – seuraavaan",
+            stringResource(R.string.valmis_seuraavaan),
             fontSize = 18.sp
         )
     }

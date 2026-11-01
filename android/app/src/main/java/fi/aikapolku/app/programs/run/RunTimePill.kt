@@ -19,11 +19,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.data.TimeDisplayPrefs
 
 @Composable
@@ -34,7 +36,7 @@ internal fun RunClockPill(time: String) {
         border = BorderStroke(1.dp, RunColors.border)
     ) {
         Text(
-            "Klo $time",
+            stringResource(R.string.klo, time),
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             fontSize = 19.sp,
             fontWeight = FontWeight.Bold,
@@ -59,13 +61,13 @@ internal fun RunCountdownPill(time: RunTime.Countdown, onToggle: () -> Unit) {
         else -> "▶"
     }
     val spoken = buildString {
-        if (finished) append("Aika päättyi. ")
-        else if (numbers) append("Aikaa jäljellä ${seconds / 60} minuuttia ${seconds % 60} sekuntia. ")
+        if (finished) append(stringResource(R.string.aika_paattyi))
+        else if (numbers) append(stringResource(R.string.aikaa_jaljella_minuuttia_sekuntia, seconds / 60, seconds % 60))
         append(
             when {
-                time.pauseLocked -> "Tauko vaatii ohjaajan PIN-koodin."
-                time.running -> "Pysäytä aika."
-                else -> "Aloita aika."
+                time.pauseLocked -> stringResource(R.string.tauko_vaatii_ohjaajan_pin_koodin)
+                time.running -> stringResource(R.string.pysayta_aika)
+                else -> stringResource(R.string.aloita_aika)
             }
         )
     }
@@ -91,7 +93,7 @@ internal fun RunCountdownPill(time: RunTime.Countdown, onToggle: () -> Unit) {
                 modifier = Modifier.size(32.dp)
             )
             if (finished) {
-                Text("Aika päättyi", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = RunColors.teal)
+                Text(stringResource(R.string.aika_paattyi_2), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = RunColors.teal)
             } else if (numbers) {
                 Text(
                     "%d:%02d".format(seconds / 60, seconds % 60),

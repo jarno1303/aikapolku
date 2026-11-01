@@ -2,6 +2,7 @@ package fi.aikapolku.app.caregiver
 
 import android.content.Context
 import androidx.compose.runtime.mutableLongStateOf
+import fi.aikapolku.app.R
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
@@ -43,6 +44,13 @@ internal class CaregiverAccessState(
 }
 
 /** PIN-koodin tarkistuksen tulos. */
+/** Miksi PIN-koodi ei kelpaa. */
+internal enum class PinProblem(val messageRes: Int) {
+    LENGTH(R.string.pin_problem_length),
+    SAME_DIGITS(R.string.pin_problem_same),
+    SEQUENCE(R.string.pin_problem_sequence)
+}
+
 internal sealed class PinResult {
     object Ok : PinResult()
     data class Wrong(val attemptsLeft: Int) : PinResult()
@@ -150,11 +158,11 @@ internal class CaregiverLockStore(
             return (BASE_LOCKOUT_MS shl shift).coerceAtMost(MAX_LOCKOUT_MS)
         }
 
-        /** Palauttaa syyn, miksi PIN ei kelpaa, tai null jos kelpaa. */
-        fun pinProblem(pin: String): String? = when {
-            pin.length != PIN_LENGTH || !pin.all { it in '0'..'9' } -> "PIN-koodissa on 4 numeroa."
-            pin.toSet().size == 1 -> "Liian helppo PIN-koodi (kaikki numerot samoja)."
-            isSequence(pin) -> "Liian helppo PIN-koodi (numerot peräkkäin, esim. 1234)."
+        /** Palauttaa syyn, miksi PIN ei kelpaa, tai null jos kelpaa. Teksti: [PinProblem.messageRes]. */
+        fun pinProblem(pin: String): PinProblem? = when {
+            pin.length != PIN_LENGTH || !pin.all { it in '0'..'9' } -> PinProblem.LENGTH
+            pin.toSet().size == 1 -> PinProblem.SAME_DIGITS
+            isSequence(pin) -> PinProblem.SEQUENCE
             else -> null
         }
 

@@ -119,27 +119,31 @@ internal object ProgramTiming {
     }
 
     /** Lyhyt aikateksti esikatseluun ja listaan. */
-    fun label(program: DayProgram, index: Int): String {
+    fun label(program: DayProgram, index: Int, minutesText: (Int) -> String): String {
         val step = program.steps.getOrNull(index) ?: return ""
         return when (program.timeMode) {
             CLOCK -> format(schedule(program.startClock, program.steps)[index].start)
-            DURATION -> if (step.mode == "manual") "" else "${step.minutes} min"
+            DURATION -> if (step.mode == "manual") "" else minutesText(step.minutes)
             else -> ""
         }
     }
 
-    /** Nimiehdotus tyhjälle nimelle. Ei toista olemassa olevaa nimeä. */
-    fun suggestName(program: DayProgram, existingNames: Collection<String>): String {
-        val base = if (program.timeMode == CLOCK) {
-            val start = parse(program.startClock) ?: parse(DEFAULT_START)!!
-            when {
-                start < 10 * 60 -> "Aamurutiini"
-                start < 17 * 60 -> "Päiväohjelma"
-                else -> "Iltarutiini"
-            }
-        } else {
-            "Päiväohjelma"
+    /** Nimiehdotuksen vuorokaudenaika; teksti tulee käännettävistä resursseista. */
+    enum class DayPart { MORNING, DAY, EVENING }
+
+    fun dayPart(program: DayProgram): DayPart {
+        if (program.timeMode != CLOCK) return DayPart.DAY
+        val start = parse(program.startClock) ?: parse(DEFAULT_START)!!
+        return when {
+            start < 10 * 60 -> DayPart.MORNING
+            start < 17 * 60 -> DayPart.DAY
+            else -> DayPart.EVENING
         }
+    }
+
+    /** Nimiehdotus tyhjälle nimelle. Ei toista olemassa olevaa nimeä. */
+    fun suggestName(program: DayProgram, existingNames: Collection<String>, partName: (DayPart) -> String): String {
+        val base = partName(dayPart(program))
         val taken = existingNames.map { it.trim().lowercase() }.toSet()
         if (base.lowercase() !in taken) return base
         var n = 2

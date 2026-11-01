@@ -5,8 +5,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.data.ProgramStep
 
 @Composable
@@ -22,13 +24,14 @@ internal fun SubstepEditor(
             modifier = Modifier.heightIn(min = 48.dp)
         ) {
             Text(
-                if (step.subSteps.isEmpty()) "+ Osavaiheet" else "Osavaiheet (${step.subSteps.size})  ${if (expanded) "⌃" else "›"}",
+                if (step.subSteps.isEmpty()) stringResource(R.string.substeps_add_first)
+                else stringResource(R.string.substeps_count, step.subSteps.size, if (expanded) "⌃" else "›"),
                 fontSize = 15.sp
             )
         }
         if (expanded) {
             Text(
-                "Jaa tehtävä pienempiin osiin. Ajastin koskee koko tehtävää.",
+                stringResource(R.string.jaa_tehtava_pienempiin_osiin_ajastin),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -45,21 +48,21 @@ internal fun SubstepEditor(
                             changed[index] = edited.take(72)
                             onUpdate(step.copy(subSteps = changed))
                         },
-                        label = { Text("Osavaihe ${index + 1}") },
+                        label = { Text(stringResource(R.string.osavaihe, index + 1)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
                     TextButton(
                         onClick = { onUpdate(step.copy(subSteps = step.subSteps.filterIndexed { i, _ -> i != index })) },
                         modifier = Modifier.heightIn(min = 48.dp)
-                    ) { Text("Poista") }
+                    ) { Text(stringResource(R.string.poista)) }
                 }
             }
             OutlinedButton(
                 onClick = { onUpdate(step.copy(subSteps = step.subSteps + "")) },
                 enabled = step.subSteps.size < 16,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-            ) { Text("+ Lisää osavaihe") }
+            ) { Text(stringResource(R.string.lisaa_osavaihe)) }
         }
     }
 }

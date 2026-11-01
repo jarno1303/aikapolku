@@ -16,11 +16,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.CaregiverLockButton
@@ -128,16 +130,16 @@ internal fun TimerScreen(
             )
         ) {
             Text(
-                if (nextActivity == "Valitse toiminto")
-                    "Valmis"
-                else "Siirry seuraavaan",
+                if (nextActivity == stringResource(R.string.valitse_toiminto))
+                    stringResource(R.string.valmis_4)
+                else stringResource(R.string.siirry_seuraavaan),
                 fontSize = 18.sp
             )
         }
     } else {
         if (guided) {
             Text(
-                "TOIMINTOPOLKU",
+                stringResource(R.string.toimintopolku),
                 fontSize = 13.sp,
                 letterSpacing = 1.sp,
                 fontWeight = FontWeight.Bold,
@@ -151,7 +153,7 @@ internal fun TimerScreen(
             )
         } else {
             Text(
-                "Ajastin",
+                stringResource(R.string.ajastin),
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
                 color = AppColors.Ink
@@ -245,7 +247,7 @@ internal fun TimerScreen(
                         )
                     }
                     Text(
-                        "Nollaa",
+                        stringResource(R.string.nollaa),
                         fontSize = 12.sp,
                         color = DialMuted
                     )
@@ -287,7 +289,7 @@ internal fun TimerScreen(
                         )
                     }
                     Text(
-                        "Asetukset",
+                        stringResource(R.string.asetukset),
                         fontSize = 11.sp,
                         color = DialMuted
                     )
@@ -305,7 +307,7 @@ internal fun TimerScreen(
     if (settingsOpen) {
         AlertDialog(
             onDismissRequest = { settingsOpen = false },
-            title = { Text("Ajastimen asetukset") },
+            title = { Text(stringResource(R.string.ajastimen_asetukset)) },
             text = {
                 Column(
                     modifier = Modifier.heightIn(max = 460.dp)
@@ -322,7 +324,7 @@ internal fun TimerScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Viimeisten 10 sekunnin laskenta",
+                            stringResource(R.string.viimeisten_10_sekunnin_laskenta),
                             modifier = Modifier.weight(1f)
                         )
                         Switch(
@@ -335,14 +337,14 @@ internal fun TimerScreen(
                     HorizontalDivider()
 
                     Text(
-                        "Äänimerkki ajan päättyessä",
+                        stringResource(R.string.aanimerkki_ajan_paattyessa),
                         fontWeight = FontWeight.SemiBold
                     )
 
                     listOf(
-                        "off" to "Ei ääntä",
-                        "short" to "Lyhyt merkkiääni",
-                        "clear" to "Selkeä piippaus"
+                        "off" to stringResource(R.string.ei_aanta),
+                        "short" to stringResource(R.string.lyhyt_merkkiaani),
+                        "clear" to stringResource(R.string.selkea_piippaus)
                     ).forEach { (value, label) ->
                         Row(
                             modifier = Modifier
@@ -372,7 +374,7 @@ internal fun TimerScreen(
                         },
                         enabled = endSound != "off"
                     ) {
-                        Text("▶ Kuuntele äänimerkki")
+                        Text(stringResource(R.string.kuuntele_aanimerkki))
                     }
                 }
             },
@@ -380,7 +382,7 @@ internal fun TimerScreen(
                 TextButton(
                     onClick = { settingsOpen = false }
                 ) {
-                    Text("Valmis")
+                    Text(stringResource(R.string.valmis_4))
                 }
             }
         )
@@ -388,21 +390,21 @@ internal fun TimerScreen(
     if (confirmReset) {
         AlertDialog(
             onDismissRequest = { confirmReset = false },
-            title = { Text("Nollataanko ajastin?") },
+            title = { Text(stringResource(R.string.nollataanko_ajastin)) },
             text = {
-                Text("Ajastin palautetaan valittuun aloitusaikaan.")
+                Text(stringResource(R.string.ajastin_palautetaan_valittuun_aloitusaikaan))
             },
             confirmButton = {
                 TextButton(onClick = {
                     confirmReset = false
                     onReset()
                 }) {
-                    Text("Nollaa")
+                    Text(stringResource(R.string.nollaa))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { confirmReset = false }) {
-                    Text("Peruuta")
+                    Text(stringResource(R.string.peruuta))
                 }
             }
         )
@@ -421,13 +423,13 @@ private fun TimerTaskCards(
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         TimerTaskCard(
-            label = "ENSIN",
+            label = stringResource(R.string.ensin),
             name = first,
             photo = firstPhoto,
             modifier = Modifier.weight(1f)
         )
         TimerTaskCard(
-            label = "SITTEN",
+            label = stringResource(R.string.sitten),
             name = next,
             photo = nextPhoto,
             modifier = Modifier.weight(1f)
@@ -457,7 +459,7 @@ private fun TimerTaskCard(
         ) {
             Surface(
                 shape = RoundedCornerShape(50.dp),
-                color = if (label == "ENSIN")
+                color = if (label == stringResource(R.string.ensin))
                     AppColors.Teal else Color(0xFFE7F5F1)
             ) {
                 Text(
@@ -468,7 +470,7 @@ private fun TimerTaskCard(
                     ),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (label == "ENSIN")
+                    color = if (label == stringResource(R.string.ensin))
                         Color.White else AppColors.Teal
                 )
             }

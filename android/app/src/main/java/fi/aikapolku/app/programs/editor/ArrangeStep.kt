@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramStep
@@ -36,6 +38,7 @@ internal fun ArrangePage(
     onDraftChange: (DayProgram) -> Unit,
     onAddMore: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     // Vedon aikana useampi siirto voi tapahtua ennen uudelleenpiirtoa: pidetään tuorein tila tässä.
     val latest = remember { Ref(draft) }
     latest.value = draft
@@ -86,7 +89,7 @@ internal fun ArrangePage(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text(
-            "Vedä ≡-kahvasta muuttaaksesi järjestystä.",
+            stringResource(R.string.veda_kahvasta_muuttaaksesi_jarjestysta),
             fontSize = 14.sp,
             color = AppColors.Muted
         )
@@ -101,7 +104,7 @@ internal fun ArrangePage(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(start = 14.dp)
                 ) {
-                    Text("Poistettu: ${step.name}", modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.poistettu, step.name), modifier = Modifier.weight(1f))
                     TextButton(
                         onClick = {
                             val list = latest.value.steps.toMutableList()
@@ -110,7 +113,7 @@ internal fun ArrangePage(
                             undo = null
                         },
                         modifier = Modifier.heightIn(min = 48.dp)
-                    ) { Text("Kumoa", fontWeight = FontWeight.Bold) }
+                    ) { Text(stringResource(R.string.kumoa), fontWeight = FontWeight.Bold) }
                 }
             }
         }
@@ -131,11 +134,11 @@ internal fun ArrangePage(
                         .onSizeChanged { heights[step.id] = it.height }
                         .semantics {
                             customActions = listOf(
-                                CustomAccessibilityAction("Siirrä ylemmäs") {
+                                CustomAccessibilityAction(context.getString(R.string.siirra_ylemmas)) {
                                     val i = latest.value.steps.indexOfFirst { it.id == step.id }
                                     if (i > 0) { move(i, i - 1); true } else false
                                 },
-                                CustomAccessibilityAction("Siirrä alemmas") {
+                                CustomAccessibilityAction(context.getString(R.string.siirra_alemmas)) {
                                     val i = latest.value.steps.indexOfFirst { it.id == step.id }
                                     if (i in 0 until latest.value.steps.lastIndex) { move(i, i + 1); true } else false
                                 }
@@ -163,7 +166,7 @@ internal fun ArrangePage(
                                             }
                                         )
                                     }
-                                    .semantics { contentDescription = "Siirrä: ${step.name}" }
+                                    .semantics { contentDescription = context.getString(R.string.siirra, step.name) }
                             ) {
                                 Text("≡", fontSize = 26.sp, color = AppColors.Muted)
                             }
@@ -192,7 +195,7 @@ internal fun ArrangePage(
                                         commit(latest.value.copy(steps = latest.value.steps.filterNot { it.id == step.id }))
                                     }
                                 },
-                                modifier = Modifier.semantics { contentDescription = "Poista ${step.name}" }
+                                modifier = Modifier.semantics { contentDescription = context.getString(R.string.poista_2, step.name) }
                             ) { Text("✕", fontSize = 20.sp, color = AppColors.Muted) }
                         }
                         Box(modifier = Modifier.padding(start = 48.dp, end = 8.dp)) {
@@ -213,7 +216,7 @@ internal fun ArrangePage(
         OutlinedButton(
             onClick = onAddMore,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
-        ) { Text("+ Lisää toimintoja") }
+        ) { Text(stringResource(R.string.lisaa_toimintoja)) }
         Spacer(Modifier.height(4.dp))
     }
 }

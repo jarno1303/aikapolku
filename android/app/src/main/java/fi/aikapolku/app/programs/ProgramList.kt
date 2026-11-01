@@ -5,9 +5,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.caregiver.CaregiverLockButton
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.RoutineTemplates
@@ -25,13 +28,13 @@ internal fun ProgramListView(
     onDelete: (DayProgram) -> Unit
 ) {
     Text(
-        "Päiväohjelmat",
+        stringResource(R.string.paivaohjelmat),
         fontSize = 28.sp,
         fontWeight = FontWeight.Bold
     )
 
     if (!canEdit) {
-        CaregiverLockButton(label = "Ohjaaja: luo ja muokkaa ohjelmia")
+        CaregiverLockButton(label = stringResource(R.string.ohjaaja_luo_ja_muokkaa_ohjelmia))
     }
 
     if (canEdit) {
@@ -39,12 +42,12 @@ internal fun ProgramListView(
         onClick = onNew,
         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
     ) {
-        Text("+ Uusi päiväohjelma")
+        Text(stringResource(R.string.uusi_paivaohjelma))
     }
 
-    Text("Aloita valmiista rutiinista", fontWeight = FontWeight.SemiBold)
+    Text(stringResource(R.string.aloita_valmiista_rutiinista), fontWeight = FontWeight.SemiBold)
     Text(
-        "Pohjaa voi muokata ennen tallentamista.",
+        stringResource(R.string.pohjaa_voi_muokata_ennen_tallentamista),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         fontSize = 13.sp
     )
@@ -59,7 +62,7 @@ internal fun ProgramListView(
                         onClick = { onTemplate(template) },
                         modifier = Modifier.weight(1f).heightIn(min = 60.dp)
                     ) {
-                        Text(template.name, fontSize = 13.sp)
+                        Text(stringResource(template.nameRes), fontSize = 13.sp)
                     }
                 }
                 if (row.size == 1) Spacer(Modifier.weight(1f))
@@ -70,7 +73,7 @@ internal fun ProgramListView(
 
     if (programs.isEmpty()) {
         Text(
-            "Ei vielä päiväohjelmia. Luo ensimmäinen ohjelma.",
+            stringResource(R.string.ei_viela_paivaohjelmia_luo_ensimmainen),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -89,7 +92,7 @@ internal fun ProgramListView(
                     fontSize = 21.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Text("${program.steps.size} toimintoa")
+                Text(pluralStringResource(R.plurals.activities_count, program.steps.size, program.steps.size))
 
                 OutlinedButton(
                     onClick = { onPrint(program) },
@@ -97,7 +100,7 @@ internal fun ProgramListView(
                         .fillMaxWidth()
                         .heightIn(min = 52.dp)
                 ) {
-                    Text("Tulosta / PDF")
+                    Text(stringResource(R.string.tulosta_pdf))
                 }
 
                 Row(
@@ -106,18 +109,18 @@ internal fun ProgramListView(
                     Button(
                         onClick = { onStart(program) }
                     ) {
-                        Text("Käynnistä")
+                        Text(stringResource(R.string.kaynnista))
                     }
                     if (canEdit) {
                         TextButton(
                             onClick = { onEdit(program) }
                         ) {
-                            Text("Muokkaa")
+                            Text(stringResource(R.string.muokkaa))
                         }
                         TextButton(
                             onClick = { onDelete(program) }
                         ) {
-                            Text("Poista")
+                            Text(stringResource(R.string.poista))
                         }
                     }
                 }
@@ -130,12 +133,12 @@ internal fun ProgramListView(
 @Composable
 internal fun ProgramDoneView(programName: String, onBack: () -> Unit) {
     Spacer(Modifier.height(30.dp))
-    Text("✓ Kaikki valmista!", fontSize = 29.sp, fontWeight = FontWeight.Bold)
-    Text("$programName on päättynyt.")
+    Text(stringResource(R.string.kaikki_valmista_2), fontSize = 29.sp, fontWeight = FontWeight.Bold)
+    Text(stringResource(R.string.on_paattynyt, programName))
     Button(
         onClick = onBack,
         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
     ) {
-        Text("Takaisin päiväohjelmiin")
+        Text(stringResource(R.string.takaisin_paivaohjelmiin))
     }
 }

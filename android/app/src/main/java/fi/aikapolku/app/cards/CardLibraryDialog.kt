@@ -14,10 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.caregiver.CaregiverSession
 import fi.aikapolku.app.data.CardItem
 import fi.aikapolku.app.data.CardStore
@@ -72,7 +74,7 @@ internal fun CardLibraryDialog(
                 photoPath = importCardPhoto(context, uri)
                 errorMessage = ""
             } catch (error: Exception) {
-                errorMessage = "Kuvan tallentaminen ei onnistunut."
+                errorMessage = context.getString(R.string.kuvan_tallentaminen_ei_onnistunut)
             }
         }
     }
@@ -80,7 +82,7 @@ internal fun CardLibraryDialog(
     if (!editing && deleteCandidate == null) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Omat toimintokortit") },
+            title = { Text(stringResource(R.string.omat_toimintokortit)) },
             text = {
                 Column(
                     modifier = Modifier
@@ -92,7 +94,7 @@ internal fun CardLibraryDialog(
                         onClick = { openEditor(null) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("+ Uusi toimintokortti")
+                        Text(stringResource(R.string.uusi_toimintokortti))
                     }
                     OutlinedButton(
                         onClick = {
@@ -101,13 +103,12 @@ internal fun CardLibraryDialog(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Tee valmiista kortista oma")
+                        Text(stringResource(R.string.tee_valmiista_kortista_oma))
                     }
 
                     if (cards.isEmpty()) {
                         Text(
-                            "Ei vielä tallennettuja kortteja. " +
-                            "Luo ensimmäinen kortti.",
+                            stringResource(R.string.ei_viela_tallennettuja_kortteja_luo),
                             color = Color(0xFF526773)
                         )
                     } else {
@@ -184,7 +185,7 @@ internal fun CardLibraryDialog(
                                                     onSelect(card)
                                                 }
                                             ) {
-                                                Text("Valitse")
+                                                Text(stringResource(R.string.valitse))
                                             }
 
                                             TextButton(
@@ -192,14 +193,14 @@ internal fun CardLibraryDialog(
                                                     openEditor(card)
                                                 }
                                             ) {
-                                                Text("Muokkaa")
+                                                Text(stringResource(R.string.muokkaa))
                                             }
                                             TextButton(
                                                 onClick = {
                                                     openEditor(card.copy(id = ""))
                                                 }
                                             ) {
-                                                Text("Kopioi")
+                                                Text(stringResource(R.string.kopioi))
                                             }
 
                                             TextButton(
@@ -207,7 +208,7 @@ internal fun CardLibraryDialog(
                                                     deleteCandidate = card
                                                 }
                                             ) {
-                                                Text("Poista")
+                                                Text(stringResource(R.string.poista))
                                             }
                                         }
                                     }
@@ -219,7 +220,7 @@ internal fun CardLibraryDialog(
             },
             confirmButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("Sulje")
+                    Text(stringResource(R.string.sulje))
                 }
             }
         )
@@ -230,8 +231,8 @@ internal fun CardLibraryDialog(
             onDismissRequest = { editing = false },
             title = {
                 Text(
-                    if (editingId == null) "Uusi kortti"
-                    else "Muokkaa korttia"
+                    if (editingId == null) stringResource(R.string.uusi_kortti)
+                    else stringResource(R.string.muokkaa_korttia)
                 )
             },
             text = {
@@ -243,7 +244,7 @@ internal fun CardLibraryDialog(
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it.take(80) },
-                        label = { Text("Toiminnon nimi") },
+                        label = { Text(stringResource(R.string.toiminnon_nimi)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -253,7 +254,7 @@ internal fun CardLibraryDialog(
                         onValueChange = {
                             description = it.take(240)
                         },
-                        label = { Text("Kuvaus (valinnainen)") },
+                        label = { Text(stringResource(R.string.kuvaus_valinnainen)) },
                         maxLines = 3,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -276,7 +277,7 @@ internal fun CardLibraryDialog(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Valitse valmis kuva")
+                        Text(stringResource(R.string.valitse_valmis_kuva))
                     }
 
                     OutlinedButton(
@@ -291,14 +292,14 @@ internal fun CardLibraryDialog(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Valitse valokuva")
+                        Text(stringResource(R.string.valitse_valokuva))
                     }
 
                     if (photoPath.isNotBlank()) {
                         TextButton(
                             onClick = { photoPath = "" }
                         ) {
-                            Text("Poista kortin kuva")
+                            Text(stringResource(R.string.poista_kortin_kuva))
                         }
                     }
 
@@ -339,14 +340,14 @@ internal fun CardLibraryDialog(
                         onSelect(savedCard)
                     }
                 ) {
-                    Text("Tallenna ja valitse")
+                    Text(stringResource(R.string.tallenna_ja_valitse))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { editing = false }
                 ) {
-                    Text("Peruuta")
+                    Text(stringResource(R.string.peruuta))
                 }
             }
         )
@@ -355,12 +356,12 @@ internal fun CardLibraryDialog(
     if (showBuiltinPicker) {
         BuiltinCardPicker(
             onDismiss = { showBuiltinPicker = false },
-            onSelect = { template ->
+            onSelect = { templateId, templateName ->
                 if (fromTemplate) {
                     openEditor(null)
-                    name = template
+                    name = templateName
                 }
-                photoPath = "builtin:$template"
+                photoPath = "builtin:$templateId"
                 showBuiltinPicker = false
                 fromTemplate = false
             }
@@ -375,12 +376,11 @@ internal fun CardLibraryDialog(
                 deleteCandidate = null
             },
             title = {
-                Text("Poistetaanko kortti?")
+                Text(stringResource(R.string.poistetaanko_kortti))
             },
             text = {
                 Text(
-                    "Kortti '${target.name}' poistetaan " +
-                    "korttikirjastosta."
+                    stringResource(R.string.kortti_poistetaan_korttikirjastosta, target.name)
                 )
             },
             confirmButton = {
@@ -391,7 +391,7 @@ internal fun CardLibraryDialog(
                         deleteCandidate = null
                     }
                 ) {
-                    Text("Poista")
+                    Text(stringResource(R.string.poista))
                 }
             },
             dismissButton = {
@@ -400,7 +400,7 @@ internal fun CardLibraryDialog(
                         deleteCandidate = null
                     }
                 ) {
-                    Text("Peruuta")
+                    Text(stringResource(R.string.peruuta))
                 }
             }
         )

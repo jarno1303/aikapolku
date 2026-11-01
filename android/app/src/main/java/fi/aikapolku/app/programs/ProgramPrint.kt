@@ -21,6 +21,7 @@ import android.print.PrintDocumentInfo
 import android.print.PrintManager
 import android.print.pdf.PrintedPdfDocument
 import android.widget.Toast
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardArt
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramStep
@@ -39,7 +40,7 @@ internal object ProgramPrint {
         if (activity == null) {
             Toast.makeText(
                 context,
-                "Tulostusikkunaa ei voitu avata.",
+                context.getString(R.string.tulostusikkunaa_ei_voitu_avata),
                 Toast.LENGTH_LONG
             ).show()
             return
@@ -51,7 +52,7 @@ internal object ProgramPrint {
         ) {
             Toast.makeText(
                 activity,
-                "Androidin tulostuspalvelua ei ole käytettävissä.",
+                context.getString(R.string.androidin_tulostuspalvelua_ei_ole_kaytettavissa),
                 Toast.LENGTH_LONG
             ).show()
             return
@@ -71,7 +72,7 @@ internal object ProgramPrint {
                 .build()
 
             manager.print(
-                "AikaPolku - ${program.name.take(50)}",
+                context.getString(R.string.aikapolku, program.name.take(50)),
                 ProgramPrintAdapter(activity, program),
                 attributes
             )
@@ -83,7 +84,7 @@ internal object ProgramPrint {
             )
             Toast.makeText(
                 activity,
-                "Tulostusta ei voitu käynnistää.",
+                context.getString(R.string.tulostusta_ei_voitu_kaynnistaa),
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -139,7 +140,7 @@ private class ProgramPrintAdapter(
             )
 
             val info = PrintDocumentInfo.Builder(
-                "AikaPolku_paivaohjelma.pdf"
+                context.getString(R.string.aikapolku_paivaohjelma_pdf)
             )
                 .setContentType(
                     PrintDocumentInfo.CONTENT_TYPE_DOCUMENT
@@ -153,7 +154,7 @@ private class ProgramPrintAdapter(
             )
         } catch (e: Exception) {
             callback.onLayoutFailed(
-                "Tulosteen asettelua ei voitu muodostaa."
+                context.getString(R.string.tulosteen_asettelua_ei_voitu_muodostaa)
             )
         }
     }
@@ -167,7 +168,7 @@ private class ProgramPrintAdapter(
         val settings = attributes
 
         if (settings == null) {
-            callback.onWriteFailed("Tulostusasetukset puuttuvat.")
+            callback.onWriteFailed(context.getString(R.string.tulostusasetukset_puuttuvat))
             return
         }
 
@@ -226,7 +227,7 @@ private class ProgramPrintAdapter(
                 callback.onWriteCancelled()
             } else {
                 callback.onWriteFailed(
-                    "PDF:n muodostus epäonnistui."
+                    context.getString(R.string.pdf_n_muodostus_epaonnistui)
                 )
             }
         } finally {
@@ -292,7 +293,7 @@ private class ProgramPrintAdapter(
         )
 
         canvas.drawText(
-            "Päiväohjelma",
+            context.getString(R.string.paivaohjelma),
             left,
             top + 74f,
             paint(secondary, 12f)
@@ -316,7 +317,7 @@ private class ProgramPrintAdapter(
 
         if (program.steps.isEmpty()) {
             canvas.drawText(
-                "Päiväohjelmassa ei ole tehtäviä.",
+                context.getString(R.string.paivaohjelmassa_ei_ole_tehtavia),
                 left,
                 top + 118f,
                 paint(secondary, 14f)
@@ -324,7 +325,7 @@ private class ProgramPrintAdapter(
         }
 
         canvas.drawText(
-            "AikaPolku  |  Sivu ${pageIndex + 1}/$pageCount",
+            context.getString(R.string.aikapolku_sivu, pageIndex + 1, pageCount),
             left,
             rect.bottom - 10f,
             paint(secondary, 10f)
@@ -374,8 +375,8 @@ private class ProgramPrintAdapter(
         )
 
         val detail = when (step.mode) {
-            "clock" -> "Klo ${step.clock}"
-            "duration" -> "${step.minutes} min"
+            "clock" -> context.getString(R.string.klo, step.clock)
+            "duration" -> context.getString(R.string.min, step.minutes)
             else -> ""
         }
 

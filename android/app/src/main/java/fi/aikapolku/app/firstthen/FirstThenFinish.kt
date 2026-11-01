@@ -7,10 +7,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.ui.FlowColors
 
 @Composable
@@ -24,7 +26,7 @@ internal fun LastActivityScreen(
     Spacer(Modifier.height(10.dp))
 
     HeroCard(
-        label = "VIIMEINEN TOIMINTO",
+        label = stringResource(R.string.viimeinen_toiminto),
         name = name,
         imagePath = imagePath,
         large = true
@@ -46,7 +48,7 @@ internal fun LastActivityScreen(
                         containerColor = FlowColors.teal
                     )
                 ) {
-                    Text("✓ Valmis", fontSize = 15.sp)
+                    Text(stringResource(R.string.valmis_2), fontSize = 15.sp)
                 }
                 if (onAddNext != null) {
                     OutlinedButton(
@@ -55,7 +57,7 @@ internal fun LastActivityScreen(
                             .weight(1f)
                             .heightIn(min = 56.dp)
                     ) {
-                        Text("+ Lisää vaihe", fontSize = 14.sp)
+                        Text(stringResource(R.string.lisaa_vaihe), fontSize = 14.sp)
                     }
                 }
             }
@@ -67,7 +69,7 @@ internal fun LastActivityScreen(
                         .fillMaxWidth()
                         .heightIn(min = 56.dp)
                 ) {
-                    Text("✓ Valmis")
+                    Text(stringResource(R.string.valmis_2))
                 }
                 if (onAddNext != null) {
                     OutlinedButton(
@@ -76,7 +78,7 @@ internal fun LastActivityScreen(
                             .fillMaxWidth()
                             .heightIn(min = 56.dp)
                     ) {
-                        Text("+ Lisää vaihe")
+                        Text(stringResource(R.string.lisaa_vaihe))
                     }
                 }
             }
@@ -113,7 +115,7 @@ internal fun FlowDoneScreen(
     Spacer(Modifier.height(16.dp))
 
     Text(
-        "Kaikki valmista!",
+        stringResource(R.string.kaikki_valmista),
         modifier = Modifier.fillMaxWidth(),
         color = FlowColors.ink,
         fontSize = 30.sp,
@@ -123,7 +125,7 @@ internal fun FlowDoneScreen(
     )
 
     Text(
-        "Ohjelma on päättynyt.",
+        stringResource(R.string.ohjelma_on_paattynyt),
         modifier = Modifier.fillMaxWidth(),
         fontSize = 16.sp,
         color = FlowColors.muted,
@@ -141,6 +143,6 @@ internal fun FlowDoneScreen(
             containerColor = FlowColors.teal
         )
     ) {
-        Text("Takaisin aloitukseen", fontSize = 17.sp)
+        Text(stringResource(R.string.takaisin_aloitukseen), fontSize = 17.sp)
     }
 }

@@ -21,10 +21,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.MainActivity
+import fi.aikapolku.app.R
 import fi.aikapolku.app.ui.AppColors
 
 /** Ohjaajan asetukset -sivu. Sivulle pääsee vain ohjaajana (ks. MainActivity). */
@@ -33,7 +35,7 @@ internal fun CaregiverSettingsScreen() {
     val caregiver = LocalCaregiver.current
     var confirmDisable by remember { mutableStateOf(false) }
 
-    Text("Ohjaajan asetukset", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+    Text(stringResource(R.string.ohjaajan_asetukset_3), fontSize = 28.sp, fontWeight = FontWeight.Bold)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -44,24 +46,20 @@ internal fun CaregiverSettingsScreen() {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text("Ohjaajan lukitus", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.ohjaajan_lukitus), fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Text(
-                if (caregiver.lockEnabled) "Tila: käytössä" else "Tila: ei käytössä",
+                if (caregiver.lockEnabled) stringResource(R.string.tila_kaytossa) else stringResource(R.string.tila_ei_kaytossa),
                 fontWeight = FontWeight.SemiBold,
                 color = AppColors.Teal
             )
             Text(
-                "Lukitus piilottaa PIN-koodin taakse ajan muuttamisen, ajastimen tauon ja nollauksen, " +
-                    "lisäajan, päiväohjelman lopettamisen, ohjelmien ja korttien muokkauksen sekä asetukset."
+                stringResource(R.string.lukitus_piilottaa_pin_koodin_taakse)
             )
             Text(
-                "Aina käytettävissä: Tarvitsen apua, Tarvitsen tauon, Valmis, osavaiheen ohitus " +
-                    "sekä ajastimen Aloita ja Jatka."
+                stringResource(R.string.aina_kaytettavissa_tarvitsen_apua_tarvitsen)
             )
             Text(
-                "PIN-koodilla avatut ohjaajan toiminnot ovat auki 2 minuuttia, minkä ajan " +
-                    "yläreunassa näkyy muistutus. Lukitus menee päälle myös, kun sovellus " +
-                    "suljetaan tai siirtyy taustalle.",
+                stringResource(R.string.pin_koodilla_avatut_ohjaajan_toiminnot),
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -70,26 +68,25 @@ internal fun CaregiverSettingsScreen() {
                 Button(
                     onClick = { caregiver.run(AppAction.SETTINGS) { caregiver.openSetup() } },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
-                ) { Text("Ota lukitus käyttöön", fontSize = 17.sp) }
+                ) { Text(stringResource(R.string.ota_lukitus_kayttoon), fontSize = 17.sp) }
             } else {
                 Button(
                     onClick = { caregiver.lockNow() },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
-                ) { Text("🔒 Lukitse nyt", fontSize = 17.sp) }
+                ) { Text(stringResource(R.string.lukitse_nyt), fontSize = 17.sp) }
                 OutlinedButton(
                     onClick = { caregiver.run(AppAction.SETTINGS) { caregiver.openSetup() } },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
-                ) { Text("Vaihda PIN-koodi") }
+                ) { Text(stringResource(R.string.vaihda_pin_koodi)) }
                 TextButton(
                     onClick = { caregiver.run(AppAction.SETTINGS) { confirmDisable = true } },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("Poista lukitus") }
+                ) { Text(stringResource(R.string.poista_lukitus)) }
             }
 
             if (!caregiver.deviceSecure) {
                 Text(
-                    "Puhelimessa ei ole näytön lukitusta. Unohtunut PIN-koodi nollataan puhelimen " +
-                        "omalla lukituksella, joten sen käyttöönotto on suositeltavaa.",
+                    stringResource(R.string.puhelimessa_ei_ole_nayton_lukitusta),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -105,11 +102,9 @@ internal fun CaregiverSettingsScreen() {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Vinkki: näytön kiinnitys", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.vinkki_nayton_kiinnitys), fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Text(
-                "Androidin näytön kiinnitys pitää AikaPolun näkyvissä niin, ettei sovelluksesta " +
-                    "voi siirtyä muihin sovelluksiin. Ota se käyttöön puhelimen asetuksista hakemalla " +
-                    "\"Näytön kiinnitys\" tai \"Sovelluksen kiinnitys\"."
+                stringResource(R.string.androidin_nayton_kiinnitys_pitaa_aikapolun)
             )
         }
     }
@@ -117,16 +112,16 @@ internal fun CaregiverSettingsScreen() {
     if (confirmDisable) {
         AlertDialog(
             onDismissRequest = { confirmDisable = false },
-            title = { Text("Poistetaanko ohjaajan lukitus?") },
-            text = { Text("Kaikki toiminnot ovat tämän jälkeen kenen tahansa käytettävissä.") },
+            title = { Text(stringResource(R.string.poistetaanko_ohjaajan_lukitus)) },
+            text = { Text(stringResource(R.string.kaikki_toiminnot_ovat_taman_jalkeen)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmDisable = false
                     caregiver.disableLock()
-                }) { Text("Poista lukitus") }
+                }) { Text(stringResource(R.string.poista_lukitus)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDisable = false }) { Text("Peruuta") }
+                TextButton(onClick = { confirmDisable = false }) { Text(stringResource(R.string.peruuta)) }
             }
         )
     }

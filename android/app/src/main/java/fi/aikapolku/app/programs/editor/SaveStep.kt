@@ -10,9 +10,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramTiming
@@ -20,6 +23,7 @@ import fi.aikapolku.app.ui.AppColors
 
 @Composable
 internal fun SavePage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
+    val minutesText = stringResource(R.string.minutes_short)
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -27,22 +31,22 @@ internal fun SavePage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
         OutlinedTextField(
             value = draft.name,
             onValueChange = { onDraftChange(draft.copy(name = it.take(80))) },
-            label = { Text("Ohjelman nimi") },
+            label = { Text(stringResource(R.string.ohjelman_nimi)) },
             singleLine = true,
             isError = draft.name.isBlank(),
-            supportingText = { if (draft.name.isBlank()) Text("Anna ohjelmalle nimi.") },
+            supportingText = { if (draft.name.isBlank()) Text(stringResource(R.string.anna_ohjelmalle_nimi)) },
             modifier = Modifier.fillMaxWidth()
         )
 
-        Text("Näin ohjelma näkyy", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.nain_ohjelma_nakyy), fontSize = 18.sp, fontWeight = FontWeight.Bold)
         val summary = when (draft.timeMode) {
             ProgramTiming.CLOCK -> {
                 val end = ProgramTiming.endOf(draft.startClock, draft.steps)
-                "Kellonajat · alkaa klo ${draft.startClock}" +
-                    (end?.let { " · päättyy noin klo ${ProgramTiming.format(it)}" } ?: "")
+                stringResource(R.string.kellonajat_alkaa_klo, draft.startClock) +
+                    (end?.let { stringResource(R.string.paattyy_noin_klo, ProgramTiming.format(it)) } ?: "")
             }
-            ProgramTiming.DURATION -> "Kestot · jokaisella toiminnolla oma ajastin"
-            else -> "Omaan tahtiin · ei aikoja"
+            ProgramTiming.DURATION -> stringResource(R.string.kestot_jokaisella_toiminnolla_oma_ajastin)
+            else -> stringResource(R.string.omaan_tahtiin_ei_aikoja)
         }
         Text(summary, fontSize = 14.sp, color = AppColors.Muted)
 
@@ -50,7 +54,7 @@ internal fun SavePage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
             ProgramTiming.schedule(draft.startClock, draft.steps) else emptyList()
         if (slots.any { it.overlap }) {
             Text(
-                "Huom: jokin kiinteä aika alkaa ennen kuin edellinen toiminto päättyy. Voit tallentaa silti.",
+                stringResource(R.string.huom_jokin_kiintea_aika_alkaa),
                 color = MaterialTheme.colorScheme.error,
                 fontSize = 13.sp
             )
@@ -66,7 +70,7 @@ internal fun SavePage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                     .padding(8.dp)
             ) {
-                val label = ProgramTiming.label(draft, index)
+                val label = ProgramTiming.label(draft, index) { minutes -> minutesText.format(minutes) }
                 if (draft.timeMode != ProgramTiming.FREE) {
                     Text(
                         label,
@@ -80,7 +84,7 @@ internal fun SavePage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("${index + 1}. ${step.name}", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     if (step.subSteps.isNotEmpty()) {
-                        Text("${step.subSteps.size} osavaihetta", fontSize = 12.sp, color = AppColors.Muted)
+                        Text(pluralStringResource(R.plurals.substeps_count_label, step.subSteps.size, step.subSteps.size), fontSize = 12.sp, color = AppColors.Muted)
                     }
                 }
             }

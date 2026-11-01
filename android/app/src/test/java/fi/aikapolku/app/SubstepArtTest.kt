@@ -1,20 +1,29 @@
 package fi.aikapolku.app
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import fi.aikapolku.app.cards.SubstepArt
+import fi.aikapolku.app.data.RunPreferences
 import fi.aikapolku.app.data.SubstepDefaults
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
-/** P0-22a: osavaiheiden kuvat ja viestinäkymän kuva. Puhdas JVM-testi. */
+/** P0-22a: osavaiheiden kuvat ja viestinäkymän kuva. */
+@RunWith(RobolectricTestRunner::class)
 class SubstepArtTest {
+
+    private val context: Context = ApplicationProvider.getApplicationContext()
+    private val texts: (Int) -> String = { context.getString(it) }
 
     @Test
     fun `jokaisella oletusosavaiheella on oma kuva`() {
-        val defaults = SubstepDefaults.forCard("Pukeutuminen") +
-            SubstepDefaults.forCard("Hampaiden pesu")
+        val defaults = SubstepDefaults.forCard("Pukeutuminen", texts) +
+            SubstepDefaults.forCard("Hampaiden pesu", texts)
 
         assertEquals(8, defaults.size)
         defaults.forEach { name ->
@@ -26,7 +35,7 @@ class SubstepArtTest {
     fun `hampaiden pesun viimeinen osavaihe on Laita hammasharja takaisin`() {
         assertEquals(
             listOf("Ota hammasharja", "Pese hampaat", "Laita hammasharja takaisin"),
-            SubstepDefaults.forCard("Hampaiden pesu")
+            SubstepDefaults.forCard("Hampaiden pesu", texts)
         )
     }
 
@@ -53,11 +62,18 @@ class SubstepArtTest {
 
     @Test
     fun `tauko- ja apuviestilla on omat kuvat`() {
-        val tauko = SubstepArt.messageImageRes("Tarvitsen tauon")
-        val apu = SubstepArt.messageImageRes("Tarvitsen apua")
+        val tauko = SubstepArt.messageImageRes(RunPreferences.BREAK)
+        val apu = SubstepArt.messageImageRes(RunPreferences.HELP)
         assertNotNull(tauko)
         assertNotNull(apu)
         assertNotEquals(tauko, apu)
-        assertNull(SubstepArt.messageImageRes("Jokin muu viesti"))
+        assertNull(SubstepArt.messageImageRes("other"))
+    }
+
+    @Test
+    fun `kaannetty osavaiheen nimi loytaa kuvan`() {
+        val english: (Int) -> String = { if (it == R.string.substep_socks) "Socks" else "?" }
+        assertEquals(SubstepArt.imageRes("Sukat"), SubstepArt.imageRes("Socks", english))
+        assertNull(SubstepArt.imageRes("Socks"))
     }
 }

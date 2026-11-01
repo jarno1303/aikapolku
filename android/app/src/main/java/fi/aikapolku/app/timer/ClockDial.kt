@@ -17,9 +17,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.ui.AppColors
 import kotlin.math.atan2
 import kotlin.math.ceil
@@ -201,7 +203,7 @@ internal fun ClockDial(
                     color = DialRed
                 )
                 Text(
-                    "SEKUNTIA",
+                    stringResource(R.string.sekuntia),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = AppColors.Ink

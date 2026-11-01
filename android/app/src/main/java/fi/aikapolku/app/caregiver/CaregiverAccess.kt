@@ -37,11 +37,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.ui.AppColors
 import kotlinx.coroutines.delay
 
@@ -122,21 +124,19 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
             CaregiverSession.close()
             askPin = false
             pending = null
-            info = "Ohjaajan lukitus on poistettu. Voit asettaa uuden PIN-koodin Ohjaajan asetuksista."
+            info = context.getString(R.string.ohjaajan_lukitus_on_poistettu_voit)
         }
     }
 
     val forgotPin: () -> Unit = {
         val intent = if (deviceSecure) keyguard?.createConfirmDeviceCredentialIntent(
-            "Nollaa ohjaajan PIN-koodi",
-            "Vahvista puhelimen omalla näytön lukituksella."
+            context.getString(R.string.nollaa_ohjaajan_pin_koodi),
+            context.getString(R.string.vahvista_puhelimen_omalla_nayton_lukituksella)
         ) else null
         if (intent != null) {
             credentialLauncher.launch(intent)
         } else {
-            info = "PIN-koodin voi nollata vain puhelimen omalla näytön lukituksella " +
-                "(PIN, kuvio tai sormenjälki), eikä puhelimessa ole sitä käytössä. " +
-                "Ota näytön lukitus käyttöön puhelimen asetuksista ja yritä uudelleen."
+            info = context.getString(R.string.pin_koodin_voi_nollata_vain)
         }
     }
 
@@ -218,12 +218,11 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
                     setupOpen = false
                     if (wasEnabled) {
                         // PIN vaihdettiin ohjaajana: avaus jatkuu entisellään.
-                        info = "PIN-koodi on vaihdettu."
+                        info = context.getString(R.string.pin_koodi_on_vaihdettu)
                     } else {
                         // Käyttöönoton jälkeen lukko on heti päällä.
                         CaregiverSession.close()
-                        info = "Ohjaajan lukitus on nyt päällä. Ohjaajan toiminnot avataan " +
-                            "🔒-painikkeella ja PIN-koodilla. Ne ovat auki 2 minuuttia kerrallaan."
+                        info = context.getString(R.string.ohjaajan_lukitus_on_nyt_paalla)
                     }
                 },
                 onDismiss = { setupOpen = false }
@@ -233,23 +232,20 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
         if (offerOpen) {
             AlertDialog(
                 onDismissRequest = { offerOpen = false },
-                title = { Text("Käyttääkö tätä laitetta myös joku muu?") },
+                title = { Text(stringResource(R.string.kayttaako_tata_laitetta_myos_joku)) },
                 text = {
                     Text(
-                        "Ohjaajan lukitus piilottaa ajan muuttamisen, ohjelmien muokkauksen ja " +
-                            "asetukset PIN-koodin taakse. Tarvitsen apua, Tarvitsen tauon ja " +
-                            "Valmis toimivat aina.\n\nLukituksen voi ottaa käyttöön myöhemmin " +
-                            "myös Ohjaajan asetuksista."
+                        stringResource(R.string.ohjaajan_lukitus_piilottaa_ajan_muuttamisen)
                     )
                 },
                 confirmButton = {
                     TextButton(onClick = {
                         offerOpen = false
                         setupOpen = true
-                    }) { Text("Ota lukitus käyttöön") }
+                    }) { Text(stringResource(R.string.ota_lukitus_kayttoon)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { offerOpen = false }) { Text("Ei nyt") }
+                    TextButton(onClick = { offerOpen = false }) { Text(stringResource(R.string.ei_nyt)) }
                 }
             )
         }
@@ -257,9 +253,9 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
         info?.let { message ->
             AlertDialog(
                 onDismissRequest = { info = null },
-                title = { Text("Ohjaajan lukitus") },
+                title = { Text(stringResource(R.string.ohjaajan_lukitus)) },
                 text = { Text(message) },
-                confirmButton = { TextButton(onClick = { info = null }) { Text("Selvä") } }
+                confirmButton = { TextButton(onClick = { info = null }) { Text(stringResource(R.string.selva)) } }
             )
         }
     }
@@ -281,7 +277,7 @@ private fun CaregiverOpenBanner(remainingMs: Long, onLock: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "🔓 Ohjaaja auki · $time",
+                stringResource(R.string.ohjaaja_auki, time),
                 modifier = Modifier.weight(1f),
                 maxLines = 1,
                 color = Color(0xFF713F12),
@@ -289,7 +285,7 @@ private fun CaregiverOpenBanner(remainingMs: Long, onLock: () -> Unit) {
                 fontSize = 14.sp
             )
             TextButton(onClick = onLock, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text("Lukitse", color = Color(0xFF713F12), fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.lukitse), color = Color(0xFF713F12), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -299,19 +295,20 @@ private fun CaregiverOpenBanner(remainingMs: Long, onLock: () -> Unit) {
 @Composable
 internal fun CaregiverLockButton(
     modifier: Modifier = Modifier,
-    label: String = "Ohjaaja",
+    label: String = stringResource(R.string.ohjaaja),
     /** Ahtaisiin paikkoihin (esim. Ensin–Sitten-otsikko): pelkkä 🔒, ei tekstiä. */
     iconOnly: Boolean = false
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val caregiver = LocalCaregiver.current
     TextButton(
         onClick = { caregiver.unlock() },
         modifier = modifier
             .heightIn(min = 48.dp)
             .then(if (iconOnly) Modifier.widthIn(min = 48.dp) else Modifier)
-            .semantics { contentDescription = "Ohjaajan toiminnot, lukittu. Avaa PIN-koodilla." },
+            .semantics { contentDescription = context.getString(R.string.ohjaajan_toiminnot_lukittu_avaa_pin) },
         contentPadding = if (iconOnly) PaddingValues(4.dp) else ButtonDefaults.TextButtonContentPadding
     ) {
-        Text(if (iconOnly) "🔒" else "🔒 $label", color = AppColors.Teal, fontSize = if (iconOnly) 20.sp else 14.sp)
+        Text(if (iconOnly) "🔒" else stringResource(R.string.lock_label, label), color = AppColors.Teal, fontSize = if (iconOnly) 20.sp else 14.sp)
     }
 }

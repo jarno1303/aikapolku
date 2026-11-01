@@ -6,6 +6,7 @@ import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.CaregiverAccessState
 import fi.aikapolku.app.caregiver.CaregiverLockStore
 import fi.aikapolku.app.caregiver.CaregiverSession
+import fi.aikapolku.app.caregiver.PinProblem
 import fi.aikapolku.app.caregiver.PinResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -248,12 +249,12 @@ class CaregiverLockTest {
         assertNull(CaregiverLockStore.pinProblem("2580"))
         assertNull(CaregiverLockStore.pinProblem("1357"))
         assertNull(CaregiverLockStore.pinProblem("0912"))
-        assertEquals("PIN-koodissa on 4 numeroa.", CaregiverLockStore.pinProblem("123"))
-        assertEquals("PIN-koodissa on 4 numeroa.", CaregiverLockStore.pinProblem("12345"))
-        assertEquals("PIN-koodissa on 4 numeroa.", CaregiverLockStore.pinProblem("12a4"))
-        assertTrue(CaregiverLockStore.pinProblem("1111")!!.startsWith("Liian helppo"))
-        assertTrue(CaregiverLockStore.pinProblem("1234")!!.startsWith("Liian helppo"))
-        assertTrue(CaregiverLockStore.pinProblem("6543")!!.startsWith("Liian helppo"))
+        assertEquals(PinProblem.LENGTH, CaregiverLockStore.pinProblem("123"))
+        assertEquals(PinProblem.LENGTH, CaregiverLockStore.pinProblem("12345"))
+        assertEquals(PinProblem.LENGTH, CaregiverLockStore.pinProblem("12a4"))
+        assertEquals(PinProblem.SAME_DIGITS, CaregiverLockStore.pinProblem("1111"))
+        assertEquals(PinProblem.SEQUENCE, CaregiverLockStore.pinProblem("1234"))
+        assertEquals(PinProblem.SEQUENCE, CaregiverLockStore.pinProblem("6543"))
     }
 
     @Test

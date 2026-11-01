@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,31 +35,31 @@ internal fun HomeScreen(open: (String) -> Unit) {
         )
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text("AikaPolku", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink)
-            Text("Selkeyttä arkeen, askel kerrallaan", fontSize = 14.sp, color = AppColors.Muted)
+            Text(stringResource(R.string.selkeytta_arkeen_askel_kerrallaan), fontSize = 14.sp, color = AppColors.Muted)
         }
     }
 
     Spacer(Modifier.height(18.dp))
-    Text("Mitä haluat tehdä?", fontSize = 22.sp,
+    Text(stringResource(R.string.mita_haluat_tehda), fontSize = 22.sp,
         fontWeight = FontWeight.Bold, color = AppColors.Ink)
     Spacer(Modifier.height(6.dp))
 
     HomeCard(
         symbol = "timer",
-        title = "Ajastin",
-        subtitle = "Aseta aika ja keskity",
+        title = stringResource(R.string.ajastin),
+        subtitle = stringResource(R.string.aseta_aika_ja_keskity),
         onClick = { open("timer") }
     )
     HomeCard(
         symbol = "flow",
-        title = "Ensin – Sitten",
-        subtitle = "Suunnittele kaksi askelta",
+        title = stringResource(R.string.ensin_sitten),
+        subtitle = stringResource(R.string.suunnittele_kaksi_askelta),
         onClick = { open("firstthen") }
     )
     HomeCard(
         symbol = "programs",
-        title = "Päiväohjelmat",
-        subtitle = "Näe päivän kulku",
+        title = stringResource(R.string.paivaohjelmat),
+        subtitle = stringResource(R.string.nae_paivan_kulku),
         onClick = { open("programs") }
     )
 
@@ -68,7 +69,7 @@ internal fun HomeScreen(open: (String) -> Unit) {
         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
     ) {
         Text(
-            if (caregiver.isLocked) "🔒 Ohjaajan asetukset" else "⚙ Ohjaajan asetukset",
+            if (caregiver.isLocked) stringResource(R.string.ohjaajan_asetukset) else stringResource(R.string.ohjaajan_asetukset_2),
             color = AppColors.Teal,
             fontSize = 15.sp
         )
@@ -80,7 +81,7 @@ internal fun HomeScreen(open: (String) -> Unit) {
         shape = RoundedCornerShape(17.dp)
     ) {
         Text(
-            "Näe, mitä teet nyt ja mitä seuraavaksi.",
+            stringResource(R.string.nae_mita_teet_nyt_ja),
             modifier = Modifier.fillMaxWidth().padding(horizontal = 17.dp, vertical = 14.dp),
             fontSize = 14.sp,
             color = Color(0xFF145B55)

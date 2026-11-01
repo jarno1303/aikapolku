@@ -9,11 +9,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.ui.FlowColors
 
@@ -81,7 +83,7 @@ internal fun EditableCard(
 
             if (editable) {
                 Text(
-                    "Muokkaa ↗",
+                    stringResource(R.string.muokkaa_2),
                     color = FlowColors.teal,
                     fontSize = 12.sp
                 )
@@ -160,22 +162,22 @@ internal fun CompletedCard(
     nextPhoto: String
 ) {
     Text(
-        "✓ $first valmis",
+        stringResource(R.string.valmis, first),
         fontSize = 16.sp,
         fontWeight = FontWeight.SemiBold,
         color = Color(0xFF166534)
     )
 
-    if (next != "Valitse toiminto") {
+    if (next != stringResource(R.string.valitse_toiminto)) {
         HeroCard(
-            label = "SEURAAVAKSI",
+            label = stringResource(R.string.seuraavaksi),
             name = next,
             imagePath = nextPhoto,
             large = false
         )
     } else {
         Text(
-            "Kaikki tehty!",
+            stringResource(R.string.kaikki_tehty),
             fontSize = 25.sp,
             fontWeight = FontWeight.Bold,
             color = FlowColors.ink

@@ -8,9 +8,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.ProgramStep
 
@@ -28,10 +30,10 @@ internal fun ProgramOverview(
     ) {
         steps.forEachIndexed { index, item ->
             val status = when {
-                index < currentIndex -> "VALMIS"
-                index == currentIndex -> "NYT"
-                index == currentIndex + 1 -> "SEURAAVAKSI"
-                else -> "TULOSSA"
+                index < currentIndex -> stringResource(R.string.valmis_3)
+                index == currentIndex -> stringResource(R.string.nyt)
+                index == currentIndex + 1 -> stringResource(R.string.seuraavaksi)
+                else -> stringResource(R.string.tulossa)
             }
 
             val color = when {
@@ -86,7 +88,7 @@ internal fun ProgramOverview(
                         )
                     } else if (item.mode == "duration") {
                         Text(
-                            "${item.minutes} min",
+                            stringResource(R.string.min, item.minutes),
                             fontSize = 14.sp
                         )
                     }

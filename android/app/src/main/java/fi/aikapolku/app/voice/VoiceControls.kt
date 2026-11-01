@@ -10,7 +10,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import fi.aikapolku.app.R
 
 @Composable
 internal fun VoiceControls(
@@ -32,14 +34,14 @@ internal fun VoiceControls(
             message = ""
         } catch (_: Exception) {
             recording = false
-            message = "Tallennus ei käynnistynyt. Tarkista mikrofonin käyttöoikeus."
+            message = context.getString(R.string.tallennus_ei_kaynnistynyt_tarkista_mikrofonin)
         }
     }
 
     val permission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (granted) begin() else message = "Mikrofonin lupa evättiin."
+        if (granted) begin() else message = context.getString(R.string.mikrofonin_lupa_evattiin)
     }
 
     DisposableEffect(recorder) {
@@ -48,27 +50,27 @@ internal fun VoiceControls(
 
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
         HorizontalDivider()
-        Text("Oma puheviesti", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(R.string.oma_puheviesti), style = MaterialTheme.typography.titleSmall)
         Text(
-            "Tallenna lyhyt ohje tälle kortille. Puhe tallennetaan vain tähän puhelimeen.",
+            stringResource(R.string.tallenna_lyhyt_ohje_talle_kortille),
             style = MaterialTheme.typography.bodySmall
         )
 
         if (recording) {
-            Text("● Tallennus käynnissä", color = MaterialTheme.colorScheme.error)
+            Text(context.getString(R.string.tallennus_kaynnissa), color = MaterialTheme.colorScheme.error)
             Button(
                 onClick = {
                     try {
                         val path = recorder.finish()
                         onVoicePathChange(path)
-                        message = "Puheviesti tallennettu."
+                        message = context.getString(R.string.puheviesti_tallennettu)
                     } catch (_: Exception) {
-                        message = "Tallennus epäonnistui. Kokeile uudelleen."
+                        message = context.getString(R.string.tallennus_epaonnistui_kokeile_uudelleen)
                     }
                     recording = false
                 },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-            ) { Text("Lopeta tallennus") }
+            ) { Text(stringResource(R.string.lopeta_tallennus)) }
         } else {
             OutlinedButton(
                 onClick = {
@@ -79,7 +81,7 @@ internal fun VoiceControls(
                     else permission.launch(Manifest.permission.RECORD_AUDIO)
                 },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-            ) { Text(if (voicePath.isBlank()) "● Tallenna puheviesti" else "● Äänitä uusi viesti") }
+            ) { Text(if (voicePath.isBlank()) stringResource(R.string.tallenna_puheviesti) else stringResource(R.string.aanita_uusi_viesti)) }
         }
 
         if (voicePath.isNotBlank() && !recording) {
@@ -92,21 +94,21 @@ internal fun VoiceControls(
                         )
 
                         message = result
-                            ?: "Puheviesti toistetaan."
+                            ?: context.getString(R.string.puheviesti_toistetaan)
                     }
                 ) {
-                    Text("▶ Kuuntele")
+                    Text(stringResource(R.string.kuuntele_2))
                 }
                 TextButton(onClick = {
                     VoicePlayer.stop()
                     onVoicePathChange("")
                     onAutoPlayChange(false)
-                }) { Text("Poista ääni") }
+                }) { Text(stringResource(R.string.poista_aani)) }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(checked = autoPlay, onCheckedChange = onAutoPlayChange)
-                Text("Toista automaattisesti toiminnon alkaessa")
+                Text(stringResource(R.string.toista_automaattisesti_toiminnon_alkaessa))
             }
         }
 

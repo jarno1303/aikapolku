@@ -6,6 +6,7 @@ import android.media.MediaPlayer
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import fi.aikapolku.app.R
 import java.io.File
 
 /** Audio files remain on the device, in application-private storage. */
@@ -44,7 +45,7 @@ internal object VoicePlayer {
         if (path.isBlank()) {
             return report(
                 context,
-                "Kortilla ei ole tallennettua puheviestiä."
+                context.getString(R.string.kortilla_ei_ole_tallennettua_puheviestia)
             )
         }
 
@@ -62,7 +63,7 @@ internal object VoicePlayer {
         if (!valid) {
             return report(
                 context,
-                "Puheviestin äänitiedostoa ei löydy."
+                context.getString(R.string.puheviestin_aanitiedostoa_ei_loydy)
             )
         }
 
@@ -98,7 +99,7 @@ internal object VoicePlayer {
 
                 report(
                     context,
-                    "Puheviestin toistossa tapahtui virhe."
+                    context.getString(R.string.puheviestin_toistossa_tapahtui_virhe)
                 )
 
                 if (player === mp) {
@@ -130,7 +131,7 @@ internal object VoicePlayer {
 
             report(
                 context,
-                "Puheviestin toisto epäonnistui."
+                context.getString(R.string.puheviestin_toisto_epaonnistui)
             )
         }
     }

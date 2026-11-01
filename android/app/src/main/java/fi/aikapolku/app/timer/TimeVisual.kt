@@ -10,21 +10,23 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.data.TimeDisplayPrefs
 import fi.aikapolku.app.ui.AppColors
 
 /** Same options are available in both the timer and the daily routine. */
 @Composable
 internal fun TimeModeChoices(mode: String, onChange: (String) -> Unit) {
-    Text("Miten aika näytetään?", fontWeight = FontWeight.SemiBold)
+    Text(stringResource(R.string.miten_aika_naytetaan), fontWeight = FontWeight.SemiBold)
     listOf(
-        Triple(TimeDisplayPrefs.NUMBERS, "Numerot ja rengas", "Tarkka aika näkyy."),
-        Triple(TimeDisplayPrefs.RING, "Vain rengas", "Ei väheneviä numeroita."),
-        Triple(TimeDisplayPrefs.CALM, "Rauhallinen", "Ei jatkuvaa aikalaskentaa.")
+        Triple(TimeDisplayPrefs.NUMBERS, stringResource(R.string.numerot_ja_rengas), stringResource(R.string.tarkka_aika_nakyy)),
+        Triple(TimeDisplayPrefs.RING, stringResource(R.string.vain_rengas), stringResource(R.string.ei_vahenevia_numeroita)),
+        Triple(TimeDisplayPrefs.CALM, stringResource(R.string.rauhallinen), stringResource(R.string.ei_jatkuvaa_aikalaskentaa))
     ).forEach { (value, label, detail) ->
         Row(
             modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp),
@@ -38,7 +40,7 @@ internal fun TimeModeChoices(mode: String, onChange: (String) -> Unit) {
         }
     }
     Text(
-        "Aika ja hälytykset toimivat kaikissa vaihtoehdoissa samalla tavalla.",
+        stringResource(R.string.aika_ja_halytykset_toimivat_kaikissa),
         fontSize = 12.sp,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -89,10 +91,10 @@ internal fun TimeVisual(
         }
         Text(
             text = when {
-                done -> "Aika päättyi"
-                running -> "Käynnissä"
-                remaining < duration -> "Tauolla"
-                else -> "Valmis aloittamaan"
+                done -> stringResource(R.string.aika_paattyi_2)
+                running -> stringResource(R.string.kaynnissa)
+                remaining < duration -> stringResource(R.string.tauolla)
+                else -> stringResource(R.string.valmis_aloittamaan)
             },
             modifier = Modifier.padding(horizontal = 16.dp),
             color = MaterialTheme.colorScheme.onSurface,

@@ -2,6 +2,7 @@ package fi.aikapolku.app.data
 
 import android.content.Context
 import android.net.Uri
+import fi.aikapolku.app.R
 import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
@@ -16,8 +17,8 @@ internal data class CardItem(
 )
 
 internal data class FirstThenSelection(
-    val firstName: String = "Askartelu",
-    val nextName: String = "Ruokailu",
+    val firstName: String = "",
+    val nextName: String = "",
     val firstPhoto: String = "",
     val nextPhoto: String = "",
     val firstDescription: String = "",
@@ -29,6 +30,7 @@ internal data class FirstThenSelection(
 )
 
 internal class CardStore(context: Context) {
+    private val appContext = context.applicationContext
     private val prefs = context.getSharedPreferences(
         "aikapolku_cards_v1",
         Context.MODE_PRIVATE
@@ -107,8 +109,8 @@ internal class CardStore(context: Context) {
         }.getOrElse { JSONObject() }
 
         return FirstThenSelection(
-            firstName = obj.optString("firstName", "Askartelu"),
-            nextName = obj.optString("nextName", "Ruokailu"),
+            firstName = obj.optString("firstName", appContext.getString(R.string.first_then_default_first)),
+            nextName = obj.optString("nextName", appContext.getString(R.string.first_then_default_next)),
             firstPhoto = obj.optString("firstPhoto"),
             nextPhoto = obj.optString("nextPhoto"),
             firstDescription = obj.optString("firstDescription"),

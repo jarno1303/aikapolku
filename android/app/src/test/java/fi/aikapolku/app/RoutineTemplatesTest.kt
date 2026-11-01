@@ -1,5 +1,7 @@
 package fi.aikapolku.app
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import fi.aikapolku.app.cards.CardArt
 import fi.aikapolku.app.data.RoutineTemplates
 import fi.aikapolku.app.data.SubstepDefaults
@@ -8,9 +10,16 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
-/** Valmiit rutiinipohjat, oletuskortit ja osavaiheiden oletukset. Puhdas JVM-testi. */
+/** Valmiit rutiinipohjat, oletuskortit ja osavaiheiden oletukset (suomenkieliset resurssit). */
+@RunWith(RobolectricTestRunner::class)
 class RoutineTemplatesTest {
+
+    private val context: Context = ApplicationProvider.getApplicationContext()
+    private val texts: (Int) -> String = { context.getString(it) }
+    private fun aamu() = RoutineTemplates.create(RoutineTemplates.all.first { texts(it.nameRes) == "Aamutoimet" }, texts)
 
     private val cardIds = CardArt.templates.map { it.id }.toSet()
 
@@ -18,7 +27,7 @@ class RoutineTemplatesTest {
     fun `pohjia on nelja oikeilla nimilla`() {
         assertEquals(
             listOf("Aamutoimet", "Iltatoimet", "Koulupäivä", "Päivätoiminta"),
-            RoutineTemplates.all.map { it.name }
+            RoutineTemplates.all.map { texts(it.nameRes) }
         )
     }
 
@@ -26,7 +35,7 @@ class RoutineTemplatesTest {
     fun `jokainen pohjan vaihe viittaa olemassa olevaan korttiin`() {
         RoutineTemplates.all.forEach { template ->
             template.steps.forEach { step ->
-                assertTrue("${template.name}: tuntematon kortti ${step.cardId}", step.cardId in cardIds)
+                assertTrue("${texts(template.nameRes)}: tuntematon kortti ${step.cardId}", step.cardId in cardIds)
             }
         }
     }
@@ -34,15 +43,15 @@ class RoutineTemplatesTest {
     @Test
     fun `jokaisesta pohjasta syntyy ohjelma kaatumatta`() {
         RoutineTemplates.all.forEach { template ->
-            val program = RoutineTemplates.create(template)
-            assertEquals(template.name, program.name)
+            val program = RoutineTemplates.create(template, texts)
+            assertEquals(texts(template.nameRes), program.name)
             assertEquals(template.steps.size, program.steps.size)
         }
     }
 
     @Test
     fun `pohjan vaiheet saavat kortin nimen ja valmiin kuvan`() {
-        val aamu = RoutineTemplates.create(RoutineTemplates.all.first { it.name == "Aamutoimet" })
+        val aamu = aamu()
 
         assertEquals(listOf("Aamupala", "Hampaiden pesu", "Pukeutuminen", "Lähtö"), aamu.steps.map { it.name })
         assertEquals("builtin:breakfast", aamu.steps[0].photo)
@@ -50,7 +59,7 @@ class RoutineTemplatesTest {
 
     @Test
     fun `kestolliset vaiheet ovat kestotilassa ja muut kasin edettavia`() {
-        val aamu = RoutineTemplates.create(RoutineTemplates.all.first { it.name == "Aamutoimet" })
+        val aamu = aamu()
 
         assertEquals("duration", aamu.steps[0].mode)
         assertEquals(15, aamu.steps[0].minutes)
@@ -59,7 +68,7 @@ class RoutineTemplatesTest {
 
     @Test
     fun `pukeutuminen ja hampaiden pesu saavat oletusosavaiheet`() {
-        val aamu = RoutineTemplates.create(RoutineTemplates.all.first { it.name == "Aamutoimet" })
+        val aamu = aamu()
 
         assertEquals(listOf("Sukat", "Housut", "Paita", "Takki", "Kengät"),
             aamu.steps.first { it.name == "Pukeutuminen" }.subSteps)
@@ -70,8 +79,8 @@ class RoutineTemplatesTest {
     @Test
     fun `jokainen luotu ohjelma ja vaihe saa yksilollisen id-n`() {
         val template = RoutineTemplates.all.first()
-        val a = RoutineTemplates.create(template)
-        val b = RoutineTemplates.create(template)
+        val a = RoutineTemplates.create(template, texts)
+        val b = RoutineTemplates.create(template, texts)
 
         assertTrue(a.id != b.id)
         val stepIds = (a.steps + b.steps).map { it.id }
@@ -80,9 +89,9 @@ class RoutineTemplatesTest {
 
     @Test
     fun `osavaiheiden oletus ei valita kirjainkoosta eika valilyonneista`() {
-        assertEquals(5, SubstepDefaults.forCard("  PUKEUTUMINEN ").size)
-        assertEquals(3, SubstepDefaults.forCard("hampaiden pesu").size)
-        assertTrue(SubstepDefaults.forCard("Ulkoilu").isEmpty())
+        assertEquals(5, SubstepDefaults.forCard("  PUKEUTUMINEN ", texts).size)
+        assertEquals(3, SubstepDefaults.forCard("hampaiden pesu", texts).size)
+        assertTrue(SubstepDefaults.forCard("Ulkoilu", texts).isEmpty())
     }
 
     @Test
@@ -106,5 +115,21 @@ class RoutineTemplatesTest {
     @Test
     fun `tuntematon kortti ei loyda kuvaa`() {
         assertNull(CardArt.imageRes("Uimahalli"))
+    }
+
+    @Test
+    fun `kaannetty nimi tunnistetaan ja vanha suomenkielinen nimi toimii aina`() {
+        // Kuvitteellinen käännös: toisella kielellä luotu kortti löytää saman kuvan.
+        val english: (Int) -> String = { if (it == R.string.card_breakfast) "Breakfast" else "?" }
+        val breakfast = CardArt.templates.first { it.id == "breakfast" }.drawable
+        assertEquals(breakfast, CardArt.imageRes("Breakfast", "", english))
+        assertEquals(breakfast, CardArt.imageRes("Aamupala", "", english))
+        assertNull(CardArt.imageRes("Breakfast"))
+    }
+
+    @Test
+    fun `valmiiden korttien nimet tulevat resursseista`() {
+        assertEquals("Aamupala", texts(CardArt.templates.first { it.id == "breakfast" }.nameRes))
+        assertEquals(21, CardArt.templates.map { texts(it.nameRes) }.toSet().size)
     }
 }

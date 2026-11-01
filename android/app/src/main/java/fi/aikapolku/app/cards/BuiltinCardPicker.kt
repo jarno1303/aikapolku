@@ -9,19 +9,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-private val builtinCardTemplates = CardArt.names
+import fi.aikapolku.app.R
 
 @Composable
 internal fun BuiltinCardPicker(
     onDismiss: () -> Unit,
-    onSelect: (String) -> Unit
+    /** Valittu kortti: tunnus ja nimi sovelluksen nykyisellä kielellä. */
+    onSelect: (id: String, name: String) -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Valitse valmis kuva") },
+        title = { Text(stringResource(R.string.valitse_valmis_kuva)) },
         text = {
             Column(
                 modifier = Modifier
@@ -30,9 +31,10 @@ internal fun BuiltinCardPicker(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                builtinCardTemplates.forEach { name ->
+                CardArt.templates.forEach { template ->
+                    val name = stringResource(template.nameRes)
                     TextButton(
-                        onClick = { onSelect(name) },
+                        onClick = { onSelect(template.id, name) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -42,7 +44,7 @@ internal fun BuiltinCardPicker(
                         ) {
                             CardPhoto(
                                 name = name,
-                                imagePath = "builtin:$name",
+                                imagePath = "builtin:${template.id}",
                                 modifier = Modifier
                                     .size(50.dp)
                                     .clip(RoundedCornerShape(10.dp))
@@ -54,7 +56,7 @@ internal fun BuiltinCardPicker(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Peruuta") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.peruuta)) }
         }
     )
 }

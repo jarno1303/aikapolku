@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.CardItem
 import fi.aikapolku.app.data.DayProgram
@@ -36,17 +38,18 @@ internal fun ChoosePage(
     cards: List<Pair<String, List<CardItem>>>,
     onDraftChange: (DayProgram) -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text(
-            "Napauta toiminnot siinä järjestyksessä kuin ne tehdään.",
+            stringResource(R.string.napauta_toiminnot_siina_jarjestyksessa_kuin),
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold
         )
         Text(
-            "Uusi napautus poistaa. Pidä painettuna, jos sama toiminto tulee päivään useamman kerran.",
+            stringResource(R.string.uusi_napautus_poistaa_pida_painettuna),
             fontSize = 13.sp,
             color = AppColors.Muted
         )
@@ -73,14 +76,14 @@ internal fun ChoosePage(
                                 positions = positions,
                                 onTap = {
                                     if (positions.isEmpty()) {
-                                        onDraftChange(draft.copy(steps = draft.steps + stepFromCard(card)))
+                                        onDraftChange(draft.copy(steps = draft.steps + stepFromCard(card) { context.getString(it) }))
                                     } else {
                                         val removeAt = positions.last() - 1
                                         onDraftChange(draft.copy(steps = draft.steps.filterIndexed { i, _ -> i != removeAt }))
                                     }
                                 },
                                 onLongPress = {
-                                    onDraftChange(draft.copy(steps = draft.steps + stepFromCard(card)))
+                                    onDraftChange(draft.copy(steps = draft.steps + stepFromCard(card) { context.getString(it) }))
                                 },
                                 modifier = Modifier.weight(1f)
                             )
@@ -105,6 +108,8 @@ private fun CardTile(
     modifier: Modifier = Modifier
 ) {
     val selected = positions.isNotEmpty()
+    val selectedText = stringResource(R.string.a11y_selected_at, positions.joinToString(", "))
+    val notSelectedText = stringResource(R.string.a11y_not_selected)
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = if (selected) AppColors.TealSoft else MaterialTheme.colorScheme.surface,
@@ -114,12 +119,12 @@ private fun CardTile(
             .combinedClickable(
                 onClick = onTap,
                 onLongClick = onLongPress,
-                onClickLabel = if (selected) "Poista ohjelmasta" else "Lisää ohjelmaan",
-                onLongClickLabel = "Lisää uudelleen"
+                onClickLabel = if (selected) stringResource(R.string.poista_ohjelmasta) else stringResource(R.string.lisaa_ohjelmaan),
+                onLongClickLabel = stringResource(R.string.lisaa_uudelleen)
             )
             .semantics {
                 contentDescription = card.name
-                stateDescription = if (selected) "Valittu, kohta ${positions.joinToString(", ")}" else "Ei valittu"
+                stateDescription = if (selected) selectedText else notSelectedText
             }
     ) {
         Column(

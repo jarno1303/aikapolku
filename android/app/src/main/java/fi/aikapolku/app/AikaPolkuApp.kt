@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.caregiver.AppAction
@@ -192,7 +193,7 @@ internal fun AikaPolkuApp() {
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                             modifier = Modifier.heightIn(min = 48.dp)
                         ) {
-                            Text("‹ Takaisin", color = AppColors.Teal, fontSize = 17.sp)
+                            Text(stringResource(R.string.takaisin), color = AppColors.Teal, fontSize = 17.sp)
                         }
                     }
                 }
@@ -228,7 +229,7 @@ internal fun AikaPolkuApp() {
                         BackgroundTimer.stop(context, "timer", 0L)
                         activeTask = ""
 
-                        if (next != "Valitse toiminto") {
+                        if (next != context.getString(R.string.valitse_toiminto)) {
                             first = next
                             firstPhoto = nextPhoto
                             firstDescription = nextDescription
@@ -263,7 +264,7 @@ internal fun AikaPolkuApp() {
                             }
                             deadline = BackgroundTimer.start(
                                 context, "timer", remaining,
-                                if (activeTask.isBlank()) "Ajastin" else activeTask
+                                if (activeTask.isBlank()) context.getString(R.string.ajastin) else activeTask
                             )
                             running = true
                             if (remaining == 0L) voiceStartedForTimer = false
@@ -343,7 +344,7 @@ internal fun AikaPolkuApp() {
                     nextPhoto = nextPhoto,
                     onNext = {
                         running = false
-                        if (next != "Valitse toiminto") {
+                        if (next != context.getString(R.string.valitse_toiminto)) {
                             first = next
                             firstPhoto = nextPhoto
                             firstDescription = nextDescription
@@ -364,7 +365,7 @@ internal fun AikaPolkuApp() {
                     },
                     onAddNext = if (caregiver.allows(AppAction.EDIT_CARDS)) {
                         {
-                            next = "Valitse toiminto"
+                            next = context.getString(R.string.valitse_toiminto)
                             nextPhoto = ""
                             nextDescription = ""
                             nextVoice = ""
@@ -396,8 +397,8 @@ internal fun AikaPolkuApp() {
                 ) {
                     Text(
     if (page == "timer" && activeTask.isNotBlank())
-        "Takaisin Ensin – Sitten"
-    else "Takaisin aloitukseen",
+        stringResource(R.string.takaisin_ensin_sitten)
+    else stringResource(R.string.takaisin_aloitukseen),
     fontSize = 16.sp
 )
                 }
