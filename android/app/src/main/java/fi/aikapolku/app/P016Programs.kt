@@ -167,7 +167,7 @@ private val ap17ProgramSaver = Saver<AP16Program, String>(
     restore = { p017ParseDraft(it) }
 )
 
-private fun p017SerializeDraft(program: AP16Program): String {
+internal fun p017SerializeDraft(program: AP16Program): String {
     val steps = JSONArray()
     program.steps.forEach { step ->
         steps.put(JSONObject().apply {
@@ -190,7 +190,7 @@ private fun p017SerializeDraft(program: AP16Program): String {
     }.toString()
 }
 
-private fun p017ParseDraft(encoded: String): AP16Program {
+internal fun p017ParseDraft(encoded: String): AP16Program {
     return runCatching {
         val obj = JSONObject(encoded)
         val jsonSteps = obj.optJSONArray("steps") ?: JSONArray()

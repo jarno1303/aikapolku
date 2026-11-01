@@ -669,7 +669,7 @@ internal fun P013ClockDial(
         }
     }
 }
-private fun p013MinuteFromPoint(
+internal fun p013MinuteFromPoint(
     position: Offset,
     width: Int,
     height: Int
