@@ -1,7 +1,5 @@
 package fi.aikapolku.app.programs
 
-import android.content.Context
-import android.os.SystemClock
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -17,7 +15,6 @@ import fi.aikapolku.app.R
 import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.data.DayProgram
-import fi.aikapolku.app.data.ProgramStep
 import fi.aikapolku.app.data.ProgramStore
 import fi.aikapolku.app.data.ProgramTiming
 import fi.aikapolku.app.data.RoutineTemplates
@@ -29,11 +26,15 @@ import fi.aikapolku.app.data.TimeMode
 import fi.aikapolku.app.data.parseDraft
 import fi.aikapolku.app.data.serializeDraft
 import fi.aikapolku.app.programs.editor.ProgramEditorScreen
+import fi.aikapolku.app.programs.run.PrefsRunProgress
+import fi.aikapolku.app.programs.run.ProgramRunController
 import fi.aikapolku.app.programs.run.RunNext
 import fi.aikapolku.app.programs.run.RunStepScreen
 import fi.aikapolku.app.programs.run.RunTime
 import fi.aikapolku.app.programs.run.SupportMessageScreen
 import fi.aikapolku.app.timer.BackgroundTimer
+import fi.aikapolku.app.timer.BackgroundTimerPort
+import fi.aikapolku.app.timer.Tick
 import fi.aikapolku.app.timer.TimeModeChoices
 import fi.aikapolku.app.timer.playCompletionSound
 import fi.aikapolku.app.voice.VoicePlayer
@@ -59,21 +60,23 @@ internal fun ProgramsScreen() {
         ProgramStore(context.applicationContext)
     }
     val completionSoundScope = rememberCoroutineScope()
-    val p018Prefs = remember(context) {
-        context.getSharedPreferences("aikapolku_program_progress_v1", Context.MODE_PRIVATE)
-    }
-    val storedProgramId = remember { p018Prefs.getString("program_id", "") ?: "" }
+    val runProgress = remember(context) { PrefsRunProgress(context.applicationContext) }
+    val runTimer = remember(context) { BackgroundTimerPort(context.applicationContext, "program") }
+    val playVoice: (String) -> Unit = remember(context) { { path -> VoicePlayer.play(context, path) } }
     val initialPrograms = remember(store) { store.load() }
     var programs by remember { mutableStateOf(initialPrograms) }
+    // Keskeytynyt ohjelma jatkuu, jos se on yhä tallessa.
+    val resumable = remember { initialPrograms.firstOrNull { it.id == runProgress.programId && it.steps.isNotEmpty() } }
+    val run = rememberSaveable(saver = ProgramRunController.saver(runTimer, runProgress, playVoice)) {
+        ProgramRunController(runTimer, runProgress, playVoice).also { c -> resumable?.let { c.resume(it) } }
+    }
     var view by rememberSaveable {
-        mutableStateOf(if (storedProgramId.isNotBlank()) ProgramsView.RUN else ProgramsView.LIST)
+        mutableStateOf(if (resumable != null) ProgramsView.RUN else ProgramsView.LIST)
     }
 
+    // Muokattava ohjelma (uusi, pohjasta tai olemassa oleva). Suoritettava ohjelma on [run].
     var draft by rememberSaveable(stateSaver = programDraftSaver) {
-        mutableStateOf(
-            initialPrograms.firstOrNull { it.id == storedProgramId }
-                ?: DayProgram(UUID.randomUUID().toString(), "", emptyList())
-        )
+        mutableStateOf(DayProgram(UUID.randomUUID().toString(), "", emptyList()))
     }
 
     var showFullProgram by rememberSaveable { mutableStateOf(false) }
@@ -105,180 +108,80 @@ internal fun ProgramsScreen() {
         mutableStateOf(TimeDisplayPrefs.load(context))
     }
 
-    var stepIndex by rememberSaveable { mutableIntStateOf(p018Prefs.getInt("step_index", 0)) }
-    var subStepIndex by rememberSaveable { mutableIntStateOf(p018Prefs.getInt("sub_step_index", 0)) }
-    var supportMessage by rememberSaveable { mutableStateOf<SupportKind?>(null) }
-    // Oliko ajastin käynnissä, kun apua tai taukoa pyydettiin? Jatka palauttaa sen.
-    var resumeAfterSupport by rememberSaveable { mutableStateOf(false) }
-    var running by rememberSaveable { mutableStateOf(BackgroundTimer.running(context, "program")) }
-    var stepVoicePlayed by rememberSaveable { mutableStateOf(false) }
-    var deadline by rememberSaveable {
-        mutableLongStateOf(SystemClock.elapsedRealtime() + BackgroundTimer.remaining(context, "program", 0L))
-    }
-    var remaining by rememberSaveable {
-        mutableLongStateOf(BackgroundTimer.remaining(context, "program", 0L))
-    }
-
     fun startProgram(program: DayProgram) {
         if (program.steps.isEmpty()) return
-        draft = program
         showFullProgram = false
-        stepIndex = 0
-        subStepIndex = 0
-        supportMessage = null
-        running = false
-        BackgroundTimer.stop(context, "program", program.steps.first().minutes * 60_000L)
-        deadline = 0L
-        remaining = program.steps.first().minutes * 60_000L
-        p018Prefs.edit().putString("program_id", program.id)
-            .putInt("step_index", 0).putInt("sub_step_index", 0).apply()
+        run.start(program)
         view = ProgramsView.RUN
-        stepVoicePlayed = program.steps.first().mode != StepMode.DURATION
-        if (stepVoicePlayed && program.steps.first().autoPlayVoice) {
-            VoicePlayer.play(context, program.steps.first().voicePath)
-        }
     }
 
-    fun advance() {
-        running = false
-        BackgroundTimer.stop(context, "program", 0L)
-        if (stepIndex + 1 >= draft.steps.size) {
-            p018Prefs.edit().remove("program_id").remove("step_index")
-                .remove("sub_step_index").apply()
-            view = ProgramsView.DONE
-        } else {
-            stepIndex += 1
-            subStepIndex = 0
-            p018Prefs.edit().putInt("step_index", stepIndex)
-                .putInt("sub_step_index", 0).apply()
-            remaining = draft.steps[stepIndex].minutes * 60_000L
-            deadline = 0L
-            val newStep = draft.steps[stepIndex]
-            stepVoicePlayed = newStep.mode != StepMode.DURATION
-            if (stepVoicePlayed && newStep.autoPlayVoice) {
-                VoicePlayer.play(context, newStep.voicePath)
-            }
-        }
-    }
-
-    fun nextSubstepOrActivity() {
-        val step = draft.steps.getOrNull(stepIndex)
-        val count = step?.subSteps?.size ?: 0
-        if (count > 0 && subStepIndex < count - 1) {
-            subStepIndex += 1
-            p018Prefs.edit().putInt("sub_step_index", subStepIndex).apply()
-        } else {
-            advance()
-        }
-    }
-
-    fun pauseStepTimer() {
-        if (running) {
-            remaining = BackgroundTimer.remaining(context, "program", remaining)
-            BackgroundTimer.stop(context, "program", remaining)
-            running = false
-        }
-    }
-
-    fun startStepTimer(step: ProgramStep) {
-        if (!BackgroundTimer.allowed(context)) {
-            BackgroundTimer.requestPermissions(context)
-            return
-        }
-        if (remaining <= 0L) remaining = step.minutes * 60_000L
-        deadline = BackgroundTimer.start(context, "program", remaining, step.name)
-        running = true
-        if (!stepVoicePlayed) {
-            stepVoicePlayed = true
-            if (step.autoPlayVoice) VoicePlayer.play(context, step.voicePath)
-        }
+    fun next() {
+        if (run.next()) view = ProgramsView.DONE
     }
 
     // Aloita ja Jatka ovat aina vapaita; Tauko lukittuna vain PIN-koodilla.
-    fun toggleStepTimer(step: ProgramStep) {
+    fun toggleStepTimer() {
         when {
-            running && caregiver.isLocked ->
-                caregiver.run(AppAction.PAUSE_TIMER) { pauseStepTimer() }
-            running -> pauseStepTimer()
-            else -> startStepTimer(step)
+            run.running && caregiver.isLocked -> caregiver.run(AppAction.PAUSE_TIMER) { run.pause() }
+            run.running -> run.pause()
+            else -> run.startTimer()
         }
     }
 
-    // Tarvitsen apua / tauon: aina vapaa, pysäyttää ajan ja näyttää viestin.
-    fun requestSupport(kind: SupportKind) {
-        resumeAfterSupport = running
-        pauseStepTimer()
-        supportMessage = kind
-    }
-
-    LaunchedEffect(view, running, deadline, stepIndex) {
-        if (view == ProgramsView.RUN && running) {
+    LaunchedEffect(view, run.running, run.deadline, run.stepIndex) {
+        if (view == ProgramsView.RUN && run.running) {
             while (true) {
-                val left = (
-                    deadline - SystemClock.elapsedRealtime()
-                ).coerceAtLeast(0L)
-
-                remaining = left
-
-                if (left == 0L) {
-                    running = false
-                    if (BackgroundTimer.complete(context, "program")) {
+                when (run.tick()) {
+                    Tick.RUNNING -> delay(150L)
+                    Tick.ENDED -> {
                         val mode = BackgroundTimer.selectedSound(context)
                         if (mode != "off") completionSoundScope.launch { playCompletionSound(mode) }
+                        break
                     }
-                    break
+                    Tick.ENDED_SILENT -> break
                 }
-
-                delay(150L)
             }
         }
     }
 
     // No scrolling through old tasks after the user completes an action.
     // Snap immediately rather than animating, to avoid unnecessary motion.
-    LaunchedEffect(view, stepIndex, subStepIndex) {
+    LaunchedEffect(view, run.stepIndex, run.subStepIndex) {
         programmeScroll.scrollTo(0)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        val runStep = if (view == ProgramsView.RUN) draft.steps.getOrNull(stepIndex) else null
+        val runStep = if (view == ProgramsView.RUN) run.currentStep else null
         if (runStep != null) {
-            val message = supportMessage
-            if (message != null) {
+            val kind = run.support
+            if (kind != null) {
                 SupportMessageScreen(
-                    kind = message,
-                    timerPaused = resumeAfterSupport,
-                    onContinue = {
-                        supportMessage = null
-                        if (resumeAfterSupport && remaining > 0L) startStepTimer(runStep)
-                        resumeAfterSupport = false
-                    },
-                    onClose = {
-                        supportMessage = null
-                        resumeAfterSupport = false
-                    }
+                    kind = kind,
+                    timerPaused = run.resumeAfterSupport,
+                    onContinue = { run.continueAfterSupport() },
+                    onClose = { run.closeSupport() }
                 )
             } else {
-                val nextSubStep = runStep.subSteps.getOrNull(subStepIndex + 1)
-                val nextTask = draft.steps.getOrNull(stepIndex + 1)
+                val nextSubStep = runStep.subSteps.getOrNull(run.subStepIndex + 1)
+                val nextTask = run.nextStep
                 RunStepScreen(
                     taskName = runStep.name,
                     taskPhoto = runStep.photo,
                     description = runStep.description,
                     subSteps = runStep.subSteps,
-                    subStepIndex = subStepIndex,
-                    taskIndex = stepIndex,
-                    taskCount = draft.steps.size,
+                    subStepIndex = run.subStepIndex,
+                    taskIndex = run.stepIndex,
+                    taskCount = run.program.steps.size,
                     time = when (runStep.mode) {
                         StepMode.DURATION -> RunTime.Countdown(
-                            remainingMs = remaining,
-                            durationMs = maxOf(runStep.minutes * 60_000L, remaining),
-                            running = running,
+                            remainingMs = run.remaining,
+                            durationMs = maxOf(runStep.minutes * 60_000L, run.remaining),
+                            running = run.running,
                             displayMode = timeMode,
-                            pauseLocked = running && caregiver.isLocked
+                            pauseLocked = run.running && caregiver.isLocked
                         )
                         StepMode.CLOCK -> RunTime.Clock(runStep.clock)
-                        else -> null
+                        StepMode.MANUAL -> null
                     },
                     // Esikatselu: ensin seuraava osavaihe, viimeisessä osavaiheessa seuraava tehtävä.
                     next = when {
@@ -287,11 +190,11 @@ internal fun ProgramsScreen() {
                         else -> null
                     },
                     nextMode = nextPreviewMode,
-                    onToggleTimer = { toggleStepTimer(runStep) },
-                    onHelp = { requestSupport(SupportKind.HELP) },
-                    onBreak = { requestSupport(SupportKind.BREAK) },
-                    onDone = { nextSubstepOrActivity() },
-                    onSkip = { nextSubstepOrActivity() },
+                    onToggleTimer = { toggleStepTimer() },
+                    onHelp = { run.requestSupport(SupportKind.HELP) },
+                    onBreak = { run.requestSupport(SupportKind.BREAK) },
+                    onDone = { next() },
+                    onSkip = { next() },
                     onMore = { showRunActions = true }
                 )
             }
@@ -343,7 +246,7 @@ internal fun ProgramsScreen() {
 
         ProgramsView.RUN -> Unit // Suoritus piirretään yllä omana näkymänään (RunStepScreen).
 
-        ProgramsView.DONE -> ProgramDoneView(draft.name, onBack = { view = ProgramsView.LIST })
+        ProgramsView.DONE -> ProgramDoneView(run.program.name, onBack = { view = ProgramsView.LIST })
     }
         } // Scrollable Column
 
@@ -351,20 +254,14 @@ internal fun ProgramsScreen() {
     } // Content Box
 
     if (showRunActions && view == ProgramsView.RUN) {
-        val current = draft.steps.getOrNull(stepIndex)
+        val current = run.currentStep
+        val fallbackTitle = stringResource(R.string.ajastin)
         RunActionsDialog(
             canExtend = current?.mode == StepMode.DURATION && caregiver.allows(AppAction.EXTEND_TIME),
             canChangeSettings = caregiver.allows(AppAction.SETTINGS),
             canEnd = caregiver.allows(AppAction.END_PROGRAM),
             onExtend = {
-                val left = if (running) BackgroundTimer.remaining(context, "program", remaining) else remaining
-                val extended = left + 5 * 60_000L
-                if (running) {
-                    deadline = BackgroundTimer.start(context, "program", extended, current?.name ?: context.getString(R.string.ajastin))
-                } else {
-                    BackgroundTimer.stop(context, "program", extended)
-                }
-                remaining = extended
+                run.extend(5 * 60_000L, fallbackTitle)
                 showRunActions = false
             },
             onTimeSettings = { showRunActions = false; timeSettingsOpen = true },
@@ -379,7 +276,7 @@ internal fun ProgramsScreen() {
         AlertDialog(
             onDismissRequest = { showFullProgram = false },
             title = { Text(stringResource(R.string.koko_paivaohjelma)) },
-            text = { ProgramOverview(draft.steps, stepIndex) },
+            text = { ProgramOverview(run.program.steps, run.stepIndex) },
             confirmButton = {
                 TextButton(onClick = { showFullProgram = false }) { Text(stringResource(R.string.sulje)) }
             }
@@ -393,11 +290,7 @@ internal fun ProgramsScreen() {
             text = { Text(stringResource(R.string.paivaohjelman_suoritus_paattyy)) },
             confirmButton = {
                 TextButton(onClick = {
-                    running = false
-                    BackgroundTimer.stop(context, "program", remaining)
-                    p018Prefs.edit().remove("program_id").remove("step_index")
-                        .remove("sub_step_index").apply()
-                    supportMessage = null
+                    run.end()
                     showExitConfirmation = false
                     view = ProgramsView.LIST
                 }) { Text(stringResource(R.string.lopeta)) }

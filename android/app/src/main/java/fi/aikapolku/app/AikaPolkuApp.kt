@@ -1,6 +1,5 @@
 package fi.aikapolku.app
 
-import android.os.SystemClock
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,13 +16,16 @@ import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.CaregiverSettingsScreen
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.data.CardStore
-import fi.aikapolku.app.data.FirstThenSelection
+import fi.aikapolku.app.firstthen.FirstThenCards
 import fi.aikapolku.app.firstthen.FirstThenScreen
 import fi.aikapolku.app.firstthen.FlowDoneScreen
+import fi.aikapolku.app.firstthen.FlowTimer
 import fi.aikapolku.app.firstthen.LastActivityScreen
 import fi.aikapolku.app.firstthen.ManualFlowScreen
 import fi.aikapolku.app.programs.ProgramsScreen
 import fi.aikapolku.app.timer.BackgroundTimer
+import fi.aikapolku.app.timer.BackgroundTimerPort
+import fi.aikapolku.app.timer.Tick
 import fi.aikapolku.app.timer.TimerScreen
 import fi.aikapolku.app.timer.playCompletionSound
 import fi.aikapolku.app.ui.AppColors
@@ -38,129 +40,63 @@ internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANU
 @Composable
 internal fun AikaPolkuApp() {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val cardStore = remember(context) {
-        CardStore(context.applicationContext)
-    }
-    val savedSelection = remember(cardStore) {
-        cardStore.loadSelection()
-    }
+    val cardStore = remember(context) { CardStore(context.applicationContext) }
     var page by rememberSaveable { mutableStateOf(AppPage.HOME) }
     val caregiver = LocalCaregiver.current
 
-    var duration by rememberSaveable {
-        mutableLongStateOf(300_000L)
-    }
-    var originalDuration by rememberSaveable {
-        mutableLongStateOf(300_000L)
-    }
-    var remaining by rememberSaveable {
-        mutableLongStateOf(BackgroundTimer.remaining(context, "timer", 300_000L))
-    }
-    var running by rememberSaveable {
-        mutableStateOf(BackgroundTimer.running(context, "timer"))
-    }
-    var deadline by rememberSaveable {
-        mutableLongStateOf(
-            SystemClock.elapsedRealtime() + BackgroundTimer.remaining(context, "timer", 300_000L)
-        )
-    }
-    var showLastTen by rememberSaveable {
-        mutableStateOf(true)
-    }
+    val timerPort = remember(context) { BackgroundTimerPort(context.applicationContext, "timer") }
+    val timer = rememberSaveable(saver = FlowTimer.saver(timerPort)) { FlowTimer(timerPort) }
+    val cards = rememberSaveable(saver = FirstThenCards.saver) { FirstThenCards(cardStore.loadSelection()) }
+    val sel = cards.selection
+    var showLastTen by rememberSaveable { mutableStateOf(true) }
 
-    var first by rememberSaveable {
-        mutableStateOf(savedSelection.firstName)
-    }
-    var next by rememberSaveable {
-        mutableStateOf(savedSelection.nextName)
-    }
+    // Valinnat tallennetaan aina niiden muuttuessa.
+    LaunchedEffect(sel) { cardStore.saveSelection(sel) }
 
-    var firstPhoto by rememberSaveable {
-        mutableStateOf(savedSelection.firstPhoto)
-    }
-    var nextPhoto by rememberSaveable {
-        mutableStateOf(savedSelection.nextPhoto)
-    }
-    var firstDescription by rememberSaveable {
-        mutableStateOf(savedSelection.firstDescription)
-    }
-    var nextDescription by rememberSaveable {
-        mutableStateOf(savedSelection.nextDescription)
-    }
-    var firstVoice by rememberSaveable { mutableStateOf(savedSelection.firstVoice) }
-    var nextVoice by rememberSaveable { mutableStateOf(savedSelection.nextVoice) }
-    var firstVoiceAuto by rememberSaveable { mutableStateOf(savedSelection.firstVoiceAuto) }
-    var nextVoiceAuto by rememberSaveable { mutableStateOf(savedSelection.nextVoiceAuto) }
-    var activeTask by rememberSaveable { mutableStateOf("") }
-    var voiceStartedForTimer by rememberSaveable { mutableStateOf(false) }
+    // Näkymät näyttävät valitsemattoman kortin tekstinä "Valitse toiminto".
+    val placeholder = stringResource(R.string.valitse_toiminto)
+    val firstShown = sel.firstName.ifBlank { placeholder }
+    val nextShown = sel.nextName.ifBlank { placeholder }
+    fun chosen(name: String) = if (name == placeholder) "" else name
 
-    LaunchedEffect(
-        first,
-        next,
-        firstPhoto,
-        nextPhoto,
-        firstDescription,
-        nextDescription,
-        firstVoice,
-        nextVoice,
-        firstVoiceAuto,
-        nextVoiceAuto
-    ) {
-        cardStore.saveSelection(
-            FirstThenSelection(
-                firstName = first,
-                nextName = next,
-                firstPhoto = firstPhoto,
-                nextPhoto = nextPhoto,
-                firstDescription = firstDescription,
-                nextDescription = nextDescription,
-                firstVoice = firstVoice,
-                nextVoice = nextVoice,
-                firstVoiceAuto = firstVoiceAuto,
-                nextVoiceAuto = nextVoiceAuto
-            )
-        )
-    }
-
-    val ap16SoundContext =
-        androidx.compose.ui.platform.LocalContext.current
-    val ap16SoundScope = rememberCoroutineScope()
-
-    LaunchedEffect(running, deadline) {
-        while (running) {
-            remaining = (
-                deadline - SystemClock.elapsedRealtime()
-            ).coerceAtLeast(0L)
-
-            if (remaining == 0L) {
-                running = false
-                if (BackgroundTimer.complete(context, "timer")) {
+    val soundScope = rememberCoroutineScope()
+    LaunchedEffect(timer.running, timer.deadline) {
+        while (timer.running) {
+            when (timer.tick()) {
+                Tick.RUNNING -> delay(100L)
+                Tick.ENDED -> {
                     val mode = BackgroundTimer.selectedSound(context)
-                    if (mode != "off") {
-                        ap16SoundScope.launch { playCompletionSound(mode) }
-                    }
+                    if (mode != "off") soundScope.launch { playCompletionSound(mode) }
+                    break
                 }
-                break
+                Tick.ENDED_SILENT -> break
             }
-            delay(100L)
+        }
+    }
+
+    fun playFirstVoice() {
+        if (cards.selection.firstVoiceAuto) VoicePlayer.play(context, cards.selection.firstVoice)
+    }
+
+    /** Ensin valmis: Sitten-kortista tulee viimeinen toiminto, tai kulku päättyy. */
+    fun afterFirst() {
+        if (cards.promoteNext()) {
+            page = AppPage.LAST
+            playFirstVoice()
+        } else {
+            page = AppPage.DONE
         }
     }
 
     // P0-21e: käynnissä olevan ajastimen pysäyttäminen on lukittuna ohjaajan toiminto.
     val guardTimerStop: (() -> Unit) -> Unit = { action ->
-        if (running && caregiver.isLocked) caregiver.run(AppAction.PAUSE_TIMER, action) else action()
+        if (timer.running && caregiver.isLocked) caregiver.run(AppAction.PAUSE_TIMER, action) else action()
     }
 
     val goBack: () -> Unit = {
-        if (page == AppPage.TIMER && activeTask.isNotBlank()) {
+        if (page == AppPage.TIMER && timer.activeTask.isNotBlank()) {
             guardTimerStop {
-                if (running) {
-                    remaining = (
-                        deadline - SystemClock.elapsedRealtime()
-                    ).coerceAtLeast(0L)
-                    running = false
-                }
-                BackgroundTimer.stop(context, "timer", remaining)
+                timer.stopKeepingRemaining()
                 page = AppPage.FIRST_THEN
             }
         } else if (page == AppPage.MANUAL) {
@@ -215,123 +151,60 @@ internal fun AikaPolkuApp() {
             when (page) {
                 AppPage.HOME -> HomeScreen { destination ->
                     page = destination
-                    if (destination == AppPage.TIMER) activeTask = ""
+                    if (destination == AppPage.TIMER) timer.activeTask = ""
                 }
 
                 AppPage.TIMER -> TimerScreen(
-                    remaining = remaining,
-                    duration = duration,
-                    running = running,
+                    remaining = timer.remaining,
+                    duration = timer.duration,
+                    running = timer.running,
                     showLastTen = showLastTen,
-                    activeTask = activeTask,
-                    firstPhoto = firstPhoto,
-                    nextPhoto = nextPhoto,
-                    nextActivity = next,
+                    activeTask = timer.activeTask,
+                    firstPhoto = sel.firstPhoto,
+                    nextPhoto = sel.nextPhoto,
+                    nextActivity = nextShown,
                     onGoNext = {
-                        running = false
-                        BackgroundTimer.stop(context, "timer", 0L)
-                        activeTask = ""
-
-                        if (next != context.getString(R.string.valitse_toiminto)) {
-                            first = next
-                            firstPhoto = nextPhoto
-                            firstDescription = nextDescription
-                            firstVoice = nextVoice
-                            firstVoiceAuto = nextVoiceAuto
-                            page = AppPage.LAST
-                            if (firstVoiceAuto) VoicePlayer.play(context, firstVoice)
-                        } else {
-                            page = AppPage.DONE
-                        }
+                        timer.finishActivity()
+                        afterFirst()
                     },
                     onShowLastTen = { showLastTen = it },
-                    onPreset = { minutes ->
-                        running = false
-                        BackgroundTimer.stop(context, "timer", minutes * 60_000L)
-                        voiceStartedForTimer = false
-                        duration = minutes * 60_000L
-                        originalDuration = duration
-                        remaining = duration
-                    },
+                    onPreset = { minutes -> timer.setMinutes(minutes) },
                     onStartPause = {
-                        if (running) {
-                            remaining = BackgroundTimer.remaining(context, "timer", remaining)
-                            BackgroundTimer.stop(context, "timer", remaining)
-                            running = false
-                        } else if (!BackgroundTimer.allowed(context)) {
-                            BackgroundTimer.requestPermissions(context)
-                        } else {
-                            if (remaining == 0L) {
-                                duration = originalDuration
-                                remaining = originalDuration
-                            }
-                            deadline = BackgroundTimer.start(
-                                context, "timer", remaining,
-                                if (activeTask.isBlank()) context.getString(R.string.ajastin) else activeTask
-                            )
-                            running = true
-                            if (remaining == 0L) voiceStartedForTimer = false
-                            if (activeTask.isNotBlank() && !voiceStartedForTimer) {
-                                voiceStartedForTimer = true
-                                if (firstVoiceAuto) VoicePlayer.play(context, firstVoice)
-                            }
-                        }
+                        timer.startPause(context.getString(R.string.ajastin)) { playFirstVoice() }
                     },
-                    onReset = {
-                        running = false
-                        BackgroundTimer.stop(context, "timer", originalDuration)
-                        voiceStartedForTimer = false
-                        duration = originalDuration
-                        remaining = originalDuration
-                    }
+                    onReset = { timer.reset() }
                 )
 
                 AppPage.FIRST_THEN -> FirstThenScreen(
-                    first = first,
-                    next = next,
-                    firstPhoto = firstPhoto,
-                    nextPhoto = nextPhoto,
-                    firstDescription = firstDescription,
-                    nextDescription = nextDescription,
-                    firstVoice = firstVoice,
-                    nextVoice = nextVoice,
-                    firstVoiceAuto = firstVoiceAuto,
-                    nextVoiceAuto = nextVoiceAuto,
-                    onFirst = { first = it },
-                    onNext = { next = it },
-                    onFirstPhoto = { firstPhoto = it },
-                    onNextPhoto = { nextPhoto = it },
-                    onFirstDescription = { firstDescription = it },
-                    onNextDescription = { nextDescription = it },
-                    onFirstVoice = { path, auto ->
-                        firstVoice = path
-                        firstVoiceAuto = auto
-                    },
-                    onNextVoice = { path, auto ->
-                        nextVoice = path
-                        nextVoiceAuto = auto
-                    },
+                    first = firstShown,
+                    next = nextShown,
+                    firstPhoto = sel.firstPhoto,
+                    nextPhoto = sel.nextPhoto,
+                    firstDescription = sel.firstDescription,
+                    nextDescription = sel.nextDescription,
+                    firstVoice = sel.firstVoice,
+                    nextVoice = sel.nextVoice,
+                    firstVoiceAuto = sel.firstVoiceAuto,
+                    nextVoiceAuto = sel.nextVoiceAuto,
+                    onFirst = { name -> cards.update { it.copy(firstName = chosen(name)) } },
+                    onNext = { name -> cards.update { it.copy(nextName = chosen(name)) } },
+                    onFirstPhoto = { path -> cards.update { it.copy(firstPhoto = path) } },
+                    onNextPhoto = { path -> cards.update { it.copy(nextPhoto = path) } },
+                    onFirstDescription = { text -> cards.update { it.copy(firstDescription = text) } },
+                    onNextDescription = { text -> cards.update { it.copy(nextDescription = text) } },
+                    onFirstVoice = { path, auto -> cards.update { it.copy(firstVoice = path, firstVoiceAuto = auto) } },
+                    onNextVoice = { path, auto -> cards.update { it.copy(nextVoice = path, nextVoiceAuto = auto) } },
                     onDone = {
                         guardTimerStop {
-                            running = false
-                            BackgroundTimer.stop(context, "timer", remaining)
-                            activeTask = ""
+                            timer.stopForManual()
                             page = AppPage.MANUAL
-                            if (firstVoiceAuto) VoicePlayer.play(context, firstVoice)
+                            playFirstVoice()
                         }
                     },
                     onStartTimer = { minutes ->
                         guardTimerStop {
-                            running = false
-                            BackgroundTimer.stop(context, "timer", minutes * 60_000L)
-                            duration = minutes * 60_000L
-                            originalDuration = duration
-                            remaining = duration
-                            activeTask = first
-                            deadline = 0L
-                            running = false
+                            timer.prepareForActivity(firstShown, minutes)
                             page = AppPage.TIMER
-                            voiceStartedForTimer = false
                         }
                     }
                 )
@@ -341,38 +214,29 @@ internal fun AikaPolkuApp() {
                 AppPage.CAREGIVER -> CaregiverSettingsScreen()
 
                 AppPage.MANUAL -> ManualFlowScreen(
-                    first = first,
-                    firstPhoto = firstPhoto,
-                    next = next,
-                    nextPhoto = nextPhoto,
+                    first = firstShown,
+                    firstPhoto = sel.firstPhoto,
+                    next = nextShown,
+                    nextPhoto = sel.nextPhoto,
                     onNext = {
-                        running = false
-                        if (next != context.getString(R.string.valitse_toiminto)) {
-                            first = next
-                            firstPhoto = nextPhoto
-                            firstDescription = nextDescription
-                            firstVoice = nextVoice
-                            firstVoiceAuto = nextVoiceAuto
+                        timer.markStopped()
+                        if (cards.promoteNext()) {
                             page = AppPage.LAST
-                            if (firstVoiceAuto) VoicePlayer.play(context, firstVoice)
+                            playFirstVoice()
                         }
                     }
                 )
 
                 AppPage.LAST -> LastActivityScreen(
-                    name = first,
-                    imagePath = firstPhoto,
+                    name = firstShown,
+                    imagePath = sel.firstPhoto,
                     onFinish = {
-                        running = false
+                        timer.markStopped()
                         page = AppPage.DONE
                     },
                     onAddNext = if (caregiver.allows(AppAction.EDIT_CARDS)) {
                         {
-                            next = context.getString(R.string.valitse_toiminto)
-                            nextPhoto = ""
-                            nextDescription = ""
-                            nextVoice = ""
-                            nextVoiceAuto = false
+                            cards.clearNext()
                             page = AppPage.FIRST_THEN
                         }
                     } else null
@@ -380,7 +244,7 @@ internal fun AikaPolkuApp() {
 
                 AppPage.DONE -> FlowDoneScreen(
                     onHome = {
-                        activeTask = ""
+                        timer.activeTask = ""
                         page = AppPage.HOME
                     }
                 )
@@ -391,7 +255,7 @@ internal fun AikaPolkuApp() {
                 page != AppPage.PROGRAMS &&
                 page != AppPage.LAST &&
                 page != AppPage.DONE &&
-                !(page == AppPage.TIMER && activeTask.isNotBlank())) {
+                !(page == AppPage.TIMER && timer.activeTask.isNotBlank())) {
                 TextButton(
                     onClick = goBack,
                     modifier = Modifier
@@ -399,7 +263,7 @@ internal fun AikaPolkuApp() {
                         .heightIn(min = 56.dp)
                 ) {
                     Text(
-    if (page == AppPage.TIMER && activeTask.isNotBlank())
+    if (page == AppPage.TIMER && timer.activeTask.isNotBlank())
         stringResource(R.string.takaisin_ensin_sitten)
     else stringResource(R.string.takaisin_aloitukseen),
     fontSize = 16.sp

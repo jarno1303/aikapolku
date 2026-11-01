@@ -1,0 +1,125 @@
+package fi.aikapolku.app
+
+import fi.aikapolku.app.data.FirstThenSelection
+import fi.aikapolku.app.firstthen.FirstThenCards
+import fi.aikapolku.app.firstthen.FlowTimer
+import fi.aikapolku.app.timer.Tick
+import fi.aikapolku.app.timer.TimerPort
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/** Ensin–Sitten-kulun säännöt (FirstThenCards, FlowTimer). Puhdas JVM-testi. */
+class FirstThenFlowTest {
+
+    private class FakeTimer : TimerPort {
+        var clock = 0L
+        var until: Long? = null
+        var allowedNow = true
+        var lastTitle = ""
+        override fun now() = clock
+        override fun allowed() = allowedNow
+        override fun requestPermissions() {}
+        override fun start(durationMs: Long, title: String): Long { lastTitle = title; until = clock + durationMs; return until!! }
+        override fun stop(remainingMs: Long) { until = null }
+        override fun remaining(fallbackMs: Long) = until?.let { (it - clock).coerceAtLeast(0L) } ?: fallbackMs
+        override fun isRunning() = until != null
+        override fun complete(): Boolean { val first = until != null; until = null; return first }
+    }
+
+    private val selection = FirstThenSelection(
+        firstName = "Askartelu", nextName = "Ruokailu", firstPhoto = "/a", nextPhoto = "/b",
+        nextDescription = "Kala", nextVoice = "/r.m4a", nextVoiceAuto = true
+    )
+
+    @Test
+    fun `sitten-kortista tulee nykyinen toiminto`() {
+        val cards = FirstThenCards(selection)
+        assertTrue(cards.promoteNext())
+        val s = cards.selection
+        assertEquals("Ruokailu", s.firstName)
+        assertEquals("/b", s.firstPhoto)
+        assertEquals("Kala", s.firstDescription)
+        assertEquals("/r.m4a", s.firstVoice)
+        assertTrue(s.firstVoiceAuto)
+    }
+
+    @Test
+    fun `ilman sitten-korttia kulku paattyy`() {
+        val cards = FirstThenCards(selection)
+        cards.clearNext()
+        assertFalse(cards.hasNext)
+        assertFalse(cards.promoteNext())
+        assertEquals("Askartelu", cards.selection.firstName)
+    }
+
+    @Test
+    fun `vanhan version Valitse toiminto -teksti tulkitaan valitsemattomaksi`() {
+        val cards = FirstThenCards(selection.copy(nextName = "Valitse toiminto"))
+        assertFalse(cards.hasNext)
+        assertEquals("", cards.selection.nextName)
+    }
+
+    @Test
+    fun `ajastimen aika asetetaan ja nollaus palauttaa sen`() {
+        val t = FlowTimer(FakeTimer())
+        t.setMinutes(10)
+        assertEquals(600_000L, t.remaining)
+        t.startPause("Ajastin") {}
+        assertTrue(t.running)
+        t.reset()
+        assertFalse(t.running)
+        assertEquals(600_000L, t.remaining)
+    }
+
+    @Test
+    fun `ensin-toiminnon puheviesti soi kerran ajastuksen alkaessa`() {
+        val port = FakeTimer()
+        val t = FlowTimer(port)
+        var voices = 0
+        t.prepareForActivity("Askartelu", 5)
+        t.startPause("Ajastin") { voices++ }
+        assertEquals("Askartelu", port.lastTitle)
+        t.startPause("Ajastin") { voices++ } // tauko
+        t.startPause("Ajastin") { voices++ } // jatka
+        assertEquals(1, voices)
+    }
+
+    @Test
+    fun `pelkka ajastin ei soita puheviestia ja kayttaa yleista otsikkoa`() {
+        val port = FakeTimer()
+        val t = FlowTimer(port)
+        var voices = 0
+        t.setMinutes(3)
+        t.startPause("Ajastin") { voices++ }
+        assertEquals(0, voices)
+        assertEquals("Ajastin", port.lastTitle)
+    }
+
+    @Test
+    fun `paluu ensin-sitteniin sailyttaa jaljella olevan ajan`() {
+        val port = FakeTimer()
+        val t = FlowTimer(port)
+        t.prepareForActivity("Askartelu", 5)
+        t.startPause("Ajastin") {}
+        port.clock += 60_000L
+        t.stopKeepingRemaining()
+        assertFalse(t.running)
+        assertEquals(240_000L, t.remaining)
+    }
+
+    @Test
+    fun `paattynyt aika kaynnistyy uudelleen alkuperaisella ajalla`() {
+        val port = FakeTimer()
+        val t = FlowTimer(port)
+        t.setMinutes(2)
+        t.startPause("Ajastin") {}
+        port.clock += 120_000L
+        assertEquals(Tick.ENDED, t.tick())
+        assertEquals(0L, t.remaining)
+        t.startPause("Ajastin") {}
+        assertEquals(120_000L, t.remaining)
+        assertTrue(t.running)
+    }
+}
