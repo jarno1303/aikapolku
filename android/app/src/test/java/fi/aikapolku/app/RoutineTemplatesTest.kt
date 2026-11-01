@@ -121,11 +121,12 @@ class RoutineTemplatesTest {
     @Test
     fun `kaannetty nimi tunnistetaan ja vanha suomenkielinen nimi toimii aina`() {
         // Kuvitteellinen käännös: toisella kielellä luotu kortti löytää saman kuvan.
-        val english: (Int) -> String = { if (it == R.string.card_breakfast) "Breakfast" else "?" }
+        // (Nimi valittu niin, ettei se ole sama kuin kortin tunnus "breakfast".)
+        val translated: (Int) -> String = { if (it == R.string.card_breakfast) "Morning meal" else "?" }
         val breakfast = CardArt.templates.first { it.id == "breakfast" }.drawable
-        assertEquals(breakfast, CardArt.imageRes("Breakfast", "", english))
-        assertEquals(breakfast, CardArt.imageRes("Aamupala", "", english))
-        assertNull(CardArt.imageRes("Breakfast"))
+        assertEquals(breakfast, CardArt.imageRes("Morning meal", "", translated))
+        assertEquals(breakfast, CardArt.imageRes("Aamupala", "", translated))
+        assertNull("ilman käännöstä nimeä ei tunneta", CardArt.imageRes("Morning meal"))
     }
 
     @Test
