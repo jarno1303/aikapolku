@@ -1,5 +1,7 @@
 package fi.aikapolku.app
 
+import fi.aikapolku.app.cards.SubstepArt
+import fi.aikapolku.app.data.SubstepDefaults
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -11,8 +13,8 @@ class SubstepArtTest {
 
     @Test
     fun `jokaisella oletusosavaiheella on oma kuva`() {
-        val defaults = P021SubstepDefaults.forCard("Pukeutuminen") +
-            P021SubstepDefaults.forCard("Hampaiden pesu")
+        val defaults = SubstepDefaults.forCard("Pukeutuminen") +
+            SubstepDefaults.forCard("Hampaiden pesu")
 
         assertEquals(8, defaults.size)
         defaults.forEach { name ->
@@ -24,7 +26,7 @@ class SubstepArtTest {
     fun `hampaiden pesun viimeinen osavaihe on Laita hammasharja takaisin`() {
         assertEquals(
             listOf("Ota hammasharja", "Pese hampaat", "Laita hammasharja takaisin"),
-            P021SubstepDefaults.forCard("Hampaiden pesu")
+            SubstepDefaults.forCard("Hampaiden pesu")
         )
     }
 

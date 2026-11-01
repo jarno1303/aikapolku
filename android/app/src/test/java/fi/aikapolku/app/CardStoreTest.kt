@@ -2,29 +2,32 @@ package fi.aikapolku.app
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import fi.aikapolku.app.data.CardItem
+import fi.aikapolku.app.data.CardStore
+import fi.aikapolku.app.data.FirstThenSelection
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** Omat toimintokortit ja viimeisin Ensin–Sitten-valinta (P015CardStore). */
+/** Omat toimintokortit ja viimeisin Ensin–Sitten-valinta (CardStore). */
 @RunWith(RobolectricTestRunner::class)
 class CardStoreTest {
 
     private lateinit var context: Context
-    private lateinit var store: P015CardStore
+    private lateinit var store: CardStore
 
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
-        store = P015CardStore(context)
+        store = CardStore(context)
     }
 
     private fun rawPrefs() =
         context.getSharedPreferences("aikapolku_cards_v1", Context.MODE_PRIVATE)
 
-    private fun card(id: String, name: String = "Kortti $id") = P015Card(
+    private fun card(id: String, name: String = "Kortti $id") = CardItem(
         id = id,
         name = name,
         description = "Kuvaus",
@@ -35,7 +38,7 @@ class CardStoreTest {
 
     @Test
     fun `tyhja kirjasto palauttaa tyhjan listan`() {
-        assertEquals(emptyList<P015Card>(), store.loadCards())
+        assertEquals(emptyList<CardItem>(), store.loadCards())
     }
 
     @Test
@@ -43,7 +46,7 @@ class CardStoreTest {
         val c = card("c1", "Uimahalli äö")
         store.upsert(c)
 
-        assertEquals(listOf(c), P015CardStore(context).loadCards())
+        assertEquals(listOf(c), CardStore(context).loadCards())
     }
 
     @Test
@@ -73,14 +76,14 @@ class CardStoreTest {
             """[{"id":"","name":"Ei id"},{"id":"x","name":""},{"id":"ok","name":"Kelpaa"}]"""
         ).commit()
 
-        assertEquals(listOf("ok"), P015CardStore(context).loadCards().map { it.id })
+        assertEquals(listOf("ok"), CardStore(context).loadCards().map { it.id })
     }
 
     @Test
     fun `rikkinainen korttitallennus ei kaada sovellusta`() {
         rawPrefs().edit().putString("cards", "[[[ rikki").commit()
 
-        assertEquals(emptyList<P015Card>(), P015CardStore(context).loadCards())
+        assertEquals(emptyList<CardItem>(), CardStore(context).loadCards())
     }
 
     @Test
@@ -94,7 +97,7 @@ class CardStoreTest {
 
     @Test
     fun `ensin-sitten-valinta sailyy`() {
-        val selection = P015Selection(
+        val selection = FirstThenSelection(
             firstName = "Kotitehtävät",
             nextName = "Pelaaminen",
             firstPhoto = "/a.image",
@@ -108,13 +111,13 @@ class CardStoreTest {
         )
         store.saveSelection(selection)
 
-        assertEquals(selection, P015CardStore(context).loadSelection())
+        assertEquals(selection, CardStore(context).loadSelection())
     }
 
     @Test
     fun `rikkinainen valinta palauttaa oletukset`() {
         rawPrefs().edit().putString("selection", "ei json").commit()
 
-        assertEquals("Askartelu", P015CardStore(context).loadSelection().firstName)
+        assertEquals("Askartelu", CardStore(context).loadSelection().firstName)
     }
 }

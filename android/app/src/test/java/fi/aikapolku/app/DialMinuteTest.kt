@@ -1,12 +1,13 @@
 package fi.aikapolku.app
 
 import androidx.compose.ui.geometry.Offset
+import fi.aikapolku.app.timer.dialMinuteFromPoint
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Kellotaulun kosketus -> minuutit (p013MinuteFromPoint).
+ * Kellotaulun kosketus -> minuutit (dialMinuteFromPoint).
  * Kellotaulu on 60 minuutin asteikko, jossa aika kasvaa vastapäivään ylhäältä.
  * Puhdas laskenta: ei Androidia, ei Robolectricia.
  */
@@ -15,7 +16,7 @@ class DialMinuteTest {
     private val size = 200
     private val c = size / 2f
 
-    private fun minuteAt(x: Float, y: Float) = p013MinuteFromPoint(Offset(x, y), size, size)
+    private fun minuteAt(x: Float, y: Float) = dialMinuteFromPoint(Offset(x, y), size, size)
 
     @Test
     fun `ylin kohta klo 12 on 60 minuuttia`() {
@@ -57,8 +58,8 @@ class DialMinuteTest {
 
     @Test
     fun `tulos ei riipu kellotaulun koosta`() {
-        val small = p013MinuteFromPoint(Offset(0f, 50f), 100, 100)
-        val large = p013MinuteFromPoint(Offset(0f, 500f), 1000, 1000)
+        val small = dialMinuteFromPoint(Offset(0f, 50f), 100, 100)
+        val large = dialMinuteFromPoint(Offset(0f, 500f), 1000, 1000)
         assertEquals(small, large)
     }
 }

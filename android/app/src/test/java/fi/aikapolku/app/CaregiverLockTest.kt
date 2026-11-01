@@ -2,6 +2,11 @@ package fi.aikapolku.app
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import fi.aikapolku.app.caregiver.AppAction
+import fi.aikapolku.app.caregiver.CaregiverAccessState
+import fi.aikapolku.app.caregiver.CaregiverLockStore
+import fi.aikapolku.app.caregiver.CaregiverSession
+import fi.aikapolku.app.caregiver.PinResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals

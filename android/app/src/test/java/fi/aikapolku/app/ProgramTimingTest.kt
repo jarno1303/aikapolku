@@ -1,5 +1,9 @@
 package fi.aikapolku.app
 
+import fi.aikapolku.app.data.DayProgram
+import fi.aikapolku.app.data.ProgramStep
+import fi.aikapolku.app.data.ProgramTiming
+import fi.aikapolku.app.data.RoutineTemplates
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -10,11 +14,11 @@ import org.junit.Test
 class ProgramTimingTest {
 
     private fun step(id: String, minutes: Int = 10, mode: String = "manual", clock: String = "08:00", fixed: Boolean = false) =
-        AP16Step(id = id, name = "T$id", photo = "", description = "", mode = mode,
+        ProgramStep(id = id, name = "T$id", photo = "", description = "", mode = mode,
             minutes = minutes, clock = clock, fixedClock = fixed)
 
-    private fun program(mode: String, vararg steps: AP16Step, start: String = "07:30") =
-        AP16Program("p", "Ohjelma", steps.toList(), timeMode = mode, startClock = start)
+    private fun program(mode: String, vararg steps: ProgramStep, start: String = "07:30") =
+        DayProgram("p", "Ohjelma", steps.toList(), timeMode = mode, startClock = start)
 
     @Test
     fun `kellonajan luku ja muotoilu`() {
@@ -79,7 +83,7 @@ class ProgramTimingTest {
 
     @Test
     fun `vanhan ohjelman aikatapa paatellaan ja kellonajat sailyvat`() {
-        val old = AP16Program("p", "Vanha", listOf(
+        val old = DayProgram("p", "Vanha", listOf(
             step("a", 20, "clock", "09:00"), step("b", 10, "clock", "13:15")
         ))
         val inferred = ProgramTiming.infer(old)
@@ -88,14 +92,14 @@ class ProgramTimingTest {
         assertEquals(listOf("09:00", "13:15"), ProgramTiming.apply(inferred).steps.map { it.clock })
 
         assertEquals(ProgramTiming.DURATION,
-            ProgramTiming.infer(AP16Program("p", "x", listOf(step("a", mode = "duration")))).timeMode)
+            ProgramTiming.infer(DayProgram("p", "x", listOf(step("a", mode = "duration")))).timeMode)
         assertEquals(ProgramTiming.FREE,
-            ProgramTiming.infer(AP16Program("p", "x", listOf(step("a")))).timeMode)
+            ProgramTiming.infer(DayProgram("p", "x", listOf(step("a")))).timeMode)
     }
 
     @Test
     fun `valmis pohja avautuu kestoina`() {
-        val template = ProgramTiming.infer(P020RoutineTemplates.create(P020RoutineTemplates.all.first()))
+        val template = ProgramTiming.infer(RoutineTemplates.create(RoutineTemplates.all.first()))
         assertEquals(ProgramTiming.DURATION, template.timeMode)
         // Lähtö on pohjassa ilman aikaa ja pysyy sellaisena.
         assertEquals("manual", template.steps.last().mode)

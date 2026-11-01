@@ -2,6 +2,10 @@ package fi.aikapolku.app
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import fi.aikapolku.app.data.DayProgram
+import fi.aikapolku.app.data.ProgramStep
+import fi.aikapolku.app.data.ProgramStore
+import fi.aikapolku.app.data.ProgramTiming
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -10,25 +14,25 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Päiväohjelmien tallennus (AP16Store).
+ * Päiväohjelmien tallennus (ProgramStore).
  * Tärkein yksittäinen asia käyttäjälle: tehdyt ohjelmat eivät saa kadota.
  */
 @RunWith(RobolectricTestRunner::class)
 class ProgramStoreTest {
 
     private lateinit var context: Context
-    private lateinit var store: AP16Store
+    private lateinit var store: ProgramStore
 
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
-        store = AP16Store(context)
+        store = ProgramStore(context)
     }
 
     private fun rawPrefs() =
         context.getSharedPreferences("aikapolku_programs_v1", Context.MODE_PRIVATE)
 
-    private fun step(id: String, name: String = "Vaihe $id") = AP16Step(
+    private fun step(id: String, name: String = "Vaihe $id") = ProgramStep(
         id = id,
         name = name,
         photo = "builtin:dress",
@@ -43,12 +47,12 @@ class ProgramStoreTest {
 
     @Test
     fun `tyhja tallennus palauttaa tyhjan listan`() {
-        assertEquals(emptyList<AP16Program>(), store.load())
+        assertEquals(emptyList<DayProgram>(), store.load())
     }
 
     @Test
     fun `ohjelma sailyy tallennuksessa kaikkine kenttineen`() {
-        val program = AP16Program(
+        val program = DayProgram(
             "p1", "Aamutoimet äöå", listOf(step("a", "Pukeutuminen"), step("b", "Hampaiden pesu"))
         )
         store.save(program)
@@ -58,16 +62,16 @@ class ProgramStoreTest {
 
     @Test
     fun `ohjelma sailyy uudessa store-instanssissa kuten sovelluksen uudelleenkaynnistyksessa`() {
-        val program = AP16Program("p1", "Koulupäivä", listOf(step("a")))
+        val program = DayProgram("p1", "Koulupäivä", listOf(step("a")))
         store.save(program)
 
-        assertEquals(listOf(program), AP16Store(context).load())
+        assertEquals(listOf(program), ProgramStore(context).load())
     }
 
     @Test
     fun `sama id korvaa vanhan ohjelman eika luo kopiota`() {
-        store.save(AP16Program("p1", "Vanha nimi", listOf(step("a"))))
-        store.save(AP16Program("p1", "Uusi nimi", listOf(step("a"), step("b"))))
+        store.save(DayProgram("p1", "Vanha nimi", listOf(step("a"))))
+        store.save(DayProgram("p1", "Uusi nimi", listOf(step("a"), step("b"))))
 
         val loaded = store.load()
         assertEquals(1, loaded.size)
@@ -77,17 +81,17 @@ class ProgramStoreTest {
 
     @Test
     fun `useampi ohjelma sailyttaa jarjestyksen`() {
-        store.save(AP16Program("p1", "Yksi", emptyList()))
-        store.save(AP16Program("p2", "Kaksi", emptyList()))
-        store.save(AP16Program("p3", "Kolme", emptyList()))
+        store.save(DayProgram("p1", "Yksi", emptyList()))
+        store.save(DayProgram("p2", "Kaksi", emptyList()))
+        store.save(DayProgram("p3", "Kolme", emptyList()))
 
         assertEquals(listOf("p1", "p2", "p3"), store.load().map { it.id })
     }
 
     @Test
     fun `poisto poistaa vain valitun ohjelman`() {
-        store.save(AP16Program("p1", "Yksi", emptyList()))
-        store.save(AP16Program("p2", "Kaksi", emptyList()))
+        store.save(DayProgram("p1", "Yksi", emptyList()))
+        store.save(DayProgram("p2", "Kaksi", emptyList()))
 
         store.delete("p1")
 
@@ -96,7 +100,7 @@ class ProgramStoreTest {
 
     @Test
     fun `tuntemattoman id-n poisto ei muuta mitaan`() {
-        store.save(AP16Program("p1", "Yksi", emptyList()))
+        store.save(DayProgram("p1", "Yksi", emptyList()))
 
         store.delete("ei-ole")
 
@@ -113,7 +117,7 @@ class ProgramStoreTest {
             ]}]"""
         ).commit()
 
-        val loaded = AP16Store(context).load()
+        val loaded = ProgramStore(context).load()
 
         assertEquals(1, loaded.size)
         val s = loaded[0].steps.single()
@@ -130,7 +134,7 @@ class ProgramStoreTest {
     fun `rikkinainen tallennus ei kaada sovellusta`() {
         rawPrefs().edit().putString("programs", "{ tämä ei ole JSONia").commit()
 
-        assertEquals(emptyList<AP16Program>(), AP16Store(context).load())
+        assertEquals(emptyList<DayProgram>(), ProgramStore(context).load())
     }
 
     @Test
@@ -140,7 +144,7 @@ class ProgramStoreTest {
             """[{"id":"p","name":"P","steps":["ei objekti",{"id":"ok","name":"Lepo"}]}, 42]"""
         ).commit()
 
-        val loaded = AP16Store(context).load()
+        val loaded = ProgramStore(context).load()
 
         assertEquals(1, loaded.size)
         assertEquals(listOf("ok"), loaded[0].steps.map { it.id })
@@ -149,7 +153,7 @@ class ProgramStoreTest {
     @Test
     fun `osavaiheita tallennetaan enintaan 16`() {
         val many = (1..20).map { "Osavaihe $it" }
-        store.save(AP16Program("p", "P", listOf(step("a").copy(subSteps = many))))
+        store.save(DayProgram("p", "P", listOf(step("a").copy(subSteps = many))))
 
         assertEquals(many.take(16), store.load()[0].steps[0].subSteps)
     }
@@ -158,7 +162,7 @@ class ProgramStoreTest {
     fun `osavaiheet siistitaan ja tyhjat poistetaan ja pitkat lyhennetaan 72 merkkiin`() {
         val long = "x".repeat(100)
         store.save(
-            AP16Program("p", "P", listOf(step("a").copy(subSteps = listOf("  Sukat  ", "", "   ", long))))
+            DayProgram("p", "P", listOf(step("a").copy(subSteps = listOf("  Sukat  ", "", "   ", long))))
         )
 
         val subSteps = store.load()[0].steps[0].subSteps
@@ -169,14 +173,14 @@ class ProgramStoreTest {
 
     @Test
     fun `P0-23 aikatapa aloitusaika ja kiintea aika sailyvat`() {
-        val program = AP16Program(
+        val program = DayProgram(
             "p23", "Koulupäivä",
             listOf(step("a"), step("b").copy(fixedClock = true, clock = "11:00")),
             timeMode = ProgramTiming.CLOCK,
             startClock = "07:45"
         )
         store.save(program)
-        assertEquals(listOf(program), AP16Store(context).load())
+        assertEquals(listOf(program), ProgramStore(context).load())
     }
 
     @Test
