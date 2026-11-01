@@ -397,4 +397,43 @@
     <string name="profile_choose_title">Kuka käyttää?</string>
     <string name="profile_switch">Vaihda</string>
     <string name="profile_switch_a11y">Profiili: %1$s. Vaihda profiilia</string>
+
+    <!-- Viikko-ohjelma ja Tänään -->
+    <string name="tab_programs">Ohjelmat</string>
+    <string name="tab_week">Viikko</string>
+    <string name="week_title">Viikko-ohjelma</string>
+    <string name="week_info">Viikon tapahtumat näkyvät aloitusnäkymässä kohdassa Tänään.</string>
+    <string name="week_caregiver_edits">Ohjaaja: muokkaa viikko-ohjelmaa</string>
+    <string name="week_a">Viikko A</string>
+    <string name="week_b">Viikko B</string>
+    <string name="week_this_week">nyt</string>
+    <string name="week_no_events">Ei tapahtumia tälle päivälle.</string>
+    <string name="week_missing_program">Poistettu ohjelma</string>
+    <string name="week_kind_program">Päiväohjelma</string>
+    <string name="week_kind_card">Kortti</string>
+    <string name="week_add_event">+ Lisää tapahtuma</string>
+    <string name="week_alternating">Vuoroviikot (A ja B)</string>
+    <string name="week_alternating_info">Kaksi erilaista viikkoa, jotka vuorottelevat. Esimerkiksi vuoroviikkoasuminen.</string>
+    <string name="week_current_is">Tällä viikolla on:</string>
+    <string name="week_add_title">Uusi tapahtuma</string>
+    <string name="week_edit_title">Muokkaa tapahtumaa</string>
+    <string name="week_time">Kellonaika</string>
+    <string name="week_hour_up">Tunti eteenpäin</string>
+    <string name="week_hour_down">Tunti taaksepäin</string>
+    <string name="week_minute_up">5 minuuttia eteenpäin</string>
+    <string name="week_minute_down">5 minuuttia taaksepäin</string>
+    <string name="week_content">Sisältö</string>
+    <string name="week_no_programs">Tee ensin päiväohjelma Ohjelmat-välilehdellä, tai valitse kortti.</string>
+    <string name="week_own_cards">Omat kortit</string>
+    <string name="week_builtin_cards">Valmiit kuvat</string>
+    <string name="week_days">Päivät</string>
+    <string name="week_weekdays">Ma–pe</string>
+    <string name="week_every_day">Joka päivä</string>
+    <string name="week_need_program">Valitse päiväohjelma.</string>
+    <string name="week_need_card">Valitse kortti.</string>
+    <string name="week_need_day">Valitse vähintään yksi päivä.</string>
+    <string name="week_delete_event">Poista tapahtuma</string>
+    <string name="week_program_delete_note">Ohjelma poistuu myös viikko-ohjelmasta.</string>
+    <string name="today_title">Tänään · %1$s</string>
+    <string name="today_start">Aloita</string>
 </resources>

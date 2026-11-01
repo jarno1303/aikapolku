@@ -246,3 +246,11 @@
 - Vaihdettaessa käynnissä olevat ajastimet pysäytetään.
 - Korjaus: ajastimen tallennusavaimet eivät enää tule käännettävistä teksteistä (endElapsed, endWall).
 - Uudet testit: ProfilesTest (7), ProfileFilesTest (4; myös Windows-polut).
+
+## Vaihe 2: viikko-ohjelma ja Tänään
+- Päiväohjelmat-näkymässä välilehdet Ohjelmat ja Viikko. Viikolle lisätään tapahtumia: kellonaika ja sisältö (päiväohjelma tai yksittäinen kortti). Uuden tapahtuman voi lisätä monelle päivälle kerralla (ma–pe, joka päivä).
+- Vuoroviikot (A ja B) kytkimellä; ohjaaja valitsee, kumpi viikko on nyt, ja viikot vuorottelevat itsestään.
+- Aloitusnäkymän Tänään-lista näkyy, kun päivälle on tapahtumia: nykyinen tapahtuma korostettuna ("Aloita"), menneet himmeinä. Päiväohjelma käynnistyy suoraan, kortti näytetään isona.
+- Viikko-ohjelma on profiilikohtainen. Päiväohjelman poisto poistaa sen tapahtumat viikolta (vahvistuksessa maininta).
+- Viikonpäivien nimet tulevat laitteen kielestä (java.time), joten niitä ei tarvitse kääntää.
+- Uudet testit: WeekScheduleTest (7), WeekStoreTest (4), TodaySectionTest (2).

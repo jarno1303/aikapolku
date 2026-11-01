@@ -38,6 +38,10 @@ import fi.aikapolku.app.timer.Tick
 import fi.aikapolku.app.timer.TimeModeChoices
 import fi.aikapolku.app.timer.playCompletionSound
 import fi.aikapolku.app.voice.VoicePlayer
+import fi.aikapolku.app.data.WeekSchedule
+import fi.aikapolku.app.data.WeekStore
+import fi.aikapolku.app.week.ChoiceButton
+import fi.aikapolku.app.week.WeekView
 import java.util.UUID
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -53,8 +57,27 @@ private val programDraftSaver = Saver<DayProgram, String>(
 /** Päiväohjelmien näkymät. */
 internal enum class ProgramsView { LIST, EDIT, RUN, DONE }
 
+/** Luettelon välilehdet: ohjelmat ja viikko-ohjelma. */
+internal enum class ProgramsTab { PROGRAMS, WEEK }
+
 @Composable
-internal fun ProgramsScreen() {
+private fun ProgramsTabs(selected: ProgramsTab, onSelect: (ProgramsTab) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        ChoiceButton(stringResource(R.string.tab_programs), selected == ProgramsTab.PROGRAMS, Modifier.weight(1f)) {
+            onSelect(ProgramsTab.PROGRAMS)
+        }
+        ChoiceButton(stringResource(R.string.tab_week), selected == ProgramsTab.WEEK, Modifier.weight(1f)) {
+            onSelect(ProgramsTab.WEEK)
+        }
+    }
+}
+
+@Composable
+internal fun ProgramsScreen(
+    /** Tänään-listasta käynnistettävä päiväohjelma. */
+    startProgramId: String? = null,
+    onStartHandled: () -> Unit = {}
+) {
     val context = LocalContext.current
     val store = remember(context) {
         ProgramStore(context.applicationContext)
@@ -114,6 +137,17 @@ internal fun ProgramsScreen() {
         run.start(program)
         view = ProgramsView.RUN
     }
+
+    // Tänään-listasta avattu ohjelma käynnistyy heti (tai jatkuu, jos sama ohjelma on jo kesken).
+    LaunchedEffect(startProgramId) {
+        val id = startProgramId ?: return@LaunchedEffect
+        onStartHandled()
+        val program = programs.firstOrNull { it.id == id } ?: return@LaunchedEffect
+        if (view == ProgramsView.RUN && run.program.id == id) return@LaunchedEffect
+        startProgram(program)
+    }
+
+    var tab by rememberSaveable { mutableStateOf(ProgramsTab.PROGRAMS) }
 
     fun next() {
         if (run.next()) view = ProgramsView.DONE
@@ -222,7 +256,10 @@ internal fun ProgramsScreen() {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
     when (view) {
-        ProgramsView.LIST -> ProgramListView(
+        ProgramsView.LIST -> {
+            ProgramsTabs(tab) { tab = it }
+            if (tab == ProgramsTab.WEEK) WeekView(programs = programs, canEdit = canEditPrograms)
+            else ProgramListView(
             programs = programs,
             canEdit = canEditPrograms,
             onNew = {
@@ -241,6 +278,7 @@ internal fun ProgramsScreen() {
             },
             onDelete = { deleteTarget = it }
         )
+        }
 
         ProgramsView.EDIT -> Unit // Muokkain piirretään yllä (ProgramEditorScreen).
 
@@ -332,12 +370,23 @@ internal fun ProgramsScreen() {
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
             title = { Text(stringResource(R.string.poistetaanko_paivaohjelma)) },
-            text = { Text(target.name) },
+            text = {
+                val usedInWeek = remember(target.id) {
+                    WeekStore(context.applicationContext).load().events.any { it.programId == target.id }
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(target.name)
+                    if (usedInWeek) Text(stringResource(R.string.week_program_delete_note))
+                }
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
                         store.delete(target.id)
                         programs = store.load()
+                        // Viikko-ohjelman tapahtumat, jotka käyttivät ohjelmaa, poistuvat samalla.
+                        val week = WeekStore(context.applicationContext)
+                        week.save(WeekSchedule.withoutMissingPrograms(week.load(), programs.map { it.id }.toSet()))
                         deleteTarget = null
                     }
                 ) {

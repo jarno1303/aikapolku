@@ -23,9 +23,14 @@ import fi.aikapolku.app.data.ProfileStore
 import fi.aikapolku.app.profiles.CurrentProfileRow
 import fi.aikapolku.app.profiles.ProfilePickerDialog
 import fi.aikapolku.app.profiles.ProfileSession
+import fi.aikapolku.app.week.TodaySection
 
 @Composable
-internal fun HomeScreen(open: (AppPage) -> Unit) {
+internal fun HomeScreen(
+    open: (AppPage) -> Unit,
+    onOpenProgram: (String) -> Unit = {},
+    onOpenCard: (String, String) -> Unit = { _, _ -> }
+) {
     Spacer(Modifier.height(10.dp))
 
     Row(
@@ -70,7 +75,11 @@ internal fun HomeScreen(open: (AppPage) -> Unit) {
         )
     }
 
-    Spacer(Modifier.height(18.dp))
+    // Viikko-ohjelman päivä, jos tälle päivälle on tapahtumia.
+    Spacer(Modifier.height(12.dp))
+    TodaySection(onOpenProgram = onOpenProgram, onOpenCard = onOpenCard)
+
+    Spacer(Modifier.height(10.dp))
     Text(stringResource(R.string.mita_haluat_tehda), fontSize = 22.sp,
         fontWeight = FontWeight.Bold, color = AppColors.Ink)
     Spacer(Modifier.height(6.dp))

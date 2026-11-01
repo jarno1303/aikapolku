@@ -30,11 +30,12 @@ import fi.aikapolku.app.timer.TimerScreen
 import fi.aikapolku.app.timer.playCompletionSound
 import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.voice.VoicePlayer
+import fi.aikapolku.app.week.EventCardScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Sovelluksen näkymät. */
-internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE }
+internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD }
 
 /** Sovelluksen navigointi ja Ensin–Sitten-kulun yhteinen tila. */
 @Composable
@@ -49,6 +50,10 @@ internal fun AikaPolkuApp() {
     val cards = rememberSaveable(saver = FirstThenCards.saver) { FirstThenCards(cardStore.loadSelection()) }
     val sel = cards.selection
     var showLastTen by rememberSaveable { mutableStateOf(true) }
+    // Viikko-ohjelman tapahtuma, joka avataan aloitusnäkymän Tänään-listasta.
+    var pendingProgramId by rememberSaveable { mutableStateOf<String?>(null) }
+    var eventCardName by rememberSaveable { mutableStateOf("") }
+    var eventCardPhoto by rememberSaveable { mutableStateOf("") }
 
     // Valinnat tallennetaan aina niiden muuttuessa.
     LaunchedEffect(sel) { cardStore.saveSelection(sel) }
@@ -149,10 +154,27 @@ internal fun AikaPolkuApp() {
             verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {
             when (page) {
-                AppPage.HOME -> HomeScreen { destination ->
-                    page = destination
-                    if (destination == AppPage.TIMER) timer.activeTask = ""
-                }
+                AppPage.HOME -> HomeScreen(
+                    open = { destination ->
+                        page = destination
+                        if (destination == AppPage.TIMER) timer.activeTask = ""
+                    },
+                    onOpenProgram = { id ->
+                        pendingProgramId = id
+                        page = AppPage.PROGRAMS
+                    },
+                    onOpenCard = { name, photo ->
+                        eventCardName = name
+                        eventCardPhoto = photo
+                        page = AppPage.EVENT_CARD
+                    }
+                )
+
+                AppPage.EVENT_CARD -> EventCardScreen(
+                    name = eventCardName,
+                    photo = eventCardPhoto,
+                    onDone = { page = AppPage.HOME }
+                )
 
                 AppPage.TIMER -> TimerScreen(
                     remaining = timer.remaining,
@@ -209,7 +231,10 @@ internal fun AikaPolkuApp() {
                     }
                 )
 
-                AppPage.PROGRAMS -> ProgramsScreen()
+                AppPage.PROGRAMS -> ProgramsScreen(
+                    startProgramId = pendingProgramId,
+                    onStartHandled = { pendingProgramId = null }
+                )
 
                 AppPage.CAREGIVER -> CaregiverSettingsScreen()
 
@@ -255,6 +280,7 @@ internal fun AikaPolkuApp() {
                 page != AppPage.PROGRAMS &&
                 page != AppPage.LAST &&
                 page != AppPage.DONE &&
+                page != AppPage.EVENT_CARD &&
                 !(page == AppPage.TIMER && timer.activeTask.isNotBlank())) {
                 TextButton(
                     onClick = goBack,
