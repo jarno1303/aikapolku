@@ -120,14 +120,14 @@ internal fun ManualFlowScreen(
     )
 
     Text(
-        stringResource(R.string.nyt),
+        stringResource(R.string.now_label),
         fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
         color = AppColors.Teal
     )
 
     HeroCard(
-        label = stringResource(R.string.nyt),
+        label = stringResource(R.string.now_label),
         name = first,
         imagePath = firstPhoto,
         large = false

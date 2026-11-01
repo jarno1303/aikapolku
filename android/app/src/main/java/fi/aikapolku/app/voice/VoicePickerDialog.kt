@@ -79,7 +79,7 @@ internal fun VoicePickerDialog(onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.valmis_4)) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_done)) }
         }
     )
 }

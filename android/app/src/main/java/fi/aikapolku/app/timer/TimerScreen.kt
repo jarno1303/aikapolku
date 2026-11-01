@@ -130,8 +130,8 @@ internal fun TimerScreen(
             )
         ) {
             Text(
-                if (nextActivity == stringResource(R.string.valitse_toiminto))
-                    stringResource(R.string.valmis_4)
+                if (nextActivity == stringResource(R.string.choose_activity))
+                    stringResource(R.string.dialog_done)
                 else stringResource(R.string.siirry_seuraavaan),
                 fontSize = 18.sp
             )
@@ -153,7 +153,7 @@ internal fun TimerScreen(
             )
         } else {
             Text(
-                stringResource(R.string.ajastin),
+                stringResource(R.string.timer_title),
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
                 color = AppColors.Ink
@@ -382,7 +382,7 @@ internal fun TimerScreen(
                 TextButton(
                     onClick = { settingsOpen = false }
                 ) {
-                    Text(stringResource(R.string.valmis_4))
+                    Text(stringResource(R.string.dialog_done))
                 }
             }
         )
@@ -404,7 +404,7 @@ internal fun TimerScreen(
             },
             dismissButton = {
                 TextButton(onClick = { confirmReset = false }) {
-                    Text(stringResource(R.string.peruuta))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -423,13 +423,13 @@ private fun TimerTaskCards(
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         TimerTaskCard(
-            label = stringResource(R.string.ensin),
+            label = stringResource(R.string.first_label),
             name = first,
             photo = firstPhoto,
             modifier = Modifier.weight(1f)
         )
         TimerTaskCard(
-            label = stringResource(R.string.sitten),
+            label = stringResource(R.string.then_label),
             name = next,
             photo = nextPhoto,
             modifier = Modifier.weight(1f)
@@ -459,7 +459,7 @@ private fun TimerTaskCard(
         ) {
             Surface(
                 shape = RoundedCornerShape(50.dp),
-                color = if (label == stringResource(R.string.ensin))
+                color = if (label == stringResource(R.string.first_label))
                     AppColors.Teal else Color(0xFFE7F5F1)
             ) {
                 Text(
@@ -470,7 +470,7 @@ private fun TimerTaskCard(
                     ),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (label == stringResource(R.string.ensin))
+                    color = if (label == stringResource(R.string.first_label))
                         Color.White else AppColors.Teal
                 )
             }

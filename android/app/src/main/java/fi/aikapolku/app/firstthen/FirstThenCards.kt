@@ -83,7 +83,7 @@ internal fun EditableCard(
 
             if (editable) {
                 Text(
-                    stringResource(R.string.muokkaa_2),
+                    stringResource(R.string.card_edit_link),
                     color = FlowColors.teal,
                     fontSize = 12.sp
                 )
@@ -162,13 +162,13 @@ internal fun CompletedCard(
     nextPhoto: String
 ) {
     Text(
-        stringResource(R.string.valmis, first),
+        stringResource(R.string.first_then_done, first),
         fontSize = 16.sp,
         fontWeight = FontWeight.SemiBold,
         color = Color(0xFF166534)
     )
 
-    if (next != stringResource(R.string.valitse_toiminto)) {
+    if (next != stringResource(R.string.choose_activity)) {
         HeroCard(
             label = stringResource(R.string.seuraavaksi),
             name = next,

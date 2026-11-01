@@ -35,7 +35,7 @@ internal fun CaregiverSettingsScreen() {
     val caregiver = LocalCaregiver.current
     var confirmDisable by remember { mutableStateOf(false) }
 
-    Text(stringResource(R.string.ohjaajan_asetukset_3), fontSize = 28.sp, fontWeight = FontWeight.Bold)
+    Text(stringResource(R.string.caregiver_settings_title), fontSize = 28.sp, fontWeight = FontWeight.Bold)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -121,7 +121,7 @@ internal fun CaregiverSettingsScreen() {
                 }) { Text(stringResource(R.string.poista_lukitus)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDisable = false }) { Text(stringResource(R.string.peruuta)) }
+                TextButton(onClick = { confirmDisable = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }

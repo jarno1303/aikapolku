@@ -42,7 +42,7 @@ internal fun ProgramListView(
         onClick = onNew,
         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
     ) {
-        Text(stringResource(R.string.uusi_paivaohjelma))
+        Text(stringResource(R.string.program_new_button))
     }
 
     Text(stringResource(R.string.aloita_valmiista_rutiinista), fontWeight = FontWeight.SemiBold)
@@ -115,12 +115,12 @@ internal fun ProgramListView(
                         TextButton(
                             onClick = { onEdit(program) }
                         ) {
-                            Text(stringResource(R.string.muokkaa))
+                            Text(stringResource(R.string.edit))
                         }
                         TextButton(
                             onClick = { onDelete(program) }
                         ) {
-                            Text(stringResource(R.string.poista))
+                            Text(stringResource(R.string.delete))
                         }
                     }
                 }
@@ -133,7 +133,7 @@ internal fun ProgramListView(
 @Composable
 internal fun ProgramDoneView(programName: String, onBack: () -> Unit) {
     Spacer(Modifier.height(30.dp))
-    Text(stringResource(R.string.kaikki_valmista_2), fontSize = 29.sp, fontWeight = FontWeight.Bold)
+    Text(stringResource(R.string.program_all_done), fontSize = 29.sp, fontWeight = FontWeight.Bold)
     Text(stringResource(R.string.on_paattynyt, programName))
     Button(
         onClick = onBack,

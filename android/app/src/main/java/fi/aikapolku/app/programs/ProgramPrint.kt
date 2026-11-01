@@ -376,8 +376,8 @@ private class ProgramPrintAdapter(
         )
 
         val detail = when (step.mode) {
-            StepMode.CLOCK -> context.getString(R.string.klo, step.clock)
-            StepMode.DURATION -> context.getString(R.string.min, step.minutes)
+            StepMode.CLOCK -> context.getString(R.string.clock_value, step.clock)
+            StepMode.DURATION -> context.getString(R.string.minutes_value, step.minutes)
             else -> ""
         }
 

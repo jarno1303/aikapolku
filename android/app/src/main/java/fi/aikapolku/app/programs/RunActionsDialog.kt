@@ -44,12 +44,12 @@ internal fun RunActionsDialog(
                 if (canEnd) {
                     TextButton(onClick = onEnd, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.lopeta_ohjelma)) }
                 } else {
-                    CaregiverLockButton(modifier = Modifier.fillMaxWidth(), label = stringResource(R.string.ohjaajan_toiminnot_2))
+                    CaregiverLockButton(modifier = Modifier.fillMaxWidth(), label = stringResource(R.string.caregiver_actions))
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.sulje)) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
         }
     )
 }

@@ -124,7 +124,7 @@ internal fun RunSettingsDialog(
                     HorizontalDivider()
                     Text(stringResource(R.string.viestipainikkeiden_aani), fontWeight = FontWeight.Bold)
                     CompactVoiceRow(
-                        label = stringResource(R.string.tarvitsen_apua),
+                        label = stringResource(R.string.support_help),
                         selection = helpMode,
                         path = helpFile,
                         recording = recordingKind == RunPreferences.HELP,
@@ -139,7 +139,7 @@ internal fun RunSettingsDialog(
                     )
                     HorizontalDivider()
                     CompactVoiceRow(
-                        label = stringResource(R.string.tarvitsen_tauon),
+                        label = stringResource(R.string.support_break),
                         selection = breakMode,
                         path = breakFile,
                         recording = recordingKind == RunPreferences.BREAK,
@@ -167,7 +167,7 @@ internal fun RunSettingsDialog(
             },
             confirmButton = {
                 TextButton(enabled = recordingKind == null, onClick = onDismiss) {
-                    Text(stringResource(R.string.valmis_4))
+                    Text(stringResource(R.string.dialog_done))
                 }
             }
         )

@@ -147,7 +147,7 @@ internal fun FirstThenScreen(
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         EditableCard(
-            label = stringResource(R.string.ensin),
+            label = stringResource(R.string.first_label),
             name = first,
             description = firstDescription,
             imagePath = firstPhoto,
@@ -156,7 +156,7 @@ internal fun FirstThenScreen(
             onClick = { if (canEditCards) choosing = "first" }
         )
         EditableCard(
-            label = stringResource(R.string.sitten),
+            label = stringResource(R.string.then_label),
             name = next,
             description = nextDescription,
             imagePath = nextPhoto,
@@ -195,9 +195,9 @@ internal fun FirstThenScreen(
         },
         enabled =
             first.isNotBlank() &&
-            first != stringResource(R.string.valitse_toiminto) &&
+            first != stringResource(R.string.choose_activity) &&
             next.isNotBlank() &&
-            next != stringResource(R.string.valitse_toiminto),
+            next != stringResource(R.string.choose_activity),
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp),
@@ -218,7 +218,7 @@ internal fun FirstThenScreen(
     if (choosing != null) {
         AlertDialog(
             onDismissRequest = { choosing = null },
-            title = { Text(stringResource(R.string.valitse_toiminto)) },
+            title = { Text(stringResource(R.string.choose_activity)) },
             text = {
                 Column(
                     modifier = Modifier
@@ -247,7 +247,7 @@ internal fun FirstThenScreen(
 
                             if (
                                 currentName.isNotBlank() &&
-                                currentName != context.getString(R.string.valitse_toiminto)
+                                currentName != context.getString(R.string.choose_activity)
                             ) {
                                 CardStore(
                                     context.applicationContext
@@ -337,7 +337,7 @@ internal fun FirstThenScreen(
             },
             confirmButton = {
                 TextButton(onClick = { choosing = null }) {
-                    Text(stringResource(R.string.sulje))
+                    Text(stringResource(R.string.close))
                 }
             }
         )
@@ -408,12 +408,12 @@ internal fun FirstThenScreen(
                         editing = null
                     }
                 ) {
-                    Text(stringResource(R.string.tallenna))
+                    Text(stringResource(R.string.save))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { editing = null }) {
-                    Text(stringResource(R.string.peruuta))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

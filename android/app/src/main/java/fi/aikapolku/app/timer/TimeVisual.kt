@@ -91,7 +91,7 @@ internal fun TimeVisual(
         }
         Text(
             text = when {
-                done -> stringResource(R.string.aika_paattyi_2)
+                done -> stringResource(R.string.time_ended)
                 running -> stringResource(R.string.kaynnissa)
                 remaining < duration -> stringResource(R.string.tauolla)
                 else -> stringResource(R.string.valmis_aloittamaan)

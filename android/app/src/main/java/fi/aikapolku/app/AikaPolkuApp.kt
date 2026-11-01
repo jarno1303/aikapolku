@@ -54,7 +54,7 @@ internal fun AikaPolkuApp() {
     LaunchedEffect(sel) { cardStore.saveSelection(sel) }
 
     // Näkymät näyttävät valitsemattoman kortin tekstinä "Valitse toiminto".
-    val placeholder = stringResource(R.string.valitse_toiminto)
+    val placeholder = stringResource(R.string.choose_activity)
     val firstShown = sel.firstName.ifBlank { placeholder }
     val nextShown = sel.nextName.ifBlank { placeholder }
     fun chosen(name: String) = if (name == placeholder) "" else name
@@ -132,7 +132,7 @@ internal fun AikaPolkuApp() {
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                             modifier = Modifier.heightIn(min = 48.dp)
                         ) {
-                            Text(stringResource(R.string.takaisin), color = AppColors.Teal, fontSize = 17.sp)
+                            Text(stringResource(R.string.back), color = AppColors.Teal, fontSize = 17.sp)
                         }
                     }
                 }
@@ -170,7 +170,7 @@ internal fun AikaPolkuApp() {
                     onShowLastTen = { showLastTen = it },
                     onPreset = { minutes -> timer.setMinutes(minutes) },
                     onStartPause = {
-                        timer.startPause(context.getString(R.string.ajastin)) { playFirstVoice() }
+                        timer.startPause(context.getString(R.string.timer_title)) { playFirstVoice() }
                     },
                     onReset = { timer.reset() }
                 )

@@ -36,7 +36,7 @@ internal fun RunClockPill(time: String) {
         border = BorderStroke(1.dp, RunColors.border)
     ) {
         Text(
-            stringResource(R.string.klo, time),
+            stringResource(R.string.clock_value, time),
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             fontSize = 19.sp,
             fontWeight = FontWeight.Bold,
@@ -61,7 +61,7 @@ internal fun RunCountdownPill(time: RunTime.Countdown, onToggle: () -> Unit) {
         else -> "▶"
     }
     val spoken = buildString {
-        if (finished) append(stringResource(R.string.aika_paattyi))
+        if (finished) append(stringResource(R.string.a11y_time_ended))
         else if (numbers) append(stringResource(R.string.aikaa_jaljella_minuuttia_sekuntia, seconds / 60, seconds % 60))
         append(
             when {
@@ -93,7 +93,7 @@ internal fun RunCountdownPill(time: RunTime.Countdown, onToggle: () -> Unit) {
                 modifier = Modifier.size(32.dp)
             )
             if (finished) {
-                Text(stringResource(R.string.aika_paattyi_2), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = RunColors.teal)
+                Text(stringResource(R.string.time_ended), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = RunColors.teal)
             } else if (numbers) {
                 Text(
                     "%d:%02d".format(seconds / 60, seconds % 60),

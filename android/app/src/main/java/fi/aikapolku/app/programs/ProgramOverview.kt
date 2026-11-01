@@ -31,8 +31,8 @@ internal fun ProgramOverview(
     ) {
         steps.forEachIndexed { index, item ->
             val status = when {
-                index < currentIndex -> stringResource(R.string.valmis_3)
-                index == currentIndex -> stringResource(R.string.nyt)
+                index < currentIndex -> stringResource(R.string.overview_status_done)
+                index == currentIndex -> stringResource(R.string.now_label)
                 index == currentIndex + 1 -> stringResource(R.string.seuraavaksi)
                 else -> stringResource(R.string.tulossa)
             }
@@ -89,7 +89,7 @@ internal fun ProgramOverview(
                         )
                     } else if (item.mode == StepMode.DURATION) {
                         Text(
-                            stringResource(R.string.min, item.minutes),
+                            stringResource(R.string.minutes_value, item.minutes),
                             fontSize = 14.sp
                         )
                     }

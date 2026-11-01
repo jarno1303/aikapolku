@@ -188,13 +188,13 @@ internal fun RunStepScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 RunSupportButton(
-                    label = stringResource(R.string.tarvitsen_apua),
+                    label = stringResource(R.string.support_help),
                     icon = { RunHelpIcon() },
                     onClick = onHelp,
                     modifier = Modifier.weight(1f)
                 )
                 RunSupportButton(
-                    label = stringResource(R.string.tarvitsen_tauon),
+                    label = stringResource(R.string.support_break),
                     icon = { RunPauseIcon(color = RunColors.ink) },
                     onClick = onBreak,
                     modifier = Modifier.weight(1f)
@@ -210,7 +210,7 @@ internal fun RunStepScreen(
                     contentColor = Color.White
                 )
             ) {
-                Text(stringResource(R.string.valmis_5), fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.run_done_button), fontSize = 21.sp, fontWeight = FontWeight.Bold)
             }
 
             if (next != null) {
@@ -230,7 +230,7 @@ internal fun RunStepScreen(
                     )
                 }
                 TextButton(onClick = onMore, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(stringResource(R.string.lisaa), color = RunColors.teal, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.run_more), color = RunColors.teal, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 }
             }
         }
@@ -253,7 +253,7 @@ private fun RunHeader(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                stringResource(R.string.nyt),
+                stringResource(R.string.now_label),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.2.sp,
@@ -319,7 +319,7 @@ private fun RunProgressDots(index: Int, count: Int) {
 @Composable
 private fun RunNextRow(next: RunNext, mode: String) {
     if (mode == RunPreferences.NEXT_HIDDEN) return
-    val label = if (next.isSubStep) stringResource(R.string.seuraavaksi_2) else stringResource(R.string.seuraava_tehtava)
+    val label = if (next.isSubStep) stringResource(R.string.run_next_label) else stringResource(R.string.seuraava_tehtava)
     Surface(
         color = RunColors.nextSurface,
         shape = RoundedCornerShape(18.dp),

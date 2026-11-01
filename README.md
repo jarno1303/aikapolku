@@ -32,6 +32,10 @@ Ei käyttäjätiliä, ei mainoksia, ei verkkoyhteyspakkoa.
 | `voice` | Puhe, äänitys ja toisto |
 | `ui` | Yhteiset värit (`AppColors`) ja teema |
 
+Tekstit ovat resursseissa (`res/values/strings.xml`); uuden kielen lisääminen: `docs/KAANNOKSET.md`.
+Päiväohjelman suoritus (`programs.run.ProgramRunController`) ja Ensin–Sitten-kulku (`firstthen.FirstThenFlow`)
+ovat omissa tilaluokissaan ja testattavissa ilman laitetta.
+
 Tallennusavaimet (SharedPreferences) ja JSON-muoto ovat ennallaan vanhoista versioista;
 `P018AlarmReceiver`/`P018BootReceiver` säilyttävät nimensä, koska ajastetut hälytykset viittaavat niihin.
 

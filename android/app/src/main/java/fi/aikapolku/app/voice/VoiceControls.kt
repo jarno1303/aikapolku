@@ -97,7 +97,7 @@ internal fun VoiceControls(
                             ?: context.getString(R.string.puheviesti_toistetaan)
                     }
                 ) {
-                    Text(stringResource(R.string.kuuntele_2))
+                    Text(stringResource(R.string.voice_listen))
                 }
                 TextButton(onClick = {
                     VoicePlayer.stop()

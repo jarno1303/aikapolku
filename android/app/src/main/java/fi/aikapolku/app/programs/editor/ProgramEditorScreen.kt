@@ -35,7 +35,7 @@ import fi.aikapolku.app.data.serializeDraft
 import fi.aikapolku.app.ui.AppColors
 import java.util.UUID
 
-private val pageTitles = listOf(R.string.valitse, R.string.jarjesta, R.string.ajat, R.string.tallenna)
+private val pageTitles = listOf(R.string.choose, R.string.jarjesta, R.string.ajat, R.string.save)
 
 /**
  * Valittavat kortit ryhmittäin: omat kortit ensin, sitten valmiit luokittain.
@@ -109,13 +109,13 @@ internal fun ProgramEditorScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                if (isNew) stringResource(R.string.uusi_paivaohjelma_2) else stringResource(R.string.muokkaa_paivaohjelmaa),
+                if (isNew) stringResource(R.string.editor_title_new) else stringResource(R.string.muokkaa_paivaohjelmaa),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f)
             )
             TextButton(onClick = { requestCancel() }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.peruuta))
+                Text(stringResource(R.string.cancel))
             }
         }
 
@@ -146,7 +146,7 @@ internal fun ProgramEditorScreen(
                     OutlinedButton(
                         onClick = { page-- },
                         modifier = Modifier.weight(1f).heightIn(min = 56.dp)
-                    ) { Text(stringResource(R.string.takaisin), fontSize = 16.sp) }
+                    ) { Text(stringResource(R.string.back), fontSize = 16.sp) }
                 }
                 if (page < 3) {
                     Button(
@@ -156,7 +156,7 @@ internal fun ProgramEditorScreen(
                         modifier = Modifier.weight(1f).heightIn(min = 56.dp)
                     ) {
                         Text(
-                            if (page == 0 && draft.steps.isNotEmpty()) stringResource(R.string.seuraava, draft.steps.size) else stringResource(R.string.seuraava_2),
+                            if (page == 0 && draft.steps.isNotEmpty()) stringResource(R.string.editor_next_count, draft.steps.size) else stringResource(R.string.editor_next),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -167,7 +167,7 @@ internal fun ProgramEditorScreen(
                         enabled = draft.name.isNotBlank() && draft.steps.isNotEmpty(),
                         colors = ButtonDefaults.buttonColors(containerColor = AppColors.Teal),
                         modifier = Modifier.weight(1f).heightIn(min = 56.dp)
-                    ) { Text(stringResource(R.string.tallenna), fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+                    ) { Text(stringResource(R.string.save), fontSize = 16.sp, fontWeight = FontWeight.Bold) }
                 }
             }
         }

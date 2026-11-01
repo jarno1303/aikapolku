@@ -216,3 +216,13 @@
 - Yhteiset värit yhteen paikkaan (AppColors); kaksi äänittäjää ja kaksi kuvan kopiointia yhdistetty.
 - Kuvat puretaan taustasäikeessä ja säilytetään välimuistissa (sujuvampi kuvaruudukko ja suoritusnäkymä).
 - Tallennetut tiedot, asetukset ja ulkoasu ennallaan. Puhelintesti odottaa hyväksyntää.
+
+## Kieliversiovalmius ja laatu
+- Kaikki käyttäjälle näkyvät tekstit resursseiksi (strings.xml, suomi oletuksena; monikkomuodot plurals-resursseina).
+- Valmiiden korttien, osavaiheiden ja päiväohjelmapohjien nimet käännettäviä; vanhat suomenkieliset nimet tunnistetaan aina.
+- Puheäänen kieli resurssina (tts_locale). Ohje uuden kielen lisäämiseen: docs/KAANNOKSET.md.
+- Valitsematon Ensin–Sitten-kortti tallennetaan kielestä riippumattomasti (vanha "Valitse toiminto" tunnistetaan).
+- Tyypitetyt tilat merkkijonojen sijaan: StepMode, TimeMode, AppPage, ProgramsView, SupportKind, PinProblem (tallennusmuoto ennallaan).
+- Tilaluokat: ProgramRunController (päiväohjelman suoritus), FirstThenCards ja FlowTimer (Ensin–Sitten ja ajastin).
+- Uudet testit: suorituksen säännöt (15), Ensin–Sitten-kulku (8), käyttöliittymätestit (3), käännösten tunnistus.
+- Puhelintesti odottaa hyväksyntää.

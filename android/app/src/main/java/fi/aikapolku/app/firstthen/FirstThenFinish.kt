@@ -48,7 +48,7 @@ internal fun LastActivityScreen(
                         containerColor = FlowColors.teal
                     )
                 ) {
-                    Text(stringResource(R.string.valmis_2), fontSize = 15.sp)
+                    Text(stringResource(R.string.flow_done_button), fontSize = 15.sp)
                 }
                 if (onAddNext != null) {
                     OutlinedButton(
@@ -69,7 +69,7 @@ internal fun LastActivityScreen(
                         .fillMaxWidth()
                         .heightIn(min = 56.dp)
                 ) {
-                    Text(stringResource(R.string.valmis_2))
+                    Text(stringResource(R.string.flow_done_button))
                 }
                 if (onAddNext != null) {
                     OutlinedButton(

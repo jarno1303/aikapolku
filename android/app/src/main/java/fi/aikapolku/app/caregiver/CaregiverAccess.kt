@@ -295,7 +295,7 @@ private fun CaregiverOpenBanner(remainingMs: Long, onLock: () -> Unit) {
 @Composable
 internal fun CaregiverLockButton(
     modifier: Modifier = Modifier,
-    label: String = stringResource(R.string.ohjaaja),
+    label: String = stringResource(R.string.caregiver_label),
     /** Ahtaisiin paikkoihin (esim. Ensin–Sitten-otsikko): pelkkä 🔒, ei tekstiä. */
     iconOnly: Boolean = false
 ) {

@@ -46,7 +46,7 @@ internal fun HomeScreen(open: (AppPage) -> Unit) {
 
     HomeCard(
         symbol = "timer",
-        title = stringResource(R.string.ajastin),
+        title = stringResource(R.string.timer_title),
         subtitle = stringResource(R.string.aseta_aika_ja_keskity),
         onClick = { open(AppPage.TIMER) }
     )
@@ -69,7 +69,7 @@ internal fun HomeScreen(open: (AppPage) -> Unit) {
         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
     ) {
         Text(
-            if (caregiver.isLocked) stringResource(R.string.ohjaajan_asetukset) else stringResource(R.string.ohjaajan_asetukset_2),
+            if (caregiver.isLocked) stringResource(R.string.home_caregiver_settings_locked) else stringResource(R.string.home_caregiver_settings_open),
             color = AppColors.Teal,
             fontSize = 15.sp
         )

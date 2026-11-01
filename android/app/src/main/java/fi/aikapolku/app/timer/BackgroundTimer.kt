@@ -189,7 +189,7 @@ internal object BackgroundTimer {
                 System.currentTimeMillis()).coerceAtLeast(1L)
             // Palautetaan aina: start toimii myös ilman lupia.
             start(c, owner, left,
-                p.getString(key(owner, "title"), c.getString(R.string.ajastin)) ?: c.getString(R.string.ajastin))
+                p.getString(key(owner, "title"), c.getString(R.string.timer_title)) ?: c.getString(R.string.timer_title))
         }
     }
 }

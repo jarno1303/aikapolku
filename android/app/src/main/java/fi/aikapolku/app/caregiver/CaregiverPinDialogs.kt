@@ -71,7 +71,7 @@ internal fun CaregiverPinDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.ohjaajan_toiminnot)) },
+        title = { Text(stringResource(R.string.caregiver_actions_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.anna_ohjaajan_pin_koodi))
@@ -101,7 +101,7 @@ internal fun CaregiverPinDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.peruuta)) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }
@@ -166,10 +166,10 @@ internal fun CaregiverPinSetupDialog(
                         onSave(first)
                     }
                 }
-            ) { Text(stringResource(R.string.tallenna)) }
+            ) { Text(stringResource(R.string.save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.peruuta)) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }

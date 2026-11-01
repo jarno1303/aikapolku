@@ -56,7 +56,7 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
         )
         ModeOption(
             selected = draft.timeMode == TimeMode.CLOCK,
-            title = stringResource(R.string.kellonajat),
+            title = stringResource(R.string.time_mode_clock),
             description = stringResource(R.string.anna_aloitusaika_ja_kestot_kellonajat),
             onSelect = { onDraftChange(ProgramTiming.switchMode(draft, TimeMode.CLOCK)) }
         )
@@ -141,7 +141,7 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                 }
                 ProgramTiming.endOf(draft.startClock, draft.steps)?.let { end ->
                     Text(
-                        stringResource(R.string.paattyy_noin_klo_2, ProgramTiming.format(end)),
+                        stringResource(R.string.program_summary_ends, ProgramTiming.format(end)),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = AppColors.Muted
@@ -223,7 +223,7 @@ private fun DurationChips(step: ProgramStep, allowNone: Boolean, onPick: (Int?) 
             FilterChip(
                 selected = !none && step.minutes == minutes,
                 onClick = { onPick(minutes) },
-                label = { Text(stringResource(R.string.min, minutes)) }
+                label = { Text(stringResource(R.string.minutes_value, minutes)) }
             )
         }
     }

@@ -63,7 +63,7 @@ internal fun SupportMessageScreen(
 ) {
     val context = LocalContext.current
     // Teksti tulee käännettävistä resursseista.
-    val message = stringResource(if (kind == SupportKind.BREAK) R.string.tarvitsen_tauon else R.string.tarvitsen_apua)
+    val message = stringResource(if (kind == SupportKind.BREAK) R.string.support_break else R.string.support_help)
     val voiceMode = remember(kind) { RunPreferences.voiceMode(context, kind.key) }
     val recording = remember(kind) { RunPreferences.recording(context, kind.key) }
     val speech = remember(context) { Speech(context.applicationContext) }
@@ -171,7 +171,7 @@ internal fun SupportMessageScreen(
                     contentColor = Color.White
                 )
             ) {
-                Text(stringResource(R.string.jatka), fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.support_continue), fontSize = 21.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

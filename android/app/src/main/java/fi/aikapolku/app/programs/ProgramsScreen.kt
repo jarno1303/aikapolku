@@ -255,7 +255,7 @@ internal fun ProgramsScreen() {
 
     if (showRunActions && view == ProgramsView.RUN) {
         val current = run.currentStep
-        val fallbackTitle = stringResource(R.string.ajastin)
+        val fallbackTitle = stringResource(R.string.timer_title)
         RunActionsDialog(
             canExtend = current?.mode == StepMode.DURATION && caregiver.allows(AppAction.EXTEND_TIME),
             canChangeSettings = caregiver.allows(AppAction.SETTINGS),
@@ -278,7 +278,7 @@ internal fun ProgramsScreen() {
             title = { Text(stringResource(R.string.koko_paivaohjelma)) },
             text = { ProgramOverview(run.program.steps, run.stepIndex) },
             confirmButton = {
-                TextButton(onClick = { showFullProgram = false }) { Text(stringResource(R.string.sulje)) }
+                TextButton(onClick = { showFullProgram = false }) { Text(stringResource(R.string.close)) }
             }
         )
     }
@@ -296,7 +296,7 @@ internal fun ProgramsScreen() {
                 }) { Text(stringResource(R.string.lopeta)) }
             },
             dismissButton = {
-                TextButton(onClick = { showExitConfirmation = false }) { Text(stringResource(R.string.peruuta)) }
+                TextButton(onClick = { showExitConfirmation = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -314,7 +314,7 @@ internal fun ProgramsScreen() {
                 }
             },
             confirmButton = {
-                TextButton(onClick = { timeSettingsOpen = false }) { Text(stringResource(R.string.valmis_4)) }
+                TextButton(onClick = { timeSettingsOpen = false }) { Text(stringResource(R.string.dialog_done)) }
             }
         )
     }
@@ -341,12 +341,12 @@ internal fun ProgramsScreen() {
                         deleteTarget = null
                     }
                 ) {
-                    Text(stringResource(R.string.poista))
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { deleteTarget = null }) {
-                    Text(stringResource(R.string.peruuta))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

@@ -60,10 +60,10 @@ internal fun LandscapeTimer(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (guided) {
-                LandscapeActivityCard(stringResource(R.string.ensin), activeTask, firstPhoto)
-                LandscapeActivityCard(stringResource(R.string.sitten), nextActivity, nextPhoto)
+                LandscapeActivityCard(stringResource(R.string.first_label), activeTask, firstPhoto)
+                LandscapeActivityCard(stringResource(R.string.then_label), nextActivity, nextPhoto)
             } else {
-                Text(stringResource(R.string.ajastin), fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.timer_title), fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 if (canAdjust) {
                     Text(
                         stringResource(R.string.valitse_aika_vetamalla_kellotaulua_kaynnissa),

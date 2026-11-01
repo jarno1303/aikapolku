@@ -185,7 +185,7 @@ internal fun CardLibraryDialog(
                                                     onSelect(card)
                                                 }
                                             ) {
-                                                Text(stringResource(R.string.valitse))
+                                                Text(stringResource(R.string.choose))
                                             }
 
                                             TextButton(
@@ -193,7 +193,7 @@ internal fun CardLibraryDialog(
                                                     openEditor(card)
                                                 }
                                             ) {
-                                                Text(stringResource(R.string.muokkaa))
+                                                Text(stringResource(R.string.edit))
                                             }
                                             TextButton(
                                                 onClick = {
@@ -208,7 +208,7 @@ internal fun CardLibraryDialog(
                                                     deleteCandidate = card
                                                 }
                                             ) {
-                                                Text(stringResource(R.string.poista))
+                                                Text(stringResource(R.string.delete))
                                             }
                                         }
                                     }
@@ -220,7 +220,7 @@ internal fun CardLibraryDialog(
             },
             confirmButton = {
                 TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.sulje))
+                    Text(stringResource(R.string.close))
                 }
             }
         )
@@ -347,7 +347,7 @@ internal fun CardLibraryDialog(
                 TextButton(
                     onClick = { editing = false }
                 ) {
-                    Text(stringResource(R.string.peruuta))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -391,7 +391,7 @@ internal fun CardLibraryDialog(
                         deleteCandidate = null
                     }
                 ) {
-                    Text(stringResource(R.string.poista))
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
@@ -400,7 +400,7 @@ internal fun CardLibraryDialog(
                         deleteCandidate = null
                     }
                 ) {
-                    Text(stringResource(R.string.peruuta))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

@@ -44,7 +44,7 @@ internal fun SavePage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
             TimeMode.CLOCK -> {
                 val end = ProgramTiming.endOf(draft.startClock, draft.steps)
                 stringResource(R.string.kellonajat_alkaa_klo, draft.startClock) +
-                    (end?.let { stringResource(R.string.paattyy_noin_klo, ProgramTiming.format(it)) } ?: "")
+                    (end?.let { stringResource(R.string.times_ends_about, ProgramTiming.format(it)) } ?: "")
             }
             TimeMode.DURATION -> stringResource(R.string.kestot_jokaisella_toiminnolla_oma_ajastin)
             else -> stringResource(R.string.omaan_tahtiin_ei_aikoja)

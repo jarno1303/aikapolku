@@ -55,7 +55,7 @@ internal fun SubstepEditor(
                     TextButton(
                         onClick = { onUpdate(step.copy(subSteps = step.subSteps.filterIndexed { i, _ -> i != index })) },
                         modifier = Modifier.heightIn(min = 48.dp)
-                    ) { Text(stringResource(R.string.poista)) }
+                    ) { Text(stringResource(R.string.delete)) }
                 }
             }
             OutlinedButton(

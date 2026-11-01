@@ -195,7 +195,7 @@ internal fun ArrangePage(
                                         commit(latest.value.copy(steps = latest.value.steps.filterNot { it.id == step.id }))
                                     }
                                 },
-                                modifier = Modifier.semantics { contentDescription = context.getString(R.string.poista_2, step.name) }
+                                modifier = Modifier.semantics { contentDescription = context.getString(R.string.a11y_remove_step, step.name) }
                             ) { Text("✕", fontSize = 20.sp, color = AppColors.Muted) }
                         }
                         Box(modifier = Modifier.padding(start = 48.dp, end = 8.dp)) {
