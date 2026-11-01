@@ -171,8 +171,6 @@ internal fun EnhancedFirstThenScreen(
         )
     }
 
-
-
     HorizontalDivider()
 
     var timerMode by rememberSaveable {
@@ -424,93 +422,6 @@ internal fun EnhancedFirstThenScreen(
                 }
             }
         )
-    }
-}
-
-@Composable
-private fun PictureActivityCard(
-    label: String,
-    name: String,
-    description: String,
-    imagePath: String,
-    modifier: Modifier,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = modifier.heightIn(min = 220.dp),
-        onClick = onClick,
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(label, color = CardTeal, fontWeight = FontWeight.Bold)
-
-            val image = remember(imagePath) {
-                if (imagePath.isBlank()) null
-                else {
-                    val bounds = BitmapFactory.Options().apply {
-                        inJustDecodeBounds = true
-                    }
-                    BitmapFactory.decodeFile(imagePath, bounds)
-                    val sample = maxOf(
-                        1,
-                        maxOf(bounds.outWidth, bounds.outHeight) / 600
-                    )
-                    BitmapFactory.decodeFile(
-                        imagePath,
-                        BitmapFactory.Options().apply {
-                            inSampleSize = sample
-                        }
-                    )
-                }
-            }
-
-            if (image != null) {
-                Image(
-                    bitmap = image.asImageBitmap(),
-                    contentDescription = "Toiminnon valokuva",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(105.dp)
-                )
-            } else {
-                P011Photo(
-                    name = name,
-                    imagePath = imagePath,
-                    modifier = Modifier.fillMaxWidth().height(105.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                )
-            }
-
-            Text(
-                name,
-                color = CardInk,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-
-            if (description.isNotBlank()) {
-                Text(
-                    description,
-                    color = Color(0xFF475569),
-                    fontSize = 12.sp,
-                    textAlign = TextAlign.Center,
-                    maxLines = 3
-                )
-            }
-
-            Text(
-                "Muokkaa",
-                color = CardTeal,
-                fontSize = 13.sp
-            )
-        }
     }
 }
 

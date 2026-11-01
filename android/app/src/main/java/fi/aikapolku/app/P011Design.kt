@@ -66,22 +66,6 @@ private fun P011Stage(
     }
 }
 
-internal fun p011Emoji(name: String): String = when (name) {
-    "Askartelu" -> "🎨"
-    "Ruokailu" -> "🍽️"
-    "Ulkoilu" -> "🚶"
-    "Pelaaminen" -> "🎮"
-    "Lukeminen" -> "📖"
-    "Musiikki" -> "🎵"
-    "Tehtävät" -> "🧩"
-    "Tauko" -> "☕"
-    "Lepo" -> "🛏️"
-    "Hampaiden pesu" -> "🪥"
-    "WC" -> "🚽"
-    "Pukeutuminen" -> "🧥"
-    else -> "🖼️"
-}
-
 @Composable
 internal fun P011Photo(
     name: String,

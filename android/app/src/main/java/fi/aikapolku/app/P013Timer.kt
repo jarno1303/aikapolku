@@ -83,7 +83,6 @@ internal fun P013TimerScreen(
         }
     }
 
-
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
     var confirmReset by rememberSaveable { mutableStateOf(false) }
 
@@ -712,28 +711,4 @@ internal fun p013MinuteFromPoint(
 
     return if (minute == 0) 60
     else minute.coerceIn(1, 60)
-}
-private suspend fun p015bPlaySound(mode: String) {
-    if (mode == "off") return
-
-    val generator = runCatching {
-        ToneGenerator(
-            AudioManager.STREAM_NOTIFICATION,
-            65
-        )
-    }.getOrNull() ?: return
-
-    try {
-        val tone = if (mode == "short")
-            ToneGenerator.TONE_PROP_ACK
-        else
-            ToneGenerator.TONE_PROP_BEEP
-
-        val durationMs = if (mode == "short") 220 else 500
-
-        generator.startTone(tone, durationMs)
-        delay(durationMs.toLong() + 120L)
-    } finally {
-        generator.release()
-    }
 }

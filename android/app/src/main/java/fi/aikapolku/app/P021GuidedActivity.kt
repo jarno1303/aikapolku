@@ -78,42 +78,5 @@ internal fun P021SubstepEditor(
     }
 }
 
-@Composable
-internal fun P021CurrentSubstep(
-    subSteps: List<String>,
-    currentIndex: Int
-) {
-    if (subSteps.isEmpty()) return
-    val safeIndex = currentIndex.coerceIn(0, subSteps.lastIndex)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFE6F4F1))
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                "VAIHE ${safeIndex + 1}/${subSteps.size}",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = androidx.compose.ui.graphics.Color(0xFF0F766E)
-            )
-            Text(
-                subSteps[safeIndex],
-                fontSize = 25.sp,
-                lineHeight = 30.sp,
-                fontWeight = FontWeight.Bold,
-                color = androidx.compose.ui.graphics.Color(0xFF1F2937)
-            )
-            LinearProgressIndicator(
-                progress = { (safeIndex + 1).toFloat() / subSteps.size.toFloat() },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
 // P0-22a: Suoritusnäkymän kortti, apu-/taukopainikkeet ja viesti-ikkuna korvattiin
 // tiedostolla RunStepScreen.kt (RunStepScreen, SupportMessageScreen).
