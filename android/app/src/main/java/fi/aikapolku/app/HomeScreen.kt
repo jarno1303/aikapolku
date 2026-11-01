@@ -24,12 +24,13 @@ import fi.aikapolku.app.profiles.CurrentProfileRow
 import fi.aikapolku.app.profiles.ProfilePickerDialog
 import fi.aikapolku.app.profiles.ProfileSession
 import fi.aikapolku.app.week.TodaySection
+import fi.aikapolku.app.data.WeekEvent
 
 @Composable
 internal fun HomeScreen(
     open: (AppPage) -> Unit,
     onOpenProgram: (String) -> Unit = {},
-    onOpenCard: (String, String) -> Unit = { _, _ -> }
+    onOpenCard: (WeekEvent) -> Unit = {}
 ) {
     Spacer(Modifier.height(10.dp))
 

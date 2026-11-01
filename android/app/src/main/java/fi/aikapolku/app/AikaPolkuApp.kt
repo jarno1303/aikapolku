@@ -31,6 +31,12 @@ import fi.aikapolku.app.timer.playCompletionSound
 import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.voice.VoicePlayer
 import fi.aikapolku.app.week.EventCardScreen
+import fi.aikapolku.app.week.EventLaunch
+import fi.aikapolku.app.data.AckStore
+import fi.aikapolku.app.data.EventKind
+import fi.aikapolku.app.data.ProfileStore
+import fi.aikapolku.app.data.WeekStore
+import java.time.LocalDate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -54,6 +60,34 @@ internal fun AikaPolkuApp() {
     var pendingProgramId by rememberSaveable { mutableStateOf<String?>(null) }
     var eventCardName by rememberSaveable { mutableStateOf("") }
     var eventCardPhoto by rememberSaveable { mutableStateOf("") }
+    var eventCardId by rememberSaveable { mutableStateOf("") }
+    var eventCardDate by rememberSaveable { mutableStateOf("") }
+
+    // Ilmoituksesta avattu tapahtuma avataan, jos se kuuluu nykyiseen profiiliin.
+    val launch = EventLaunch.pending.value
+    LaunchedEffect(launch) {
+        val request = launch ?: return@LaunchedEffect
+        EventLaunch.pending.value = null
+        if (request.profileId != ProfileStore.currentId(context)) {
+            page = AppPage.HOME
+            return@LaunchedEffect
+        }
+        val event = WeekStore(context).load().events.firstOrNull { it.id == request.eventId }
+        when {
+            event == null -> page = AppPage.HOME
+            event.kind == EventKind.PROGRAM -> {
+                pendingProgramId = event.programId
+                page = AppPage.PROGRAMS
+            }
+            else -> {
+                eventCardName = event.cardName
+                eventCardPhoto = event.cardPhoto
+                eventCardId = event.id
+                eventCardDate = request.date.toString()
+                page = AppPage.EVENT_CARD
+            }
+        }
+    }
 
     // Valinnat tallennetaan aina niiden muuttuessa.
     LaunchedEffect(sel) { cardStore.saveSelection(sel) }
@@ -163,9 +197,11 @@ internal fun AikaPolkuApp() {
                         pendingProgramId = id
                         page = AppPage.PROGRAMS
                     },
-                    onOpenCard = { name, photo ->
-                        eventCardName = name
-                        eventCardPhoto = photo
+                    onOpenCard = { event ->
+                        eventCardName = event.cardName
+                        eventCardPhoto = event.cardPhoto
+                        eventCardId = event.id
+                        eventCardDate = LocalDate.now().toString()
                         page = AppPage.EVENT_CARD
                     }
                 )
@@ -173,7 +209,14 @@ internal fun AikaPolkuApp() {
                 AppPage.EVENT_CARD -> EventCardScreen(
                     name = eventCardName,
                     photo = eventCardPhoto,
-                    onDone = { page = AppPage.HOME }
+                    onDone = {
+                        // Valmis kuittaa tapahtuman (näkyy Tänään-listassa ja ohjaajalle).
+                        if (eventCardId.isNotBlank()) {
+                            val date = runCatching { LocalDate.parse(eventCardDate) }.getOrElse { LocalDate.now() }
+                            AckStore(context).ack(date, eventCardId)
+                        }
+                        page = AppPage.HOME
+                    }
                 )
 
                 AppPage.TIMER -> TimerScreen(

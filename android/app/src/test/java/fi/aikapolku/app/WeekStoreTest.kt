@@ -27,7 +27,7 @@ class WeekStoreTest {
     private val plan = WeekPlan(
         events = listOf(
             WeekEvent("1", 1, 0, "07:00", EventKind.PROGRAM, programId = "aamu"),
-            WeekEvent("2", 5, 1, "12:00", EventKind.CARD, cardName = "Lääkkeet äöå", cardPhoto = "builtin:rest")
+            WeekEvent("2", 5, 1, "12:00", EventKind.CARD, cardName = "Lääkkeet äöå", cardPhoto = "builtin:rest", notify = true, notifyBefore = 10)
         ),
         alternating = true,
         anchorMonday = 20_394L
@@ -62,5 +62,25 @@ class WeekStoreTest {
         assertEquals(WeekPlan(), WeekStore(context).load())
         ProfileStore.switchTo(context, ProfileScope.DEFAULT_ID)
         assertEquals(plan, WeekStore(context).load())
+    }
+
+    @Test
+    fun `vanhassa tallennuksessa ilmoitus on pois paalta`() {
+        val old = """{"events":[{"id":"a","day":1,"week":0,"time":"08:00","kind":"card","cardName":"X"}]}"""
+        val event = WeekStore.decode(old).events.single()
+        assertEquals(false, event.notify)
+        assertEquals(0, event.notifyBefore)
+    }
+
+    @Test
+    fun `kuittaus sailyy ja vanhat poistuvat`() {
+        val store = fi.aikapolku.app.data.AckStore(context)
+        val today = java.time.LocalDate.now()
+        store.ack(today, "laakkeet", java.time.LocalTime.of(20, 4))
+        store.ack(today.minusDays(3), "vanha", java.time.LocalTime.of(8, 0))
+        assertEquals("20:04", store.ackTime(today, "laakkeet"))
+        store.prune(today)
+        assertEquals(null, store.ackTime(today.minusDays(3), "vanha"))
+        assertEquals("20:04", store.ackTime(today, "laakkeet"))
     }
 }

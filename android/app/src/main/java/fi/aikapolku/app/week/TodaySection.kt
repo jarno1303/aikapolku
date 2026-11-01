@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.ProgramStore
+import fi.aikapolku.app.data.AckStore
+import fi.aikapolku.app.data.WeekEvent
 import fi.aikapolku.app.data.WeekSchedule
 import fi.aikapolku.app.data.WeekStore
 import fi.aikapolku.app.ui.AppColors
@@ -53,10 +55,11 @@ import kotlinx.coroutines.delay
  * yhdellä napautuksella; menneet ovat himmeitä.
  */
 @Composable
-internal fun TodaySection(onOpenProgram: (String) -> Unit, onOpenCard: (String, String) -> Unit) {
+internal fun TodaySection(onOpenProgram: (String) -> Unit, onOpenCard: (WeekEvent) -> Unit) {
     val context = LocalContext.current
     val plan = remember(context) { WeekStore(context.applicationContext).load() }
     val programs = remember(context) { ProgramStore(context.applicationContext).load() }
+    val acks = remember(context) { AckStore(context.applicationContext) }
     var now by remember { mutableStateOf(LocalTime.now()) }
     var date by remember { mutableStateOf(LocalDate.now()) }
 
@@ -75,7 +78,7 @@ internal fun TodaySection(onOpenProgram: (String) -> Unit, onOpenCard: (String, 
     val current = WeekSchedule.currentIndex(events.map { it.event }, now)
 
     fun open(item: ResolvedEvent) {
-        if (item.isProgram) onOpenProgram(item.event.programId) else onOpenCard(item.event.cardName, item.event.cardPhoto)
+        if (item.isProgram) onOpenProgram(item.event.programId) else onOpenCard(item.event)
     }
 
     Text(
@@ -89,7 +92,9 @@ internal fun TodaySection(onOpenProgram: (String) -> Unit, onOpenCard: (String, 
     events.forEachIndexed { index, item ->
         val isCurrent = index == current
         val isPast = index < current
-        val a11y = item.event.time + " " + item.title + if (isCurrent) ", $nowLabel" else ""
+        val ackTime = acks.ackTime(date, item.event.id)
+        val doneText = ackTime?.let { stringResource(R.string.ack_done_at, it.replace(':', '.')) }
+        val a11y = item.event.time + " " + item.title + (if (isCurrent) ", $nowLabel" else "") + (doneText?.let { ", $it" } ?: "")
         Surface(
             onClick = { open(item) },
             shape = RoundedCornerShape(18.dp),
@@ -116,15 +121,19 @@ internal fun TodaySection(onOpenProgram: (String) -> Unit, onOpenCard: (String, 
                     item,
                     Modifier.size(if (isCurrent) 64.dp else 44.dp).clip(RoundedCornerShape(if (isCurrent) 16.dp else 12.dp))
                 )
-                Text(
-                    item.title,
-                    modifier = Modifier.weight(1f),
-                    fontSize = if (isCurrent) 20.sp else 17.sp,
-                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
-                    color = AppColors.Ink,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        item.title,
+                        fontSize = if (isCurrent) 20.sp else 17.sp,
+                        fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
+                        color = AppColors.Ink,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (doneText != null) {
+                        Text(doneText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal)
+                    }
+                }
                 if (isCurrent) {
                     // Koko rivi on painike; "Aloita" näyttää, mistä päivä jatkuu.
                     Surface(color = AppColors.Teal, shape = RoundedCornerShape(14.dp)) {

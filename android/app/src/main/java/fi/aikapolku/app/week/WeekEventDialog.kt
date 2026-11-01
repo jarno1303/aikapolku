@@ -46,6 +46,8 @@ import fi.aikapolku.app.data.EventKind
 import fi.aikapolku.app.data.WeekEvent
 import fi.aikapolku.app.data.WeekSchedule
 import fi.aikapolku.app.ui.AppColors
+import fi.aikapolku.app.timer.BackgroundTimer
+import androidx.compose.material3.Switch
 import java.util.UUID
 
 /**
@@ -71,6 +73,14 @@ internal fun WeekEventDialog(
     var cardName by remember { mutableStateOf(initial?.cardName ?: "") }
     var cardPhoto by remember { mutableStateOf(initial?.cardPhoto ?: "") }
     var days by remember { mutableStateOf(setOf(day)) }
+    // Ilmoitus: korteille (esim. lääkkeet) oletuksena päällä, päiväohjelmille pois.
+    var notify by remember { mutableStateOf(initial?.notify ?: (kind == EventKind.CARD)) }
+    var notifyTouched by remember { mutableStateOf(initial != null) }
+    var notifyBefore by remember { mutableIntStateOf(initial?.notifyBefore ?: 0) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var permissionsOk by remember {
+        mutableStateOf(BackgroundTimer.notificationsAllowed(context) && BackgroundTimer.exactAlarmsAllowed(context))
+    }
     var showLibrary by remember { mutableStateOf(false) }
     var showBuiltin by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
@@ -103,12 +113,20 @@ internal fun WeekEventDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = kind == EventKind.PROGRAM,
-                        onClick = { kind = EventKind.PROGRAM; error = "" },
+                        onClick = {
+                            kind = EventKind.PROGRAM
+                            if (!notifyTouched) notify = false
+                            error = ""
+                        },
                         label = { Text(stringResource(R.string.week_kind_program)) }
                     )
                     FilterChip(
                         selected = kind == EventKind.CARD,
-                        onClick = { kind = EventKind.CARD; error = "" },
+                        onClick = {
+                            kind = EventKind.CARD
+                            if (!notifyTouched) notify = true
+                            error = ""
+                        },
                         label = { Text(stringResource(R.string.week_kind_card)) }
                     )
                 }
@@ -142,6 +160,47 @@ internal fun WeekEventDialog(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { showLibrary = true }) { Text(stringResource(R.string.week_own_cards)) }
                         OutlinedButton(onClick = { showBuiltin = true }) { Text(stringResource(R.string.week_builtin_cards)) }
+                    }
+                }
+
+                // Ilmoitus tapahtumasta: alkaessa tai ennakkoon.
+                val notifyLabel = stringResource(R.string.reminder_label)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(notifyLabel, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.reminder_info), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(
+                        checked = notify,
+                        onCheckedChange = { notify = it; notifyTouched = true },
+                        modifier = Modifier.semantics { contentDescription = notifyLabel }
+                    )
+                }
+                if (notify) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        WeekSchedule.NOTIFY_BEFORE_CHOICES.forEach { minutes ->
+                            FilterChip(
+                                selected = notifyBefore == minutes,
+                                onClick = { notifyBefore = minutes },
+                                label = {
+                                    Text(
+                                        if (minutes == 0) stringResource(R.string.reminder_at_start)
+                                        else stringResource(R.string.reminder_before, minutes)
+                                    )
+                                }
+                            )
+                        }
+                    }
+                    if (!permissionsOk) {
+                        Text(stringResource(R.string.reminder_permission_needed), fontSize = 13.sp, color = MaterialTheme.colorScheme.error)
+                        OutlinedButton(onClick = {
+                            BackgroundTimer.resetPermissionPrompts()
+                            BackgroundTimer.requestPermissions(context)
+                            permissionsOk = BackgroundTimer.notificationsAllowed(context) && BackgroundTimer.exactAlarmsAllowed(context)
+                        }) { Text(stringResource(R.string.reminder_allow)) }
+                    }
+                    if (kind == EventKind.CARD) {
+                        Text(stringResource(R.string.ack_disclaimer), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -190,7 +249,9 @@ internal fun WeekEventDialog(
                             kind = kind,
                             programId = if (kind == EventKind.PROGRAM) programId else "",
                             cardName = if (kind == EventKind.CARD) cardName else "",
-                            cardPhoto = if (kind == EventKind.CARD) cardPhoto else ""
+                            cardPhoto = if (kind == EventKind.CARD) cardPhoto else "",
+                            notify = notify,
+                            notifyBefore = if (notify) notifyBefore else 0
                         )
                         onSave(
                             if (initial != null) listOf(build(initial.id, initial.day))

@@ -42,7 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
 import fi.aikapolku.app.caregiver.CaregiverLockButton
+import fi.aikapolku.app.data.AckStore
 import fi.aikapolku.app.data.DayProgram
+import fi.aikapolku.app.data.EventKind
 import fi.aikapolku.app.data.WeekEvent
 import fi.aikapolku.app.data.WeekPlan
 import fi.aikapolku.app.data.WeekSchedule
@@ -62,6 +64,7 @@ internal fun WeekView(programs: List<DayProgram>, canEdit: Boolean) {
     fun update(next: WeekPlan) {
         plan = next
         store.save(next)
+        EventReminders.reschedule(context.applicationContext)
     }
 
     val currentWeek = WeekSchedule.weekOf(plan, today)
@@ -183,6 +186,10 @@ internal fun WeekView(programs: List<DayProgram>, canEdit: Boolean) {
         }
     }
 
+    if (canEdit) {
+        AckOverview(plan, today)
+    }
+
     if (adding) {
         WeekEventDialog(
             initial = null,
@@ -268,6 +275,57 @@ private fun DayButton(day: Int, selected: Boolean, hasEvents: Boolean, modifier:
                 fontSize = 14.sp,
                 color = if (selected) Color.White else AppColors.Teal
             )
+        }
+    }
+}
+
+/**
+ * Ohjaajalle: korttitapahtumien kuittaukset eiliseltä ja tältä päivältä.
+ * Vanhempia ei säilytetä (ks. AckStore).
+ */
+@Composable
+private fun AckOverview(plan: WeekPlan, today: LocalDate) {
+    val context = LocalContext.current
+    val acks = remember(context) { AckStore(context.applicationContext) }
+    val now = remember { java.time.LocalTime.now() }
+    val days = listOf(today.minusDays(1) to R.string.ack_yesterday, today to R.string.ack_today)
+    val rows = days.map { (date, label) ->
+        Triple(date, label, WeekSchedule.eventsFor(plan, date).filter { it.kind == EventKind.CARD })
+    }
+    if (rows.all { it.third.isEmpty() }) return
+
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(stringResource(R.string.ack_title), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            rows.forEach { (date, label, events) ->
+                if (events.isEmpty()) return@forEach
+                Text(stringResource(label), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
+                events.forEach { event ->
+                    val ack = acks.ackTime(date, event.id)
+                    val missed = ack == null &&
+                        (date.isBefore(today) || WeekSchedule.minutesOf(event.time) <= now.hour * 60 + now.minute)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(event.time, fontSize = 15.sp, modifier = Modifier.width(52.dp))
+                        Text(event.cardName, fontSize = 15.sp, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        when {
+                            ack != null -> Text(
+                                stringResource(R.string.ack_done_at, ack.replace(':', '.')),
+                                fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal
+                            )
+                            missed -> Text(
+                                stringResource(R.string.ack_missing),
+                                fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFB45309)
+                            )
+                            else -> Text(stringResource(R.string.ack_upcoming), fontSize = 14.sp, color = AppColors.Muted)
+                        }
+                    }
+                }
+            }
+            Text(stringResource(R.string.ack_disclaimer), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

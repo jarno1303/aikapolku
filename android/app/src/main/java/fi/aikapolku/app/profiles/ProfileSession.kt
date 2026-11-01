@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.mutableIntStateOf
 import fi.aikapolku.app.data.ProfileStore
 import fi.aikapolku.app.timer.BackgroundTimer
+import fi.aikapolku.app.week.EventReminders
 
 /**
  * Profiilien muutokset käyttöliittymälle. [revision] kasvaa jokaisesta muutoksesta, jolloin
@@ -28,6 +29,8 @@ internal object ProfileSession {
     fun delete(context: Context, id: String): Boolean {
         if (id == ProfileStore.currentId(context)) stopTimers(context)
         val deleted = ProfileStore.delete(context, id)
+        // Poistetun profiilin ilmoitukset eivät saa enää tulla.
+        EventReminders.reschedule(context.applicationContext)
         changed()
         return deleted
     }

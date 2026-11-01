@@ -1,6 +1,9 @@
 package fi.aikapolku.app
 
+import android.content.Intent
 import android.os.Bundle
+import fi.aikapolku.app.week.EventLaunch
+import fi.aikapolku.app.week.EventReminders
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -16,6 +19,9 @@ import fi.aikapolku.app.ui.theme.AikapolkuTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Ilmoituksesta avattu tapahtuma (vain ensimmäisellä kerralla, ei esim. näytön kääntyessä).
+        if (savedInstanceState == null) EventLaunch.from(intent)
+        EventReminders.onAppStart(this)
         setContent {
             AikapolkuTheme {
                 CaregiverLockHost {
@@ -31,8 +37,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        EventLaunch.from(intent)
+    }
+
     override fun onStop() {
         super.onStop()
+        // Viikko-ohjelman muutokset ajan tasalle myös taustalla oleville ilmoituksille.
+        EventReminders.reschedule(this)
         // P0-21e: ohjaajan toiminnot lukittuvat aina, kun sovellus siirtyy taustalle.
         CaregiverSession.onAppBackground()
     }

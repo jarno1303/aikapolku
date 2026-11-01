@@ -254,3 +254,11 @@
 - Viikko-ohjelma on profiilikohtainen. Päiväohjelman poisto poistaa sen tapahtumat viikolta (vahvistuksessa maininta).
 - Viikonpäivien nimet tulevat laitteen kielestä (java.time), joten niitä ei tarvitse kääntää.
 - Uudet testit: WeekScheduleTest (7), WeekStoreTest (4), TodaySectionTest (2).
+
+## Vaihe 3: ilmoitukset ja kuittaus
+- Tapahtumakohtainen ilmoitus: alkaessa tai 5/10/15 min ennen. Korteille oletuksena päällä, päiväohjelmille pois.
+- Ilmoituksessa kortin tai ohjelman kuva, nimi ja kellonaika; useamman profiilin laitteessa profiilin nimi. Napautus avaa tapahtuman, jos se kuuluu nykyiseen profiiliin (profiilia ei vaihdeta ohi PIN-koodin).
+- Korttitapahtuman voi kuitata ilmoituksen Valmis-painikkeella tai sovelluksessa. Tänään-listassa "✓ Tehty 20.04"; ohjaajalle Viikko-välilehdellä "Kuittaukset: eilen ja tänään" (Tehty / Ei kuitattu / Tulossa).
+- Kuittaukset säilyvät vain eiliseltä ja tältä päivältä. AikaPolku muistuttaa, mutta se ei ole lääkehoidon kirjaamisväline (teksti näkyy sovelluksessa).
+- Ajastettuna on aina vain seuraava ilmoitushetki kaikista profiileista. Ajastus uusitaan käynnistyksessä, viikon muuttuessa, profiilin poistossa, puhelimen käynnistyessä, kellonajan/aikavyöhykkeen muuttuessa ja sovelluksen päivittyessä.
+- Uudet testit: RemindersTest (7), WeekStoreTest +2.

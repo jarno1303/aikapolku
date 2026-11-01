@@ -3,6 +3,7 @@ package fi.aikapolku.app.data
 import android.content.Context
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
@@ -32,7 +33,18 @@ internal data class WeekEvent(
     val kind: EventKind,
     val programId: String = "",
     val cardName: String = "",
-    val cardPhoto: String = ""
+    val cardPhoto: String = "",
+    /** Ilmoitus tapahtumasta: alkaessa ([notifyBefore] = 0) tai 5/10/15 min ennen. */
+    val notify: Boolean = false,
+    val notifyBefore: Int = 0
+)
+
+/** Yksi tuleva ilmoitus: kenen profiilin tapahtuma, minä päivänä ja milloin ilmoitetaan. */
+internal data class Reminder(
+    val profileId: String,
+    val event: WeekEvent,
+    val date: LocalDate,
+    val at: LocalDateTime
 )
 
 /**
@@ -101,14 +113,40 @@ internal object WeekSchedule {
     fun formatTime(hour: Int, minute: Int): String =
         "%02d:%02d".format(hour.coerceIn(0, 23), minute.coerceIn(0, 59))
 
+    val NOTIFY_BEFORE_CHOICES = listOf(0, 5, 10, 15)
+
+    /** Ilmoitukset päiviltä [from] … [from] + [days] - 1 kaikista profiileista. */
+    fun reminders(plans: Map<String, WeekPlan>, from: LocalDate, days: Int): List<Reminder> =
+        (0 until days).flatMap { offset ->
+            val date = from.plusDays(offset.toLong())
+            plans.flatMap { (profileId, plan) ->
+                eventsFor(plan, date).filter { it.notify }.map { event ->
+                    val start = date.atStartOfDay().plusMinutes(minutesOf(event.time).toLong())
+                    Reminder(profileId, event, date, start.minusMinutes(event.notifyBefore.coerceIn(0, 60).toLong()))
+                }
+            }
+        }
+
+    /** Seuraava ilmoitushetki [now]:n jälkeen (minuutin tarkkuudella), tai null. */
+    fun nextReminderAt(plans: Map<String, WeekPlan>, now: LocalDateTime): LocalDateTime? {
+        val minute = now.withSecond(0).withNano(0)
+        return reminders(plans, minute.toLocalDate(), 16).map { it.at }.filter { it.isAfter(minute) }.minOrNull()
+    }
+
+    /** Ilmoitukset, jotka kuuluvat hetkelle [at]. Ennakkoilmoitus voi osua edelliselle päivälle. */
+    fun dueReminders(plans: Map<String, WeekPlan>, at: LocalDateTime): List<Reminder> {
+        val minute = at.withSecond(0).withNano(0)
+        return reminders(plans, minute.toLocalDate(), 2).filter { it.at == minute }
+    }
+
     /** Poistaa tapahtumat, joiden päiväohjelmaa ei enää ole. */
     fun withoutMissingPrograms(plan: WeekPlan, programIds: Set<String>): WeekPlan =
         plan.copy(events = plan.events.filterNot { it.kind == EventKind.PROGRAM && it.programId !in programIds })
 }
 
 /** Viikko-ohjelman tallennus nykyiseen profiiliin. */
-internal class WeekStore(context: Context) {
-    private val prefs = ProfileScope.prefs(context, ProfileScope.WEEK)
+internal class WeekStore(context: Context, profileId: String = ProfileStore.currentId(context)) {
+    private val prefs = ProfileScope.prefs(context, ProfileScope.WEEK, profileId)
 
     fun load(): WeekPlan = decode(prefs.getString(KEY, null))
 
@@ -132,6 +170,8 @@ internal class WeekStore(context: Context) {
                         .put("programId", e.programId)
                         .put("cardName", e.cardName)
                         .put("cardPhoto", e.cardPhoto)
+                        .put("notify", e.notify)
+                        .put("notifyBefore", e.notifyBefore)
                 )
             }
             return JSONObject()
@@ -159,7 +199,9 @@ internal class WeekStore(context: Context) {
                     kind = EventKind.from(o.optString("kind")),
                     programId = o.optString("programId"),
                     cardName = o.optString("cardName"),
-                    cardPhoto = o.optString("cardPhoto")
+                    cardPhoto = o.optString("cardPhoto"),
+                    notify = o.optBoolean("notify", false),
+                    notifyBefore = o.optInt("notifyBefore", 0).coerceIn(0, 60)
                 )
             }
             return WeekPlan(

@@ -3,9 +3,9 @@ package fi.aikapolku.app.data
 import android.content.Context
 import org.json.JSONArray
 
-internal class ProgramStore(context: Context) {
-    // Nykyisen profiilin päiväohjelmat.
-    private val prefs = ProfileScope.prefs(context, ProfileScope.PROGRAMS)
+internal class ProgramStore(context: Context, profileId: String = ProfileStore.currentId(context)) {
+    // Profiilin (oletuksena nykyisen) päiväohjelmat.
+    private val prefs = ProfileScope.prefs(context, ProfileScope.PROGRAMS, profileId)
 
     fun load(): List<DayProgram> {
         val array = runCatching {

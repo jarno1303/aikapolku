@@ -31,7 +31,7 @@ class TodaySectionTest {
 
     @Test
     fun `tanaan-lista ei nay ilman tapahtumia`() {
-        compose.setContent { Column { TodaySection(onOpenProgram = {}, onOpenCard = { _, _ -> }) } }
+        compose.setContent { Column { TodaySection(onOpenProgram = {}, onOpenCard = {}) } }
         compose.onNodeWithText(t(R.string.today_title, dayName(today))).assertDoesNotExist()
     }
 
@@ -43,7 +43,7 @@ class TodaySectionTest {
         var opened = ""
         // Lista päivittää kellonaikaa jatkuvasti; testikello ei saa yrittää kelata sitä loppuun.
         compose.mainClock.autoAdvance = false
-        compose.setContent { Column { TodaySection(onOpenProgram = {}, onOpenCard = { name, _ -> opened = name }) } }
+        compose.setContent { Column { TodaySection(onOpenProgram = {}, onOpenCard = { opened = it.cardName }) } }
         compose.onNodeWithText(t(R.string.today_title, dayName(today))).assertExists()
         compose.onNodeWithText("Lääkkeet").performClick()
         assertEquals("Lääkkeet", opened)

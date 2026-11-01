@@ -436,4 +436,22 @@
     <string name="week_program_delete_note">Ohjelma poistuu myös viikko-ohjelmasta.</string>
     <string name="today_title">Tänään · %1$s</string>
     <string name="today_start">Aloita</string>
+
+    <!-- Ilmoitukset ja kuittaukset -->
+    <string name="reminder_channel">Viikko-ohjelman muistutukset</string>
+    <string name="reminder_label">Ilmoitus</string>
+    <string name="reminder_info">Puhelin muistuttaa tapahtumasta, vaikka sovellus olisi kiinni.</string>
+    <string name="reminder_at_start">Alkaessa</string>
+    <string name="reminder_before">%1$d min ennen</string>
+    <string name="reminder_now">Nyt on aika · klo %1$s</string>
+    <string name="reminder_in_minutes">%1$d minuutin päästä · klo %2$s</string>
+    <string name="reminder_permission_needed">Salli ilmoitukset ja tarkat hälytykset, jotta muistutus tulee ajallaan.</string>
+    <string name="reminder_allow">Salli ilmoitukset</string>
+    <string name="ack_done_at">✓ Tehty %1$s</string>
+    <string name="ack_title">Kuittaukset: eilen ja tänään</string>
+    <string name="ack_yesterday">Eilen</string>
+    <string name="ack_today">Tänään</string>
+    <string name="ack_missing">Ei kuitattu</string>
+    <string name="ack_upcoming">Tulossa</string>
+    <string name="ack_disclaimer">AikaPolku muistuttaa, mutta se ei ole lääkehoidon kirjaamisväline. Kuittaukset säilyvät vain eiliseltä ja tältä päivältä.</string>
 </resources>

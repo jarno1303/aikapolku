@@ -92,7 +92,7 @@ internal object BackgroundTimer {
         }
     }
 
-    /** Vain testejä varten: nollaa käynnistyskertakohtaiset lupakyselymerkinnät. */
+    /** Nollaa käynnistyskertakohtaiset lupakyselymerkinnät: testit ja käyttäjän oma "Salli"-painike. */
     internal fun resetPermissionPrompts() {
         exactPrompted = false
         notificationPrompted = false
