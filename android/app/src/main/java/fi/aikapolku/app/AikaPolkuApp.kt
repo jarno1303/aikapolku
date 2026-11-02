@@ -1,5 +1,9 @@
 package fi.aikapolku.app
 
+import androidx.compose.ui.layout.boundsInWindow
+
+import androidx.compose.ui.layout.onGloballyPositioned
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -235,6 +239,7 @@ internal fun AikaPolkuApp() {
     }
 
     val rootScroll = rememberScrollState()
+    val pageScroll = remember(rootScroll) { fi.aikapolku.app.ui.PageScroll(rootScroll) }
     LaunchedEffect(page) { rootScroll.scrollTo(0) }
     // Sisäkkäisen näkymän (esim. muokkain) oma otsikko yläpalkkiin.
     val titleOverride = remember { mutableStateOf<String?>(null) }
@@ -247,7 +252,12 @@ internal fun AikaPolkuApp() {
         // ajautuisi uuden näkymän asetuksen jälkeen ja piilottaisi sen.
     }
 
-    CompositionLocalProvider(LocalTitleOverride provides titleOverride, LocalBackOverride provides backOverride, LocalTopBarAction provides topBarAction) {
+    CompositionLocalProvider(
+        LocalTitleOverride provides titleOverride,
+        LocalBackOverride provides backOverride,
+        LocalTopBarAction provides topBarAction,
+        fi.aikapolku.app.ui.LocalPageScroll provides pageScroll
+    ) {
     Scaffold(
         containerColor = AppColors.Background,
         topBar = {
@@ -280,6 +290,11 @@ internal fun AikaPolkuApp() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .onGloballyPositioned {
+                    val bounds = it.boundsInWindow()
+                    pageScroll.viewportTop = bounds.top
+                    pageScroll.viewportBottom = bounds.bottom
+                }
                 // The programmes screen owns its scrolling and keeps action buttons visible.
                 .then(if (page == AppPage.PROGRAMS) Modifier else Modifier.verticalScroll(rootScroll))
                 .padding(horizontal = 12.dp, vertical = 9.dp),

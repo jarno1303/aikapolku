@@ -58,6 +58,31 @@ internal object Runko {
 
     private fun shownWeek(plan: WeekPlan, week: Int) = if (plan.alternating) week else WeekSchedule.WEEK_A
 
+    /**
+     * Siirto päivän sisällä: kellonajat pysyvät paikallaan ja sisällöt vaihtavat järjestystä.
+     * Kohta [from] siirtyy järjestyksessä kohtaan [to]; väliin jäävät liukuvat yhden pykälän.
+     * Sisällön mukana kulkevat kortti/ohjelma, muistutus, "kestää seuraavaan" ja tunnus
+     * (tunnuksen mukana myös päivän muutokset ja kuittaukset).
+     */
+    fun moveContent(plan: WeekPlan, day: Int, week: Int, from: Int, to: Int): WeekPlan {
+        val events = WeekSchedule.eventsOn(plan, day, week)
+        if (from !in events.indices || to !in events.indices || from == to) return plan
+        val times = events.map { it.time }
+        val reordered = events.toMutableList().apply { add(to, removeAt(from)) }
+        val retimed = reordered.mapIndexed { i, e -> e.copy(time = times[i]) }.associateBy { it.id }
+        return plan.copy(events = plan.events.map { retimed[it.id] ?: it })
+    }
+
+    /** Kohta toiselle päivälle samaan kellonaikaan. */
+    fun moveToDay(plan: WeekPlan, eventId: String, day: Int): WeekPlan =
+        plan.copy(events = plan.events.map { if (it.id == eventId && day in 1..7) it.copy(day = day) else it })
+
+    /**
+     * Raahauksen pudotuskohta: monesko järjestyksessä raahattu kohta olisi, kun sormi on
+     * kohdassa [y]. [centers] = muiden (ei raahatun) kohtien keskikohdat ylhäältä alas.
+     */
+    fun dropIndex(centers: List<Float>, y: Float): Int = centers.count { it < y }
+
     /** Asiakkaan toistuva poikkeus ryhmän kohtaan: asetus tai poisto (null = ryhmän mukaan). */
     fun withException(group: Group, eventId: String, memberId: String, exception: MemberException?): Group =
         group.copy(exceptions = group.exceptions.filterNot { it.eventId == eventId && it.memberId == memberId } + listOfNotNull(exception))

@@ -1,6 +1,26 @@
 package fi.aikapolku.app.week
 
 import androidx.compose.foundation.background
+import fi.aikapolku.app.ui.LocalPageScroll
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -101,7 +121,61 @@ internal fun RunkoEditor(
     var copyDayOpen by remember { mutableStateOf(false) }
     var replaceWith by remember { mutableStateOf<WeekPlan?>(null) }
     var chooseStart by remember { mutableStateOf(false) }
+    var moveToDayOf by remember { mutableStateOf<WeekEvent?>(null) }
     val newId = { UUID.randomUUID().toString() }
+
+    // Raahaus (pitkä painallus): sisällöt vaihtavat järjestystä, kellonajat pysyvät.
+    val haptic = LocalHapticFeedback.current
+    val pageScroll = LocalPageScroll.current
+    val density = LocalDensity.current
+    val currentPlan by rememberUpdatedState(plan)
+    val currentOnChange by rememberUpdatedState(onChange)
+    var dragId by remember { mutableStateOf<String?>(null) }
+    var pointerY by remember { mutableFloatStateOf(0f) }
+    var grab by remember { mutableFloatStateOf(0f) }
+    // Rivien paikat ikkunassa: tunnus → (yläreuna, korkeus).
+    val bounds = remember { mutableStateMapOf<String, Pair<Float, Float>>() }
+
+    fun ownNow() = WeekSchedule.eventsOn(currentPlan, day, if (currentPlan.alternating) week else WeekSchedule.WEEK_A)
+
+    fun dropTarget(id: String): Int {
+        val others = ownNow().filter { it.id != id }
+        return Runko.dropIndex(others.map { e -> bounds[e.id]?.let { (top, h) -> top + h / 2 } ?: 0f }, pointerY)
+    }
+
+    fun move(from: Int, to: Int) {
+        val wk = if (currentPlan.alternating) week else WeekSchedule.WEEK_A
+        currentOnChange(Runko.moveContent(currentPlan, day, wk, from, to))
+    }
+
+    fun finishDrag() {
+        val id = dragId ?: return
+        val from = ownNow().indexOfFirst { it.id == id }
+        val to = dropTarget(id)
+        dragId = null
+        if (from >= 0 && to != from) {
+            move(from, to)
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        }
+    }
+
+    // Sivu vierii, kun raahattu kohta on lähellä näkyvän alueen reunaa.
+    LaunchedEffect(dragId) {
+        val scroll = pageScroll ?: return@LaunchedEffect
+        if (dragId == null) return@LaunchedEffect
+        val edge = with(density) { 88.dp.toPx() }
+        val maxSpeed = with(density) { 22.dp.toPx() }
+        while (dragId != null) {
+            val y = pointerY
+            val speed = when {
+                y < scroll.viewportTop + edge -> -maxSpeed * ((scroll.viewportTop + edge - y) / edge).coerceIn(0f, 1f)
+                y > scroll.viewportBottom - edge -> maxSpeed * ((y - (scroll.viewportBottom - edge)) / edge).coerceIn(0f, 1f)
+                else -> 0f
+            }
+            if (speed != 0f) scroll.state.scrollBy(speed)
+            withFrameNanos { }
+        }
+    }
 
     if (plan.alternating) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -154,12 +228,70 @@ internal fun RunkoEditor(
         Text(stringResource(R.string.week_no_events), color = AppColors.Muted)
     }
 
+    // Pudotuskohta raahauksen aikana: monenneksi raahattu kohta tulee ja mihin aikaan.
+    val dragging = dragId
+    val target = dragging?.let { dropTarget(it) }
+    val others = if (dragging != null) own.filter { it.id != dragging } else emptyList()
+    val ownTimes = own.map { it.time }
+    val moveUpLabel = stringResource(R.string.runko_move_up)
+    val moveDownLabel = stringResource(R.string.runko_move_down)
+
     rows.forEachIndexed { index, (time, row) ->
         if (canEdit) AddSlot(Runko.suggestTime(rows.getOrNull(index - 1)?.first, time)) { addAt = it }
         when (row) {
-            is WeekEvent -> OwnRow(row, programs, canEdit) { editing = row }
+            is WeekEvent -> {
+                val ownIndex = own.indexOfFirst { it.id == row.id }
+                val draggable = canEdit && own.size > 1
+                val lineAbove = target != null && others.getOrNull(target)?.id == row.id
+                val lineBelow = target != null && target == others.size && others.lastOrNull()?.id == row.id
+                Box(
+                    modifier = Modifier
+                        .onGloballyPositioned { c -> bounds[row.id] = c.positionInWindow().y to c.size.height.toFloat() }
+                        .then(
+                            if (!draggable) Modifier else Modifier.pointerInput(row.id) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { offset ->
+                                        dragId = row.id
+                                        grab = offset.y
+                                        pointerY = (bounds[row.id]?.first ?: 0f) + offset.y
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    },
+                                    onDrag = { change, _ ->
+                                        change.consume()
+                                        pointerY = (bounds[row.id]?.first ?: 0f) + change.position.y
+                                    },
+                                    onDragEnd = { finishDrag() },
+                                    onDragCancel = { dragId = null }
+                                )
+                            }
+                        )
+                        .then(
+                            if (dragging == row.id) Modifier.zIndex(2f).graphicsLayer {
+                                translationY = pointerY - (bounds[row.id]?.first ?: 0f) - grab
+                                scaleX = 1.03f
+                                scaleY = 1.03f
+                                shadowElevation = 24f
+                                shape = RoundedCornerShape(16.dp)
+                                clip = true
+                            } else Modifier
+                        )
+                        .semantics {
+                            if (draggable) customActions = listOfNotNull(
+                                if (ownIndex > 0) CustomAccessibilityAction(moveUpLabel) { move(ownIndex, ownIndex - 1); true } else null,
+                                if (ownIndex < own.size - 1) CustomAccessibilityAction(moveDownLabel) { move(ownIndex, ownIndex + 1); true } else null
+                            )
+                        }
+                ) {
+                    OwnRow(row, programs, canEdit) { editing = row }
+                    if (lineAbove) DropLine(ownTimes[target!!], Modifier.align(Alignment.TopCenter))
+                    if (lineBelow) DropLine(ownTimes[target!!], Modifier.align(Alignment.BottomCenter))
+                }
+            }
             is GroupRow -> GroupEventRow(row, canEdit) { onGroupRow(row) }
         }
+    }
+    if (canEdit && own.size > 1 && dragging == null) {
+        Text(stringResource(R.string.runko_drag_hint), fontSize = 13.sp, color = AppColors.Muted)
     }
     if (canEdit && rows.isNotEmpty()) AddSlot(Runko.suggestTime(rows.last().first, null)) { addAt = it }
     if (canEdit && rows.isEmpty() && !(plan.events.isEmpty() && groups.isEmpty())) {
@@ -217,7 +349,40 @@ internal fun RunkoEditor(
                 onChange(plan.copy(events = plan.events.filterNot { it.id == event.id }))
                 editing = null
             },
-            onDismiss = { editing = null }
+            onDismiss = { editing = null },
+            extraActions = run {
+                val list = WeekSchedule.eventsOn(plan, event.day, event.week)
+                val i = list.indexOfFirst { it.id == event.id }
+                listOfNotNull(
+                    if (i > 0) stringResource(R.string.runko_move_up) to {
+                        onChange(Runko.moveContent(plan, event.day, event.week, i, i - 1)); editing = null
+                    } else null,
+                    if (i in 0 until list.size - 1) stringResource(R.string.runko_move_down) to {
+                        onChange(Runko.moveContent(plan, event.day, event.week, i, i + 1)); editing = null
+                    } else null,
+                    stringResource(R.string.runko_move_day) to {
+                        moveToDayOf = event; editing = null
+                    }
+                )
+            }
+        )
+    }
+    moveToDayOf?.let { event ->
+        AlertDialog(
+            onDismissRequest = { moveToDayOf = null },
+            title = { Text(stringResource(R.string.runko_move_day_title, event.time.replace(':', '.'))) },
+            text = {
+                Column {
+                    (1..7).filter { it != event.day }.forEach { d ->
+                        ChoiceRow(title = dayName(d), onClick = {
+                            onChange(Runko.moveToDay(plan, event.id, d))
+                            moveToDayOf = null
+                            day = d
+                        })
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { moveToDayOf = null }) { Text(stringResource(R.string.cancel)) } }
         )
     }
     if (copyDayOpen) {
@@ -256,9 +421,10 @@ internal fun RunkoEditor(
         )
     }
     // Lukko (ks. canEdit): avoimet ikkunat suljetaan.
-    androidx.compose.runtime.LaunchedEffect(canEdit) {
+    LaunchedEffect(canEdit) {
         if (!canEdit) {
             addAt = null; editing = null; copyDayOpen = false; chooseStart = false; programAt = null; replaceWith = null
+            moveToDayOf = null; dragId = null
         }
     }
 }
@@ -600,4 +766,22 @@ private fun SelectedMark() {
         tint = AppColors.Teal,
         modifier = Modifier.size(26.dp)
     )
+}
+
+/** Pudotuskohdan viiva: kohta tulee tähän, tähän aikaan. Ei vie tilaa (päällä). */
+@Composable
+private fun DropLine(time: String, modifier: Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth().offset(y = 0.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(Modifier.weight(1f).height(4.dp).clip(RoundedCornerShape(2.dp)).background(AppColors.Teal))
+        Text(
+            time.replace(':', '.'),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(AppColors.Teal).padding(horizontal = 8.dp, vertical = 2.dp)
+        )
+    }
 }

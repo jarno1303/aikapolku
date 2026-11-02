@@ -1,5 +1,8 @@
 package fi.aikapolku.app.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -125,3 +128,15 @@ internal fun TopBarAction(content: @Composable () -> Unit) {
         onDispose { if (holder.value === wrapper) holder.value = null }
     }
 }
+
+/**
+ * Sivun vieritys sisäkkäisille näkymille: aikajanan raahaus vierittää sivua, kun kohta
+ * viedään lähelle näkyvän alueen ylä- tai alareunaa. [viewportTop]/[viewportBottom] =
+ * vieritettävän alueen rajat ikkunassa (pikseleinä).
+ */
+internal class PageScroll(val state: androidx.compose.foundation.ScrollState) {
+    var viewportTop by androidx.compose.runtime.mutableFloatStateOf(0f)
+    var viewportBottom by androidx.compose.runtime.mutableFloatStateOf(0f)
+}
+
+internal val LocalPageScroll = compositionLocalOf<PageScroll?> { null }

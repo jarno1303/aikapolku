@@ -68,7 +68,9 @@ internal fun WeekEventDialog(
     initialTime: String? = null,
     initialKind: EventKind? = null,
     /** Ryhmän rungossa vain kortit: Päiväohjelma-valintaa ei näytetä. */
-    allowPrograms: Boolean = true
+    allowPrograms: Boolean = true,
+    /** Muokattaessa: siirtotoiminnot (Siirrä ylös / alas / toiseen päivään). */
+    extraActions: List<Pair<String, () -> Unit>> = emptyList()
 ) {
     val startMinutes = initial?.let { WeekSchedule.minutesOf(it.time) } ?: initialTime?.let { WeekSchedule.minutesOf(it) } ?: (8 * 60)
     var hour by remember { mutableIntStateOf(startMinutes / 60) }
@@ -250,6 +252,13 @@ internal fun WeekEventDialog(
 
                 if (error.isNotBlank()) Text(error, color = MaterialTheme.colorScheme.error)
 
+                if (initial != null && extraActions.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                        extraActions.forEach { (label, action) ->
+                            fi.aikapolku.app.ui.SecondaryButton(label, action, modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
                 if (initial != null) {
                     TextButton(onClick = onDelete, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.week_delete_event), color = MaterialTheme.colorScheme.error)

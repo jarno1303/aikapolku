@@ -738,5 +738,10 @@
     <string name="runko_exception_one_day">Yksittäisen päivän poikkeus (esim. hammaslääkäri) tehdään Tee muutos -toiminnolla.</string>
     <string name="runko_manual">Lisää kohdat itse</string>
     <string name="runko_manual_info">Aloita tyhjästä ja lisää kortit yksi kerrallaan</string>
+    <string name="runko_move_up">Siirrä ylös</string>
+    <string name="runko_move_down">Siirrä alas</string>
+    <string name="runko_move_day">Toiseen päivään</string>
+    <string name="runko_move_day_title">Siirrä klo %1$s kohta päivälle</string>
+    <string name="runko_drag_hint">Siirrä kohtaa painamalla sitä pitkään ja raahaamalla. Kellonajat pysyvät, sisällöt vaihtavat järjestystä.</string>
     <string name="runko_selected">Valittu</string>
 </resources>

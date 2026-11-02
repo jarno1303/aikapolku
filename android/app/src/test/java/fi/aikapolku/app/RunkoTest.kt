@@ -106,4 +106,55 @@ class RunkoTest {
         val removed = Runko.withoutEvent(g, "lounas")
         assertTrue(removed.plan.events.isEmpty() && removed.exceptions.isEmpty())
     }
+
+    private fun day(vararg items: Pair<String, String>) =
+        WeekPlan(items.map { (id, time) -> card(id, 1, time) } + card("tiistai", 2, "09:00"))
+
+    private fun order(plan: WeekPlan) = WeekSchedule.eventsOn(plan, 1, 0).map { it.time to it.id }
+
+    @Test
+    fun `siirto alas - ajat pysyvat ja sisallot liukuvat`() {
+        val plan = day("kokous" to "09:00", "ulkoilu" to "10:00", "lounas" to "11:00", "askartelu" to "12:30")
+        val moved = Runko.moveContent(plan, 1, 0, 1, 3)
+        assertEquals(
+            listOf("09:00" to "kokous", "10:00" to "lounas", "11:00" to "askartelu", "12:30" to "ulkoilu"),
+            order(moved)
+        )
+        // Toinen päivä ennallaan.
+        assertEquals(listOf("09:00"), WeekSchedule.eventsOn(moved, 2, 0).map { it.time })
+    }
+
+    @Test
+    fun `siirto ylos alkuun ja sisallon asetukset kulkevat mukana`() {
+        val plan = WeekPlan(listOf(
+            card("kokous", 1, "09:00"),
+            card("lounas", 1, "11:00"),
+            card("laake", 1, "12:00").copy(notify = true, notifyBefore = 5, ongoing = false)
+        ))
+        val moved = Runko.moveContent(plan, 1, 0, 2, 0)
+        assertEquals(listOf("09:00" to "laake", "11:00" to "kokous", "12:00" to "lounas"), order(moved))
+        val laake = moved.events.first { it.id == "laake" }
+        assertTrue(laake.notify)
+        assertEquals(5, laake.notifyBefore)
+        // Sama paikka tai virheellinen kohta: ei muutosta.
+        assertEquals(plan, Runko.moveContent(plan, 1, 0, 1, 1))
+        assertEquals(plan, Runko.moveContent(plan, 1, 0, 0, 9))
+    }
+
+    @Test
+    fun `siirto toiseen paivaan sailyttaa ajan`() {
+        val plan = day("kokous" to "09:00")
+        val moved = Runko.moveToDay(plan, "kokous", 4)
+        assertEquals(4, moved.events.first { it.id == "kokous" }.day)
+        assertEquals("09:00", moved.events.first { it.id == "kokous" }.time)
+        assertEquals(plan, Runko.moveToDay(plan, "kokous", 9))
+    }
+
+    @Test
+    fun `pudotuskohta lasketaan sormen ja muiden keskikohtien mukaan`() {
+        val centers = listOf(100f, 200f, 300f)
+        assertEquals(0, Runko.dropIndex(centers, 50f))
+        assertEquals(1, Runko.dropIndex(centers, 150f))
+        assertEquals(3, Runko.dropIndex(centers, 999f))
+    }
 }
