@@ -113,6 +113,18 @@ internal fun RunSettingsDialog(
                             RunPreferences.setNextMode(context, nextModes[it])
                         }
                     )
+                    // Kestotehtävän aika: itsestään vai asiakkaan Aloita aika -painalluksella (profiilikohtainen).
+                    Text(stringResource(R.string.timer_start_title), fontWeight = FontWeight.Bold)
+                    val timerModes = listOf(RunPreferences.TIMER_AUTO, RunPreferences.TIMER_BUTTON)
+                    var timerStart by remember { mutableStateOf(RunPreferences.timerStart(context)) }
+                    SegmentedChoice(
+                        options = listOf(stringResource(R.string.timer_start_auto), stringResource(R.string.timer_start_button)),
+                        selected = timerModes.indexOf(timerStart).coerceAtLeast(0),
+                        onSelect = {
+                            timerStart = timerModes[it]
+                            RunPreferences.setTimerStart(context, timerModes[it])
+                        }
+                    )
                     // Valmis-painike, kun kestotehtävän aikaa on jäljellä (profiilikohtainen).
                     Text(stringResource(R.string.done_mode_title), fontWeight = FontWeight.Bold)
                     val doneModes = listOf(RunPreferences.DONE_ALWAYS, RunPreferences.DONE_CONFIRM, RunPreferences.DONE_AFTER_TIME)

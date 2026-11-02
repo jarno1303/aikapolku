@@ -326,4 +326,60 @@ class ProgramRunControllerTest {
         assertEquals(0, run.subStepIndex)
         assertEquals("a", run.currentStep?.id)
     }
+
+    @Test
+    fun `aika alkaa itsestaan kestotehtavassa eika pyyda lupia`() {
+        timer.allowedNow = false
+        run.autoStartTimer = true
+        run.start(program)
+        assertFalse(run.running)          // a: tavallinen tehtävä
+        run.next(); run.next()             // a:n osavaiheet → b (kesto)
+        assertEquals("b", run.currentStep?.id)
+        assertTrue(run.running)
+        assertTrue(run.timerStarted)
+        assertEquals(0, timer.permissionRequests)
+        assertEquals(listOf("/b.m4a"), voices)
+    }
+
+    @Test
+    fun `aloita aika -tilassa valmis tulee vasta ajan kaynnistyttya`() {
+        run.start(program)
+        run.next(); run.next()
+        assertEquals("b", run.currentStep?.id)
+        assertFalse(run.running)
+        assertEquals(DoneGate.START_TIMER, run.doneGate(RunPreferences.DONE_ALWAYS, false, RunPreferences.TIMER_BUTTON))
+        // Itsestään-tilassa sama tilanne ei estä Valmista.
+        assertEquals(DoneGate.ALLOW, run.doneGate(RunPreferences.DONE_ALWAYS, false, RunPreferences.TIMER_AUTO))
+        run.startTimer(askPermissions = false)
+        assertEquals(DoneGate.ALLOW, run.doneGate(RunPreferences.DONE_ALWAYS, false, RunPreferences.TIMER_BUTTON))
+        // Tauon jälkeenkin Valmis säilyy (aika on jo käynnistetty kerran).
+        run.pause()
+        assertEquals(DoneGate.CONFIRM, run.doneGate(RunPreferences.DONE_CONFIRM, false, RunPreferences.TIMER_BUTTON))
+    }
+
+    @Test
+    fun `asiakkaan aloitus ilman lupia kaynnistaa ajan ilman asetussivua`() {
+        timer.allowedNow = false
+        run.start(program)
+        run.next(); run.next()
+        run.startTimer(askPermissions = false)
+        assertTrue(run.running)
+        assertEquals(0, timer.permissionRequests)
+        // Ohjaajalta luvat kysytään.
+        run.pause()
+        run.startTimer(askPermissions = true)
+        assertEquals(1, timer.permissionRequests)
+    }
+
+    @Test
+    fun `seuraava tehtava nollaa ajan kaynnistyksen`() {
+        val p = DayProgram("q", "Q", listOf(step("x", StepMode.DURATION, 1), step("y", StepMode.DURATION, 1)))
+        run.start(p)
+        run.startTimer(askPermissions = false)
+        assertTrue(run.timerStarted)
+        run.next()
+        assertEquals("y", run.currentStep?.id)
+        assertFalse(run.timerStarted)
+        assertEquals(DoneGate.START_TIMER, run.doneGate(RunPreferences.DONE_ALWAYS, false, RunPreferences.TIMER_BUTTON))
+    }
 }

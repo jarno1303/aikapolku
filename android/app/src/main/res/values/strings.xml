@@ -462,6 +462,9 @@
     <string name="done_confirm_text">Oletko valmis?</string>
     <string name="done_confirm_yes">Kyllä, valmis</string>
     <string name="done_confirm_no">Jatka vielä</string>
+    <string name="timer_start_title">Tehtävän aika alkaa</string>
+    <string name="timer_start_auto">Itsestään</string>
+    <string name="timer_start_button">Aloita aika -painikkeella</string>
     <string name="done_mode_title">Valmis, kun aikaa on jäljellä</string>
     <string name="done_mode_always">Aina</string>
     <string name="done_mode_confirm">Kysy ensin</string>

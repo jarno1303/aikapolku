@@ -9,7 +9,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -32,7 +31,7 @@ import org.junit.runner.RunWith
 /**
  * Puhelimessa ajettava testi, joka näkyy ruudulla: asiakas käy esittelypäivän läpi.
  * NYT-kortti → Aloita → aloitusnäkymä → Aloita → Aamupala (Valmis) → Hampaiden pesu
- * (aika käyntiin, odotetaan minuutti, Valmis) → Pukeutuminen (Valmis) → Kaikki valmista
+ * (aika alkaa itsestään, odotetaan minuutti, Valmis) → Pukeutuminen (Valmis) → Kaikki valmista
  * → Takaisin aloitukseen, jolloin NYT-kortissa on "✓ Esittelypäivä tehty",
  * Vapaa-aika ja seuraavaksi Lukeminen.
  *
@@ -153,15 +152,11 @@ class ProgramDayDeviceTest {
         waitForText(t(R.string.card_breakfast))
         clickDone()
 
-        // 4. Hampaiden pesu: aika käyntiin, odotetaan minuutti.
+        // 4. Hampaiden pesu: aika alkaa itsestään (oletus), odotetaan minuutti.
         waitForText(t(R.string.card_brush_teeth))
-        pause()
-        compose.onNodeWithContentDescription(t(R.string.aloita_aika), substring = true).performClick()
         waitRealTime(
             5_000L,
-            "Aika ei käynnistynyt Hampaiden pesussa. Todennäköisesti puhelimelta puuttuu " +
-                "AikaPolun lupa tarkkoihin hälytyksiin tai ilmoituksiin, jolloin sovellus avasi " +
-                "Androidin asetukset ajan käynnistämisen sijaan."
+            "Hampaiden pesun aika ei alkanut itsestään (asetus: Tehtävän aika alkaa = Itsestään)."
         ) {
             shown(hasContentDescription(t(R.string.pysayta_aika), substring = true)) ||
                 shown(hasContentDescription(t(R.string.tauko_vaatii_ohjaajan_pin_koodin), substring = true))

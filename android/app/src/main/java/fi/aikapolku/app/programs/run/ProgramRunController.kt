@@ -73,6 +73,14 @@ internal class ProgramRunController(
     var remaining by mutableLongStateOf(0L)
         private set
     private var stepVoicePlayed by mutableStateOf(false)
+    /** Onko nykyisen vaiheen aika käynnistetty (Aloita aika -tilassa Valmis näkyy vasta tämän jälkeen). */
+    var timerStarted by mutableStateOf(false)
+        private set
+    /**
+     * Käynnistyykö kestotehtävän aika itsestään, kun tehtävä tulee näkyviin (ohjaajan valinta,
+     * RunPreferences.TIMER_AUTO). Näkymä asettaa tämän ennen aloitusta.
+     */
+    var autoStartTimer = false
     /** Ohitetut tehtävät (indeksit): näkyvät himmeinä Kaikki valmista -näkymässä. */
     var skipped by mutableStateOf<Set<Int>>(emptySet())
         private set
@@ -87,8 +95,11 @@ internal class ProgramRunController(
      * (RunPreferences.DONE_*). Ohjaajan avaama lukko ([caregiverOpen]) sallii aina, kysyen.
      * Rajoitus koskee vain painallusta, joka päättäisi tehtävän (ei osavaiheita).
      */
-    fun doneGate(policy: String, caregiverOpen: Boolean): DoneGate {
+    fun doneGate(policy: String, caregiverOpen: Boolean, timerStart: String = RunPreferences.TIMER_AUTO): DoneGate {
         val step = currentStep ?: return DoneGate.ALLOW
+        // Aloita aika -tila: asiakas käynnistää ajan itse ennen kuin Valmis tulee esiin.
+        if (step.mode == StepMode.DURATION && timerStart == RunPreferences.TIMER_BUTTON && !timerStarted && !running)
+            return DoneGate.START_TIMER
         val subCount = step.subSteps.size
         if (subCount > 0 && subStepIndex < subCount - 1) return DoneGate.ALLOW
         if (step.mode != StepMode.DURATION) return DoneGate.ALLOW
@@ -144,6 +155,7 @@ internal class ProgramRunController(
         skipped = cancelledIndices(saved)
         subStepIndex = progress.subStepIndex.coerceAtLeast(0)
         running = timer.isRunning()
+        timerStarted = true
         remaining = timer.remaining(0L)
         deadline = timer.now() + remaining
         stepVoicePlayed = false
@@ -162,6 +174,7 @@ internal class ProgramRunController(
         stepEnteredAt = timer.now()
         support = null
         running = false
+        timerStarted = false
         val first = newProgram.steps[start]
         timer.stop(first.minutes * 60_000L)
         deadline = 0L
@@ -173,6 +186,8 @@ internal class ProgramRunController(
     private fun enterStep(step: ProgramStep) {
         stepVoicePlayed = step.mode != StepMode.DURATION
         if (stepVoicePlayed && step.autoPlayVoice) playVoice(step.voicePath)
+        // Aika alkaa itsestään: ei koskaan avata Androidin lupa-asetuksia asiakkaan eteen.
+        if (step.mode == StepMode.DURATION && autoStartTimer) startTimer(askPermissions = false)
     }
 
     /** Valmis tai Ohita. Palauttaa true, kun koko ohjelma on suoritettu. */
@@ -204,6 +219,7 @@ internal class ProgramRunController(
         }
         stepIndex = nextIndex
         subStepIndex = 0
+        timerStarted = false
         stepEnteredAt = timer.now()
         progress.save(program.id, stepIndex, 0)
         val step = program.steps[stepIndex]
@@ -220,15 +236,20 @@ internal class ProgramRunController(
         running = false
     }
 
-    fun startTimer() {
+    /**
+     * Käynnistää tai jatkaa vaiheen aikaa. [askPermissions] = saa pyytää puuttuvia lupia
+     * (avaa Androidin asetukset); asiakkaalle false, jolloin aika alkaa ilman lupia.
+     */
+    fun startTimer(askPermissions: Boolean = true) {
         val step = currentStep ?: return
-        if (!timer.allowed()) {
+        if (askPermissions && !timer.allowed()) {
             timer.requestPermissions()
             return
         }
         if (remaining <= 0L) remaining = step.minutes * 60_000L
         deadline = timer.start(remaining, step.name)
         running = true
+        timerStarted = true
         if (!stepVoicePlayed) {
             stepVoicePlayed = true
             if (step.autoPlayVoice) playVoice(step.voicePath)
@@ -291,7 +312,7 @@ internal class ProgramRunController(
                     listOf(
                         serializeDraft(it.program), it.stepIndex, it.subStepIndex, it.support?.name,
                         it.resumeAfterSupport, it.running, it.stepVoicePlayed, it.deadline, it.remaining,
-                        ArrayList(it.skipped)
+                        ArrayList(it.skipped), it.timerStarted, it.autoStartTimer
                     )
                 },
                 restore = { v ->
@@ -307,6 +328,8 @@ internal class ProgramRunController(
                         remaining = v[8] as Long
                         @Suppress("UNCHECKED_CAST")
                         skipped = (v.getOrNull(9) as? List<Int>)?.toSet() ?: emptySet()
+                        timerStarted = v.getOrNull(10) as? Boolean ?: running
+                        autoStartTimer = v.getOrNull(11) as? Boolean ?: false
                     }
                 }
             )

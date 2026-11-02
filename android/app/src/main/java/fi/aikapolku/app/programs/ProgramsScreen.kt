@@ -165,6 +165,7 @@ internal fun ProgramsScreen(
 
     fun beginRun() {
         val ready = readyDraft?.let { parseDraft(it) } ?: return
+        run.autoStartTimer = RunPreferences.timerStart(context) == RunPreferences.TIMER_AUTO
         run.start(ready)
         readyDraft = null
         view = ProgramsView.RUN
@@ -205,10 +206,11 @@ internal fun ProgramsScreen(
     // Valmis: vahinkonaputusten esto ja ohjaajan valitsema toiminta, kun aikaa on jäljellä.
     fun onDonePressed() {
         if (run.tapGuardActive()) return
-        when (run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver)) {
+        when (run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver, RunPreferences.timerStart(context))) {
             DoneGate.ALLOW -> if (run.next()) finishRun()
             DoneGate.CONFIRM -> confirmDoneLeft = run.timeLeft()
-            DoneGate.START_TIMER -> run.startTimer()
+            // Lupia pyydetään vain ohjaajalta; asiakkaalle aika alkaa ilman asetussivua.
+            DoneGate.START_TIMER -> run.startTimer(askPermissions = caregiver.isCaregiver)
             DoneGate.WAIT -> Unit
         }
     }
@@ -218,7 +220,7 @@ internal fun ProgramsScreen(
         when {
             run.running && caregiver.isLocked -> caregiver.run(AppAction.PAUSE_TIMER) { run.pause() }
             run.running -> run.pause()
-            else -> run.startTimer()
+            else -> run.startTimer(askPermissions = caregiver.isCaregiver)
         }
     }
 
@@ -304,12 +306,12 @@ internal fun ProgramsScreen(
                     // Asiakkaalla ei Muut toiminnot -valikkoa (ohitus, lopetus ym. ovat ohjaajan).
                     onMore = { if (caregiver.isCaregiver) showRunActions = true else showFullProgram = true },
                     moreIsProgram = !caregiver.isCaregiver,
-                    doneLabel = when (run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver)) {
+                    doneLabel = when (run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver, RunPreferences.timerStart(context))) {
                         DoneGate.START_TIMER -> stringResource(R.string.done_start_timer)
                         DoneGate.WAIT -> stringResource(R.string.done_wait, formatLeft(run.timeLeft()))
                         else -> null
                     },
-                    doneEnabled = run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver) != DoneGate.WAIT
+                    doneEnabled = run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver, RunPreferences.timerStart(context)) != DoneGate.WAIT
                 )
             }
         } else if (view == ProgramsView.EDIT) {

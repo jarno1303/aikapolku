@@ -23,6 +23,10 @@ internal object RunPreferences {
     const val DONE_AFTER_TIME = "after_time"
     private val doneModes = setOf(DONE_ALWAYS, DONE_CONFIRM, DONE_AFTER_TIME)
     const val BREAK = "break"
+    /** Kestotehtävän aika: alkaa itsestään (oletus) tai kun asiakas painaa Aloita aika. */
+    const val TIMER_AUTO = "auto"
+    const val TIMER_BUTTON = "button"
+    private val timerModes = setOf(TIMER_AUTO, TIMER_BUTTON)
 
     private fun prefs(context: Context) = ProfileScope.prefs(context, ProfileScope.RUN_PREFS)
 
@@ -40,6 +44,13 @@ internal object RunPreferences {
 
     fun setDoneMode(context: Context, mode: String) {
         if (mode in doneModes) prefs(context).edit().putString("done_mode", mode).apply()
+    }
+
+    fun timerStart(context: Context): String =
+        (prefs(context).getString("timer_start", TIMER_AUTO) ?: TIMER_AUTO).takeIf { it in timerModes } ?: TIMER_AUTO
+
+    fun setTimerStart(context: Context, mode: String) {
+        if (mode in timerModes) prefs(context).edit().putString("timer_start", mode).apply()
     }
 
     fun voiceMode(context: Context, kind: String): String =
