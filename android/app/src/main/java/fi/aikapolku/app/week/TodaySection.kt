@@ -1,5 +1,8 @@
 package fi.aikapolku.app.week
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -151,13 +154,7 @@ internal fun TodaySection(
 @Composable
 internal fun DayScreen(onOpenProgram: (WeekEvent) -> Unit, onOpenCard: (WeekEvent) -> Unit) {
     val state = rememberTodayState()
-    Text(
-        stringResource(R.string.today_title, dayName(LocalDate.now().dayOfWeek.value)),
-        modifier = Modifier.semantics { heading() },
-        fontSize = 28.sp,
-        fontWeight = FontWeight.Bold,
-        color = AppColors.Ink
-    )
+    // Otsikko (päivän nimi) on yläpalkissa.
     if (state == null) {
         Text(stringResource(R.string.week_no_events), color = AppColors.Muted)
         return
@@ -272,7 +269,10 @@ internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDon
                 modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.Teal)
-            ) { Text(stringResource(R.string.run_done_button), fontSize = 21.sp, fontWeight = FontWeight.Bold) }
+            ) {
+                Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(28.dp))
+                Text(stringResource(R.string.run_done_button), fontSize = 21.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp))
+            }
         }
     }
 }

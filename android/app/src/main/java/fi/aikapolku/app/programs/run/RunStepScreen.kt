@@ -1,5 +1,8 @@
 package fi.aikapolku.app.programs.run
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -220,7 +223,8 @@ internal fun RunStepScreen(
                     contentColor = Color.White
                 )
             ) {
-                Text(stringResource(R.string.run_done_button), fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(28.dp))
+                Text(stringResource(R.string.run_done_button), fontSize = 21.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp))
             }
 
             if (next != null) {

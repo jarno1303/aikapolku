@@ -37,8 +37,6 @@ internal fun CaregiverSettingsScreen() {
     val caregiver = LocalCaregiver.current
     var confirmDisable by remember { mutableStateOf(false) }
 
-    Text(stringResource(R.string.caregiver_settings_title), fontSize = 28.sp, fontWeight = FontWeight.Bold)
-
     ProfilesSettingsCard()
 
     NotificationStatusCard()

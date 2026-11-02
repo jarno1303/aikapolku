@@ -1,5 +1,10 @@
 package fi.aikapolku.app.programs.editor
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import fi.aikapolku.app.ui.BackOverride
+import fi.aikapolku.app.ui.ScreenTitle
+import fi.aikapolku.app.ui.SecondaryButton
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -102,22 +107,11 @@ internal fun ProgramEditorScreen(
     }
 
     BackHandler { if (page > 0) page-- else requestCancel() }
+    // Otsikko yläpalkissa; yläpalkin nuoli toimii kuten puhelimen takaisin-ele.
+    ScreenTitle(if (isNew) stringResource(R.string.editor_title_new) else stringResource(R.string.muokkaa_paivaohjelmaa))
+    BackOverride { if (page > 0) page-- else requestCancel() }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                if (isNew) stringResource(R.string.editor_title_new) else stringResource(R.string.muokkaa_paivaohjelmaa),
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f)
-            )
-            TextButton(onClick = { requestCancel() }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
 
         EditorProgress(
             page = page,
@@ -143,10 +137,11 @@ internal fun ProgramEditorScreen(
             if (page == 0 && draft.steps.isNotEmpty()) SelectedStrip(draft.steps)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (page > 0) {
-                    OutlinedButton(
+                    SecondaryButton(
+                        text = stringResource(R.string.previous),
                         onClick = { page-- },
                         modifier = Modifier.weight(1f).heightIn(min = 56.dp)
-                    ) { Text(stringResource(R.string.back), fontSize = 16.sp) }
+                    )
                 }
                 if (page < 3) {
                     Button(
@@ -217,12 +212,16 @@ private fun EditorProgress(page: Int, canJump: Boolean, onSelect: (Int) -> Unit)
                         .clip(CircleShape)
                         .background(if (active || done) AppColors.Teal else Color(0xFFE2E8F0))
                 ) {
-                    Text(
-                        if (done) "✓" else "${index + 1}",
-                        color = if (active || done) Color.White else AppColors.Muted,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
+                    if (done) {
+                        Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    } else {
+                        Text(
+                            "${index + 1}",
+                            color = if (active) Color.White else AppColors.Muted,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
                 Text(
                     stringResource(title),

@@ -1,5 +1,15 @@
 package fi.aikapolku.app.programs.editor
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import fi.aikapolku.app.ui.InfoButton
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -43,16 +53,24 @@ internal fun ChoosePage(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text(
-            stringResource(R.string.napauta_toiminnot_siina_jarjestyksessa_kuin),
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold
-        )
-        Text(
-            stringResource(R.string.uusi_napautus_poistaa_pida_painettuna),
-            fontSize = 13.sp,
-            color = AppColors.Muted
-        )
+        // Yksi lyhyt ohjerivi; tarkennus (poisto, sama toiminto useasti) ⓘ-kuvakkeen takana.
+        var showHelp by remember { mutableStateOf(false) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.napauta_toiminnot_siina_jarjestyksessa_kuin),
+                modifier = Modifier.weight(1f),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            InfoButton(stringResource(R.string.korttien_kayttoohje)) { showHelp = true }
+        }
+        if (showHelp) {
+            AlertDialog(
+                onDismissRequest = { showHelp = false },
+                text = { Text(stringResource(R.string.uusi_napautus_poistaa_pida_painettuna)) },
+                confirmButton = { TextButton(onClick = { showHelp = false }) { Text(stringResource(R.string.selva)) } }
+            )
+        }
 
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             val columns = maxOf(3, (maxWidth / 112.dp).toInt())
@@ -181,7 +199,7 @@ internal fun SelectedStrip(steps: List<ProgramStep>) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         steps.forEachIndexed { index, step ->
-            if (index > 0) Text("›", color = AppColors.Muted, fontSize = 16.sp)
+            if (index > 0) Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = AppColors.Muted, modifier = Modifier.size(18.dp))
             Box {
                 CardPhoto(step.name, step.photo, Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)))
                 Text(

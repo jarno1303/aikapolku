@@ -12,7 +12,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import fi.aikapolku.app.R
-import fi.aikapolku.app.caregiver.CaregiverLockButton
+import fi.aikapolku.app.caregiver.LocalCaregiver
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Settings
+import fi.aikapolku.app.ui.AppIcons
+import fi.aikapolku.app.ui.ChoiceRow
+import fi.aikapolku.app.ui.RowIcon
 
 /** Suorituksen Lisää-valikko. Ohjaajan toiminnot näkyvät vain avattuna (P0-21e). */
 @Composable
@@ -31,20 +40,21 @@ internal fun RunActionsDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.muut_toiminnot)) },
         text = {
+            // Toiminnot kuvakeriveinä; ohjaajan toiminnot lukossa yhtenä lukkorivinä.
+            val caregiver = LocalCaregiver.current
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 if (canExtend) {
-                    TextButton(onClick = onExtend, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.extend_5_min)) }
+                    ChoiceRow(stringResource(R.string.extend_5_min), onExtend, leading = { RowIcon(Icons.Rounded.Add) })
                 }
                 if (canChangeSettings) {
-                    TextButton(onClick = onTimeSettings, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ajan_nayttotapa)) }
-                    TextButton(onClick = onViewSettings, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.nakyma_ja_viestiaanet)) }
+                    ChoiceRow(stringResource(R.string.ajan_nayttotapa), onTimeSettings, leading = { RowIcon(Icons.Rounded.Settings) })
+                    ChoiceRow(stringResource(R.string.nakyma_ja_viestiaanet), onViewSettings, leading = { RowIcon(AppIcons.Speaker) })
                 }
-                TextButton(onClick = onShowProgram, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.nayta_koko_ohjelma)) }
-                HorizontalDivider()
+                ChoiceRow(stringResource(R.string.nayta_koko_ohjelma), onShowProgram, leading = { RowIcon(Icons.AutoMirrored.Rounded.List) })
                 if (canEnd) {
-                    TextButton(onClick = onEnd, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.lopeta_ohjelma)) }
+                    ChoiceRow(stringResource(R.string.lopeta_ohjelma), onEnd, leading = { RowIcon(Icons.Rounded.Close) })
                 } else {
-                    CaregiverLockButton(modifier = Modifier.fillMaxWidth(), label = stringResource(R.string.caregiver_actions))
+                    ChoiceRow(stringResource(R.string.caregiver_actions), { caregiver.unlock() }, leading = { RowIcon(Icons.Rounded.Lock) })
                 }
             }
         },

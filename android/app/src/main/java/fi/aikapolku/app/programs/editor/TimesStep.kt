@@ -1,5 +1,11 @@
 package fi.aikapolku.app.programs.editor
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material3.Icon
+import fi.aikapolku.app.ui.SecondaryButton
+import fi.aikapolku.app.ui.SegmentedChoice
 import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
@@ -41,29 +47,31 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text(stringResource(R.string.miten_aika_kulkee), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        ModeOption(
-            selected = draft.timeMode == TimeMode.FREE,
-            title = stringResource(R.string.omaan_tahtiin),
-            description = stringResource(R.string.ei_aikoja_valmis_painike_siirtaa),
-            onSelect = { onDraftChange(ProgramTiming.switchMode(draft, TimeMode.FREE)) }
+        // Ajan kulku: sama valitsin kuin muualla ja yksi selitysrivi valitusta.
+        val modes = listOf(TimeMode.FREE, TimeMode.DURATION, TimeMode.CLOCK)
+        SegmentedChoice(
+            options = listOf(
+                stringResource(R.string.omaan_tahtiin),
+                stringResource(R.string.kestot),
+                stringResource(R.string.time_mode_clock)
+            ),
+            selected = modes.indexOf(draft.timeMode).coerceAtLeast(0),
+            onSelect = { onDraftChange(ProgramTiming.switchMode(draft, modes[it])) }
         )
-        ModeOption(
-            selected = draft.timeMode == TimeMode.DURATION,
-            title = stringResource(R.string.kestot),
-            description = stringResource(R.string.jokaisella_toiminnolla_on_oma_ajastin),
-            onSelect = { onDraftChange(ProgramTiming.switchMode(draft, TimeMode.DURATION)) }
-        )
-        ModeOption(
-            selected = draft.timeMode == TimeMode.CLOCK,
-            title = stringResource(R.string.time_mode_clock),
-            description = stringResource(R.string.anna_aloitusaika_ja_kestot_kellonajat),
-            onSelect = { onDraftChange(ProgramTiming.switchMode(draft, TimeMode.CLOCK)) }
+        Text(
+            stringResource(
+                when (draft.timeMode) {
+                    TimeMode.DURATION -> R.string.jokaisella_toiminnolla_on_oma_ajastin
+                    TimeMode.CLOCK -> R.string.anna_aloitusaika_ja_kestot_kellonajat
+                    else -> R.string.ei_aikoja_valmis_painike_siirtaa
+                }
+            ),
+            fontSize = 14.sp,
+            color = AppColors.Muted
         )
 
         when (draft.timeMode) {
             TimeMode.DURATION -> {
-                HorizontalDivider()
                 draft.steps.forEach { step ->
                     TimeRowCard {
                         StepHeader(step = step, timeLabel = null)
@@ -82,23 +90,22 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
             }
 
             TimeMode.CLOCK -> {
-                HorizontalDivider()
-                OutlinedButton(
+                SecondaryButton(
+                    text = stringResource(R.string.aloitus_klo_muuta, draft.startClock),
+                    icon = Icons.Rounded.Edit,
                     onClick = {
                         showClockPicker(context, draft.startClock) { onDraftChange(draft.copy(startClock = it)) }
                     },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
-                ) {
-                    Text(stringResource(R.string.aloitus_klo_muuta, draft.startClock), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-                }
+                    modifier = Modifier.fillMaxWidth()
+                )
                 val slots = ProgramTiming.schedule(draft.startClock, draft.steps)
                 draft.steps.forEachIndexed { index, step ->
                     val slot = slots[index]
                     TimeRowCard {
                         StepHeader(
                             step = step,
-                            timeLabel = (if (index > 0 && step.fixedClock) "🔒 " else "") +
-                                ProgramTiming.format(slot.start)
+                            timeLabel = ProgramTiming.format(slot.start),
+                            fixed = index > 0 && step.fixedClock
                         )
                         DurationChips(
                             step = step,
@@ -121,12 +128,13 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
                                     label = { Text(stringResource(R.string.kiintea_aika)) }
                                 )
                                 if (step.fixedClock) {
-                                    OutlinedButton(
+                                    SecondaryButton(
+                                        text = stringResource(R.string.klo_muuta, step.clock),
+                                        icon = Icons.Rounded.Edit,
                                         onClick = {
                                             showClockPicker(context, step.clock) { updateStep(step.copy(clock = it)) }
-                                        },
-                                        modifier = Modifier.heightIn(min = 48.dp)
-                                    ) { Text(stringResource(R.string.klo_muuta, step.clock)) }
+                                        }
+                                    )
                                 }
                             }
                         }
@@ -156,31 +164,6 @@ internal fun TimesPage(draft: DayProgram, onDraftChange: (DayProgram) -> Unit) {
 }
 
 @Composable
-private fun ModeOption(selected: Boolean, title: String, description: String, onSelect: () -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = if (selected) AppColors.TealSoft else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) AppColors.Teal else Color(0xFFCBD5E1)),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onSelect)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp)
-        ) {
-            RadioButton(selected = selected, onClick = null)
-            Spacer(Modifier.width(8.dp))
-            Column {
-                Text(title, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                Text(description, fontSize = 13.sp, color = AppColors.Muted)
-            }
-        }
-    }
-}
-
-@Composable
 private fun TimeRowCard(content: @Composable ColumnScope.() -> Unit) {
     Card(shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -192,8 +175,9 @@ private fun TimeRowCard(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun StepHeader(step: ProgramStep, timeLabel: String?) {
+private fun StepHeader(step: ProgramStep, timeLabel: String?, fixed: Boolean = false) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (fixed) Icon(Icons.Rounded.Lock, contentDescription = stringResource(R.string.kiintea_aika), tint = AppColors.Teal, modifier = Modifier.size(18.dp))
         if (timeLabel != null) {
             Text(
                 timeLabel,

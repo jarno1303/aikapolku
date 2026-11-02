@@ -40,7 +40,8 @@ import fi.aikapolku.app.timer.playCompletionSound
 import fi.aikapolku.app.voice.VoicePlayer
 import fi.aikapolku.app.data.WeekSchedule
 import fi.aikapolku.app.data.WeekStore
-import fi.aikapolku.app.week.ChoiceButton
+import fi.aikapolku.app.ui.SegmentedChoice
+import fi.aikapolku.app.ui.ScreenTitle
 import fi.aikapolku.app.week.WeekView
 import java.util.UUID
 import kotlinx.coroutines.delay
@@ -62,14 +63,11 @@ internal enum class ProgramsTab { PROGRAMS, WEEK }
 
 @Composable
 private fun ProgramsTabs(selected: ProgramsTab, onSelect: (ProgramsTab) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-        ChoiceButton(stringResource(R.string.tab_programs), selected == ProgramsTab.PROGRAMS, Modifier.weight(1f)) {
-            onSelect(ProgramsTab.PROGRAMS)
-        }
-        ChoiceButton(stringResource(R.string.tab_week), selected == ProgramsTab.WEEK, Modifier.weight(1f)) {
-            onSelect(ProgramsTab.WEEK)
-        }
-    }
+    SegmentedChoice(
+        options = listOf(stringResource(R.string.tab_programs), stringResource(R.string.tab_week)),
+        selected = selected.ordinal,
+        onSelect = { onSelect(ProgramsTab.entries[it]) }
+    )
 }
 
 @Composable
@@ -199,6 +197,9 @@ internal fun ProgramsScreen(
     LaunchedEffect(view, run.stepIndex, run.subStepIndex) {
         programmeScroll.scrollTo(0)
     }
+
+    // Suorituksen aikana yläpalkissa ohjelman nimi.
+    if (view == ProgramsView.RUN || view == ProgramsView.DONE) ScreenTitle(run.program.name)
 
     Box(modifier = Modifier.fillMaxSize()) {
         val runStep = if (view == ProgramsView.RUN) run.currentStep else null

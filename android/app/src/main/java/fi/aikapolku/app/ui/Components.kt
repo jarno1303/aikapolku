@@ -139,7 +139,7 @@ internal fun SegmentedChoice(
                     label,
                     modifier = Modifier.padding(horizontal = 8.dp),
                     color = if (isSelected) Color.White else AppColors.Teal,
-                    fontSize = 16.sp,
+                    fontSize = if (options.size > 2) 15.sp else 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                     maxLines = 1,

@@ -29,6 +29,10 @@ import fi.aikapolku.app.timer.Tick
 import fi.aikapolku.app.timer.TimerScreen
 import fi.aikapolku.app.timer.playCompletionSound
 import fi.aikapolku.app.ui.AppColors
+import fi.aikapolku.app.ui.AppTopBar
+import fi.aikapolku.app.ui.LocalTitleOverride
+import fi.aikapolku.app.ui.LocalBackOverride
+import fi.aikapolku.app.week.dayName
 import fi.aikapolku.app.voice.VoicePlayer
 import fi.aikapolku.app.week.EventCardScreen
 import fi.aikapolku.app.week.DayScreen
@@ -173,30 +177,34 @@ internal fun AikaPolkuApp() {
 
     val rootScroll = rememberScrollState()
     LaunchedEffect(page) { rootScroll.scrollTo(0) }
+    // Sisäkkäisen näkymän (esim. muokkain) oma otsikko yläpalkkiin.
+    val titleOverride = remember { mutableStateOf<String?>(null) }
+    val backOverride = remember { mutableStateOf<(() -> Unit)?>(null) }
+    LaunchedEffect(page) {
+        titleOverride.value = null
+        backOverride.value = null
+    }
 
+    CompositionLocalProvider(LocalTitleOverride provides titleOverride, LocalBackOverride provides backOverride) {
     Scaffold(
         containerColor = AppColors.Background,
         topBar = {
             if (page != AppPage.HOME) {
-                // Tilarivin alapuolella; teksti tasattu sisällön ja otsikoiden reunaan (12 dp).
-                Surface(color = AppColors.Background) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .statusBarsPadding()
-                            .padding(start = 4.dp)
-                            .heightIn(min = 52.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(
-                            onClick = goBack,
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-                            modifier = Modifier.heightIn(min = 48.dp)
-                        ) {
-                            Text(stringResource(R.string.back), color = AppColors.Teal, fontSize = 17.sp)
-                        }
-                    }
-                }
+                AppTopBar(
+                    title = titleOverride.value ?: when (page) {
+                        AppPage.TIMER -> stringResource(R.string.timer_title)
+                        AppPage.FIRST_THEN, AppPage.MANUAL, AppPage.LAST, AppPage.DONE -> stringResource(R.string.ensin_sitten)
+                        AppPage.PROGRAMS -> stringResource(R.string.paivaohjelmat)
+                        AppPage.CAREGIVER -> stringResource(R.string.caregiver_settings_title)
+                        AppPage.DAY -> dayName(LocalDate.now().dayOfWeek.value)
+                        AppPage.EVENT_CARD -> dayName(LocalDate.now().dayOfWeek.value)
+                        AppPage.HOME -> ""
+                    },
+                    onBack = { (backOverride.value ?: goBack)() },
+                    // Lukko aina samassa paikassa; ohjaajan asetuksissa lukko on jo auki.
+                    showLock = caregiver.lockEnabled && caregiver.isLocked && page != AppPage.CAREGIVER,
+                    onUnlock = { caregiver.unlock() }
+                )
             }
         }
     ) { padding ->
@@ -349,5 +357,6 @@ internal fun AikaPolkuApp() {
 
             // Takaisin vain yläreunasta: alareunan "Takaisin aloitukseen" poistettu toistona.
         }
+    }
     }
 }

@@ -296,3 +296,11 @@
 - Omat kortit: rivin napautus valitsee, Muokkaa/Kopioi/Poista ⋮-valikossa; "Tee valmiista kortista oma" poistettu. Kortin muokkaus: Valmis kuva / Oma kuva -painikkeet, puheviesti mikrofoni- ja kaiutinkuvakkeilla.
 - Ajastin (pysty ja vaaka): nollaus, aloitus/tauko, lukko ja asetukset kuvakkeina; "TOIMINTOPOLKU" poistettu.
 - Lukkopainike ja "Ohjaaja auki" -palkki kuvakkeilla. Alareunan "Takaisin aloitukseen" poistettu. Kirjoitusvirheet korjattu. 15 käyttämätöntä tekstiä poistettu.
+
+## Yhtenäinen käyttöliittymä, osa 2/3
+- Yläpalkki kaikissa näkymissä: takaisin-nuoli, sivun otsikko ja lukkopainike aina samassa paikassa (oikealla, kun ohjaajan toiminnot ovat lukossa). Erilliset sivuotsikot ja sisällön lukkopainikkeet poistettu. Muokkain ja suoritus vaihtavat otsikon (ScreenTitle); muokkaimen nuoli palaa edelliseen vaiheeseen tai kysyy hylkäämisestä (BackOverride).
+- Ajastin: rengas ilman koloja (ei taustalaatikkoa numeroille), kellotaulu ruudun levyinen, ohjaimet symmetrisesti.
+- Päiväohjelmat: Ohjelmat/Viikko-valitsin, tyhjä tila kuvalla, ohjelmakortissa kuva, Käynnistä ja ⋮ (Tulosta, Muokkaa, Poista); valmiit pohjat "Uusi päiväohjelma" -ikkunassa.
+- Muokkain: Edellinen/Seuraava-painikkeet, vaiheiden ✓ kuvakkeena, ohje ⓘ:n takana, ≡/✕/🔒 kuvakkeina, ajan kulku valitsimella, kellonajat kynäkuvakkeella, osavaiheet nuolilla.
+- Suoritus: Muut toiminnot kuvakeriveinä, tukiviesti ilman "VIESTI"-otsikkoa, Toista ja Jatka kuvakkeilla, näkymä- ja ääniasetukset valitsimilla, äänitys mikrofonikuvakkeella.
+- Kaikki valmista -näkymä yhteinen (päiväohjelma ja Ensin–Sitten). Valmis-painikkeet yhtenäisesti "✓ Valmis" kuvakkeella. 11 käyttämätöntä tekstiä poistettu.

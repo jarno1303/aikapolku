@@ -1,5 +1,8 @@
 package fi.aikapolku.app.programs
 
+import fi.aikapolku.app.ui.AppIcons
+import fi.aikapolku.app.ui.SecondaryButton
+import fi.aikapolku.app.ui.SegmentedChoice
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -101,27 +104,15 @@ internal fun RunSettingsDialog(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(stringResource(R.string.seuraavan_vaiheen_esikatselu), fontWeight = FontWeight.Bold)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                    ) {
-                        listOf(
-                            RunPreferences.NEXT_HIDDEN to stringResource(R.string.ei),
-                            RunPreferences.NEXT_TEXT to stringResource(R.string.teksti),
-                            RunPreferences.NEXT_CARD to stringResource(R.string.kuva)
-                        ).forEach { (value, label) ->
-                            FilterChip(
-                                selected = currentNextMode == value,
-                                onClick = {
-                                    onNextModeChange(value)
-                                    RunPreferences.setNextMode(context, value)
-                                },
-                                label = { Text(label, fontSize = 12.sp) },
-                                modifier = Modifier.weight(1f)
-                            )
+                    val nextModes = listOf(RunPreferences.NEXT_HIDDEN, RunPreferences.NEXT_TEXT, RunPreferences.NEXT_CARD)
+                    SegmentedChoice(
+                        options = listOf(stringResource(R.string.ei), stringResource(R.string.teksti), stringResource(R.string.kuva)),
+                        selected = nextModes.indexOf(currentNextMode).coerceAtLeast(0),
+                        onSelect = {
+                            onNextModeChange(nextModes[it])
+                            RunPreferences.setNextMode(context, nextModes[it])
                         }
-                    }
-                    HorizontalDivider()
+                    )
                     Text(stringResource(R.string.viestipainikkeiden_aani), fontWeight = FontWeight.Bold)
                     CompactVoiceRow(
                         label = stringResource(R.string.support_help),
@@ -137,7 +128,6 @@ internal fun RunSettingsDialog(
                         onFinish = { stopRecord(RunPreferences.HELP) },
                         onPlay = { VoicePlayer.play(context, helpFile) }
                     )
-                    HorizontalDivider()
                     CompactVoiceRow(
                         label = stringResource(R.string.support_break),
                         selection = breakMode,
@@ -152,17 +142,16 @@ internal fun RunSettingsDialog(
                         onFinish = { stopRecord(RunPreferences.BREAK) },
                         onPlay = { VoicePlayer.play(context, breakFile) }
                     )
-                    HorizontalDivider()
-                    OutlinedButton(
+                    SecondaryButton(
+                        text = stringResource(R.string.valitse_ja_kuuntele_puheaani),
+                        icon = AppIcons.Speaker,
                         onClick = { showVoicePicker = true },
                         enabled = recordingKind == null,
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                    ) { Text(stringResource(R.string.valitse_ja_kuuntele_puheaani)) }
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     if (message.isNotBlank()) {
                         Text(message, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Text(stringResource(R.string.valitse_laitteella_kaytettavissa_oleva_aani),
-                        fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
             confirmButton = {
@@ -188,24 +177,15 @@ private fun CompactVoiceRow(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Text(label, fontWeight = FontWeight.SemiBold)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
-        ) {
-            listOf(
-                RunPreferences.AUDIO_SILENT to stringResource(R.string.ei_aanta),
-                RunPreferences.AUDIO_TTS to stringResource(R.string.puheaani),
-                RunPreferences.AUDIO_RECORDED to stringResource(R.string.oma_aani)
-            ).forEach { (value, title) ->
-                FilterChip(
-                    selected = selection == value,
-                    enabled = value != RunPreferences.AUDIO_RECORDED || path.isNotBlank(),
-                    onClick = { onSelection(value) },
-                    label = { Text(title, fontSize = 11.sp, maxLines = 1) },
-                    modifier = Modifier.weight(1f)
-                )
+        // Oma ääni valittavissa vasta, kun se on äänitetty.
+        val audioModes = listOf(RunPreferences.AUDIO_SILENT, RunPreferences.AUDIO_TTS, RunPreferences.AUDIO_RECORDED)
+        SegmentedChoice(
+            options = listOf(stringResource(R.string.ei_aanta), stringResource(R.string.puheaani), stringResource(R.string.oma_aani)),
+            selected = audioModes.indexOf(selection).coerceAtLeast(0),
+            onSelect = { index ->
+                if (audioModes[index] != RunPreferences.AUDIO_RECORDED || path.isNotBlank()) onSelection(audioModes[index])
             }
-        }
+        )
         if (recording) {
             Button(onClick = onFinish, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.lopeta_tallennus))
@@ -215,13 +195,19 @@ private fun CompactVoiceRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                OutlinedButton(
+                SecondaryButton(
+                    text = if (path.isEmpty()) stringResource(R.string.aanita_oma_viesti) else stringResource(R.string.aanita_uudelleen),
+                    icon = AppIcons.Mic,
                     onClick = onStart,
                     enabled = canStart,
                     modifier = Modifier.weight(1f)
-                ) { Text(if (path.isEmpty()) stringResource(R.string.aanita_oma_viesti) else stringResource(R.string.aanita_uudelleen), fontSize = 12.sp) }
+                )
                 if (path.isNotBlank()) {
-                    TextButton(onClick = onPlay) { Text(stringResource(R.string.kuuntele), fontSize = 12.sp) }
+                    SecondaryButton(
+                        text = stringResource(R.string.kuuntele),
+                        icon = AppIcons.Speaker,
+                        onClick = onPlay
+                    )
                 }
             }
         }

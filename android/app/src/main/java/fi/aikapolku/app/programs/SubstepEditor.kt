@@ -1,5 +1,13 @@
 package fi.aikapolku.app.programs
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
+import fi.aikapolku.app.ui.SecondaryButton
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,10 +31,20 @@ internal fun SubstepEditor(
             onClick = { expanded = !expanded },
             modifier = Modifier.heightIn(min = 48.dp)
         ) {
+            Icon(
+                when {
+                    step.subSteps.isEmpty() -> Icons.Rounded.Add
+                    expanded -> Icons.Rounded.KeyboardArrowUp
+                    else -> Icons.Rounded.KeyboardArrowDown
+                },
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
             Text(
                 if (step.subSteps.isEmpty()) stringResource(R.string.substeps_add_first)
-                else stringResource(R.string.substeps_count, step.subSteps.size, if (expanded) "⌃" else "›"),
-                fontSize = 15.sp
+                else stringResource(R.string.substeps_count, step.subSteps.size),
+                fontSize = 15.sp,
+                modifier = Modifier.padding(start = 6.dp)
             )
         }
         if (expanded) {
@@ -58,11 +76,13 @@ internal fun SubstepEditor(
                     ) { Text(stringResource(R.string.delete)) }
                 }
             }
-            OutlinedButton(
+            SecondaryButton(
+                text = stringResource(R.string.lisaa_osavaihe),
+                icon = Icons.Rounded.Add,
                 onClick = { onUpdate(step.copy(subSteps = step.subSteps + "")) },
                 enabled = step.subSteps.size < 16,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-            ) { Text(stringResource(R.string.lisaa_osavaihe)) }
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

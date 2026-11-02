@@ -1,5 +1,8 @@
 package fi.aikapolku.app.firstthen
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -82,11 +85,15 @@ internal fun EditableCard(
             }
 
             if (editable) {
-                Text(
-                    stringResource(R.string.card_edit_link),
-                    color = FlowColors.teal,
-                    fontSize = 12.sp
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.Edit, contentDescription = null, tint = FlowColors.teal, modifier = Modifier.size(14.dp))
+                    Text(
+                        stringResource(R.string.card_edit_link),
+                        color = FlowColors.teal,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
             }
         }
     }

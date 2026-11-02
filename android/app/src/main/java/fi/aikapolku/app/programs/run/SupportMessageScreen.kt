@@ -1,5 +1,9 @@
 package fi.aikapolku.app.programs.run
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.Icon
+import fi.aikapolku.app.ui.AppIcons
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -99,13 +103,6 @@ internal fun SupportMessageScreen(
         ) {
             Column(modifier = Modifier.heightIn(min = 52.dp), verticalArrangement = Arrangement.Center) {
                 Text(
-                    stringResource(R.string.viesti),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.2.sp,
-                    color = RunColors.secondary
-                )
-                Text(
                     if (timerPaused) stringResource(R.string.ajastin_on_pysaytetty) else stringResource(R.string.nayta_viesti_tarvittaessa_toiselle),
                     fontSize = 15.sp,
                     color = RunColors.secondary
@@ -158,7 +155,8 @@ internal fun SupportMessageScreen(
                         contentColor = RunColors.ink
                     )
                 ) {
-                    Text(stringResource(R.string.toista_viesti), fontSize = 17.sp, fontWeight = FontWeight.Medium)
+                    Icon(AppIcons.Speaker, contentDescription = null, modifier = Modifier.size(22.dp))
+                    Text(stringResource(R.string.toista_viesti), fontSize = 17.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 8.dp))
                 }
             }
 
@@ -171,7 +169,8 @@ internal fun SupportMessageScreen(
                     contentColor = Color.White
                 )
             ) {
-                Text(stringResource(R.string.support_continue), fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(26.dp))
+                Text(stringResource(R.string.support_continue), fontSize = 21.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp))
             }
         }
     }

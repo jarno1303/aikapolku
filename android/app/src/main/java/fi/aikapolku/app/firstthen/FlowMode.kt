@@ -1,5 +1,8 @@
 package fi.aikapolku.app.firstthen
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -97,9 +100,12 @@ internal fun ManualFlowScreen(
             containerColor = AppColors.Teal
         )
     ) {
+        Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(26.dp))
         Text(
             stringResource(R.string.valmis_seuraavaan),
-            fontSize = 18.sp
+            fontSize = 19.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 6.dp)
         )
     }
 }

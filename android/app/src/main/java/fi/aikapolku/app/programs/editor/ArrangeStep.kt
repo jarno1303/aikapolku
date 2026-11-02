@@ -1,5 +1,11 @@
 package fi.aikapolku.app.programs.editor
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.Icon
+import fi.aikapolku.app.ui.AppIcons
+import fi.aikapolku.app.ui.SecondaryButton
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -168,7 +174,7 @@ internal fun ArrangePage(
                                     }
                                     .semantics { contentDescription = context.getString(R.string.siirra, step.name) }
                             ) {
-                                Text("≡", fontSize = 26.sp, color = AppColors.Muted)
+                                Icon(AppIcons.DragHandle, contentDescription = null, tint = AppColors.Muted)
                             }
                             Text(
                                 "${index + 1}.",
@@ -196,7 +202,7 @@ internal fun ArrangePage(
                                     }
                                 },
                                 modifier = Modifier.semantics { contentDescription = context.getString(R.string.a11y_remove_step, step.name) }
-                            ) { Text("✕", fontSize = 20.sp, color = AppColors.Muted) }
+                            ) { Icon(Icons.Rounded.Close, contentDescription = null, tint = AppColors.Muted) }
                         }
                         Box(modifier = Modifier.padding(start = 48.dp, end = 8.dp)) {
                             SubstepEditor(
@@ -213,10 +219,12 @@ internal fun ArrangePage(
             }
         }
 
-        OutlinedButton(
+        SecondaryButton(
+            text = stringResource(R.string.lisaa_toimintoja),
+            icon = Icons.Rounded.Add,
             onClick = onAddMore,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
-        ) { Text(stringResource(R.string.lisaa_toimintoja)) }
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(Modifier.height(4.dp))
     }
 }

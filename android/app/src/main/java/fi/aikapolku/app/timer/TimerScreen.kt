@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.caregiver.AppAction
-import fi.aikapolku.app.caregiver.CaregiverLockButton
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.data.TimeDisplayPrefs
 import fi.aikapolku.app.firstthen.CompletedCard
@@ -149,17 +148,8 @@ internal fun TimerScreen(
                 next = nextActivity,
                 nextPhoto = nextPhoto
             )
-        } else {
-            Text(
-                stringResource(R.string.timer_title),
-                fontSize = 25.sp,
-                fontWeight = FontWeight.Bold,
-                color = AppColors.Ink
-            )
-
-            // Pikavalinnat poistettu (puhelintesti 1.11.2026): aika valitaan kellotaulua
-            // vetämällä, eikä näkymä hypi ajastimen tilan tai lukituksen mukana.
         }
+        // Otsikko on yläpalkissa. Aika valitaan kellotaulua napauttamalla tai vetämällä.
 
         val secs = ((remaining + 999L) / 1000L)
             .coerceAtLeast(0L)
@@ -172,10 +162,11 @@ internal fun TimerScreen(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
+            // Kellotaulu käyttää ruudun leveyden (yläpalkki vapautti tilaa).
             val target = when {
-                compact -> 258.dp
-                guided -> 330.dp
-                else -> 345.dp
+                compact -> 300.dp
+                guided -> 340.dp
+                else -> 420.dp
             }
 
             val diameter = minOf(maxWidth - 8.dp, target)
@@ -202,24 +193,22 @@ internal fun TimerScreen(
                     )
                 }
                 if (timeMode == TimeDisplayPrefs.NUMBERS && !lastTen) {
-                    Surface(
-                        shape = RoundedCornerShape(18.dp),
-                        color = Color.White.copy(alpha = 0.96f)
-                    ) {
-                        Text(
-                            String.format(
-                                Locale.getDefault(),
-                                "%02d:%02d",
-                                secs / 60,
-                                secs % 60
-                            ),
-                            modifier = Modifier.padding(horizontal = 15.dp, vertical = 5.dp),
-                            fontSize = 35.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AppColors.Ink,
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                    // Numerot suoraan renkaan valkoisen keskustan päällä: ei taustalaatikkoa,
+                    // joka leikkaisi renkaaseen koloja. Koko suhteessa keskustan kokoon.
+                    val innerDiameter = ((diameter / 2) - 44.dp) * 0.62f * 2
+                    Text(
+                        String.format(
+                            Locale.getDefault(),
+                            "%02d:%02d",
+                            secs / 60,
+                            secs % 60
+                        ),
+                        fontSize = (innerDiameter.value * 0.24f).sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppColors.Ink,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1
+                    )
                 }
             }
         }
@@ -244,8 +233,6 @@ internal fun TimerScreen(
                         fontSize = 12.sp,
                         color = DialMuted
                     )
-                } else {
-                    CaregiverLockButton()
                 }
             }
             RoundIconButton(

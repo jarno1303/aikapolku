@@ -41,7 +41,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
-import fi.aikapolku.app.caregiver.CaregiverLockButton
 import fi.aikapolku.app.data.AckStore
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.EventKind
@@ -74,11 +73,6 @@ internal fun WeekView(programs: List<DayProgram>, canEdit: Boolean) {
     var adding by remember { mutableStateOf(false) }
     val shownWeek = if (plan.alternating) week else WeekSchedule.WEEK_A
 
-    Text(stringResource(R.string.week_title), fontSize = 28.sp, fontWeight = FontWeight.Bold)
-    Text(stringResource(R.string.week_info), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    if (!canEdit) {
-        CaregiverLockButton(label = stringResource(R.string.week_caregiver_edits))
-    }
 
     if (plan.alternating) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {

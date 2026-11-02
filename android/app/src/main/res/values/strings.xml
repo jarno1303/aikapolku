@@ -40,15 +40,14 @@
     <string name="aloita_aika">Aloita aika.</string>
     <string name="aloita_toiminto">Aloita toiminto</string>
     <string name="aloita_valmiista_rutiinista">Aloita valmiista rutiinista</string>
-    <string name="aloitus_klo_muuta">Aloitus klo %1$s – muuta</string>
+    <string name="aloitus_klo_muuta">Aloitus klo %1$s</string>
     <string name="androidin_nayton_kiinnitys_pitaa_aikapolun">Androidin näytön kiinnitys pitää AikaPolun näkyvissä niin, ettei sovelluksesta voi siirtyä muihin sovelluksiin. Ota se käyttöön puhelimen asetuksista hakemalla \"Näytön kiinnitys\" tai \"Sovelluksen kiinnitys\".</string>
     <string name="androidin_tulostuspalvelua_ei_ole_kaytettavissa">Androidin tulostuspalvelua ei ole käytettävissä.</string>
-    <string name="anna_aloitusaika_ja_kestot_kellonajat">Anna aloitusaika ja kestot – kellonajat lasketaan. Toiminnon voi myös lukita kiinteään aikaan.</string>
+    <string name="anna_aloitusaika_ja_kestot_kellonajat">Kellonajat lasketaan aloitusajasta ja kestoista.</string>
     <string name="anna_ohjaajan_pin_koodi">Anna ohjaajan PIN-koodi.</string>
     <string name="anna_ohjelmalle_nimi">Anna ohjelmalle nimi.</string>
     <string name="aseta_aika_ja_keskity">Aseta aika ja keskity</string>
     <string name="asetukset">Asetukset</string>
-    <string name="back">‹ Takaisin</string>
     <string name="cancel">Peruuta</string>
     <string name="card_break">Tauko</string>
     <string name="card_breakfast">Aamupala</string>
@@ -63,7 +62,7 @@
     <string name="card_category_transitions">Siirtymät</string>
     <string name="card_crafts">Askartelu</string>
     <string name="card_dress">Pukeutuminen</string>
-    <string name="card_edit_link">Muokkaa ↗</string>
+    <string name="card_edit_link">Muokkaa</string>
     <string name="card_exercise">Liikunta</string>
     <string name="card_gaming">Pelaaminen</string>
     <string name="card_homework">Kotitehtävät</string>
@@ -81,7 +80,7 @@
     <string name="card_waiting">Odota</string>
     <string name="card_wash_hands">Käsienpesu</string>
     <string name="caregiver_actions">Ohjaajan toiminnot</string>
-    <string name="caregiver_actions_title">🔒 Ohjaajan toiminnot</string>
+    <string name="caregiver_actions_title">Ohjaajan toiminnot</string>
     <string name="caregiver_label">Ohjaaja</string>
     <string name="caregiver_settings_title">Ohjaajan asetukset</string>
     <string name="choose">Valitse</string>
@@ -91,13 +90,13 @@
     <string name="delete">Poista</string>
     <string name="dialog_done">Valmis</string>
     <string name="edit">Muokkaa</string>
-    <string name="editor_next">Seuraava ›</string>
-    <string name="editor_next_count">Seuraava (%1$s) ›</string>
+    <string name="editor_next">Seuraava</string>
+    <string name="editor_next_count">Seuraava (%1$s)</string>
     <string name="editor_title_new">Uusi päiväohjelma</string>
     <string name="ei">Ei</string>
     <string name="ei_aanta">Ei ääntä</string>
     <string name="ei_aikaa">Ei aikaa</string>
-    <string name="ei_aikoja_valmis_painike_siirtaa">Ei aikoja. Valmis-painike siirtää seuraavaan.</string>
+    <string name="ei_aikoja_valmis_painike_siirtaa">Ei aikoja: Valmis siirtää seuraavaan.</string>
     <string name="ei_jatkuvaa_aikalaskentaa">Ei jatkuvaa aikalaskentaa.</string>
     <string name="ei_nyt">Ei nyt</string>
     <string name="ei_vahenevia_numeroita">Ei väheneviä numeroita.</string>
@@ -105,12 +104,12 @@
     <string name="ei_viela_tallennettuja_kortteja_luo">Ei vielä tallennettuja kortteja. Luo ensimmäinen kortti.</string>
     <string name="ensin_sitten">Ensin – Sitten</string>
     <string name="erillisia_suomenkielisia_aania_ei_loytynyt">Erillisiä suomenkielisiä ääniä ei löytynyt. Kokeile laitteen oletusääntä.</string>
-    <string name="extend_5_min">+ 5 min lisäaikaa</string>
+    <string name="extend_5_min">5 min lisäaikaa</string>
     <string name="first_label">ENSIN</string>
     <string name="first_then_default_first">Askartelu</string>
     <string name="first_then_default_next">Ruokailu</string>
     <string name="first_then_done">✓ %1$s valmis</string>
-    <string name="flow_done_button">✓ Valmis</string>
+    <string name="flow_done_button">Valmis</string>
     <string name="flow_stage_first">1  ENSIN</string>
     <string name="flow_stage_then">2  SITTEN</string>
     <string name="huom_jokin_kiintea_aika_alkaa">Huom: jokin kiinteä aika alkaa ennen kuin edellinen toiminto päättyy. Voit tallentaa silti.</string>
@@ -131,7 +130,7 @@
     <string name="kestot">Kestot</string>
     <string name="kestot_jokaisella_toiminnolla_oma_ajastin">Kestot · jokaisella toiminnolla oma ajastin</string>
     <string name="kiintea_aika">Kiinteä aika</string>
-    <string name="klo_muuta">Klo %1$s – muuta</string>
+    <string name="klo_muuta">Klo %1$s</string>
     <string name="koko_paivaohjelma">Koko päiväohjelma</string>
     <string name="kopioi">Kopioi</string>
     <string name="kortilla_ei_ole_tallennettua_puheviestia">Kortilla ei ole tallennettua puheviestiä.</string>
@@ -150,10 +149,10 @@
     <string name="laitteen_oletusaani">Laitteen oletusääni</string>
     <string name="liian_monta_vaaraa_yritysta_yrita">Liian monta väärää yritystä. Yritä uudelleen %1$s sekunnin kuluttua.</string>
     <string name="lisaa_ohjelmaan">Lisää ohjelmaan</string>
-    <string name="lisaa_osavaihe">+ Lisää osavaihe</string>
-    <string name="lisaa_toimintoja">+ Lisää toimintoja</string>
+    <string name="lisaa_osavaihe">Lisää osavaihe</string>
+    <string name="lisaa_toimintoja">Lisää toimintoja</string>
     <string name="lisaa_uudelleen">Lisää uudelleen</string>
-    <string name="lisaa_vaihe">+ Lisää vaihe</string>
+    <string name="lisaa_vaihe">Lisää vaihe</string>
     <string name="lopeta">Lopeta</string>
     <string name="lopeta_ohjelma">Lopeta ohjelma</string>
     <string name="lopeta_tallennus">Lopeta tallennus</string>
@@ -167,7 +166,6 @@
     <string name="mikrofonin_lupa_evattiin">Mikrofonin lupa evättiin.</string>
     <string name="minutes_short">%1$d min</string>
     <string name="minutes_value">%1$s min</string>
-    <string name="miten_aika_kulkee">Miten aika kulkee?</string>
     <string name="miten_aika_naytetaan">Miten aika näytetään?</string>
     <string name="muokkaa_korttia">Muokkaa korttia</string>
     <string name="muokkaa_paivaohjelmaa">Muokkaa päiväohjelmaa</string>
@@ -192,13 +190,11 @@
     <string name="ohita_tehtava">Ohita tehtävä</string>
     <string name="ohita_vaihe">Ohita vaihe</string>
     <string name="ohjaaja_auki">Ohjaaja auki · %1$s</string>
-    <string name="ohjaaja_luo_ja_muokkaa_ohjelmia">Ohjaaja: luo ja muokkaa ohjelmia</string>
     <string name="ohjaajan_lukitus">Ohjaajan lukitus</string>
-    <string name="ohjaajan_lukitus_on_nyt_paalla">Ohjaajan lukitus on nyt päällä. Ohjaajan toiminnot avataan 🔒-painikkeella ja PIN-koodilla. Ne ovat auki 2 minuuttia kerrallaan.</string>
+    <string name="ohjaajan_lukitus_on_nyt_paalla">Ohjaajan lukitus on nyt päällä. Ohjaajan toiminnot avataan lukkokuvakkeesta PIN-koodilla. Ne ovat auki 2 minuuttia kerrallaan.</string>
     <string name="ohjaajan_lukitus_on_poistettu_voit">Ohjaajan lukitus on poistettu. Voit asettaa uuden PIN-koodin Ohjaajan asetuksista.</string>
     <string name="ohjaajan_lukitus_piilottaa_ajan_muuttamisen">Ohjaajan lukitus piilottaa ajan muuttamisen, ohjelmien muokkauksen ja asetukset PIN-koodin taakse. Tarvitsen apua, Tarvitsen tauon ja Valmis toimivat aina.\n\nLukituksen voi ottaa käyttöön myöhemmin myös Ohjaajan asetuksista.</string>
     <string name="ohjaajan_toiminnot_lukittu_avaa_pin">Ohjaajan toiminnot, lukittu. Avaa PIN-koodilla.</string>
-    <string name="ohjelma_on_paattynyt">Ohjelma on päättynyt.</string>
     <string name="ohjelman_nimi">Ohjelman nimi</string>
     <string name="oma_aani">Oma ääni</string>
     <string name="oma_aani_tallennettu">Oma ääni tallennettu.</string>
@@ -225,7 +221,6 @@
     <string name="pin_problem_length">PIN-koodissa on 4 numeroa.</string>
     <string name="pin_problem_same">Liian helppo PIN-koodi (kaikki numerot samoja).</string>
     <string name="pin_problem_sequence">Liian helppo PIN-koodi (numerot peräkkäin, esim. 1234).</string>
-    <string name="pohjaa_voi_muokata_ennen_tallentamista">Pohjaa voi muokata ennen tallentamista.</string>
     <string name="poista_aani">Poista ääni</string>
     <string name="poista_kortin_kuva">Poista kortin kuva</string>
     <string name="poista_lukitus">Poista lukitus</string>
@@ -234,8 +229,7 @@
     <string name="poistetaanko_ohjaajan_lukitus">Poistetaanko ohjaajan lukitus?</string>
     <string name="poistetaanko_paivaohjelma">Poistetaanko päiväohjelma?</string>
     <string name="poistettu">Poistettu: %1$s</string>
-    <string name="program_all_done">Kaikki valmista!</string>
-    <string name="program_new_button">+ Uusi päiväohjelma</string>
+    <string name="program_new_button">Uusi päiväohjelma</string>
     <string name="program_summary_ends">Päättyy noin klo %1$s</string>
     <string name="puheaanet_tulevat_puhelimen_android_puhemoottorista">Puheäänet tulevat puhelimen Android-puhemoottorista. Valikoima vaihtelee laitteittain.</string>
     <string name="puheaani">Puheääni</string>
@@ -250,7 +244,7 @@
     <string name="puheviestin_toistossa_tapahtui_virhe">Puheviestin toistossa tapahtui virhe.</string>
     <string name="pysayta_aika">Pysäytä aika.</string>
     <string name="rauhallinen">Rauhallinen</string>
-    <string name="run_done_button">✓  Valmis</string>
+    <string name="run_done_button">Valmis</string>
     <string name="run_more">Lisää</string>
     <string name="run_next_line">Seuraavaksi: %1$s</string>
     <string name="salli_aikapolkun_ilmoitukset">Salli AikaPolkun ilmoitukset.</string>
@@ -276,14 +270,14 @@
     <string name="substep_socks">Sukat</string>
     <string name="substep_take_toothbrush">Ota hammasharja</string>
     <string name="substep_trousers">Housut</string>
-    <string name="substeps_add_first">+ Osavaiheet</string>
-    <string name="substeps_count">Osavaiheet (%1$d)  %2$s</string>
+    <string name="substeps_add_first">Osavaiheet</string>
+    <string name="substeps_count">Osavaiheet (%1$d)</string>
     <plurals name="substeps_count_label">
         <item quantity="one">%1$d osavaihe</item>
         <item quantity="other">%1$d osavaihetta</item>
     </plurals>
     <string name="support_break">Tarvitsen tauon</string>
-    <string name="support_continue">▶  Jatka</string>
+    <string name="support_continue">Jatka</string>
     <string name="support_help">Tarvitsen apua</string>
     <string name="suunnittele_kaksi_askelta">Kaksi asiaa järjestyksessä</string>
     <string name="takaisin_aloitukseen">Takaisin aloitukseen</string>
@@ -318,7 +312,7 @@
     <string name="times_ends_about"> · päättyy noin klo %1$s</string>
     <string name="toiminnon_nimi">Toiminnon nimi</string>
     <string name="toista_automaattisesti_toiminnon_alkaessa">Toista automaattisesti toiminnon alkaessa</string>
-    <string name="toista_viesti">🔊  Toista viesti</string>
+    <string name="toista_viesti">Toista viesti</string>
     <string name="tts_locale">fi-FI</string>
     <string name="tulossa">TULOSSA</string>
     <string name="tulosta_pdf">Tulosta / PDF</string>
@@ -338,15 +332,13 @@
     <string name="valitse_aika_vetamalla_kellotaulua_kaynnissa">Valitse aika napauttamalla tai vetämällä kellotaulua. Käynnissä olevan ajastimen aika on lukittu.</string>
     <string name="valitse_ja_kuuntele_haluamasi_suomenkielinen">Valitse ja kuuntele haluamasi suomenkielinen ääni.</string>
     <string name="valitse_ja_kuuntele_puheaani">Valitse ja kuuntele puheääni</string>
-    <string name="valitse_laitteella_kaytettavissa_oleva_aani">Valitse laitteella käytettävissä oleva ääni kuuntelemalla. Oma tallenne toimii myös ilman puhemoottoria.</string>
     <string name="valitse_nelinumeroinen_pin_koodi_jota">Valitse nelinumeroinen PIN-koodi, jota asiakas ei tiedä.</string>
     <string name="valitse_puheaani">Valitse puheääni</string>
     <string name="valitse_valmis_kuva">Valitse valmis kuva</string>
     <string name="valitse_valokuva">Valitse valokuva</string>
     <string name="valmis_aloittamaan">Valmis aloittamaan</string>
-    <string name="valmis_seuraavaan">Valmis – seuraavaan</string>
-    <string name="veda_kahvasta_muuttaaksesi_jarjestysta">Vedä ≡-kahvasta muuttaaksesi järjestystä.</string>
-    <string name="viesti">VIESTI</string>
+    <string name="valmis_seuraavaan">Valmis</string>
+    <string name="veda_kahvasta_muuttaaksesi_jarjestysta">Vedä kahvasta muuttaaksesi järjestystä.</string>
     <string name="viestipainikkeiden_aani">Viestipainikkeiden ääni</string>
     <string name="viimeinen_toiminto">VIIMEINEN TOIMINTO</string>
     <string name="viimeisten_10_sekunnin_laskenta">Viimeisten 10 sekunnin laskenta</string>
@@ -379,9 +371,6 @@
     <!-- Viikko-ohjelma ja Tänään -->
     <string name="tab_programs">Ohjelmat</string>
     <string name="tab_week">Viikko</string>
-    <string name="week_title">Viikko-ohjelma</string>
-    <string name="week_info">Viikon tapahtumat näkyvät aloitusnäkymässä kohdassa Tänään.</string>
-    <string name="week_caregiver_edits">Ohjaaja: muokkaa viikko-ohjelmaa</string>
     <string name="week_a">Viikko A</string>
     <string name="week_b">Viikko B</string>
     <string name="week_this_week">nyt</string>
@@ -458,5 +447,9 @@
     <string name="edit_current_card">Muokkaa nimeä ja kuvausta</string>
     <string name="photo_short">Oma kuva</string>
     <string name="valmis_kuva_short">Valmis kuva</string>
+    <string name="back_a11y">Takaisin</string>
+    <string name="program_empty">Tyhjä ohjelma</string>
+    <string name="program_empty_hint">Valitse toiminnot itse</string>
+    <string name="previous">Edellinen</string>
     <string name="save_to_own_cards">Tallenna myös omiin kortteihin</string>
 </resources>

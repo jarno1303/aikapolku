@@ -36,7 +36,6 @@ import fi.aikapolku.app.cards.CardArt
 import fi.aikapolku.app.cards.CardLibraryDialog
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.caregiver.AppAction
-import fi.aikapolku.app.caregiver.CaregiverLockButton
 import fi.aikapolku.app.caregiver.CaregiverSession
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.data.CardItem
@@ -117,10 +116,6 @@ internal fun FirstThenScreen(
             modifier = Modifier.weight(1f),
             compact = true
         )
-
-        if (!canEditCards) {
-            CaregiverLockButton(iconOnly = true)
-        }
 
         InfoButton(stringResource(R.string.korttien_kayttoohje)) { showCardHelp = true }
     }

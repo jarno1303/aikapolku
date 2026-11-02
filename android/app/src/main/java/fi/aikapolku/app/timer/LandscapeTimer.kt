@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
-import fi.aikapolku.app.caregiver.CaregiverLockButton
 import fi.aikapolku.app.data.TimeDisplayPrefs
 import fi.aikapolku.app.ui.AppColors
 import java.util.Locale
@@ -126,7 +125,7 @@ internal fun LandscapeTimer(
                 if (showReset) {
                     RoundIconButton(Icons.Rounded.Refresh, stringResource(R.string.nollaa), onResetClick, tint = LandscapeInk)
                 } else {
-                    CaregiverLockButton()
+                    Spacer(Modifier.size(48.dp))
                 }
                 RoundIconButton(
                     icon = when {
