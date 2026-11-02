@@ -124,6 +124,9 @@ internal fun ClientDayView(
     onOpenChange: (EventChange) -> Unit
 ) {
     val state = rememberTodayState()
+    // Kesken jäänyt päiväohjelma: NYT-kortissa "Jatka" eikä "Aloita".
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val runningProgramId = remember { fi.aikapolku.app.programs.run.PrefsRunProgress(context.applicationContext).programId }
     fun open(item: DayItem) {
         val change = item.change
         when {
@@ -227,7 +230,8 @@ internal fun ClientDayView(
                     if (prefs.showTimes) {
                         Text(stringResource(R.string.change_time_now, item.event.time.replace(':', '.')), fontSize = 18.sp, color = AppColors.Muted)
                     }
-                    BigButton(stringResource(R.string.today_start)) { open(item) }
+                    val resume = item.resolved.isProgram && item.event.programId.isNotBlank() && item.event.programId == runningProgramId
+                    BigButton(stringResource(if (resume) R.string.client_continue else R.string.today_start)) { open(item) }
                 }
             }
         }

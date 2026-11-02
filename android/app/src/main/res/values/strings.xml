@@ -636,4 +636,9 @@
     <string name="client_time_range">klo %1$s–%2$s</string>
     <string name="client_view_gap">Väliajan kortti</string>
     <string name="client_view_gap_info">Näkyy NYT-kortissa, kun edellinen on tehty eikä seuraava ole vielä alkanut.</string>
+    <string name="demo_program_name">Esittelypäivä</string>
+    <string name="demo_profile_name">Esittely</string>
+    <string name="demo_create">Luo esittelypäivä</string>
+    <string name="demo_create_info">Testitila: oma Esittely-profiili, ohjelma alkaa heti, toinen tehtävä kestää minuutin</string>
+    <string name="demo_created">Esittelypäivä luotu profiiliin %1$s. Vaihda asiakkaaksi ja paina NYT-kortin Aloita.</string>
 </resources>

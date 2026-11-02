@@ -77,6 +77,8 @@ private fun ProgramsTabs(selected: ProgramsTab, onSelect: (ProgramsTab) -> Unit)
 
 @Composable
 internal fun ProgramsScreen(
+    /** Asiakkaan paluu omaan päivään (aloitusnäkymästä ja Kaikki valmista -näkymästä). */
+    onExitToHome: () -> Unit = {},
     /** Ohjaajan etusivun "Viikko-ohjelma": avautuu Viikko-välilehdelle. */
     initialWeekTab: Boolean = false,
     /** Tänään-listasta käynnistettävä päiväohjelma. */
@@ -249,7 +251,8 @@ internal fun ProgramsScreen(
         ScreenTitle(readyProgram.name)
         BackOverride {
             readyDraft = null
-            view = ProgramsView.LIST
+            // Asiakkaalla ei ohjelmaluetteloa: takaisin omaan päivään.
+            if (caregiver.isCaregiver) view = ProgramsView.LIST else onExitToHome()
         }
     }
 
@@ -366,7 +369,18 @@ internal fun ProgramsScreen(
 
         ProgramsView.RUN -> Unit // Suoritus piirretään yllä omana näkymänään (RunStepScreen).
 
-        ProgramsView.DONE -> ProgramDoneView(run.program, run.skipped, onBack = { view = ProgramsView.LIST })
+        ProgramsView.DONE -> if (caregiver.isCaregiver) {
+            ProgramDoneView(run.program, run.skipped, onBack = { view = ProgramsView.LIST })
+        } else {
+            ProgramDoneView(
+                run.program, run.skipped,
+                onBack = {
+                    view = ProgramsView.LIST
+                    onExitToHome()
+                },
+                buttonText = stringResource(R.string.takaisin_aloitukseen)
+            )
+        }
     }
         } // Scrollable Column
 

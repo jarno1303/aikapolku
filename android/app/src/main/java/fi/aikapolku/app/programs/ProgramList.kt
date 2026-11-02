@@ -196,12 +196,12 @@ internal fun ProgramListView(
 
 /** Ohjelma suoritettu loppuun: yhteinen Kaikki valmista -näkymä. */
 @Composable
-internal fun ProgramDoneView(program: DayProgram, skipped: Set<Int>, onBack: () -> Unit) {
+internal fun ProgramDoneView(program: DayProgram, skipped: Set<Int>, onBack: () -> Unit, buttonText: String? = null) {
     AllDoneView(
         subtitle = stringResource(R.string.on_paattynyt, program.name),
         images = program.steps.map { it.name to it.photo },
         dimmed = skipped,
-        buttonText = stringResource(R.string.takaisin_paivaohjelmiin),
+        buttonText = buttonText ?: stringResource(R.string.takaisin_paivaohjelmiin),
         onButton = onBack
     )
 }

@@ -3,6 +3,7 @@ package fi.aikapolku.app
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
@@ -219,6 +220,19 @@ private fun CaregiverHome(
         ChoiceRow(stringResource(R.string.client_view_title), { showClientView = true }, subtitle = stringResource(R.string.client_view_info), leading = { RowIcon(Icons.Rounded.Person) })
         ChoiceRow(stringResource(R.string.home_view_as_client), { fi.aikapolku.app.caregiver.RoleSession.preview() }, subtitle = stringResource(R.string.home_view_as_client_info), leading = { RowIcon(Icons.Rounded.Face) })
         ChoiceRow(stringResource(R.string.home_settings), { open(AppPage.CAREGIVER) }, subtitle = stringResource(R.string.home_settings_info), leading = { RowIcon(Icons.Rounded.Settings) })
+        // Testitilassa: esittelypäivä omaan profiiliinsa yhdellä painalluksella.
+        if (fi.aikapolku.app.caregiver.RoleSession.testMode) {
+            val context = LocalContext.current
+            ChoiceRow(stringResource(R.string.demo_create), {
+                val name = context.getString(R.string.demo_profile_name)
+                val profile = fi.aikapolku.app.data.DemoDay.profile(context, name)
+                fi.aikapolku.app.data.DemoDay.fill(context, profile.id)
+                fi.aikapolku.app.week.EventReminders.reschedule(context.applicationContext)
+                android.widget.Toast.makeText(context, context.getString(R.string.demo_created, name), android.widget.Toast.LENGTH_LONG).show()
+                ProfileSession.switchTo(context, profile.id)
+                ProfileSession.changed()
+            }, subtitle = stringResource(R.string.demo_create_info), leading = { RowIcon(Icons.Rounded.PlayArrow) })
+        }
     }
     if (showCards) {
         fi.aikapolku.app.cards.CardLibraryDialog(onDismiss = { showCards = false }, onSelect = { showCards = false })

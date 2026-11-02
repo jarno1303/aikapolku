@@ -467,6 +467,7 @@ internal fun AikaPolkuApp() {
                 )
 
                 AppPage.PROGRAMS -> ProgramsScreen(
+                    onExitToHome = { page = AppPage.HOME },
                     initialWeekTab = programsWeek.also { programsWeek = false },
                     startProgramId = pendingProgramId,
                     startEventId = pendingEventId,

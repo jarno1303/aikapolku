@@ -403,3 +403,9 @@
 
 ## Ensin–Sitten asiakkaalle yhdellä painalluksella
 - Asiakkaan NYT-kortin Aloita käynnistää ohjaajan valmisteleman Ensin–Sitten-ajan heti ja avaa kellotaulun aika jo käynnissä (ennen: kaksi painallusta). Tauolla tai jo käynnistetty kulku vain avataan (Jatka). Ohjaaja voi edelleen käynnistää ajan itse ennen roolin vaihtoa.
+
+## Esittelypäivä ja puhelimessa ajettava testi
+- Ohjaajan työkaluissa (testitilassa) "Luo esittelypäivä": oma Esittely-profiili, päiväohjelma "Esittelypäivä" alkaa heti (Aamupala, Hampaiden pesu 1 min, Pukeutuminen) ja Lukeminen 20 minuutin päästä (väliaika näkyy ohjelman jälkeen). Uusi esittely korvaa aiemman.
+- Puhelimessa ajettava automaattitesti (androidTest ProgramDayDeviceTest, skripti aikapolku-laitetesti.ps1): asiakas käy esittelypäivän läpi ruudun näkyessä – NYT-kortti, aloitusnäkymä, Valmis, minuutin aika, Kaikki valmista, kuittaus, paluu omaan päivään (Odota + Lukeminen). Sovellus asennetaan päivityksenä (tiedot säilyvät; ei connectedAndroidTestia, joka poistaisi sovelluksen). Testi käyttää väliaikaista profiilia ja poistaa sen.
+- Kulun läpikäynnissä korjattu asiakkaalle: aloitusnäkymästä takaisin vie omaan päivään (ei ohjelmaluetteloon); Kaikki valmista -painike "Takaisin aloitukseen" omaan päivään; kesken jäänyt päiväohjelma näkyy NYT-kortissa "Jatka".
+- Uudet testit: esittelypäivän sisältö ja ajat (4).
