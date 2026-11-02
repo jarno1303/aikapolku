@@ -2,6 +2,7 @@ package fi.aikapolku.app
 
 import android.content.Context
 import android.os.SystemClock
+import android.view.WindowManager
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
@@ -22,6 +23,7 @@ import fi.aikapolku.app.week.EventReminders
 import java.time.LocalDate
 import org.junit.AfterClass
 import org.junit.Assert.assertNotNull
+import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
@@ -81,6 +83,13 @@ class ProgramDayDeviceTest {
     @get:Rule
     val compose = createAndroidComposeRule<MainActivity>()
 
+    /** Näyttö ei saa sammua minuutin odotuksen aikana (puhelimen oma aikakatkaisu voi olla 30 s). */
+    @Before
+    fun keepScreenOn() {
+        val activity = compose.activity
+        compose.runOnUiThread { activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+    }
+
     private fun t(id: Int, vararg args: Any) = compose.activity.getString(id, *args)
 
     /** Tauko, jotta kulun ehtii nähdä ruudulta (ja Valmis-painikkeen 1,5 s esto ohittuu). */
@@ -103,9 +112,17 @@ class ProgramDayDeviceTest {
     private fun waitRealTime(timeoutMs: Long, failure: String, condition: () -> Boolean) {
         val end = SystemClock.elapsedRealtime() + timeoutMs
         while (true) {
-            compose.mainClock.advanceTimeBy(500L)
-            compose.waitForIdle()
-            if (condition()) return
+            val ok = try {
+                compose.mainClock.advanceTimeBy(500L)
+                compose.waitForIdle()
+                condition()
+            } catch (e: IllegalStateException) {
+                throw AssertionError(
+                    "Sovellus poistui ruudulta kesken odotuksen (näyttö sammui, puhelin lukittui " +
+                        "tai toinen sovellus/asetussivu avautui päälle).", e
+                )
+            }
+            if (ok) return
             if (SystemClock.elapsedRealtime() > end) throw AssertionError(failure)
             Thread.sleep(500L)
         }
