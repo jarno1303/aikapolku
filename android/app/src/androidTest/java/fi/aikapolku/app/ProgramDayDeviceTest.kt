@@ -2,6 +2,8 @@ package fi.aikapolku.app
 
 import android.content.Context
 import android.os.SystemClock
+import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasContentDescription
@@ -21,7 +23,9 @@ import fi.aikapolku.app.data.ProfileStore
 import fi.aikapolku.app.week.EventReminders
 import java.time.LocalDate
 import org.junit.AfterClass
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Rule
@@ -128,6 +132,20 @@ class ProgramDayDeviceTest {
         }
     }
 
+    /** Pitääkö sovellus itse näytön päällä (jokin näkymä keepScreenOn; testin oma ikkunalippu ei lasketa). */
+    private fun appKeepsScreenOn(): Boolean {
+        val activity = compose.activity
+        var found = false
+        compose.runOnUiThread {
+            fun walk(v: View) {
+                if (v.keepScreenOn) found = true
+                if (v is ViewGroup) for (i in 0 until v.childCount) walk(v.getChildAt(i))
+            }
+            walk(activity.window.decorView)
+        }
+        return found
+    }
+
     private fun clickDone() {
         pause()
         compose.onNodeWithText(t(R.string.run_done_button)).performClick()
@@ -161,6 +179,7 @@ class ProgramDayDeviceTest {
             shown(hasContentDescription(t(R.string.pysayta_aika), substring = true)) ||
                 shown(hasContentDescription(t(R.string.tauko_vaatii_ohjaajan_pin_koodin), substring = true))
         }
+        assertTrue("näyttö pidetään päällä, kun tehtävän aika on käynnissä", appKeepsScreenOn())
         waitRealTime(
             75_000L,
             "Aika käynnistyi, mutta \"${t(R.string.time_ended)}\" ei tullut näkyviin 75 sekunnissa."
@@ -168,6 +187,7 @@ class ProgramDayDeviceTest {
             shown(hasText(t(R.string.time_ended))) ||
                 shown(hasContentDescription(t(R.string.a11y_time_ended), substring = true))
         }
+        assertFalse("näyttö vapautuu, kun aika on päättynyt", appKeepsScreenOn())
         clickDone()
 
         // 5. Pukeutuminen: Valmis.

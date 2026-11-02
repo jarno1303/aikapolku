@@ -159,6 +159,9 @@ internal fun AikaPolkuApp() {
     fun chosen(name: String) = if (name == placeholder) "" else name
 
     val soundScope = rememberCoroutineScope()
+    // Ajastin ja Ensin–Sitten: näyttö päällä ajan käydessä (ks. ScreenOn).
+    fi.aikapolku.app.timer.KeepScreenOnWhile("timer", timer.running)
+
     LaunchedEffect(timer.running, timer.deadline) {
         while (timer.running) {
             when (timer.tick()) {

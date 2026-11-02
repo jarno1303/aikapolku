@@ -224,6 +224,9 @@ internal fun ProgramsScreen(
         }
     }
 
+    // Näyttö pysyy päällä, kun tehtävän aika on käynnissä (ks. ScreenOn).
+    fi.aikapolku.app.timer.KeepScreenOnWhile("program", view == ProgramsView.RUN && run.running)
+
     LaunchedEffect(view, run.running, run.deadline, run.stepIndex) {
         if (view == ProgramsView.RUN && run.running) {
             while (true) {
