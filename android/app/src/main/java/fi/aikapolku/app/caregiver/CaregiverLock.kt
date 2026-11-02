@@ -15,13 +15,13 @@ internal enum class AppAction(val caregiverOnly: Boolean) {
     HELP(false),
     BREAK(false),
     DONE(false),
-    SKIP_STEP(false),
     START_RESUME(false), // Aloita ja Jatka; Tarvitsen tauon (BREAK) pysäyttää aina ilman PIN-koodia.
     START_PROGRAM(false),
     VIEW_PROGRAM(false),
     PRINT(false),
 
     // Ohjaajan toiminnot – lukittuja, kun lukitus on päällä.
+    SKIP_STEP(true), // Tehtävän ohitus on ohjaajan päätös (roolijako 2.11.2026).
     ADJUST_TIME(true),
     PAUSE_TIMER(true), // Tauko-painike ja muut käynnissä olevan ajastimen pysäytykset
     RESET_TIMER(true),

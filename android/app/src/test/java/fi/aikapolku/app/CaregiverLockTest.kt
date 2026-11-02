@@ -41,12 +41,14 @@ class CaregiverLockTest {
     // --- Linjaus: käyttäjän omat toiminnot eivät ole koskaan lukossa ---
 
     @Test
-    fun `apu tarvitsen tauon valmis ohitus ja aloita-jatka eivat ole koskaan ohjaajan toimintoja`() {
+    fun `apu tarvitsen tauon valmis ja aloita-jatka eivat ole koskaan ohjaajan toimintoja`() {
         val alwaysFree = listOf(
-            AppAction.HELP, AppAction.BREAK, AppAction.DONE, AppAction.SKIP_STEP,
+            AppAction.HELP, AppAction.BREAK, AppAction.DONE,
             AppAction.START_RESUME, AppAction.START_PROGRAM, AppAction.VIEW_PROGRAM, AppAction.PRINT
         )
         alwaysFree.forEach { assertFalse("$it ei saa olla lukittu", it.caregiverOnly) }
+        // Roolijako 2.11.2026: tehtävän ohitus on ohjaajan päätös.
+        assertTrue(AppAction.SKIP_STEP.caregiverOnly)
     }
 
     @Test
@@ -60,10 +62,10 @@ class CaregiverLockTest {
     }
 
     @Test
-    fun `ohjaajan toiminnot ovat ajan muutos tauko nollaus lisaaika lopetus muokkaus ja asetukset`() {
+    fun `ohjaajan toiminnot ovat ohitus ajan muutos tauko nollaus lisaaika lopetus muokkaus ja asetukset`() {
         assertEquals(
             setOf(
-                AppAction.ADJUST_TIME, AppAction.PAUSE_TIMER, AppAction.RESET_TIMER, AppAction.EXTEND_TIME,
+                AppAction.SKIP_STEP, AppAction.ADJUST_TIME, AppAction.PAUSE_TIMER, AppAction.RESET_TIMER, AppAction.EXTEND_TIME,
                 AppAction.END_PROGRAM, AppAction.EDIT_PROGRAMS, AppAction.EDIT_CARDS, AppAction.SETTINGS
             ),
             AppAction.values().filter { it.caregiverOnly }.toSet()

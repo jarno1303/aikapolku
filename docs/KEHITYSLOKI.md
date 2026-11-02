@@ -381,3 +381,7 @@
 - Asiakkaaksi vaihdettaessa ohjaajan näkymistä palataan aloitukseen. Asiakkaan valikossa vain profiilin vaihto (jos sallittu) ja Ohjaajan tila.
 - Korjattu: valintaympyrät otsikon kohdalle (muutoksen näkyminen, vientivalinnat); Lisävalinnat-kuvaus vain suljettuna.
 - Uudet testit: roolit (5), käyttöliittymätestiin ohjaajan ja asiakkaan etusivun erot.
+
+## Päiväohjelman aloitus ja asiakkaan suoritusnäkymä
+- Päiväohjelma alkaa aloitusnäkymästä (Tänään-listasta ja Päiväohjelmista): nimi, tehtävien määrä, tehtävät kuvina järjestyksessä ja iso Aloita. Tänään perutut vaiheet eivät näy; jos päivän ohjelmassa on muutoksia, "Tänään on muutoksia" muutosmerkillä. Ensimmäinen tehtävä tulee vasta Aloita-painalluksesta. Keskeytynyt ohjelma jatkuu suoraan.
+- Asiakkaalla ei Muut toiminnot -valikkoa: tilalla "Näytä koko ohjelma". Asiakkaalla vain Tarvitsen apua, Tarvitsen tauon ja Valmis. Ohita on ohjaajan toiminto (SKIP_STEP), samoin lisäaika, muutos, asetukset ja lopetus ohjaajan Muut toiminnot -valikossa.

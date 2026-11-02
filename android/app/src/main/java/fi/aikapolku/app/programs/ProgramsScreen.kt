@@ -16,6 +16,7 @@ import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramStore
+import fi.aikapolku.app.ui.BackOverride
 import fi.aikapolku.app.data.SubstepDefaults
 import fi.aikapolku.app.week.StepChangeDialog
 import fi.aikapolku.app.week.replacementStep
@@ -60,7 +61,7 @@ private val programDraftSaver = Saver<DayProgram, String>(
 )
 
 /** Päiväohjelmien näkymät. */
-internal enum class ProgramsView { LIST, EDIT, RUN, DONE }
+internal enum class ProgramsView { LIST, EDIT, READY, RUN, DONE }
 
 /** Luettelon välilehdet: ohjelmat ja viikko-ohjelma. */
 internal enum class ProgramsTab { PROGRAMS, WEEK }
@@ -150,10 +151,20 @@ internal fun ProgramsScreen(
         mutableStateOf(TimeDisplayPrefs.load(context))
     }
 
+    // Aloitusnäkymä ennen ensimmäistä tehtävää: asiakas näkee, mitä tulee, ja aloittaa itse.
+    var readyDraft by rememberSaveable { mutableStateOf<String?>(null) }
+
     fun startProgram(program: DayProgram) {
         if (program.steps.isEmpty()) return
         showFullProgram = false
-        run.start(withTodayChanges(context, program))
+        readyDraft = serializeDraft(withTodayChanges(context, program))
+        view = ProgramsView.READY
+    }
+
+    fun beginRun() {
+        val ready = readyDraft?.let { parseDraft(it) } ?: return
+        run.start(ready)
+        readyDraft = null
         view = ProgramsView.RUN
     }
 
@@ -233,6 +244,14 @@ internal fun ProgramsScreen(
 
     // Suorituksen aikana yläpalkissa ohjelman nimi.
     if (view == ProgramsView.RUN || view == ProgramsView.DONE) ScreenTitle(run.program.name)
+    val readyProgram = remember(readyDraft) { readyDraft?.let { parseDraft(it) } }
+    if (view == ProgramsView.READY && readyProgram != null) {
+        ScreenTitle(readyProgram.name)
+        BackOverride {
+            readyDraft = null
+            view = ProgramsView.LIST
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         val runStep = if (view == ProgramsView.RUN) run.currentStep else null
@@ -279,7 +298,9 @@ internal fun ProgramsScreen(
                     onHelp = { run.requestSupport(SupportKind.HELP) },
                     onBreak = { run.requestSupport(SupportKind.BREAK) },
                     onDone = { onDonePressed() },
-                    onMore = { showRunActions = true },
+                    // Asiakkaalla ei Muut toiminnot -valikkoa (ohitus, lopetus ym. ovat ohjaajan).
+                    onMore = { if (caregiver.isCaregiver) showRunActions = true else showFullProgram = true },
+                    moreIsProgram = !caregiver.isCaregiver,
                     doneLabel = when (run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver)) {
                         DoneGate.START_TIMER -> stringResource(R.string.done_start_timer)
                         DoneGate.WAIT -> stringResource(R.string.done_wait, formatLeft(run.timeLeft()))
@@ -339,6 +360,9 @@ internal fun ProgramsScreen(
         }
 
         ProgramsView.EDIT -> Unit // Muokkain piirretään yllä (ProgramEditorScreen).
+
+        ProgramsView.READY -> readyProgram?.let { ProgramStartView(it, onStart = { beginRun() }) }
+            ?: run { view = ProgramsView.LIST }
 
         ProgramsView.RUN -> Unit // Suoritus piirretään yllä omana näkymänään (RunStepScreen).
 

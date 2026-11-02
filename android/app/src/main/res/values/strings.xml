@@ -605,4 +605,6 @@
     <string name="home_settings_info">Profiilit, lukitus, muistutukset, vienti ja tuonti</string>
     <string name="home_view_as_client">Katso asiakkaana</string>
     <string name="home_view_as_client_info">Näe, mitä asiakas näkee juuri nyt</string>
+    <string name="program_start_count">%1$d tehtävää</string>
+    <string name="program_start_changes">Tänään on muutoksia</string>
 </resources>

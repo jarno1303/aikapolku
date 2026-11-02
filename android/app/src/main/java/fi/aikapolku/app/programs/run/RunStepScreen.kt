@@ -3,6 +3,7 @@ package fi.aikapolku.app.programs.run
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -103,6 +104,8 @@ internal fun RunStepScreen(
     onBreak: () -> Unit,
     onDone: () -> Unit,
     onMore: () -> Unit,
+    /** Asiakkaalla Muut toiminnot -painikkeen tilalla "Koko ohjelma". */
+    moreIsProgram: Boolean = false,
     /** Valmis-painikkeen teksti, kun se poikkeaa tavallisesta (esim. "Aloita aika" tai jäljellä oleva aika). */
     doneLabel: String? = null,
     /** false = odotetaan ajan päättymistä (painike himmeä). */
@@ -251,13 +254,20 @@ internal fun RunStepScreen(
                 RunNextRow(next = next, mode = nextMode)
             }
 
-            // Ohita ja muut harvinaiset toiminnot yhden painikkeen takana.
+            // Ohjaajalla Ohita ja muut harvinaiset toiminnot yhden painikkeen takana;
+            // asiakkaalla vain koko ohjelman katselu.
             TextButton(
                 onClick = onMore,
                 modifier = Modifier.align(Alignment.CenterHorizontally).heightIn(min = 48.dp)
             ) {
-                Icon(Icons.Rounded.MoreVert, contentDescription = null, tint = RunColors.teal, modifier = Modifier.size(20.dp))
-                Text(stringResource(R.string.muut_toiminnot), color = RunColors.teal, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 4.dp))
+                Icon(
+                    if (moreIsProgram) Icons.AutoMirrored.Rounded.List else Icons.Rounded.MoreVert,
+                    contentDescription = null, tint = RunColors.teal, modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    stringResource(if (moreIsProgram) R.string.nayta_koko_ohjelma else R.string.muut_toiminnot),
+                    color = RunColors.teal, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 4.dp)
+                )
             }
         }
     }
