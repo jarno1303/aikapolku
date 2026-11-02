@@ -284,3 +284,8 @@
 - Logo, sovelluksen nimi ja iskulause poistettu aloitusnäkymästä: ylimpänä päivän tilanne ("Tänään · Maanantai ✓ 1/1 ›").
 - Profiili oikeassa yläkulmassa pienenä kuvana (vain, kun profiileja on useampi); napautus avaa vaihdon samoin säännöin.
 - Ilman päivän tapahtumia ylimpänä "Mitä haluat tehdä?" ja profiilikuva.
+
+## Aloitusnäkymä: vain päivä, valikko ja toiminnot
+- Ylärivillä päivän nimi (ja tehty/kaikki-laskuri, kun tapahtumia on) sekä oikeassa yläkulmassa valikko: profiilikuva (useampi profiili) tai valikkokuvake. Valikossa "Vaihda profiilia" ja "Ohjaajan asetukset".
+- Poistettu: "Mitä haluat tehdä?", erillinen Ohjaajan asetukset -linkki ja alareunan esittelyteksti. Ensin–Sitten-kortin alateksti lyhennetty ("Kaksi asiaa järjestyksessä").
+- Kuitatussa kortissa ei enää toista Takaisin-painiketta (yläreunan Takaisin riittää).

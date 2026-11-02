@@ -232,7 +232,6 @@ internal fun AikaPolkuApp() {
                         val date = runCatching { LocalDate.parse(eventCardDate) }.getOrElse { LocalDate.now() }
                         eventCardId.takeIf { it.isNotBlank() }?.let { AckStore(context).ackTime(date, it) }
                     },
-                    onBack = { page = AppPage.HOME },
                     onDone = {
                         // Valmis kuittaa tapahtuman (näkyy Tänään-listassa ja ohjaajalle).
                         if (eventCardId.isNotBlank()) {

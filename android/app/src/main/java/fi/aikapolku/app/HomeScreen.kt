@@ -1,6 +1,17 @@
 package fi.aikapolku.app
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import fi.aikapolku.app.data.Profile
+import fi.aikapolku.app.week.dayName
+import java.time.LocalDate
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -33,22 +44,23 @@ internal fun HomeScreen(
     onOpenCard: (WeekEvent) -> Unit = {},
     onOpenDay: () -> Unit = {}
 ) {
-    // Ei logoa eikä iskulausetta: ylimpänä päivän tilanne ja oikeassa yläkulmassa profiili
-    // (vain, jos profiileja on useampi). Vaihto vaatii ohjaajan PIN-koodin, ellei ohjaaja
-    // ole sallinut omaa valintaa.
+    // Aloitusnäkymässä vain päivä, valikko ja toiminnot. Oikean yläkulman valikosta profiilin
+    // vaihto (vain, jos profiileja on useampi) ja ohjaajan asetukset (PIN-koodin takana).
     val context = LocalContext.current
-    val caregiverAccess = LocalCaregiver.current
+    val caregiver = LocalCaregiver.current
     val revision = ProfileSession.revision
     val profiles = remember(revision) { ProfileStore.list(context) }
     val currentId = remember(revision) { ProfileStore.currentId(context) }
     var choosing by remember { mutableStateOf(false) }
-    val profileButton: @Composable () -> Unit = {
-        if (profiles.size > 1) {
-            ProfileAvatarButton(profiles.first { it.id == currentId }) {
+    val menuButton: @Composable () -> Unit = {
+        HomeMenu(
+            profile = profiles.first { it.id == currentId }.takeIf { profiles.size > 1 },
+            onSwitchProfile = {
                 if (ProfileStore.selfSelect(context)) choosing = true
-                else caregiverAccess.run(AppAction.SETTINGS) { choosing = true }
-            }
-        }
+                else caregiver.run(AppAction.SETTINGS) { choosing = true }
+            },
+            onCaregiverSettings = { caregiver.run(AppAction.SETTINGS) { open(AppPage.CAREGIVER) } }
+        )
     }
     if (choosing) {
         ProfilePickerDialog(
@@ -62,24 +74,26 @@ internal fun HomeScreen(
         )
     }
 
-    // Viikko-ohjelman päivä, jos tälle päivälle on tapahtumia.
+    // Ylärivi: päivä ja (jos tapahtumia) tehty/kaikki sekä nyt- ja seuraavat tapahtumat.
     val todayShown = TodaySection(
         onOpenProgram = onOpenProgram,
         onOpenCard = onOpenCard,
         onOpenDay = onOpenDay,
-        trailing = profileButton
+        trailing = menuButton
     )
-
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-        Text(
-            stringResource(R.string.mita_haluat_tehda),
-            modifier = Modifier.weight(1f),
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = AppColors.Ink
-        )
-        if (!todayShown) profileButton()
+    if (!todayShown) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            Text(
+                dayName(LocalDate.now().dayOfWeek.value),
+                modifier = Modifier.weight(1f).semantics { heading() },
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = AppColors.Ink
+            )
+            menuButton()
+        }
     }
+    Spacer(Modifier.height(2.dp))
     HomeCard(
         symbol = "timer",
         title = stringResource(R.string.timer_title),
@@ -99,29 +113,55 @@ internal fun HomeScreen(
         onClick = { open(AppPage.PROGRAMS) }
     )
 
-    val caregiver = LocalCaregiver.current
-    TextButton(
-        onClick = { caregiver.run(AppAction.SETTINGS) { open(AppPage.CAREGIVER) } },
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-    ) {
-        Text(
-            if (caregiver.isLocked) stringResource(R.string.home_caregiver_settings_locked) else stringResource(R.string.home_caregiver_settings_open),
-            color = AppColors.Teal,
-            fontSize = 15.sp
-        )
-    }
+}
 
-    Spacer(Modifier.height(14.dp))
-    Surface(
-        color = Color(0xFFE6F4F1),
-        shape = RoundedCornerShape(17.dp)
-    ) {
-        Text(
-            stringResource(R.string.nae_mita_teet_nyt_ja),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 17.dp, vertical = 14.dp),
-            fontSize = 14.sp,
-            color = Color(0xFF145B55)
-        )
+/**
+ * Oikean yläkulman valikko: profiilikuva (kun profiileja on useampi) tai valikkokuvake.
+ * Valikossa profiilin vaihto ja ohjaajan asetukset.
+ */
+@Composable
+private fun HomeMenu(profile: Profile?, onSwitchProfile: () -> Unit, onCaregiverSettings: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val menuLabel = stringResource(R.string.menu_open)
+    Box {
+        if (profile != null) {
+            ProfileAvatarButton(profile) { expanded = true }
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button) { expanded = true }
+                    .semantics { contentDescription = menuLabel },
+                contentAlignment = Alignment.Center
+            ) {
+                // Valikkokuvake (kolme viivaa) piirrettynä, ei emojia: sama ilme kaikissa puhelimissa.
+                Canvas(modifier = Modifier.size(22.dp)) {
+                    val stroke = 2.5.dp.toPx()
+                    listOf(0.2f, 0.5f, 0.8f).forEach { y ->
+                        drawLine(
+                            AppColors.Ink,
+                            Offset(0f, size.height * y),
+                            Offset(size.width, size.height * y),
+                            strokeWidth = stroke,
+                            cap = StrokeCap.Round
+                        )
+                    }
+                }
+            }
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            if (profile != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.menu_switch_profile), fontSize = 17.sp) },
+                    onClick = { expanded = false; onSwitchProfile() }
+                )
+            }
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_caregiver_settings), fontSize = 17.sp) },
+                onClick = { expanded = false; onCaregiverSettings() }
+            )
+        }
     }
 }
 

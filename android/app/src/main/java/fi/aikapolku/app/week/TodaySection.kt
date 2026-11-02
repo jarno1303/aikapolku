@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -234,10 +233,10 @@ private fun TodayRow(item: ResolvedEvent, isCurrent: Boolean, isPast: Boolean, d
 
 /**
  * Yksittäisen kortin tapahtuma isona: kuva, nimi ja Valmis. Jos tapahtuma on jo kuitattu
- * ([doneAt]), Valmiin tilalla näkyy kuittausaika ja Takaisin, eikä aika muutu.
+ * ([doneAt]), Valmiin tilalla näkyy kuittausaika (takaisin yläreunasta), eikä aika muutu.
  */
 @Composable
-internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDone: () -> Unit, onBack: () -> Unit) {
+internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDone: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -267,11 +266,6 @@ internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDon
                 fontWeight = FontWeight.Bold,
                 color = AppColors.Teal
             )
-            OutlinedButton(
-                onClick = onBack,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                shape = RoundedCornerShape(18.dp)
-            ) { Text(stringResource(R.string.back), fontSize = 18.sp, color = AppColors.Teal) }
         } else {
             Button(
                 onClick = onDone,

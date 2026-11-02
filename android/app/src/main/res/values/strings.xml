@@ -113,8 +113,6 @@
     <string name="flow_done_button">✓ Valmis</string>
     <string name="flow_stage_first">1  ENSIN</string>
     <string name="flow_stage_then">2  SITTEN</string>
-    <string name="home_caregiver_settings_locked">🔒 Ohjaajan asetukset</string>
-    <string name="home_caregiver_settings_open">⚙ Ohjaajan asetukset</string>
     <string name="huom_jokin_kiintea_aika_alkaa">Huom: jokin kiinteä aika alkaa ennen kuin edellinen toiminto päättyy. Voit tallentaa silti.</string>
     <string name="huom_puhelimessa_ei_ole_nayton">Huom: puhelimessa ei ole näytön lukitusta. Unohtunutta PIN-koodia ei voi nollata, ennen kuin puhelimen näytön lukitus otetaan käyttöön.</string>
     <string name="hylataanko_muutokset">Hylätäänkö muutokset?</string>
@@ -172,7 +170,6 @@
     <string name="mikrofonin_lupa_evattiin">Mikrofonin lupa evättiin.</string>
     <string name="minutes_short">%1$d min</string>
     <string name="minutes_value">%1$s min</string>
-    <string name="mita_haluat_tehda">Mitä haluat tehdä?</string>
     <string name="miten_aika_kulkee">Miten aika kulkee?</string>
     <string name="miten_aika_naytetaan">Miten aika näytetään?</string>
     <string name="miten_haluat_edeta">Miten haluat edetä?</string>
@@ -181,7 +178,6 @@
     <string name="muokkaa_paivaohjelmaa">Muokkaa päiväohjelmaa</string>
     <string name="muokkaa_toimintoa">Muokkaa toimintoa</string>
     <string name="muut_toiminnot">Muut toiminnot</string>
-    <string name="nae_mita_teet_nyt_ja">Näe, mitä teet nyt ja mitä seuraavaksi.</string>
     <string name="nae_paivan_kulku">Näe päivän kulku</string>
     <string name="nain_ohjelma_nakyy">Näin ohjelma näkyy</string>
     <string name="nakyma_ja_viestiaanet">Näkymä ja viestiäänet</string>
@@ -295,7 +291,7 @@
     <string name="support_break">Tarvitsen tauon</string>
     <string name="support_continue">▶  Jatka</string>
     <string name="support_help">Tarvitsen apua</string>
-    <string name="suunnittele_kaksi_askelta">Suunnittele kaksi askelta</string>
+    <string name="suunnittele_kaksi_askelta">Kaksi asiaa järjestyksessä</string>
     <string name="takaisin_aloitukseen">Takaisin aloitukseen</string>
     <string name="takaisin_ensin_sitten">Takaisin Ensin – Sitten</string>
     <string name="takaisin_paivaohjelmiin">Takaisin päiväohjelmiin</string>
@@ -432,7 +428,7 @@
     <string name="week_need_day">Valitse vähintään yksi päivä.</string>
     <string name="week_delete_event">Poista tapahtuma</string>
     <string name="week_program_delete_note">Ohjelma poistuu myös viikko-ohjelmasta.</string>
-    <string name="today_title">Tänään · %1$s</string>
+    <string name="today_title">%1$s</string>
     <string name="today_start">Aloita</string>
 
     <!-- Ilmoitukset ja kuittaukset -->
@@ -470,4 +466,7 @@
     <string name="reminder_test_text">Muistutukset toimivat tässä puhelimessa.</string>
     <string name="today_progress">✓ %1$d/%2$d  ›</string>
     <string name="today_progress_a11y">tehty %1$d / %2$d. Avaa koko päivä</string>
+    <string name="menu_open">Valikko</string>
+    <string name="menu_switch_profile">Vaihda profiilia</string>
+    <string name="menu_caregiver_settings">Ohjaajan asetukset</string>
 </resources>
