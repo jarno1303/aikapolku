@@ -28,6 +28,7 @@ import fi.aikapolku.app.timer.BackgroundTimerPort
 import fi.aikapolku.app.timer.Tick
 import fi.aikapolku.app.timer.TimerScreen
 import fi.aikapolku.app.timer.TimerReturnRow
+import fi.aikapolku.app.backup.ImportLaunch
 import fi.aikapolku.app.week.ChangeScreen
 import fi.aikapolku.app.data.ChangeStore
 import fi.aikapolku.app.data.ChangeType
@@ -112,6 +113,12 @@ internal fun AikaPolkuApp() {
                 page = AppPage.EVENT_CARD
             }
         }
+    }
+
+    // Sähköpostin liitteestä avattu vientitiedosto: tuonti on ohjaajan toiminto (PIN).
+    val importUri = ImportLaunch.pending.value
+    LaunchedEffect(importUri) {
+        if (importUri != null) caregiver.run(AppAction.SETTINGS) { page = AppPage.CAREGIVER }
     }
 
     // Valinnat tallennetaan aina niiden muuttuessa.

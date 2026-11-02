@@ -117,6 +117,14 @@ internal fun ProgramsScreen(
     }
     val programmeScroll = rememberScrollState()
     var deleteTarget by remember { mutableStateOf<DayProgram?>(null) }
+    // Yhden päiväohjelman vienti tiedostoksi (ohjelman ⋮-valikosta).
+    var exportTarget by remember { mutableStateOf<String?>(null) }
+    exportTarget?.let { id ->
+        fi.aikapolku.app.backup.ExportDialog(
+            initialScope = fi.aikapolku.app.backup.BackupScope.PROGRAMS,
+            initialProgramIds = setOf(id)
+        ) { exportTarget = null }
+    }
     var timeSettingsOpen by remember { mutableStateOf(false) }
 
     // Jos lukitus menee päälle, ohjaajan ikkunat suljetaan. Muokkausnäkymä jätetään
@@ -311,6 +319,7 @@ internal fun ProgramsScreen(
             onStart = { startProgram(it) },
             onPrint = { ProgramPrint.open(context, it) },
             onShare = { ProgramPrint.shareImage(context, it) },
+            onExport = { exportTarget = it.id },
             onEdit = {
                 draft = ProgramTiming.infer(it)
                 view = ProgramsView.EDIT

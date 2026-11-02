@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import fi.aikapolku.app.caregiver.CaregiverLockHost
+import fi.aikapolku.app.backup.ImportLaunch
 import fi.aikapolku.app.caregiver.CaregiverSession
 import androidx.compose.ui.platform.LocalContext
 import fi.aikapolku.app.data.ProfileStore
@@ -20,7 +21,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Ilmoituksesta avattu tapahtuma (vain ensimmäisellä kerralla, ei esim. näytön kääntyessä).
-        if (savedInstanceState == null) EventLaunch.from(intent)
+        if (savedInstanceState == null) {
+            EventLaunch.from(intent)
+            ImportLaunch.from(intent)
+        }
         EventReminders.onAppStart(this)
         setContent {
             AikapolkuTheme {
@@ -41,6 +45,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         EventLaunch.from(intent)
+        ImportLaunch.from(intent)
     }
 
     override fun onStop() {

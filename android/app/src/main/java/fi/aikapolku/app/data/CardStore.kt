@@ -43,14 +43,20 @@ internal data class FirstThenSelection(
     val nextVoiceAuto: Boolean = false
 )
 
-internal class CardStore(context: Context) {
+internal class CardStore(context: Context, profileId: String = ProfileStore.currentId(context)) {
     private val appContext = context.applicationContext
-    // Nykyisen profiilin kortit ja Ensin–Sitten-valinnat.
-    private val prefs = ProfileScope.prefs(context, ProfileScope.CARDS)
+    // Profiilin (oletuksena nykyisen) kortit ja Ensin–Sitten-valinnat.
+    private val prefs = ProfileScope.prefs(context, ProfileScope.CARDS, profileId)
 
-    fun loadCards(): List<CardItem> {
+    fun loadCards(): List<CardItem> = decodeCards(prefs.getString("cards", "[]"))
+
+    companion object {
+        const val KEY_CARDS = "cards"
+
+        /** Korttien JSON-luettelo (myös vientitiedostosta). Rikkinäinen = tyhjä. */
+        fun decodeCards(text: String?): List<CardItem> {
         val array = runCatching {
-            JSONArray(prefs.getString("cards", "[]") ?: "[]")
+            JSONArray(text ?: "[]")
         }.getOrElse { JSONArray() }
 
         return buildList {
@@ -73,6 +79,7 @@ internal class CardStore(context: Context) {
                     )
                 }
             }
+        }
         }
     }
 

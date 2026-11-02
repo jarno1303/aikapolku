@@ -348,3 +348,13 @@
 - Muutokset ovat profiilikohtaisia (ProfileScope.CHANGES), yli viikon vanhat ja poistettujen tapahtumien muutokset siivotaan. Koskee vain tätä puhelinta (ei synkronointia).
 - Huom: ilman ohjaajan lukitusta ohjaajan ja käyttäjän näkymää ei erotella; ajastettu näkyminen toimii vain käyttäjän näkymässä.
 - Uudet testit: muutoslogiikka ja muistutukset (13), tallennus (4).
+
+## Vaihe 5: vienti ja tuonti
+- Ohjaajan asetuksissa "Vienti ja tuonti" (PIN-koodin takana). Viedään kaikki profiilit (varmuuskopio, näkyy kun profiileja on useampi), tämä profiili tai valitut päiväohjelmat; päiväohjelman ⋮-valikossa "Vie tiedostoksi".
+- Tiedosto .aikapolku: zip (data.json + media/). Mukana päiväohjelmat, omat kortit, viikko-ohjelma, profiilin asetukset sekä niiden kuvat ja äänitteet. Kuvat pienennetään (pisin sivu 1600 px). Ei viedä: kuittaukset, päivän muutokset, suorituksen edistyminen, Ensin–Sitten-valinta, ohjaajan PIN-koodi.
+- Salasanasuojaus: AES-256-GCM, avain PBKDF2-HMAC-SHA256 (120 000 kierrosta), vähintään 6 merkkiä. Oletuksena päällä profiilien viennissä, pois ohjelmapohjissa. Muokattu tai väärällä salasanalla avattu tiedosto torjutaan.
+- "Ilman henkilötietoja" ohjelmapohjille (oletus päällä): omat valokuvat korvataan valmiilla kuvalla vaiheen nimen mukaan tai jätetään pois, äänitteet jätetään pois. Muuten muistutus henkilötiedoista ennen jakamista.
+- Jaa (Androidin jakovalikko) tai Tallenna laitteelle. Tuonti: Tuo tiedostosta tai avaus suoraan sähköpostin liitteestä (vaatii ohjaajan PIN-koodin). Esikatselu (profiilit, ohjelmat, kortit, viikko-ohjelma), salasana tarvittaessa.
+- Kohde: uutena profiilina (oletus profiileille, mitään ei korvata; samanniminen profiili saa "(2)") tai nykyiseen profiiliin (oletus ohjelmapohjille): ohjelmat ja kortit lisätään, täysin samanlaiset ohitetaan, samannimiset saavat "(2)"; viikko-ohjelma korvataan vain erikseen valittaessa, ja sen tapahtumat osoittavat tuotuihin ohjelmiin. Kaikkien profiilien tiedosto tuodaan aina uusina profiileina.
+- Uudemman version tiedosto torjutaan selkeällä viestillä (formaatin versio 1).
+- Uudet testit: paketointi, salaus ja mediaviittaukset (8, myös Windows-polut), yhdistäminen ja anonymisointi (5), vienti–tuonti kokonaisuutena (3).

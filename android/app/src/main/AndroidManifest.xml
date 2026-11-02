@@ -27,6 +27,19 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Vientitiedoston (.aikapolku) avaus esim. sähköpostin liitteestä. Tuonti vaatii ohjaajan PIN-koodin. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/x-aikapolku" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
         </activity>
         <!-- Jaa kuvana: päiväohjelman PNG jaetaan välimuistista. -->
         <provider

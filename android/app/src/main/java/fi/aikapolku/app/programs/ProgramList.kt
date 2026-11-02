@@ -64,6 +64,7 @@ internal fun ProgramListView(
     onStart: (DayProgram) -> Unit,
     onPrint: (DayProgram) -> Unit,
     onShare: (DayProgram) -> Unit,
+    onExport: (DayProgram) -> Unit = {},
     onEdit: (DayProgram) -> Unit,
     onDelete: (DayProgram) -> Unit
 ) {
@@ -101,6 +102,7 @@ internal fun ProgramListView(
     val menuLabel = stringResource(R.string.muut_toiminnot)
     val printLabel = stringResource(R.string.tulosta_pdf)
     val shareLabel = stringResource(R.string.share_as_image)
+    val exportLabel = stringResource(R.string.backup_export)
     val editLabel = stringResource(R.string.edit)
     val deleteLabel = stringResource(R.string.delete)
     programs.forEach { program ->
@@ -140,6 +142,7 @@ internal fun ProgramListView(
                         add(printLabel to { onPrint(program) })
                         add(shareLabel to { onShare(program) })
                         if (canEdit) {
+                            add(exportLabel to { onExport(program) })
                             add(editLabel to { onEdit(program) })
                             add(deleteLabel to { onDelete(program) })
                         }

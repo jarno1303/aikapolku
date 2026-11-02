@@ -30,6 +30,7 @@ import fi.aikapolku.app.R
 import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.profiles.ProfilesSettingsCard
 import fi.aikapolku.app.week.NotificationStatusCard
+import fi.aikapolku.app.backup.BackupSettingsCard
 
 /** Ohjaajan asetukset -sivu. Sivulle pääsee vain ohjaajana (ks. MainActivity). */
 @Composable
@@ -40,6 +41,8 @@ internal fun CaregiverSettingsScreen() {
     ProfilesSettingsCard()
 
     NotificationStatusCard()
+
+    BackupSettingsCard()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
