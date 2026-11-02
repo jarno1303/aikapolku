@@ -328,3 +328,11 @@
 - Ajastimen päättymisilmoitus: otsikko "Aika on päättynyt", tekstinä toiminto (ei katkea; puhelin näyttää sovelluksen nimen itse). Luokka hälytys.
 - Uudet valmiit kortit: Lounas (Päivä), Päivällinen ja Iltapala (Ilta). Valmiissa pohjissa koulupäivä ja päivätoiminta käyttävät Lounasta, iltarutiini Iltapalaa.
 - Uudet testit: sanan katkeaminen (3), uusien korttien ryhmät (1). Valmiiden korttien määrä testeissä 21 → 24.
+
+## Korjaus: ajastin ei pysähdy huomaamatta (puhelintesti)
+- Periaate: aika pysähtyy vain selvästi merkitystä taukopainikkeesta.
+- Takaisin ajastimesta ei enää pysäytä aikaa. Kesken oleva Ensin-ajastus (käynnissä, tauolla tai aika päättynyt) näkyy aloitus- ja Ensin–Sitten-näkymässä rivinä "Ajastin käynnissä · Aamupala · 3.12 ›", josta palataan samaan ajastukseen. Ensin–Sitten-näkymän pääpainike on silloin "Palaa ajastimeen"; "Aloita aika alusta" erikseen. Aloitusnäkymän Ajastin avaa kesken olevan ajastuksen.
+- Keskipainike näyttää aina tauon tai aloituksen kuvakkeen; lukittuna tauossa on pieni lukkomerkki (aiemmin pelkkä lukko näytti lukon avaamiselta, mutta PIN-koodin jälkeen aika pysähtyi).
+- Ajan valinta kellotaululta toimii ennen käynnistystä kaikissa näyttötavoissa (ennen vain "Numerot ja rengas"). Asetettu kesto näkyy kellotaulun alla ("Aika: 5 min"; rauhallisessa tilassa vain ohjaajalle).
+- Rauhallinen: rengas neljässä osassa, yksi poistuu kerrallaan, joten eteneminen näkyy ilman numeroita.
+- Sama vaaka-asennon ajastimeen. Uudet testit: kesken oleva ajastus (2), rauhallisen osat (1).

@@ -290,6 +290,12 @@
     <string name="tarvitsen_apua_haluan_pitaa_tauon">Tarvitsen apua. Haluan pitää tauon.</string>
     <string name="tauko_vaatii_ohjaajan_pin_koodin">Tauko vaatii ohjaajan PIN-koodin.</string>
     <string name="tauolla">Tauolla</string>
+    <string name="timer_return">Palaa ajastimeen</string>
+    <string name="timer_restart">Aloita aika alusta</string>
+    <string name="timer_running_row">Ajastin käynnissä</string>
+    <string name="timer_paused_row">Ajastin tauolla</string>
+    <string name="timer_duration">Aika: %1$d min</string>
+    <string name="timer_pause_locked">Tauko (vaatii ohjaajan PIN-koodin)</string>
     <string name="tehtava">Tehtävä %1$s / %2$s</string>
     <string name="teksti">Teksti</string>
     <string name="template_day_activity">Päivätoiminta</string>

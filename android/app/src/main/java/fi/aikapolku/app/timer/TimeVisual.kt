@@ -82,11 +82,21 @@ internal fun TimeVisual(
                     )
                 }
             } else {
-                // Calm mode: a constant ring, no progress information.
-                drawCircle(
-                    color = teal.copy(alpha = 0.8f), radius = radius, center = center,
-                    style = Stroke(width = 9.dp.toPx(), cap = StrokeCap.Round)
-                )
+                // Rauhallinen: neljä osaa, yksi poistuu kerrallaan. Eteneminen näkyy ilman
+                // jatkuvasti vähenevää aikaa.
+                val segments = CalmProgress.segmentsLeft(remaining, duration)
+                val gap = 14f
+                repeat(segments) { i ->
+                    drawArc(
+                        color = teal.copy(alpha = 0.85f),
+                        startAngle = -90f + i * 90f + gap / 2f,
+                        sweepAngle = 90f - gap,
+                        useCenter = false,
+                        topLeft = Offset(center.x - radius, center.y - radius),
+                        size = androidx.compose.ui.geometry.Size(radius * 2f, radius * 2f),
+                        style = Stroke(width = 15.dp.toPx(), cap = StrokeCap.Round)
+                    )
+                }
             }
         }
         Text(
@@ -102,5 +112,16 @@ internal fun TimeVisual(
             fontSize = 16.sp,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+internal object CalmProgress {
+    const val SEGMENTS = 4
+
+    /** Montako neljästä osasta on jäljellä: 4 alussa, 0 kun aika on päättynyt. */
+    fun segmentsLeft(remaining: Long, duration: Long): Int {
+        if (remaining <= 0L) return 0
+        val fraction = remaining.toDouble() / duration.coerceAtLeast(1L)
+        return kotlin.math.ceil(fraction.coerceIn(0.0, 1.0) * SEGMENTS).toInt().coerceIn(1, SEGMENTS)
     }
 }

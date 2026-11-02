@@ -100,6 +100,12 @@ internal class FlowTimer(private val timer: TimerPort) {
     var activeTask by mutableStateOf("")
     private var voiceStarted by mutableStateOf(false)
 
+    /**
+     * Ensin-toiminnon ajastus on aloitettu eikä vielä kuitattu (käynnissä, tauolla tai aika
+     * päättynyt). Silloin ajastimeen palataan eikä aikaa aloiteta alusta.
+     */
+    val inProgress: Boolean get() = activeTask.isNotBlank() && (running || remaining < duration)
+
     /** Uusi aika kellotaululta. */
     fun setMinutes(minutes: Int) {
         running = false
@@ -164,7 +170,7 @@ internal class FlowTimer(private val timer: TimerPort) {
         activeTask = ""
     }
 
-    /** Ajastimesta palataan Ensin–Sitteniin: aika pysähtyy ja jäljellä oleva aika säilyy. */
+    /** Pysäyttää ajan säilyttäen jäljellä olevan ajan (ohjaajan tauko). */
     fun stopKeepingRemaining() {
         if (running) {
             remaining = (deadline - timer.now()).coerceAtLeast(0L)

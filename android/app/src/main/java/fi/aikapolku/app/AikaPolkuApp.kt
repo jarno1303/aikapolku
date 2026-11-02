@@ -27,6 +27,7 @@ import fi.aikapolku.app.timer.BackgroundTimer
 import fi.aikapolku.app.timer.BackgroundTimerPort
 import fi.aikapolku.app.timer.Tick
 import fi.aikapolku.app.timer.TimerScreen
+import fi.aikapolku.app.timer.TimerReturnRow
 import fi.aikapolku.app.timer.playCompletionSound
 import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.ui.AppTopBar
@@ -148,12 +149,11 @@ internal fun AikaPolkuApp() {
         if (timer.running && caregiver.isLocked) caregiver.run(AppAction.PAUSE_TIMER, action) else action()
     }
 
+    // Takaisin ei pysäytä aikaa: ajastin jatkuu taustalla ja siihen palataan
+    // "Ajastin käynnissä" -riviltä. Tauko tehdään vain taukopainikkeella.
     val goBack: () -> Unit = {
         if (page == AppPage.TIMER && timer.activeTask.isNotBlank()) {
-            guardTimerStop {
-                timer.stopKeepingRemaining()
-                page = AppPage.FIRST_THEN
-            }
+            page = AppPage.FIRST_THEN
         } else if (page == AppPage.MANUAL) {
             page = AppPage.FIRST_THEN
         } else {
@@ -227,11 +227,21 @@ internal fun AikaPolkuApp() {
                 .padding(horizontal = 12.dp, vertical = 9.dp),
             verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {
+            if ((page == AppPage.HOME || page == AppPage.FIRST_THEN) && timer.inProgress) {
+                TimerReturnRow(
+                    task = timer.activeTask,
+                    photo = sel.firstPhoto,
+                    remaining = timer.remaining,
+                    running = timer.running,
+                    onClick = { page = AppPage.TIMER }
+                )
+            }
             when (page) {
                 AppPage.HOME -> HomeScreen(
                     open = { destination ->
                         page = destination
-                        if (destination == AppPage.TIMER) timer.activeTask = ""
+                        // Kesken oleva Ensin-ajastus säilyy; muuten ajastin avataan yksinään.
+                        if (destination == AppPage.TIMER && !timer.inProgress) timer.activeTask = ""
                     },
                     onOpenProgram = { openProgramEvent(it) },
                     onOpenCard = { openCardEvent(it) },
@@ -307,6 +317,8 @@ internal fun AikaPolkuApp() {
                             playFirstVoice()
                         }
                     },
+                    timerInProgress = timer.inProgress,
+                    onReturnToTimer = { page = AppPage.TIMER },
                     onStartTimer = { minutes ->
                         guardTimerStop {
                             timer.prepareForActivity(firstShown, minutes)

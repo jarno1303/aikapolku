@@ -84,12 +84,14 @@ internal fun LandscapeTimer(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
+            // Ennen käynnistystä ohjaaja valitsee ajan kellotaululta kaikissa näyttötavoissa.
+            val showDial = timeMode == TimeDisplayPrefs.NUMBERS || (canAdjust && !running && remaining >= duration)
             BoxWithConstraints(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.TopCenter
             ) {
                 val dialSize = minOf(maxWidth - 4.dp, 212.dp)
-                if (timeMode == TimeDisplayPrefs.NUMBERS) {
+                if (showDial) {
                     ClockDial(
                         remaining = remaining,
                         seconds = seconds,
@@ -108,7 +110,7 @@ internal fun LandscapeTimer(
                 }
             }
 
-            if (timeMode == TimeDisplayPrefs.NUMBERS) {
+            if (showDial) {
                 Text(
                     String.format(Locale.getDefault(), "%02d:%02d", seconds / 60, seconds % 60),
                     fontSize = 24.sp,
@@ -129,12 +131,11 @@ internal fun LandscapeTimer(
                 }
                 RoundIconButton(
                     icon = when {
-                        pauseLocked -> Icons.Rounded.Lock
                         running -> AppIcons.Pause
                         else -> Icons.Rounded.PlayArrow
                     },
                     contentDescription = when {
-                        pauseLocked -> stringResource(R.string.tauko_vaatii_ohjaajan_pin_koodin)
+                        pauseLocked -> stringResource(R.string.timer_pause_locked)
                         running -> stringResource(R.string.pysayta_aika)
                         else -> stringResource(R.string.aloita_aika)
                     },

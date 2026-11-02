@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.border
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -166,7 +168,7 @@ internal fun TimerScreen(
             // Kellotaulu käyttää ruudun leveyden (yläpalkki vapautti tilaa).
             // Korkeus rajaa myös: korttipari, kellotaulu ja painikkeet mahtuvat ilman vieritystä
             // (yläpalkki, ohjaajan palkki ja painikerivi vievät noin 330 dp, korttipari noin 150 dp).
-            val byHeight = (screenHeight - if (guided) 490 else 340).coerceAtLeast(220).dp
+            val byHeight = (screenHeight - if (guided) 510 else 360).coerceAtLeast(220).dp
             val target = minOf(
                 byHeight,
                 when {
@@ -178,11 +180,15 @@ internal fun TimerScreen(
 
             val diameter = minOf(maxWidth - 8.dp, target)
 
+            // Ennen käynnistystä ohjaaja valitsee ajan kellotaululta kaikissa näyttötavoissa;
+            // valittu näyttötapa (rengas / rauhallinen) näkyy, kun aika on käynnissä.
+            val started = running || remaining < duration
+            val showDial = timeMode == TimeDisplayPrefs.NUMBERS || (canAdjust && !started)
             Box(
                 modifier = Modifier.size(diameter),
                 contentAlignment = Alignment.Center
             ) {
-                if (timeMode == TimeDisplayPrefs.NUMBERS) {
+                if (showDial) {
                     ClockDial(
                         remaining = remaining,
                         seconds = secs,
@@ -199,7 +205,7 @@ internal fun TimerScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                 }
-                if (timeMode == TimeDisplayPrefs.NUMBERS && !lastTen) {
+                if (showDial && !lastTen) {
                     // Numerot suoraan renkaan valkoisen keskustan päällä: ei taustalaatikkoa,
                     // joka leikkaisi renkaaseen koloja. Koko suhteessa keskustan kokoon.
                     val innerDiameter = ((diameter / 2) - 44.dp) * 0.62f * 2
@@ -218,6 +224,17 @@ internal fun TimerScreen(
                     )
                 }
             }
+        }
+
+        // Asetettu kesto ohjaajalle. Rauhallisessa tilassa vain, kun ohjaajan toiminnot ovat auki.
+        if (timeMode != TimeDisplayPrefs.CALM || showSettings) {
+            Text(
+                stringResource(R.string.timer_duration, ((duration + 59_999L) / 60_000L).toInt()),
+                modifier = Modifier.fillMaxWidth(),
+                fontSize = 15.sp,
+                color = DialMuted,
+                textAlign = TextAlign.Center
+            )
         }
 
         Row(
@@ -242,22 +259,35 @@ internal fun TimerScreen(
                     )
                 }
             }
-            RoundIconButton(
-                icon = when {
-                    pauseLocked -> Icons.Rounded.Lock
-                    running -> AppIcons.Pause
-                    else -> Icons.Rounded.PlayArrow
-                },
-                contentDescription = when {
-                    pauseLocked -> stringResource(R.string.tauko_vaatii_ohjaajan_pin_koodin)
-                    running -> stringResource(R.string.pysayta_aika)
-                    else -> stringResource(R.string.aloita_aika)
-                },
-                onClick = startPause,
-                size = 72.dp,
-                container = AppColors.Ink,
-                tint = Color.White
-            )
+            // Painike näyttää aina mitä se tekee (tauko / aloita). Lukittuna tauossa on pieni
+            // lukkomerkki: PIN kysytään ja aika pysähtyy vasta sen jälkeen.
+            Box {
+                RoundIconButton(
+                    icon = if (running) AppIcons.Pause else Icons.Rounded.PlayArrow,
+                    contentDescription = when {
+                        pauseLocked -> stringResource(R.string.timer_pause_locked)
+                        running -> stringResource(R.string.pysayta_aika)
+                        else -> stringResource(R.string.aloita_aika)
+                    },
+                    onClick = startPause,
+                    size = 72.dp,
+                    container = AppColors.Ink,
+                    tint = Color.White
+                )
+                if (pauseLocked) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .size(26.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .border(2.dp, AppColors.Ink, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Rounded.Lock, contentDescription = null, tint = AppColors.Ink, modifier = Modifier.size(15.dp))
+                    }
+                }
+            }
 
             Column(
                 modifier = Modifier.weight(1f),

@@ -68,7 +68,10 @@ internal fun FirstThenScreen(
     onFirstVoice: (String, Boolean) -> Unit,
     onNextVoice: (String, Boolean) -> Unit,
     onDone: () -> Unit,
-    onStartTimer: (Int) -> Unit
+    onStartTimer: (Int) -> Unit,
+    /** Ensin-toiminnon ajastus on kesken: pääpainike palaa ajastimeen. */
+    timerInProgress: Boolean = false,
+    onReturnToTimer: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var choosing by remember { mutableStateOf<String?>(null) }
@@ -163,11 +166,23 @@ internal fun FirstThenScreen(
     )
 
     val placeholder = stringResource(R.string.choose_activity)
-    PrimaryButton(
-        text = if (timerMode) stringResource(R.string.siirry_kellotauluun) else stringResource(R.string.aloita_toiminto),
-        onClick = { if (timerMode) onStartTimer(5) else onDone() },
-        enabled = first.isNotBlank() && first != placeholder && next.isNotBlank() && next != placeholder
-    )
+    val ready = first.isNotBlank() && first != placeholder && next.isNotBlank() && next != placeholder
+    if (timerInProgress && timerMode) {
+        // Aika on kesken: palataan samaan ajastukseen. Alusta aloitus on erillinen valinta.
+        PrimaryButton(text = stringResource(R.string.timer_return), onClick = onReturnToTimer)
+        SecondaryButton(
+            text = stringResource(R.string.timer_restart),
+            onClick = { onStartTimer(5) },
+            enabled = ready,
+            modifier = Modifier.fillMaxWidth()
+        )
+    } else {
+        PrimaryButton(
+            text = if (timerMode) stringResource(R.string.siirry_kellotauluun) else stringResource(R.string.aloita_toiminto),
+            onClick = { if (timerMode) onStartTimer(5) else onDone() },
+            enabled = ready
+        )
+    }
     if (photoError.isNotBlank()) {
         Text(photoError, color = MaterialTheme.colorScheme.error)
     }

@@ -143,7 +143,7 @@ class FirstThenFlowTest {
     }
 
     @Test
-    fun `paluu ensin-sitteniin sailyttaa jaljella olevan ajan`() {
+    fun `tauko sailyttaa jaljella olevan ajan`() {
         val port = FakeTimer()
         val t = FlowTimer(port)
         t.prepareForActivity("Askartelu", 5)
@@ -166,5 +166,40 @@ class FirstThenFlowTest {
         t.startPause("Ajastin") {}
         assertEquals(120_000L, t.remaining)
         assertTrue(t.running)
+    }
+
+    @Test
+    fun `ensin-ajastus on kesken kunnes se kuitataan`() {
+        val fake = FakeTimer()
+        val t = FlowTimer(fake)
+        t.prepareForActivity("Aamupala", 5)
+        assertFalse("ei vielä aloitettu", t.inProgress)
+        t.startPause("Ajastin") {}
+        assertTrue("käynnissä", t.inProgress)
+        fake.clock = 60_000L
+        t.tick()
+        t.startPause("Ajastin") {}
+        assertFalse(t.running)
+        assertTrue("tauolla", t.inProgress)
+        t.finishActivity()
+        assertFalse("kuitattu", t.inProgress)
+    }
+
+    @Test
+    fun `yksinaan kaytetty ajastin ei ole kesken oleva ensin-ajastus`() {
+        val t = FlowTimer(FakeTimer())
+        t.setMinutes(3)
+        t.startPause("Ajastin") {}
+        assertFalse(t.inProgress)
+    }
+
+    @Test
+    fun `rauhallinen nayttaa nelja osaa jotka poistuvat yksi kerrallaan`() {
+        val d = 400_000L
+        assertEquals(4, fi.aikapolku.app.timer.CalmProgress.segmentsLeft(d, d))
+        assertEquals(4, fi.aikapolku.app.timer.CalmProgress.segmentsLeft(300_001L, d))
+        assertEquals(3, fi.aikapolku.app.timer.CalmProgress.segmentsLeft(300_000L, d))
+        assertEquals(1, fi.aikapolku.app.timer.CalmProgress.segmentsLeft(1L, d))
+        assertEquals(0, fi.aikapolku.app.timer.CalmProgress.segmentsLeft(0L, d))
     }
 }
