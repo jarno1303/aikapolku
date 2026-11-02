@@ -96,9 +96,9 @@ class RoutineTemplatesTest {
     }
 
     @Test
-    fun `oletuskortteja on 24 ja tunnisteet ovat yksilolliset`() {
-        assertEquals(24, CardArt.templates.size)
-        assertEquals(24, cardIds.size)
+    fun `oletuskortteja on 25 ja tunnisteet ovat yksilolliset`() {
+        assertEquals(25, CardArt.templates.size)
+        assertEquals(25, cardIds.size)
     }
 
     @Test
@@ -132,6 +132,6 @@ class RoutineTemplatesTest {
     @Test
     fun `valmiiden korttien nimet tulevat resursseista`() {
         assertEquals("Aamupala", texts(CardArt.templates.first { it.id == "breakfast" }.nameRes))
-        assertEquals(24, CardArt.templates.map { texts(it.nameRes) }.toSet().size)
+        assertEquals(25, CardArt.templates.map { texts(it.nameRes) }.toSet().size)
     }
 }

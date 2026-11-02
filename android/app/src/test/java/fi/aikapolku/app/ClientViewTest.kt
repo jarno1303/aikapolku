@@ -6,6 +6,7 @@ import fi.aikapolku.app.data.DayTime
 import fi.aikapolku.app.data.TimelineMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Asiakkaan etusivu: oletukset, päivän osat ja aikajanan rivit. Puhdas JVM-testi. */
@@ -57,7 +58,23 @@ class ClientViewTest {
     }
 
     @Test
-    fun `valiajan kortti on oletuksena odota`() {
-        assertEquals("waiting", ClientViewPrefs().gapCard)
+    fun `valiajan kortti on oletuksena vapaa-aika ja kaikki vaihtoehdot ovat kortteja`() {
+        assertEquals("free_time", ClientViewPrefs().gapCard)
+        assertEquals("free_time", ClientViewPrefs.GAP_CHOICES.first())
+        val ids = fi.aikapolku.app.cards.CardArt.templates.map { it.id }
+        assertTrue(ClientViewPrefs.GAP_CHOICES.all { it in ids })
+    }
+
+    @Test
+    fun `valiajan kuittausrivi naytetaan vain tehdylle edelliselle`() {
+        val none = listOf(false, false, false)
+        // Edellinen (1) tehty → rivi.
+        assertEquals(1, DayParts.previousDone(2, none) { it == 1 })
+        // Edellinen jäi tekemättä → ei riviä, vaikka aiempi olisi tehty.
+        assertEquals(null, DayParts.previousDone(2, none) { it == 0 })
+        // Peruttu ohitetaan: edellinen ei-peruttu on 0.
+        assertEquals(0, DayParts.previousDone(2, listOf(false, true, false)) { it == 0 })
+        // Päivän ensimmäinen: ei edellistä.
+        assertEquals(null, DayParts.previousDone(0, none) { true })
     }
 }

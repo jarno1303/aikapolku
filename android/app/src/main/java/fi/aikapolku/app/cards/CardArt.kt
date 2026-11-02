@@ -50,7 +50,8 @@ internal object CardArt {
         Template("wash_hands", "Käsienpesu", R.string.card_wash_hands, DayTime.ANYTIME, R.drawable.ap_card_wash_hands),
         Template("break", "Tauko", R.string.card_break, DayTime.ANYTIME, R.drawable.ap_card_break),
         Template("waiting", "Odota", R.string.card_waiting, DayTime.ANYTIME, R.drawable.ap_card_waiting),
-        Template("rest", "Lepo", R.string.card_rest, DayTime.ANYTIME, R.drawable.ap_card_rest)
+        Template("rest", "Lepo", R.string.card_rest, DayTime.ANYTIME, R.drawable.ap_card_rest),
+        Template("free_time", "Vapaa-aika", R.string.card_free_time, DayTime.ANYTIME, R.drawable.ap_card_free_time)
     )
 
     private val legacyAliases = mapOf(

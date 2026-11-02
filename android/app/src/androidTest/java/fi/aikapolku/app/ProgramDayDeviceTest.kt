@@ -33,7 +33,8 @@ import org.junit.runner.RunWith
  * Puhelimessa ajettava testi, joka näkyy ruudulla: asiakas käy esittelypäivän läpi.
  * NYT-kortti → Aloita → aloitusnäkymä → Aloita → Aamupala (Valmis) → Hampaiden pesu
  * (aika käyntiin, odotetaan minuutti, Valmis) → Pukeutuminen (Valmis) → Kaikki valmista
- * → Takaisin aloitukseen, jolloin NYT-kortissa on väliaika ja seuraavaksi Lukeminen.
+ * → Takaisin aloitukseen, jolloin NYT-kortissa on "✓ Esittelypäivä tehty",
+ * Vapaa-aika ja seuraavaksi Lukeminen.
  *
  * Testi käyttää omaa väliaikaista profiiliaan eikä koske muihin tietoihin; profiili
  * poistetaan lopuksi. Aja skriptillä aikapolku-laitetesti.ps1 (ei connectedAndroidTest,
@@ -186,9 +187,10 @@ class ProgramDayDeviceTest {
             AckStore(context, testProfile).ackTime(LocalDate.now(), programEventId)
         )
 
-        // 7. Takaisin omaan päivään: väliaika (Odota) ja seuraavaksi Lukeminen.
+        // 7. Takaisin omaan päivään: kuittaus tehdystä, Vapaa-aika ja seuraavaksi Lukeminen.
         compose.onNodeWithText(t(R.string.takaisin_aloitukseen)).performScrollTo().performClick()
-        waitForText(t(R.string.card_waiting))
+        waitForText(t(R.string.card_free_time))
+        compose.onNodeWithText(t(R.string.client_gap_done, programName)).assertExists()
         compose.onAllNodesWithText(t(R.string.card_reading)).onFirst().assertExists()
         pause(3_000L)
     }

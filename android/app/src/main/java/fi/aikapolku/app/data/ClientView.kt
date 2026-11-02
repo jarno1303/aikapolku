@@ -28,14 +28,19 @@ internal data class ClientViewPrefs(
     val showFirstThen: Boolean = false,
     val showPrograms: Boolean = false,
     /** Väliajan kortti (valmis kortti): näkyy NYT-kortissa, kun seuraava ei ole vielä alkanut. */
-    val gapCard: String = GAP_WAITING
+    val gapCard: String = GAP_FREE
 ) {
     val anyTool: Boolean get() = showTimer || showFirstThen || showPrograms
 
     companion object {
         private const val PREFIX = "client_"
+        /** Oletus: myönteinen "tämä aika on sinun". Odota sopii vain todelliseen odottamiseen. */
+        const val GAP_FREE = "free_time"
         const val GAP_WAITING = "waiting"
-        val GAP_CHOICES = listOf(GAP_WAITING, "rest", "break")
+        val GAP_CHOICES = listOf(GAP_FREE, GAP_WAITING, "rest", "break")
+
+        // Uusi avain: aiemmin tallentunut oletus "Odota" ei jää voimaan, vaan kaikki alkavat Vapaa-ajasta.
+        private const val GAP_KEY = "gap_card"
 
         fun load(context: Context): ClientViewPrefs {
             val p = ProfileScope.prefs(context, ProfileScope.RUN_PREFS)
@@ -45,7 +50,7 @@ internal data class ClientViewPrefs(
                 showTimer = p.getBoolean(PREFIX + "timer", false),
                 showFirstThen = p.getBoolean(PREFIX + "first_then", false),
                 showPrograms = p.getBoolean(PREFIX + "programs", false),
-                gapCard = p.getString(PREFIX + "gap", GAP_WAITING)?.takeIf { it in GAP_CHOICES } ?: GAP_WAITING
+                gapCard = p.getString(PREFIX + GAP_KEY, GAP_FREE)?.takeIf { it in GAP_CHOICES } ?: GAP_FREE
             )
         }
 
@@ -56,7 +61,7 @@ internal data class ClientViewPrefs(
                 .putBoolean(PREFIX + "timer", prefs.showTimer)
                 .putBoolean(PREFIX + "first_then", prefs.showFirstThen)
                 .putBoolean(PREFIX + "programs", prefs.showPrograms)
-                .putString(PREFIX + "gap", prefs.gapCard)
+                .putString(PREFIX + GAP_KEY, prefs.gapCard)
                 .apply()
         }
     }
@@ -89,6 +94,13 @@ internal object DayParts {
         ongoing -> NowKind.ONGOING
         else -> NowKind.EVENT
     }
+
+    /**
+     * Väliajan kuittausrivi: lähin ei-peruttu tapahtuma ennen [current], jos se on kuitattu
+     * tehdyksi. Null, jos edellistä ei ole tai se jäi tekemättä (silloin riviä ei näytetä).
+     */
+    fun previousDone(current: Int, cancelled: List<Boolean>, done: (Int) -> Boolean): Int? =
+        (current - 1 downTo 0).firstOrNull { !cancelled[it] }?.takeIf(done)
 
     /** Kestävän tapahtuman loppu: seuraavan (ei peruttu) tapahtuman alku, tai null. */
     fun endTime(times: List<String>, cancelled: List<Boolean>, index: Int): String? =

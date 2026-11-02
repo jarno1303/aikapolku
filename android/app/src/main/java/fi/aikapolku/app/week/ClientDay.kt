@@ -175,6 +175,15 @@ internal fun ClientDayView(
                 NowKind.GAP -> NowFrame {
                     // Väliaika: edellinen tehty, seuraava ei vielä alkanut.
                     NowLabel(stringResource(R.string.now_label))
+                    val previous = DayParts.previousDone(state.current, state.items.map { it.cancelled }) {
+                        state.ackTimes[state.items[it].event.id] != null
+                    }
+                    if (previous != null) {
+                        Text(
+                            stringResource(R.string.client_gap_done, state.items[previous].resolved.title),
+                            fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal, textAlign = TextAlign.Center
+                        )
+                    }
                     val gap = remember(prefs.gapCard) { CardArt.templates.firstOrNull { it.id == prefs.gapCard } }
                     val gapName = gap?.let { stringResource(it.nameRes) } ?: ""
                     fi.aikapolku.app.cards.CardPhoto(

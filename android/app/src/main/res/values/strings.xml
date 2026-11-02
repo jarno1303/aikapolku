@@ -67,6 +67,7 @@
     <string name="card_outdoors">Ulkoilu</string>
     <string name="card_reading">Lukeminen</string>
     <string name="card_rest">Lepo</string>
+    <string name="card_free_time">Vapaa-aika</string>
     <string name="card_schoolwork">Koulutyö</string>
     <string name="card_sleep">Nukkumaan</string>
     <string name="card_snack">Välipala</string>
@@ -632,6 +633,7 @@
     <string name="week_ongoing">Kestää seuraavaan tapahtumaan asti</string>
     <string name="week_ongoing_info">Esim. koulu tai päivätoiminta. Ei kuitata: näkyy asiakkaan NYT-korttina, kunnes seuraava tapahtuma alkaa.</string>
     <string name="client_continues_after">Sen jälkeen päivä jatkuu: %1$s</string>
+    <string name="client_gap_done">✓ %1$s tehty</string>
     <string name="client_gap_next_at">SEURAAVAKSI KLO %1$s</string>
     <string name="client_time_range">klo %1$s–%2$s</string>
     <string name="client_view_gap">Väliajan kortti</string>
