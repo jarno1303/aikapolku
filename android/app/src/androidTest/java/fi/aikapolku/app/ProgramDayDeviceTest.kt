@@ -1,6 +1,9 @@
 package fi.aikapolku.app
 
 import android.content.Context
+import android.os.SystemClock
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -91,6 +94,23 @@ class ProgramDayDeviceTest {
         compose.waitUntil(timeoutMs) { compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty() }
     }
 
+    private fun shown(matcher: SemanticsMatcher) = compose.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
+
+    /**
+     * Odottaa oikeaa aikaa (ohjelman ajastin laskee laitteen kellolla) ja siirtää samalla
+     * Compose-testikelloa perässä, jotta ajastimen päivityssilmukka ehtii pyöriä.
+     */
+    private fun waitRealTime(timeoutMs: Long, failure: String, condition: () -> Boolean) {
+        val end = SystemClock.elapsedRealtime() + timeoutMs
+        while (true) {
+            compose.mainClock.advanceTimeBy(500L)
+            compose.waitForIdle()
+            if (condition()) return
+            if (SystemClock.elapsedRealtime() > end) throw AssertionError(failure)
+            Thread.sleep(500L)
+        }
+    }
+
     private fun clickDone() {
         pause()
         compose.onNodeWithText(t(R.string.run_done_button)).performClick()
@@ -119,12 +139,21 @@ class ProgramDayDeviceTest {
         waitForText(t(R.string.card_brush_teeth))
         pause()
         compose.onNodeWithContentDescription(t(R.string.aloita_aika), substring = true).performClick()
-        Thread.sleep(62_000L)
-        compose.mainClock.advanceTimeBy(1_000L)
-        compose.waitUntil(15_000L) {
-            compose.onAllNodes(hasText(t(R.string.time_ended))).fetchSemanticsNodes().isNotEmpty() ||
-                compose.onAllNodes(androidx.compose.ui.test.hasContentDescription(t(R.string.a11y_time_ended), substring = true))
-                    .fetchSemanticsNodes().isNotEmpty()
+        waitRealTime(
+            5_000L,
+            "Aika ei käynnistynyt Hampaiden pesussa. Todennäköisesti puhelimelta puuttuu " +
+                "AikaPolun lupa tarkkoihin hälytyksiin tai ilmoituksiin, jolloin sovellus avasi " +
+                "Androidin asetukset ajan käynnistämisen sijaan."
+        ) {
+            shown(hasContentDescription(t(R.string.pysayta_aika), substring = true)) ||
+                shown(hasContentDescription(t(R.string.tauko_vaatii_ohjaajan_pin_koodin), substring = true))
+        }
+        waitRealTime(
+            75_000L,
+            "Aika käynnistyi, mutta \"${t(R.string.time_ended)}\" ei tullut näkyviin 75 sekunnissa."
+        ) {
+            shown(hasText(t(R.string.time_ended))) ||
+                shown(hasContentDescription(t(R.string.a11y_time_ended), substring = true))
         }
         clickDone()
 
