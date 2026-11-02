@@ -15,8 +15,10 @@ internal class AckStore(context: Context, profileId: String = ProfileStore.curre
     /** Kuittauksen kellonaika (HH:mm) tai null. */
     fun ackTime(date: LocalDate, eventId: String): String? = prefs.getString(AckLog.key(date, eventId), null)
 
+    /** Kuittaa tapahtuman. Ensimmäinen kuittausaika säilyy, vaikka Valmis painettaisiin uudelleen. */
     fun ack(date: LocalDate, eventId: String, time: LocalTime = LocalTime.now()) {
         prune(LocalDate.now())
+        if (ackTime(date, eventId) != null) return
         prefs.edit().putString(AckLog.key(date, eventId), WeekSchedule.formatTime(time.hour, time.minute)).commit()
     }
 

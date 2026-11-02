@@ -262,3 +262,11 @@
 - Kuittaukset säilyvät vain eiliseltä ja tältä päivältä. AikaPolku muistuttaa, mutta se ei ole lääkehoidon kirjaamisväline (teksti näkyy sovelluksessa).
 - Ajastettuna on aina vain seuraava ilmoitushetki kaikista profiileista. Ajastus uusitaan käynnistyksessä, viikon muuttuessa, profiilin poistossa, puhelimen käynnistyessä, kellonajan/aikavyöhykkeen muuttuessa ja sovelluksen päivittyessä.
 - Uudet testit: RemindersTest (7), WeekStoreTest +2.
+
+## Korjaus: tehdyt tapahtumat ja luotettavat muistutukset (puhelintesti OnePlus 12R)
+- Tehty tapahtuma näkyy Tänään-listassa himmeänä "✓ Tehty 07.50" ilman Aloita-painiketta; korostus siirtyy seuraavaan tekemättömään. Ensimmäinen kuittausaika säilyy (uusi Valmis ei muuta sitä); kuitattu kortti avautuu katseltavaksi Takaisin-painikkeella.
+- Tänään-listasta käynnistetty päiväohjelma merkitään tehdyksi, kun se viedään loppuun.
+- Aloita on nimen alla, joten nimi ei katkea.
+- Muistutukset herätyskellon tavoin (setAlarmClock): OnePlus ja muut tiukan akunhallinnan puhelimet toimittavat ne ajallaan. Muistutuskanava luodaan heti.
+- Ohjaajan asetuksiin "Muistutusten tila": ilmoitukset, tarkat hälytykset ja akun optimointi, korjauspainikkeet ja testimuistutus (1 min).
+- Uudet testit: korostus tehtyjen ohi, ensimmäinen kuittausaika säilyy, tehty ilman Aloita-painiketta.

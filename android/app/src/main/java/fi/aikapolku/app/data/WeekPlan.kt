@@ -93,14 +93,17 @@ internal object WeekSchedule {
     }
 
     /**
-     * "Nyt"-tapahtuma: viimeisin jo alkanut. Ennen ensimmäistä tapahtumaa korostetaan
-     * ensimmäinen (tulossa). Tyhjällä listalla -1.
+     * Korostettava tapahtuma: viimeisin jo alkanut, jos se on tekemättä; muuten seuraava
+     * tekemätön. Ennen ensimmäistä tapahtumaa korostetaan ensimmäinen tekemätön (tulossa).
+     * [done] = kuitattujen tapahtumien tunnukset. -1, jos korostettavaa ei ole.
      */
-    fun currentIndex(events: List<WeekEvent>, now: LocalTime): Int {
+    fun currentIndex(events: List<WeekEvent>, now: LocalTime, done: Set<String> = emptySet()): Int {
         if (events.isEmpty()) return -1
         val nowMinutes = now.hour * 60 + now.minute
         val started = events.indexOfLast { minutesOf(it.time) <= nowMinutes }
-        return if (started >= 0) started else 0
+        if (started >= 0 && events[started].id !in done) return started
+        val from = maxOf(started + 1, 0)
+        return (from until events.size).firstOrNull { events[it].id !in done } ?: -1
     }
 
     fun minutesOf(time: String): Int {

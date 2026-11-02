@@ -80,4 +80,19 @@ class WeekScheduleTest {
             WeekSchedule.withoutMissingPrograms(plan, setOf("jaljella")).events.map { it.id }
         )
     }
+
+    @Test
+    fun `tehty tapahtuma ei ole enaa korostettu vaan seuraava tekematon on`() {
+        val events = listOf(ev("a", 1, "07:00"), ev("b", 1, "08:00"), ev("c", 1, "12:00"))
+        // Klo 8.10: b on alkanut ja tekemättä.
+        assertEquals(1, WeekSchedule.currentIndex(events, LocalTime.of(8, 10), done = setOf("a")))
+        // b tehty: korostus siirtyy tulevaan c:hen.
+        assertEquals(2, WeekSchedule.currentIndex(events, LocalTime.of(8, 10), done = setOf("b")))
+        // Ennen ensimmäistä, ensimmäinen jo tehty: korostetaan seuraava.
+        assertEquals(1, WeekSchedule.currentIndex(events, LocalTime.of(6, 0), done = setOf("a")))
+        // Kaikki tehty: ei korostusta.
+        assertEquals(-1, WeekSchedule.currentIndex(events, LocalTime.of(13, 0), done = setOf("a", "b", "c")))
+        // Päivä ohi ja viimeinen tehty: ei korostusta.
+        assertEquals(-1, WeekSchedule.currentIndex(events, LocalTime.of(23, 0), done = setOf("c")))
+    }
 }

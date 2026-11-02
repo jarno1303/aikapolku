@@ -454,4 +454,20 @@
     <string name="ack_missing">Ei kuitattu</string>
     <string name="ack_upcoming">Tulossa</string>
     <string name="ack_disclaimer">AikaPolku muistuttaa, mutta se ei ole lääkehoidon kirjaamisväline. Kuittaukset säilyvät vain eiliseltä ja tältä päivältä.</string>
+
+    <!-- Muistutusten tila -->
+    <string name="reminder_status_title">Muistutusten tila</string>
+    <string name="reminder_status_info">Viikko-ohjelman muistutukset tulevat ajallaan vain, kun nämä ovat kunnossa. Tarkista ne jokaisessa käytettävässä puhelimessa.</string>
+    <string name="reminder_status_notifications">Ilmoitukset</string>
+    <string name="reminder_status_exact">Tarkat hälytykset</string>
+    <string name="reminder_status_battery">Akun optimointi ohitettu</string>
+    <string name="reminder_status_ok">Kunnossa</string>
+    <string name="reminder_status_missing">Ei sallittu – muistutus voi myöhästyä tai jäädä tulematta</string>
+    <string name="reminder_status_fix">Korjaa</string>
+    <string name="reminder_status_oem">Joissain puhelimissa (esim. OnePlus, Xiaomi, Samsung) sallitaan lisäksi taustatoiminta sovelluksen akkuasetuksista.</string>
+    <string name="reminder_status_app_settings">Avaa sovelluksen asetukset</string>
+    <string name="reminder_test_button">Testaa muistutus (1 min)</string>
+    <string name="reminder_test_sent">Testimuistutus tulee noin minuutin päästä. Voit sulkea sovelluksen ja lukita näytön.</string>
+    <string name="reminder_test_title">AikaPolku: testimuistutus</string>
+    <string name="reminder_test_text">Muistutukset toimivat tässä puhelimessa.</string>
 </resources>

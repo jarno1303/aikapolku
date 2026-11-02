@@ -76,6 +76,9 @@ private fun ProgramsTabs(selected: ProgramsTab, onSelect: (ProgramsTab) -> Unit)
 internal fun ProgramsScreen(
     /** Tänään-listasta käynnistettävä päiväohjelma. */
     startProgramId: String? = null,
+    /** Viikko-ohjelman tapahtuma (tunnus ja päivä), joka kuitataan, kun ohjelma viedään loppuun. */
+    startEventId: String? = null,
+    startEventDate: String? = null,
     onStartHandled: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -139,8 +142,12 @@ internal fun ProgramsScreen(
     }
 
     // Tänään-listasta avattu ohjelma käynnistyy heti (tai jatkuu, jos sama ohjelma on jo kesken).
+    var runEventId by rememberSaveable { mutableStateOf<String?>(null) }
+    var runEventDate by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(startProgramId) {
         val id = startProgramId ?: return@LaunchedEffect
+        runEventId = startEventId
+        runEventDate = startEventDate
         onStartHandled()
         val program = programs.firstOrNull { it.id == id } ?: return@LaunchedEffect
         if (view == ProgramsView.RUN && run.program.id == id) return@LaunchedEffect
@@ -150,7 +157,16 @@ internal fun ProgramsScreen(
     var tab by rememberSaveable { mutableStateOf(ProgramsTab.PROGRAMS) }
 
     fun next() {
-        if (run.next()) view = ProgramsView.DONE
+        if (run.next()) {
+            view = ProgramsView.DONE
+            // Tänään-listasta käynnistetty ohjelma merkitään tehdyksi.
+            runEventId?.let { id ->
+                val date = runEventDate?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() } ?: java.time.LocalDate.now()
+                fi.aikapolku.app.data.AckStore(context.applicationContext).ack(date, id)
+            }
+            runEventId = null
+            runEventDate = null
+        }
     }
 
     // Aloita ja Jatka ovat aina vapaita; Tauko lukittuna vain PIN-koodilla.

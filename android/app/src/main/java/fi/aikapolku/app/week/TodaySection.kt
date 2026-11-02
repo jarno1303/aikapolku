@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,7 +56,7 @@ import kotlinx.coroutines.delay
  * yhdellä napautuksella; menneet ovat himmeitä.
  */
 @Composable
-internal fun TodaySection(onOpenProgram: (String) -> Unit, onOpenCard: (WeekEvent) -> Unit) {
+internal fun TodaySection(onOpenProgram: (WeekEvent) -> Unit, onOpenCard: (WeekEvent) -> Unit) {
     val context = LocalContext.current
     val plan = remember(context) { WeekStore(context.applicationContext).load() }
     val programs = remember(context) { ProgramStore(context.applicationContext).load() }
@@ -75,10 +76,13 @@ internal fun TodaySection(onOpenProgram: (String) -> Unit, onOpenCard: (WeekEven
             date = LocalDate.now()
         }
     }
-    val current = WeekSchedule.currentIndex(events.map { it.event }, now)
+    // Kuitatut (tehdyt) eivät enää ole korostettuina; korostus siirtyy seuraavaan tekemättömään.
+    val ackTimes = events.associate { it.event.id to acks.ackTime(date, it.event.id) }
+    val done = ackTimes.filterValues { it != null }.keys
+    val current = WeekSchedule.currentIndex(events.map { it.event }, now, done)
 
     fun open(item: ResolvedEvent) {
-        if (item.isProgram) onOpenProgram(item.event.programId) else onOpenCard(item.event)
+        if (item.isProgram) onOpenProgram(item.event) else onOpenCard(item.event)
     }
 
     Text(
@@ -91,8 +95,10 @@ internal fun TodaySection(onOpenProgram: (String) -> Unit, onOpenCard: (WeekEven
     val nowLabel = stringResource(R.string.now_label)
     events.forEachIndexed { index, item ->
         val isCurrent = index == current
-        val isPast = index < current
-        val ackTime = acks.ackTime(date, item.event.id)
+        val ackTime = ackTimes[item.event.id]
+        val isDone = ackTime != null
+        // Himmeä: tehty, tai jo mennyt korostettua edeltävä (tai kaikki, jos päivä on ohi).
+        val isPast = isDone || (if (current >= 0) index < current else true)
         val doneText = ackTime?.let { stringResource(R.string.ack_done_at, it.replace(':', '.')) }
         val a11y = item.event.time + " " + item.title + (if (isCurrent) ", $nowLabel" else "") + (doneText?.let { ", $it" } ?: "")
         Surface(
@@ -121,7 +127,7 @@ internal fun TodaySection(onOpenProgram: (String) -> Unit, onOpenCard: (WeekEven
                     item,
                     Modifier.size(if (isCurrent) 64.dp else 44.dp).clip(RoundedCornerShape(if (isCurrent) 16.dp else 12.dp))
                 )
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
                         item.title,
                         fontSize = if (isCurrent) 20.sp else 17.sp,
@@ -132,18 +138,18 @@ internal fun TodaySection(onOpenProgram: (String) -> Unit, onOpenCard: (WeekEven
                     )
                     if (doneText != null) {
                         Text(doneText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal)
-                    }
-                }
-                if (isCurrent) {
-                    // Koko rivi on painike; "Aloita" näyttää, mistä päivä jatkuu.
-                    Surface(color = AppColors.Teal, shape = RoundedCornerShape(14.dp)) {
-                        Text(
-                            stringResource(R.string.today_start),
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                    } else if (isCurrent) {
+                        // Koko rivi on painike; "Aloita" näyttää, mistä päivä jatkuu. Nimen alla,
+                        // jotta pitkäkin nimi mahtuu yhdelle riville.
+                        Surface(color = AppColors.Teal, shape = RoundedCornerShape(12.dp)) {
+                            Text(
+                                stringResource(R.string.today_start) + " ›",
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
@@ -151,9 +157,12 @@ internal fun TodaySection(onOpenProgram: (String) -> Unit, onOpenCard: (WeekEven
     }
 }
 
-/** Yksittäisen kortin tapahtuma isona: kuva, nimi ja Valmis. */
+/**
+ * Yksittäisen kortin tapahtuma isona: kuva, nimi ja Valmis. Jos tapahtuma on jo kuitattu
+ * ([doneAt]), Valmiin tilalla näkyy kuittausaika ja Takaisin, eikä aika muutu.
+ */
 @Composable
-internal fun EventCardScreen(name: String, photo: String, onDone: () -> Unit) {
+internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDone: () -> Unit, onBack: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -176,11 +185,25 @@ internal fun EventCardScreen(name: String, photo: String, onDone: () -> Unit) {
             color = AppColors.Ink,
             textAlign = TextAlign.Center
         )
-        Button(
-            onClick = onDone,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
-            shape = RoundedCornerShape(18.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = AppColors.Teal)
-        ) { Text(stringResource(R.string.run_done_button), fontSize = 21.sp, fontWeight = FontWeight.Bold) }
+        if (doneAt != null) {
+            Text(
+                stringResource(R.string.ack_done_at, doneAt.replace(':', '.')),
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = AppColors.Teal
+            )
+            OutlinedButton(
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+                shape = RoundedCornerShape(18.dp)
+            ) { Text(stringResource(R.string.back), fontSize = 18.sp, color = AppColors.Teal) }
+        } else {
+            Button(
+                onClick = onDone,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = AppColors.Teal)
+            ) { Text(stringResource(R.string.run_done_button), fontSize = 21.sp, fontWeight = FontWeight.Bold) }
+        }
     }
 }

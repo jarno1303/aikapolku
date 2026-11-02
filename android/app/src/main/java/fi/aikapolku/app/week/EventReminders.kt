@@ -40,6 +40,9 @@ import java.time.ZoneId
 internal object EventReminders {
     private const val CHANNEL = "aikapolku_events_v1"
     private const val ALARM_REQUEST = 1810
+    private const val TEST_REQUEST = 1811
+    private const val TEST_NOTIFICATION = 1812
+    const val EXTRA_TEST = "reminder_test"
     const val EXTRA_AT = "reminder_at"
     const val EXTRA_PROFILE = "event_profile"
     const val EXTRA_EVENT = "event_id"
@@ -68,18 +71,73 @@ internal object EventReminders {
         val am = c.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val next = WeekSchedule.nextReminderAt(plans(c), LocalDateTime.now())
         am.cancel(alarmIntent(c, null))
+        // Kanava luodaan heti, jotta se näkyy puhelimen asetuksissa jo ennen ensimmäistä muistutusta.
+        createChannel(c, c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
         if (next == null) return
         val whenMs = next.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val intent = alarmIntent(c, next)
+        setAlarm(c, whenMs, alarmIntent(c, next))
+    }
+
+    /**
+     * Muistutus herätyskellon tavoin (setAlarmClock): puhelimet, myös tiukan akunhallinnan
+     * mallit (esim. OnePlus), toimittavat nämä luotettavasti ja ajallaan. Ilman tarkkojen
+     * hälytysten lupaa tavallinen hälytys, joka voi myöhästyä.
+     */
+    private fun setAlarm(c: Context, whenMs: Long, intent: PendingIntent) {
+        val am = c.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (BackgroundTimer.exactAlarmsAllowed(c)) {
             try {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, whenMs, intent)
+                val show = PendingIntent.getActivity(
+                    c, ALARM_REQUEST,
+                    Intent(c, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                am.setAlarmClock(AlarmManager.AlarmClockInfo(whenMs, show), intent)
                 return
             } catch (_: SecurityException) {
                 // Lupa peruttiin juuri: tavallinen hälytys (voi myöhästyä hieman).
             }
         }
         am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, whenMs, intent)
+    }
+
+    /** Testimuistutus noin minuutin päästä: ohjaaja näkee, toimivatko muistutukset tässä puhelimessa. */
+    fun scheduleTest(c: Context) {
+        val intent = PendingIntent.getBroadcast(
+            c, TEST_REQUEST,
+            Intent(c, EventReminderReceiver::class.java).putExtra(EXTRA_TEST, true),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        setAlarm(c, System.currentTimeMillis() + 60_000L, intent)
+    }
+
+    fun showTest(c: Context) {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
+        val nm = c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        createChannel(c, nm)
+        val open = PendingIntent.getActivity(
+            c, TEST_NOTIFICATION,
+            Intent(c, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        nm.notify(
+            TEST_NOTIFICATION,
+            Notification.Builder(c, CHANNEL)
+                .setSmallIcon(android.R.drawable.ic_popup_reminder)
+                .setContentTitle(c.getString(R.string.reminder_test_title))
+                .setContentText(c.getString(R.string.reminder_test_text))
+                .setAutoCancel(true)
+                .setCategory(Notification.CATEGORY_REMINDER)
+                .setContentIntent(open)
+                .build()
+        )
+    }
+
+    private fun createChannel(c: Context, nm: NotificationManager) {
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL, c.getString(R.string.reminder_channel), NotificationManager.IMPORTANCE_HIGH)
+        )
     }
 
     /** Hälytys laukesi: näytetään hetken ilmoitukset ja ajastetaan seuraava. */
@@ -98,9 +156,7 @@ internal object EventReminders {
         if (Build.VERSION.SDK_INT >= 33 &&
             c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         val nm = c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, c.getString(R.string.reminder_channel), NotificationManager.IMPORTANCE_HIGH)
-        )
+        createChannel(c, nm)
 
         val (title, imageName, imagePath) = when (r.event.kind) {
             EventKind.CARD -> Triple(r.event.cardName, r.event.cardName, r.event.cardPhoto)
@@ -198,7 +254,11 @@ internal object EventLaunch {
 
 class EventReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        EventReminders.onAlarm(context, intent.getStringExtra(EventReminders.EXTRA_AT))
+        if (intent.getBooleanExtra(EventReminders.EXTRA_TEST, false)) {
+            EventReminders.showTest(context)
+        } else {
+            EventReminders.onAlarm(context, intent.getStringExtra(EventReminders.EXTRA_AT))
+        }
     }
 }
 

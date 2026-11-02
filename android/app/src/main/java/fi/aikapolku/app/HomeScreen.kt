@@ -29,7 +29,7 @@ import fi.aikapolku.app.data.WeekEvent
 @Composable
 internal fun HomeScreen(
     open: (AppPage) -> Unit,
-    onOpenProgram: (String) -> Unit = {},
+    onOpenProgram: (WeekEvent) -> Unit = {},
     onOpenCard: (WeekEvent) -> Unit = {}
 ) {
     Spacer(Modifier.height(10.dp))

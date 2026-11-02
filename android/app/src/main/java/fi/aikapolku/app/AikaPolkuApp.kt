@@ -58,6 +58,8 @@ internal fun AikaPolkuApp() {
     var showLastTen by rememberSaveable { mutableStateOf(true) }
     // Viikko-ohjelman tapahtuma, joka avataan aloitusnäkymän Tänään-listasta.
     var pendingProgramId by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingEventId by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingEventDate by rememberSaveable { mutableStateOf<String?>(null) }
     var eventCardName by rememberSaveable { mutableStateOf("") }
     var eventCardPhoto by rememberSaveable { mutableStateOf("") }
     var eventCardId by rememberSaveable { mutableStateOf("") }
@@ -77,6 +79,8 @@ internal fun AikaPolkuApp() {
             event == null -> page = AppPage.HOME
             event.kind == EventKind.PROGRAM -> {
                 pendingProgramId = event.programId
+                pendingEventId = event.id
+                pendingEventDate = request.date.toString()
                 page = AppPage.PROGRAMS
             }
             else -> {
@@ -193,8 +197,10 @@ internal fun AikaPolkuApp() {
                         page = destination
                         if (destination == AppPage.TIMER) timer.activeTask = ""
                     },
-                    onOpenProgram = { id ->
-                        pendingProgramId = id
+                    onOpenProgram = { event ->
+                        pendingProgramId = event.programId
+                        pendingEventId = event.id
+                        pendingEventDate = LocalDate.now().toString()
                         page = AppPage.PROGRAMS
                     },
                     onOpenCard = { event ->
@@ -209,6 +215,11 @@ internal fun AikaPolkuApp() {
                 AppPage.EVENT_CARD -> EventCardScreen(
                     name = eventCardName,
                     photo = eventCardPhoto,
+                    doneAt = remember(eventCardId, eventCardDate) {
+                        val date = runCatching { LocalDate.parse(eventCardDate) }.getOrElse { LocalDate.now() }
+                        eventCardId.takeIf { it.isNotBlank() }?.let { AckStore(context).ackTime(date, it) }
+                    },
+                    onBack = { page = AppPage.HOME },
                     onDone = {
                         // Valmis kuittaa tapahtuman (näkyy Tänään-listassa ja ohjaajalle).
                         if (eventCardId.isNotBlank()) {
@@ -276,7 +287,13 @@ internal fun AikaPolkuApp() {
 
                 AppPage.PROGRAMS -> ProgramsScreen(
                     startProgramId = pendingProgramId,
-                    onStartHandled = { pendingProgramId = null }
+                    startEventId = pendingEventId,
+                    startEventDate = pendingEventDate,
+                    onStartHandled = {
+                        pendingProgramId = null
+                        pendingEventId = null
+                        pendingEventDate = null
+                    }
                 )
 
                 AppPage.CAREGIVER -> CaregiverSettingsScreen()

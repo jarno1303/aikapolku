@@ -48,4 +48,16 @@ class TodaySectionTest {
         compose.onNodeWithText("Lääkkeet").performClick()
         assertEquals("Lääkkeet", opened)
     }
+
+    @Test
+    fun `tehty tapahtuma ei nayta Aloita-painiketta`() {
+        WeekStore(context).save(
+            WeekPlan(listOf(WeekEvent("e", today, 0, "00:00", EventKind.CARD, cardName = "Lääkkeet", cardPhoto = "builtin:rest")))
+        )
+        fi.aikapolku.app.data.AckStore(context).ack(LocalDate.now(), "e", java.time.LocalTime.of(7, 50))
+        compose.mainClock.autoAdvance = false
+        compose.setContent { Column { TodaySection(onOpenProgram = {}, onOpenCard = {}) } }
+        compose.onNodeWithText(t(R.string.ack_done_at, "07.50")).assertExists()
+        compose.onNodeWithText(t(R.string.today_start) + " ›").assertDoesNotExist()
+    }
 }

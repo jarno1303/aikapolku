@@ -83,4 +83,13 @@ class WeekStoreTest {
         assertEquals(null, store.ackTime(today.minusDays(3), "vanha"))
         assertEquals("20:04", store.ackTime(today, "laakkeet"))
     }
+
+    @Test
+    fun `ensimmainen kuittausaika sailyy`() {
+        val store = fi.aikapolku.app.data.AckStore(context)
+        val today = java.time.LocalDate.now()
+        store.ack(today, "e", java.time.LocalTime.of(7, 50))
+        store.ack(today, "e", java.time.LocalTime.of(7, 51))
+        assertEquals("07:50", store.ackTime(today, "e"))
+    }
 }
