@@ -742,6 +742,16 @@
     <string name="runko_move_down">Siirrä alas</string>
     <string name="runko_move_day">Toiseen päivään</string>
     <string name="runko_move_day_title">Siirrä klo %1$s kohta päivälle</string>
-    <string name="runko_drag_hint">Siirrä kohtaa painamalla sitä pitkään ja raahaamalla. Kellonajat pysyvät, sisällöt vaihtavat järjestystä.</string>
+    <string name="runko_drag_hint">Siirrä kohtaa painamalla sitä pitkään ja raahaamalla. Omat kohdat vaihtavat järjestystä kellonaikojen pysyessä; ryhmän kohta saa uuden ajan.</string>
+    <string name="move_title">Siirrä: %1$s</string>
+    <string name="move_today">Vain tänään</string>
+    <string name="move_today_info">Päivän muutos asiakkaalle %1$s. Asiakas näkee muutoksen, ja muistutus siirtyy.</string>
+    <string name="move_weekly">Joka viikko</string>
+    <string name="move_weekly_info">Muuttaa asiakkaan %1$s viikko-ohjelmaa pysyvästi.</string>
+    <string name="move_weekly_group_info">Kohta kuuluu ryhmän runkoon. Siirto koskee vain asiakasta %1$s joka viikko; ryhmän muiden asiakkaiden päivä ei muutu.</string>
+    <string name="move_today_hint">Siirrä kohtaa painamalla sitä pitkään ja raahaamalla. Sen jälkeen valitset, koskeeko siirto vain tätä päivää vai joka viikkoa.</string>
+    <string name="move_cancelled_blocked">Peruttua kohtaa ei voi siirtää. Avaa muutos napauttamalla, jos haluat palauttaa sen.</string>
+    <string name="runko_drag_only_one">Tällä päivällä on vain yksi oma kohta. Vaihda sen aikaa napauttamalla kohtaa.</string>
+    <string name="runko_drag_group_blocked">Ryhmän kohtaa siirretään ryhmän rungossa (Ryhmät) tai asiakkaan viikossa.</string>
     <string name="runko_selected">Valittu</string>
 </resources>

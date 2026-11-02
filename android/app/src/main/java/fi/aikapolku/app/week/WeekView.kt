@@ -77,6 +77,7 @@ internal fun WeekView(programs: List<DayProgram>, canEdit: Boolean) {
     var groups by remember { mutableStateOf(GroupStore(app).load()) }
     val myGroups = groups.filter { me in it.members }
     var exceptionRow by remember { mutableStateOf<GroupRow?>(null) }
+    var groupMove by remember { mutableStateOf<Pair<GroupRow, String>?>(null) }
 
     fun update(next: WeekPlan) {
         plan = next
@@ -127,12 +128,39 @@ internal fun WeekView(programs: List<DayProgram>, canEdit: Boolean) {
         allowPrograms = true,
         groupRows = ::groupRows,
         onGroupRow = { exceptionRow = it },
+        onGroupMove = { row, time -> groupMove = row to time },
         copySources = copySources
     )
 
     if (canEdit) {
         ChangeOverview(remember(plan, groups) { ClientWeek.load(app, me, own = plan) }, programs, today)
         AckOverview(remember(plan, groups) { ClientWeek.load(app, me, own = plan) }, today)
+    }
+
+    // Ryhmän kohta raahattiin uuteen aikaan: tälle asiakkaalle joka viikko (varmistus).
+    groupMove?.let { (row, time) ->
+        MoveDialog(
+            name = row.exception?.takeIf { it.kind == fi.aikapolku.app.data.ExceptionKind.REPLACE }?.cardName ?: row.event.cardName,
+            fromTime = row.event.time,
+            initialTime = time,
+            clientName = clientName,
+            isGroup = true,
+            onToday = null,
+            onWeekly = { chosen ->
+                val date = today.plusDays(((row.event.day - today.dayOfWeek.value + 7) % 7).toLong())
+                val result = fi.aikapolku.app.data.Moves.weekly(
+                    plan, GroupStore(app).load(), me,
+                    fi.aikapolku.app.data.GroupSchedule.eventId(row.group.id, row.event.id), date, chosen
+                ) { java.util.UUID.randomUUID().toString() }
+                if (result != null) {
+                    result.group?.let { GroupStore(app).upsert(it) }
+                    groups = GroupStore(app).load()
+                    update(result.own)
+                }
+                groupMove = null
+            },
+            onDismiss = { groupMove = null }
+        )
     }
 
     exceptionRow?.let { row ->

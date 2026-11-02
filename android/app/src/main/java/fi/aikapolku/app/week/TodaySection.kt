@@ -1,5 +1,21 @@
 package fi.aikapolku.app.week
 
+import fi.aikapolku.app.data.ChangeType
+
+import fi.aikapolku.app.data.ProfileStore
+
+import fi.aikapolku.app.data.GroupStore
+
+import fi.aikapolku.app.data.GroupSchedule
+
+import fi.aikapolku.app.data.Moves
+
+import fi.aikapolku.app.data.Runko
+
+import androidx.compose.ui.platform.LocalHapticFeedback
+
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Icon
@@ -425,8 +441,18 @@ internal fun CaregiverDayList(
     onChange: (WeekEvent) -> Unit,
     onOpenDay: () -> Unit
 ) {
-    val state = rememberTodayState(caregiverView = true)
+    val context = LocalContext.current
+    val app = context.applicationContext
+    var refresh by remember { mutableIntStateOf(0) }
+    val state = rememberTodayState(caregiverView = true, refresh = refresh)
     val title = stringResource(R.string.today_title, dayName(LocalDate.now().dayOfWeek.value))
+    val caregiver = fi.aikapolku.app.caregiver.LocalCaregiver.current
+    val canMove = caregiver.allows(fi.aikapolku.app.caregiver.AppAction.EDIT_PROGRAMS)
+    val drag = rememberRowDrag()
+    val haptic = LocalHapticFeedback.current
+    var moving by remember { mutableStateOf<Pair<DayItem, String>?>(null) }
+    AutoScrollWhileDragging(drag)
+
     Surface(
         onClick = onOpenDay,
         shape = RoundedCornerShape(14.dp),
@@ -444,24 +470,101 @@ internal fun CaregiverDayList(
         Text(stringResource(R.string.week_no_events), color = AppColors.Muted)
         return
     }
+
+    // Raahaus: kohta saa uuden ajan pudotuskohdasta (edellisen ja seuraavan välistä).
+    val dragging = drag.dragId
+    val others = if (dragging != null) state.items.filter { it.event.id != dragging } else emptyList()
+    val target = dragging?.let { drag.target(others.map { o -> o.event.id }) }
+    val targetTime = target?.let { Runko.suggestTime(others.getOrNull(it - 1)?.event?.time, others.getOrNull(it)?.event?.time) }
+    val blockedText = stringResource(R.string.move_cancelled_blocked)
+
     state.items.forEachIndexed { index, item ->
         val doneAt = state.ackTimes[item.event.id]
         val isCurrent = index == state.current
         val isPast = item.cancelled || doneAt != null || (if (state.current >= 0) index < state.current else true)
         val changeLabel = stringResource(R.string.quick_title) + ": " + item.original.title
-        TodayRow(
-            item,
-            isCurrent = isCurrent,
-            isPast = isPast,
-            doneAt = doneAt,
-            trailing = { ChangeButton(changeLabel) { onChange(item.entry.original) } }
+        val lineAbove = target != null && others.getOrNull(target)?.event?.id == item.event.id
+        val lineBelow = target != null && target == others.size && others.lastOrNull()?.event?.id == item.event.id
+        Box(
+            modifier = Modifier.dragRow(
+                drag = drag,
+                id = item.event.id,
+                enabled = canMove && !item.cancelled && state.items.size > 1,
+                haptic = haptic,
+                onDrop = {
+                    val rest = state.items.filter { it.event.id != item.event.id }
+                    val to = drag.target(rest.map { it.event.id })
+                    val time = Runko.suggestTime(rest.getOrNull(to - 1)?.event?.time, rest.getOrNull(to)?.event?.time)
+                    drag.dragId = null
+                    moving = item to time
+                },
+                onBlocked = if (canMove && item.cancelled) {
+                    { android.widget.Toast.makeText(context, blockedText, android.widget.Toast.LENGTH_SHORT).show() }
+                } else null
+            )
         ) {
-            val change = item.change
-            when {
-                change != null && item.cancelled -> onOpenChange(change)
-                item.resolved.isProgram -> onOpenProgram(item.event)
-                else -> onOpenCard(item.event)
+            TodayRow(
+                item,
+                isCurrent = isCurrent,
+                isPast = isPast,
+                doneAt = doneAt,
+                trailing = { ChangeButton(changeLabel) { onChange(item.entry.original) } }
+            ) {
+                val change = item.change
+                when {
+                    change != null && item.cancelled -> onOpenChange(change)
+                    item.resolved.isProgram -> onOpenProgram(item.event)
+                    else -> onOpenCard(item.event)
+                }
             }
+            if (lineAbove && targetTime != null) DropLine(targetTime, Modifier.align(Alignment.TopCenter))
+            if (lineBelow && targetTime != null) DropLine(targetTime, Modifier.align(Alignment.BottomCenter))
         }
+    }
+    if (canMove && state.items.size > 1 && dragging == null) {
+        Text(stringResource(R.string.move_today_hint), fontSize = 13.sp, color = AppColors.Muted)
+    }
+
+    moving?.let { (item, time) ->
+        val original = item.entry.original
+        val me = remember { ProfileStore.currentId(app) }
+        val clientName = remember { ProfileStore.list(app).firstOrNull { it.id == me }?.name.orEmpty() }
+        MoveDialog(
+            name = item.resolved.title,
+            fromTime = item.event.time,
+            initialTime = time,
+            clientName = clientName,
+            isGroup = GroupSchedule.isGroupEvent(original.id),
+            onToday = { chosen ->
+                val store = ChangeStore(app)
+                Moves.dayChange(store.load(), original.id, state.date, chosen, store.lastReveal, store.lastShowOriginal) {
+                    java.util.UUID.randomUUID().toString()
+                }?.let { store.upsert(it) }
+                EventReminders.reschedule(app)
+                moving = null
+                refresh++
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            },
+            onWeekly = { chosen ->
+                val groups = GroupStore(app)
+                val result = Moves.weekly(
+                    WeekStore(app, me).load(), groups.load(), me, original.id, state.date, chosen
+                ) { java.util.UUID.randomUUID().toString() }
+                if (result != null) {
+                    WeekStore(app, me).save(result.own)
+                    result.group?.let { groups.upsert(it) }
+                    // Tämän päivän siirto samalle kohdalle ei enää tarvita (viikko-ohjelma muuttui).
+                    val store = ChangeStore(app)
+                    DayChanges.wholeChange(store.load(), state.date, original.id)
+                        ?.takeIf { it.type == ChangeType.MOVE }
+                        ?.let { store.delete(it.id) }
+                    EventReminders.reschedule(app)
+                }
+                moving = null
+                refresh++
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            },
+            onDismiss = { moving = null }
+        )
     }
 }

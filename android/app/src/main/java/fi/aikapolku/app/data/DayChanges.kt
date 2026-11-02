@@ -85,6 +85,8 @@ internal object DayChanges {
     fun effective(original: WeekEvent, change: EventChange): WeekEvent = if (change.isStep) original else when (change.type) {
         ChangeType.CANCEL -> original
         ChangeType.REPLACE -> original.copy(
+            // Korvattu kohta voi myös siirtyä samana päivänä (raahaus Tänään-listalla).
+            time = change.time.ifBlank { original.time },
             kind = change.kind,
             programId = if (change.kind == EventKind.PROGRAM) change.programId else "",
             cardName = if (change.kind == EventKind.CARD) change.cardName else "",

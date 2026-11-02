@@ -107,6 +107,8 @@ internal fun RunkoEditor(
     allowPrograms: Boolean,
     groupRows: (day: Int, week: Int) -> List<GroupRow> = { _, _ -> emptyList() },
     onGroupRow: (GroupRow) -> Unit = {},
+    /** Ryhmän kohdan raahaus asiakkaan viikossa: uusi aika (null = ei raahattavissa). */
+    onGroupMove: ((GroupRow, String) -> Unit)? = null,
     /** Kopioitavat rungot (toiset asiakkaat ja ryhmät): nimi ja runko. */
     copySources: List<Pair<String, WeekPlan>> = emptyList()
 ) {
@@ -124,57 +126,19 @@ internal fun RunkoEditor(
     var moveToDayOf by remember { mutableStateOf<WeekEvent?>(null) }
     val newId = { UUID.randomUUID().toString() }
 
-    // Raahaus (pitkä painallus): sisällöt vaihtavat järjestystä, kellonajat pysyvät.
+    // Raahaus (pitkä painallus). Omat kohdat: sisällöt vaihtavat järjestystä, ajat pysyvät.
+    // Ryhmän kohta (asiakkaan viikossa): saa uuden ajan pudotuskohdasta, varmistus ennen tallennusta.
     val haptic = LocalHapticFeedback.current
-    val pageScroll = LocalPageScroll.current
-    val density = LocalDensity.current
     val currentPlan by rememberUpdatedState(plan)
     val currentOnChange by rememberUpdatedState(onChange)
-    var dragId by remember { mutableStateOf<String?>(null) }
-    var pointerY by remember { mutableFloatStateOf(0f) }
-    var grab by remember { mutableFloatStateOf(0f) }
-    // Rivien paikat ikkunassa: tunnus → (yläreuna, korkeus).
-    val bounds = remember { mutableStateMapOf<String, Pair<Float, Float>>() }
+    val drag = rememberRowDrag()
+    AutoScrollWhileDragging(drag)
 
     fun ownNow() = WeekSchedule.eventsOn(currentPlan, day, if (currentPlan.alternating) week else WeekSchedule.WEEK_A)
-
-    fun dropTarget(id: String): Int {
-        val others = ownNow().filter { it.id != id }
-        return Runko.dropIndex(others.map { e -> bounds[e.id]?.let { (top, h) -> top + h / 2 } ?: 0f }, pointerY)
-    }
 
     fun move(from: Int, to: Int) {
         val wk = if (currentPlan.alternating) week else WeekSchedule.WEEK_A
         currentOnChange(Runko.moveContent(currentPlan, day, wk, from, to))
-    }
-
-    fun finishDrag() {
-        val id = dragId ?: return
-        val from = ownNow().indexOfFirst { it.id == id }
-        val to = dropTarget(id)
-        dragId = null
-        if (from >= 0 && to != from) {
-            move(from, to)
-            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-        }
-    }
-
-    // Sivu vierii, kun raahattu kohta on lähellä näkyvän alueen reunaa.
-    LaunchedEffect(dragId) {
-        val scroll = pageScroll ?: return@LaunchedEffect
-        if (dragId == null) return@LaunchedEffect
-        val edge = with(density) { 88.dp.toPx() }
-        val maxSpeed = with(density) { 22.dp.toPx() }
-        while (dragId != null) {
-            val y = pointerY
-            val speed = when {
-                y < scroll.viewportTop + edge -> -maxSpeed * ((scroll.viewportTop + edge - y) / edge).coerceIn(0f, 1f)
-                y > scroll.viewportBottom - edge -> maxSpeed * ((y - (scroll.viewportBottom - edge)) / edge).coerceIn(0f, 1f)
-                else -> 0f
-            }
-            if (speed != 0f) scroll.state.scrollBy(speed)
-            withFrameNanos { }
-        }
     }
 
     if (plan.alternating) {
@@ -228,52 +192,68 @@ internal fun RunkoEditor(
         Text(stringResource(R.string.week_no_events), color = AppColors.Muted)
     }
 
-    // Pudotuskohta raahauksen aikana: monenneksi raahattu kohta tulee ja mihin aikaan.
-    val dragging = dragId
-    val target = dragging?.let { dropTarget(it) }
-    val others = if (dragging != null) own.filter { it.id != dragging } else emptyList()
-    val ownTimes = own.map { it.time }
+    // Pudotuskohta raahauksen aikana ja aika, jonka kohta saa.
+    fun rowKey(row: Any): String = when (row) {
+        is WeekEvent -> row.id
+        is GroupRow -> "grp-row:" + row.group.id + ":" + row.event.id
+        else -> ""
+    }
+    val dragging = drag.dragId
+    val draggingGroup = dragging?.startsWith("grp-row:") == true
+    val ownOthers = if (dragging != null && !draggingGroup) own.filter { it.id != dragging } else emptyList()
+    val allOthers = if (dragging != null && draggingGroup) rows.filter { rowKey(it.second) != dragging } else emptyList()
+    val target = when {
+        dragging == null -> null
+        draggingGroup -> drag.target(allOthers.map { rowKey(it.second) })
+        else -> drag.target(ownOthers.map { it.id })
+    }
+    val targetKey = when {
+        target == null -> null
+        draggingGroup -> allOthers.getOrNull(target)?.let { rowKey(it.second) }
+        else -> ownOthers.getOrNull(target)?.id
+    }
+    val lastKey = if (draggingGroup) allOthers.lastOrNull()?.let { rowKey(it.second) } else ownOthers.lastOrNull()?.id
+    val atEnd = target != null && target == (if (draggingGroup) allOthers.size else ownOthers.size)
+    val targetTime = when {
+        target == null -> null
+        draggingGroup -> Runko.suggestTime(allOthers.getOrNull(target - 1)?.first, allOthers.getOrNull(target)?.first)
+        else -> own.map { it.time }.getOrNull(target)
+    }
     val moveUpLabel = stringResource(R.string.runko_move_up)
     val moveDownLabel = stringResource(R.string.runko_move_down)
+    val context = LocalContext.current
+    val onlyOneText = stringResource(R.string.runko_drag_only_one)
+    val groupBlockedText = stringResource(R.string.runko_drag_group_blocked)
 
     rows.forEachIndexed { index, (time, row) ->
         if (canEdit) AddSlot(Runko.suggestTime(rows.getOrNull(index - 1)?.first, time)) { addAt = it }
+        val key = rowKey(row)
+        val lineAbove = targetKey != null && targetKey == key
+        val lineBelow = atEnd && lastKey == key
         when (row) {
             is WeekEvent -> {
                 val ownIndex = own.indexOfFirst { it.id == row.id }
                 val draggable = canEdit && own.size > 1
-                val lineAbove = target != null && others.getOrNull(target)?.id == row.id
-                val lineBelow = target != null && target == others.size && others.lastOrNull()?.id == row.id
                 Box(
                     modifier = Modifier
-                        .onGloballyPositioned { c -> bounds[row.id] = c.positionInWindow().y to c.size.height.toFloat() }
-                        .then(
-                            if (!draggable) Modifier else Modifier.pointerInput(row.id) {
-                                detectDragGesturesAfterLongPress(
-                                    onDragStart = { offset ->
-                                        dragId = row.id
-                                        grab = offset.y
-                                        pointerY = (bounds[row.id]?.first ?: 0f) + offset.y
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    },
-                                    onDrag = { change, _ ->
-                                        change.consume()
-                                        pointerY = (bounds[row.id]?.first ?: 0f) + change.position.y
-                                    },
-                                    onDragEnd = { finishDrag() },
-                                    onDragCancel = { dragId = null }
-                                )
-                            }
-                        )
-                        .then(
-                            if (dragging == row.id) Modifier.zIndex(2f).graphicsLayer {
-                                translationY = pointerY - (bounds[row.id]?.first ?: 0f) - grab
-                                scaleX = 1.03f
-                                scaleY = 1.03f
-                                shadowElevation = 24f
-                                shape = RoundedCornerShape(16.dp)
-                                clip = true
-                            } else Modifier
+                        .dragRow(
+                            drag = drag,
+                            id = key,
+                            enabled = draggable,
+                            haptic = haptic,
+                            onDrop = {
+                                val now = ownNow()
+                                val from = now.indexOfFirst { it.id == row.id }
+                                val to = drag.target(now.filter { it.id != row.id }.map { it.id })
+                                drag.dragId = null
+                                if (from >= 0 && to != from) {
+                                    move(from, to)
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                }
+                            },
+                            onBlocked = if (canEdit) {
+                                { android.widget.Toast.makeText(context, onlyOneText, android.widget.Toast.LENGTH_LONG).show() }
+                            } else null
                         )
                         .semantics {
                             if (draggable) customActions = listOfNotNull(
@@ -283,14 +263,35 @@ internal fun RunkoEditor(
                         }
                 ) {
                     OwnRow(row, programs, canEdit) { editing = row }
-                    if (lineAbove) DropLine(ownTimes[target!!], Modifier.align(Alignment.TopCenter))
-                    if (lineBelow) DropLine(ownTimes[target!!], Modifier.align(Alignment.BottomCenter))
+                    if (lineAbove && targetTime != null) DropLine(targetTime, Modifier.align(Alignment.TopCenter))
+                    if (lineBelow && targetTime != null) DropLine(targetTime, Modifier.align(Alignment.BottomCenter))
                 }
             }
-            is GroupRow -> GroupEventRow(row, canEdit) { onGroupRow(row) }
+            is GroupRow -> Box(
+                modifier = Modifier.dragRow(
+                    drag = drag,
+                    id = key,
+                    enabled = canEdit && onGroupMove != null && rows.size > 1,
+                    haptic = haptic,
+                    onDrop = {
+                        val rest = rows.filter { rowKey(it.second) != key }
+                        val to = drag.target(rest.map { rowKey(it.second) })
+                        val newTime = Runko.suggestTime(rest.getOrNull(to - 1)?.first, rest.getOrNull(to)?.first)
+                        drag.dragId = null
+                        onGroupMove?.invoke(row, newTime)
+                    },
+                    onBlocked = if (canEdit && onGroupMove == null) {
+                        { android.widget.Toast.makeText(context, groupBlockedText, android.widget.Toast.LENGTH_LONG).show() }
+                    } else null
+                )
+            ) {
+                GroupEventRow(row, canEdit) { onGroupRow(row) }
+                if (lineAbove && targetTime != null) DropLine(targetTime, Modifier.align(Alignment.TopCenter))
+                if (lineBelow && targetTime != null) DropLine(targetTime, Modifier.align(Alignment.BottomCenter))
+            }
         }
     }
-    if (canEdit && own.size > 1 && dragging == null) {
+    if (canEdit && rows.size > 1 && dragging == null) {
         Text(stringResource(R.string.runko_drag_hint), fontSize = 13.sp, color = AppColors.Muted)
     }
     if (canEdit && rows.isNotEmpty()) AddSlot(Runko.suggestTime(rows.last().first, null)) { addAt = it }
@@ -424,7 +425,7 @@ internal fun RunkoEditor(
     LaunchedEffect(canEdit) {
         if (!canEdit) {
             addAt = null; editing = null; copyDayOpen = false; chooseStart = false; programAt = null; replaceWith = null
-            moveToDayOf = null; dragId = null
+            moveToDayOf = null; drag.dragId = null
         }
     }
 }
@@ -768,20 +769,3 @@ private fun SelectedMark() {
     )
 }
 
-/** Pudotuskohdan viiva: kohta tulee tähän, tähän aikaan. Ei vie tilaa (päällä). */
-@Composable
-private fun DropLine(time: String, modifier: Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth().offset(y = 0.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(Modifier.weight(1f).height(4.dp).clip(RoundedCornerShape(2.dp)).background(AppColors.Teal))
-        Text(
-            time.replace(':', '.'),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(AppColors.Teal).padding(horizontal = 8.dp, vertical = 2.dp)
-        )
-    }
-}
