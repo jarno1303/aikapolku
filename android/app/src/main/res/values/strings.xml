@@ -470,6 +470,6 @@
     <string name="reminder_test_sent">Testimuistutus tulee noin minuutin päästä. Voit sulkea sovelluksen ja lukita näytön.</string>
     <string name="reminder_test_title">AikaPolku: testimuistutus</string>
     <string name="reminder_test_text">Muistutukset toimivat tässä puhelimessa.</string>
-    <string name="today_done_count">✓ Tehty tänään: %1$d</string>
-    <string name="today_whole_day">Koko päivä (%1$d) ›</string>
+    <string name="today_progress">✓ %1$d/%2$d  ›</string>
+    <string name="today_progress_a11y">tehty %1$d / %2$d. Avaa koko päivä</string>
 </resources>

@@ -33,21 +33,28 @@ internal fun HomeScreen(
     onOpenCard: (WeekEvent) -> Unit = {},
     onOpenDay: () -> Unit = {}
 ) {
-    Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(4.dp))
 
+    // Tiivis yläreuna: tila jää päivän tapahtumille ja toiminnoille.
     Row(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
             painter = painterResource(R.drawable.ap_home_brand),
             contentDescription = null,
-            modifier = Modifier.size(66.dp).clip(RoundedCornerShape(17.dp))
+            modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp))
         )
-        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text("AikaPolku", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink)
-            Text(stringResource(R.string.selkeytta_arkeen_askel_kerrallaan), fontSize = 14.sp, color = AppColors.Muted)
+        Column {
+            Text("AikaPolku", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink)
+            Text(
+                stringResource(R.string.selkeytta_arkeen_askel_kerrallaan),
+                fontSize = 13.sp,
+                color = AppColors.Muted,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
         }
     }
 
@@ -59,7 +66,6 @@ internal fun HomeScreen(
     val currentId = remember(revision) { ProfileStore.currentId(context) }
     var choosing by remember { mutableStateOf(false) }
     if (profiles.size > 1) {
-        Spacer(Modifier.height(12.dp))
         CurrentProfileRow(profiles.first { it.id == currentId }) {
             if (ProfileStore.selfSelect(context)) choosing = true
             else caregiverAccess.run(AppAction.SETTINGS) { choosing = true }
@@ -78,14 +84,11 @@ internal fun HomeScreen(
     }
 
     // Viikko-ohjelman päivä, jos tälle päivälle on tapahtumia.
-    Spacer(Modifier.height(12.dp))
     TodaySection(onOpenProgram = onOpenProgram, onOpenCard = onOpenCard, onOpenDay = onOpenDay)
 
-    Spacer(Modifier.height(10.dp))
-    Text(stringResource(R.string.mita_haluat_tehda), fontSize = 22.sp,
+    Spacer(Modifier.height(4.dp))
+    Text(stringResource(R.string.mita_haluat_tehda), fontSize = 20.sp,
         fontWeight = FontWeight.Bold, color = AppColors.Ink)
-    Spacer(Modifier.height(6.dp))
-
     HomeCard(
         symbol = "timer",
         title = stringResource(R.string.timer_title),

@@ -32,7 +32,7 @@ class TodaySectionTest {
     @Test
     fun `tanaan-lista ei nay ilman tapahtumia`() {
         compose.setContent { Column { TodaySection(onOpenProgram = {}, onOpenCard = {}) } }
-        compose.onNodeWithText(t(R.string.today_title, dayName(today))).assertDoesNotExist()
+        compose.onNodeWithText(t(R.string.today_title, dayName(today)), useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test
@@ -44,7 +44,7 @@ class TodaySectionTest {
         // Lista päivittää kellonaikaa jatkuvasti; testikello ei saa yrittää kelata sitä loppuun.
         compose.mainClock.autoAdvance = false
         compose.setContent { Column { TodaySection(onOpenProgram = {}, onOpenCard = { opened = it.cardName }) } }
-        compose.onNodeWithText(t(R.string.today_title, dayName(today))).assertExists()
+        compose.onNodeWithText(t(R.string.today_title, dayName(today)), useUnmergedTree = true).assertExists()
         compose.onNodeWithText("Lääkkeet").performClick()
         assertEquals("Lääkkeet", opened)
     }
@@ -58,7 +58,7 @@ class TodaySectionTest {
         compose.mainClock.autoAdvance = false
         compose.setContent { Column { TodaySection(onOpenProgram = {}, onOpenCard = {}) } }
         // Tehdyt kootaan yhdeksi riviksi; tehty ei näy omana rivinään eikä Aloita-painikkeena.
-        compose.onNodeWithText(t(R.string.today_done_count, 1)).assertExists()
+        compose.onNodeWithText(t(R.string.today_progress, 1, 1), useUnmergedTree = true).assertExists()
         compose.onNodeWithText("Lääkkeet").assertDoesNotExist()
         compose.onNodeWithText(t(R.string.today_start) + " ›").assertDoesNotExist()
     }
@@ -75,6 +75,6 @@ class TodaySectionTest {
         compose.onNodeWithText("Kortti 1").assertExists()
         compose.onNodeWithText("Kortti 2").assertExists()
         compose.onNodeWithText("Kortti 3").assertDoesNotExist()
-        compose.onNodeWithText(t(R.string.today_whole_day, 8)).assertExists()
+        compose.onNodeWithText(t(R.string.today_progress, 0, 8), useUnmergedTree = true).assertExists()
     }
 }

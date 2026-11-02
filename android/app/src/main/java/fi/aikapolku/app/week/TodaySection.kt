@@ -104,27 +104,34 @@ internal fun TodaySection(
         if (item.isProgram) onOpenProgram(item.event) else onOpenCard(item.event)
     }
 
-    Text(
-        stringResource(R.string.today_title, dayName(state.date.dayOfWeek.value)),
-        modifier = Modifier.semantics { heading() },
-        fontSize = 22.sp,
-        fontWeight = FontWeight.Bold,
-        color = AppColors.Ink
-    )
-    if (state.doneCount > 0) {
-        Surface(
-            onClick = onOpenDay,
-            shape = RoundedCornerShape(14.dp),
-            color = AppColors.TealSoft,
-            modifier = Modifier.fillMaxWidth()
-        ) {
+    // Otsikko ja yhteenveto yhdellä rivillä; koko rivi avaa koko päivän. Kun kaikki on tehty,
+    // osio on pelkkä tämä rivi.
+    val title = stringResource(R.string.today_title, dayName(state.date.dayOfWeek.value))
+    val progress = stringResource(R.string.today_progress, state.doneCount, state.events.size)
+    val a11y = title + ", " + stringResource(R.string.today_progress_a11y, state.doneCount, state.events.size)
+    Surface(
+        onClick = onOpenDay,
+        shape = RoundedCornerShape(14.dp),
+        color = Color.Transparent,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .semantics(mergeDescendants = true) {
+                heading()
+                contentDescription = a11y
+            }
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {
             Text(
-                stringResource(R.string.today_done_count, state.doneCount),
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = AppColors.Teal
+                title,
+                modifier = Modifier.weight(1f),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = AppColors.Ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
+            Text(progress, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal)
         }
     }
     WeekSchedule.compactIndices(state.events.map { it.event }, state.current, state.ackTimes.filterValues { it != null }.keys)
@@ -133,12 +140,6 @@ internal fun TodaySection(
                 open(state.events[index])
             }
         }
-    TextButton(
-        onClick = onOpenDay,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-    ) {
-        Text(stringResource(R.string.today_whole_day, state.events.size), color = AppColors.Teal, fontSize = 16.sp)
-    }
 }
 
 /** Koko päivän tapahtumat omana näkymänään: tehdyt, väliin jääneet, nyt ja tulevat. */

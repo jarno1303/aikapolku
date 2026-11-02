@@ -275,3 +275,7 @@
 - Aloitusnäkymässä enintään: "✓ Tehty tänään: N" -rivi, korostettu nyt-tapahtuma ja kaksi seuraavaa tekemätöntä sekä "Koko päivä (N) ›".
 - Koko päivä -näkymässä kaikki tapahtumat: tehdyt ("✓ Tehty 07.50"), väliin jääneet ja tulevat. Väliin jääneet eivät kasaannu aloitusnäkymään.
 - Uudet testit: tiivis lista (logiikka ja käyttöliittymä).
+
+## Tiiviimpi aloitusnäkymä
+- Tänään-osion otsikko ja yhteenveto yhdellä rivillä ("Tänään · Maanantai   ✓ 1/1 ›"), joka avaa koko päivän. Kun kaikki on tehty, osio on pelkkä tämä rivi.
+- Pienempi logo ja otsikko yläreunassa, pienemmät välit: toiminnot näkyvät ilman vieritystä.
