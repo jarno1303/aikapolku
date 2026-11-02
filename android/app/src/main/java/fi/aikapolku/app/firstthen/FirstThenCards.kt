@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
+import fi.aikapolku.app.ui.FitText
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.ui.FlowColors
 
@@ -131,7 +132,7 @@ private fun PairCardContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(if (primary) FlowColors.teal else FlowColors.soft)
-                .padding(vertical = if (compact) 5.dp else 8.dp),
+                .padding(vertical = if (compact) 3.dp else 8.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -143,27 +144,26 @@ private fun PairCardContent(
             )
         }
         Column(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(if (compact) 6.dp else 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp)
         ) {
             CardPhoto(
                 name = name,
                 imagePath = imagePath,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(if (compact) 88.dp else 120.dp)
+                    .height(if (compact) 64.dp else 120.dp)
                     .clip(RoundedCornerShape(14.dp))
             )
-            Text(
-                name,
+            // Pitkä sana pienennetään mahtumaan eikä katkaista kesken.
+            FitText(
+                text = name,
+                maxFontSize = if (compact) 16.sp else 17.sp,
                 color = FlowColors.ink,
-                fontSize = if (compact) 16.sp else 17.sp,
-                lineHeight = 21.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                maxLines = 2
             )
             if (!compact && description.isNotBlank()) {
                 Text(

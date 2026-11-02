@@ -171,8 +171,10 @@ internal object BackgroundTimer {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val note = Notification.Builder(c, CHANNEL)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle(c.getString(R.string.aikapolku_aika_paattyi))
-            .setContentText(title)
+            // Puhelin näyttää sovelluksen nimen itse: otsikko lyhyeksi, ettei se katkea.
+            .setContentTitle(c.getString(R.string.aika_on_paattynyt))
+            .setContentText(title.takeUnless { it == c.getString(R.string.aika_on_paattynyt) })
+            .setCategory(Notification.CATEGORY_ALARM)
             .setAutoCancel(true)
             .setContentIntent(open)
             .build()

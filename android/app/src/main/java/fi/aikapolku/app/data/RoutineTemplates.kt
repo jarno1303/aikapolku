@@ -25,7 +25,7 @@ internal object RoutineTemplates {
             TemplateStep("leaving")
         )),
         Template(R.string.template_evening, R.string.template_evening_desc, listOf(
-            TemplateStep("lunch", 20),
+            TemplateStep("evening_snack", 20),
             TemplateStep("brush_teeth", 3),
             TemplateStep("reading", 15),
             TemplateStep("sleep")
@@ -34,7 +34,7 @@ internal object RoutineTemplates {
             TemplateStep("morning_meeting", 10),
             TemplateStep("schoolwork", 30),
             TemplateStep("break", 10),
-            TemplateStep("lunch", 30),
+            TemplateStep("lunch_meal", 30),
             TemplateStep("outdoors", 20),
             TemplateStep("leaving")
         )),
@@ -42,7 +42,7 @@ internal object RoutineTemplates {
             TemplateStep("morning_meeting", 15),
             TemplateStep("crafts", 25),
             TemplateStep("break", 10),
-            TemplateStep("lunch", 30),
+            TemplateStep("lunch_meal", 30),
             TemplateStep("outdoors", 20)
         ))
     )

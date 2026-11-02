@@ -321,3 +321,10 @@
 - Omalle kortille valitaan Ajankohta (oletus Milloin tahansa; valmiin kortin pohjalta tehty saa sen ajankohdan). Vanhat kortit ovat Milloin tahansa.
 - Tulossa käyttäjän kuvilla: Lounas, Päivällinen, Iltapala, Lääkkeet.
 - Uudet testit: kulun palautus ja tilan tallennus (4), ryhmittely (5), ajankohdan tallennus (1).
+
+## Korjaus: kortin nimi, ajastinnäkymän mitoitus ja uudet ruokailukortit (puhelintesti)
+- Kortin nimi ei enää katkea kesken sanan ("Pukeutumine / n"): nimi pienenee mahtumaan (FitText).
+- Ajastin: korttipari tiiviimpi (kuva 64 dp) ja kellotaulun koko rajataan myös ruudun korkeuden mukaan, jotta kortit, kellotaulu ja painikkeet mahtuvat samalle ruudulle.
+- Ajastimen päättymisilmoitus: otsikko "Aika on päättynyt", tekstinä toiminto (ei katkea; puhelin näyttää sovelluksen nimen itse). Luokka hälytys.
+- Uudet valmiit kortit: Lounas (Päivä), Päivällinen ja Iltapala (Ilta). Valmiissa pohjissa koulupäivä ja päivätoiminta käyttävät Lounasta, iltarutiini Iltapalaa.
+- Uudet testit: sanan katkeaminen (3), uusien korttien ryhmät (1). Valmiiden korttien määrä testeissä 21 → 24.

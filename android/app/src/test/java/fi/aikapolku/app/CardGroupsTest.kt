@@ -54,4 +54,13 @@ class CardGroupsTest {
         assertEquals(DayTime.ANYTIME, DayTime.from("aamuyo"))
         assertEquals(DayTime.EVENING, DayTime.from("evening"))
     }
+
+    @Test
+    fun `lounas paivalla ja paivallinen seka iltapala illalla`() {
+        val groups = cardsByDayTime(emptyList(), texts).toMap()
+        assertTrue(groups.getValue(DayTime.DAY).any { it.photoPath == "builtin:lunch_meal" })
+        val evening = groups.getValue(DayTime.EVENING).map { it.photoPath }
+        assertEquals("builtin:dinner", evening.first())
+        assertTrue(evening.indexOf("builtin:evening_snack") < evening.indexOf("builtin:sleep"))
+    }
 }

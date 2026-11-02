@@ -24,7 +24,6 @@
     <string name="aika_on_paattynyt">Aika on päättynyt</string>
     <string name="aikaa_jaljella_minuuttia_sekuntia">Aikaa jäljellä %1$s minuuttia %2$s sekuntia. </string>
     <string name="aikapolku">AikaPolku - %1$s</string>
-    <string name="aikapolku_aika_paattyi">AikaPolku – aika päättyi</string>
     <string name="aikapolku_paivaohjelma_pdf">AikaPolku_paivaohjelma.pdf</string>
     <string name="aikapolku_sivu">AikaPolku  |  Sivu %1$s/%2$s</string>
     <string name="aina_kaytettavissa_tarvitsen_apua_tarvitsen">Aina käytettävissä: Tarvitsen apua, Tarvitsen tauon, Valmis, osavaiheen ohitus sekä ajastimen Aloita ja Jatka.</string>
@@ -60,6 +59,9 @@
     <string name="card_homework">Kotitehtävät</string>
     <string name="card_leaving">Lähtö</string>
     <string name="card_lunch">Ruokailu</string>
+    <string name="card_lunch_meal">Lounas</string>
+    <string name="card_dinner">Päivällinen</string>
+    <string name="card_evening_snack">Iltapala</string>
     <string name="card_morning_meeting">Aamukokous</string>
     <string name="card_music">Musiikki</string>
     <string name="card_outdoors">Ulkoilu</string>

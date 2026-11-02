@@ -156,18 +156,25 @@ internal fun TimerScreen(
             .toInt()
 
         val lastTen = showLastTen && secs in 1..10
-        val compact = LocalConfiguration.current.screenHeightDp < 750
+        val screenHeight = LocalConfiguration.current.screenHeightDp
+        val compact = screenHeight < 750
 
         BoxWithConstraints(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
             // Kellotaulu käyttää ruudun leveyden (yläpalkki vapautti tilaa).
-            val target = when {
-                compact -> 300.dp
-                guided -> 340.dp
-                else -> 420.dp
-            }
+            // Korkeus rajaa myös: korttipari, kellotaulu ja painikkeet mahtuvat ilman vieritystä
+            // (yläpalkki, ohjaajan palkki ja painikerivi vievät noin 330 dp, korttipari noin 150 dp).
+            val byHeight = (screenHeight - if (guided) 490 else 340).coerceAtLeast(220).dp
+            val target = minOf(
+                byHeight,
+                when {
+                    compact -> 300.dp
+                    guided -> 340.dp
+                    else -> 420.dp
+                }
+            )
 
             val diameter = minOf(maxWidth - 8.dp, target)
 
