@@ -85,7 +85,7 @@ private fun errorText(context: Context, reason: BackupException.Reason): String 
 
 /** Ohjaajan asetusten kortti: vienti ja tuonti. */
 @Composable
-internal fun BackupSettingsCard() {
+internal fun BackupSettingsCard(framed: Boolean = true) {
     var exporting by remember { mutableStateOf(false) }
     val importer = rememberImportFlow()
     // Sähköpostin liitteestä avattu tiedosto: esikatselu aukeaa heti.
@@ -97,17 +97,10 @@ internal fun BackupSettingsCard() {
         }
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.backup_title), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Text(stringResource(R.string.backup_info), fontSize = 15.sp)
-            PrimaryButton(text = stringResource(R.string.backup_export), onClick = { exporting = true }, modifier = Modifier.fillMaxWidth())
-            SecondaryButton(text = stringResource(R.string.backup_import), onClick = importer::pick, modifier = Modifier.fillMaxWidth())
-        }
+    fi.aikapolku.app.settings.OptionalCard(framed, stringResource(R.string.backup_title)) {
+        Text(stringResource(R.string.backup_info), fontSize = 15.sp)
+        PrimaryButton(text = stringResource(R.string.backup_export), onClick = { exporting = true }, modifier = Modifier.fillMaxWidth())
+        SecondaryButton(text = stringResource(R.string.backup_import), onClick = importer::pick, modifier = Modifier.fillMaxWidth())
     }
 
     if (exporting) {

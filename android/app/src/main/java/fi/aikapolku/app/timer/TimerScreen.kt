@@ -47,13 +47,11 @@ internal fun TimerScreen(
     remaining: Long,
     duration: Long,
     running: Boolean,
-    showLastTen: Boolean,
     activeTask: String,
     firstPhoto: String,
     nextPhoto: String,
     nextActivity: String,
     onGoNext: () -> Unit,
-    onShowLastTen: (Boolean) -> Unit,
     onPreset: (Int) -> Unit,
     onStartPause: () -> Unit,
     onReset: () -> Unit
@@ -81,20 +79,10 @@ internal fun TimerScreen(
     var confirmReset by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val preferences = remember(context) {
-        ProfileScope.prefs(context, ProfileScope.TIMER_PREFS)
-    }
-
-    var endSound by rememberSaveable {
-        mutableStateOf(
-            preferences.getString("end_sound", "off") ?: "off"
-        )
-    }
-
-    val soundScope = rememberCoroutineScope()
-    var timeMode by rememberSaveable {
-        mutableStateOf(TimeDisplayPrefs.load(context))
-    }
+    // Asetukset luetaan uudelleen, kun ne muuttuvat Asetuksissa (ks. SettingsDialog).
+    val settingsRevision = fi.aikapolku.app.settings.SettingsRevision.value
+    val timeMode = remember(settingsRevision) { TimeDisplayPrefs.load(context) }
+    val showLastTen = remember(settingsRevision) { TimeDisplayPrefs.lastTen(context) }
 
     val landscape = LocalConfiguration.current.orientation ==
         android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -316,87 +304,9 @@ internal fun TimerScreen(
     }
 
     if (settingsOpen) {
-        AlertDialog(
-            onDismissRequest = { settingsOpen = false },
-            title = { Text(stringResource(R.string.ajastimen_asetukset)) },
-            text = {
-                Column(
-                    modifier = Modifier.heightIn(max = 460.dp)
-                        .verticalScroll(androidx.compose.foundation.rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    TimeModeChoices(timeMode) { mode ->
-                        timeMode = mode
-                        TimeDisplayPrefs.save(context, mode)
-                    }
-                    HorizontalDivider()
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            stringResource(R.string.viimeisten_10_sekunnin_laskenta),
-                            modifier = Modifier.weight(1f)
-                        )
-                        Switch(
-                            checked = showLastTen,
-                            onCheckedChange = onShowLastTen,
-                            enabled = timeMode == TimeDisplayPrefs.NUMBERS
-                        )
-                    }
-
-                    HorizontalDivider()
-
-                    Text(
-                        stringResource(R.string.aanimerkki_ajan_paattyessa),
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    listOf(
-                        "off" to stringResource(R.string.ei_aanta),
-                        "short" to stringResource(R.string.lyhyt_merkkiaani),
-                        "clear" to stringResource(R.string.selkea_piippaus)
-                    ).forEach { (value, label) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 48.dp)
-                                .clickable {
-                                    endSound = value
-                                    preferences.edit()
-                                        .putString("end_sound", value)
-                                        .apply()
-                                },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = endSound == value,
-                                onClick = null
-                            )
-                            Text(label)
-                        }
-                    }
-
-                    TextButton(
-                        onClick = {
-                            soundScope.launch {
-                                playCompletionSound(endSound)
-                            }
-                        },
-                        enabled = endSound != "off"
-                    ) {
-                        Icon(AppIcons.Speaker, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Text(stringResource(R.string.kuuntele_aanimerkki), modifier = Modifier.padding(start = 6.dp))
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { settingsOpen = false }
-                ) {
-                    Text(stringResource(R.string.dialog_done))
-                }
-            }
+        fi.aikapolku.app.settings.SettingsDialog(
+            parts = listOf(fi.aikapolku.app.settings.SettingsPart.TIME),
+            onDismiss = { settingsOpen = false }
         )
     }
     if (confirmReset) {

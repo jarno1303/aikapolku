@@ -19,6 +19,25 @@ internal object ProfileSession {
         revisionState.intValue++
     }
 
+    // Asetuksista vaihdettaessa sovellus palaa vaihdon jälkeen Asetuksiin (ei etusivulle).
+    @Volatile private var reopenSettings = false
+
+    /** Kertakäyttöinen: true, jos edellinen vaihto tehtiin Asetuksista. */
+    fun takeReopenSettings(): Boolean = reopenSettings.also { reopenSettings = false }
+
+    /** Vaihto Asetukset-näkymästä: näkymä avautuu uudelleen uudelle asiakkaalle. */
+    fun switchFromSettings(context: Context, id: String) {
+        if (id == ProfileStore.currentId(context)) return
+        reopenSettings = true
+        switchTo(context, id)
+    }
+
+    /** Poisto Asetuksista: jos valittu asiakas poistetaan, Asetukset avautuu seuraavalle. */
+    fun deleteFromSettings(context: Context, id: String): Boolean {
+        if (id == ProfileStore.currentId(context)) reopenSettings = true
+        return delete(context, id).also { if (!it) reopenSettings = false }
+    }
+
     fun switchTo(context: Context, id: String) {
         if (id == ProfileStore.currentId(context)) return
         stopTimers(context)

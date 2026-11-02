@@ -21,7 +21,6 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Settings
-import fi.aikapolku.app.ui.AppIcons
 import fi.aikapolku.app.ui.ChoiceRow
 import fi.aikapolku.app.ui.RowIcon
 
@@ -32,8 +31,7 @@ internal fun RunActionsDialog(
     canChangeSettings: Boolean,
     canEnd: Boolean,
     onExtend: () -> Unit,
-    onTimeSettings: () -> Unit,
-    onViewSettings: () -> Unit,
+    onSettings: () -> Unit,
     onShowProgram: () -> Unit,
     onSkip: () -> Unit,
     onEnd: () -> Unit,
@@ -52,8 +50,12 @@ internal fun RunActionsDialog(
                     ChoiceRow(stringResource(R.string.extend_5_min), onExtend, leading = { RowIcon(Icons.Rounded.Add) })
                 }
                 if (canChangeSettings) {
-                    ChoiceRow(stringResource(R.string.ajan_nayttotapa), onTimeSettings, leading = { RowIcon(Icons.Rounded.Settings) })
-                    ChoiceRow(stringResource(R.string.nakyma_ja_viestiaanet), onViewSettings, leading = { RowIcon(AppIcons.Speaker) })
+                    ChoiceRow(
+                        stringResource(R.string.asetukset),
+                        onSettings,
+                        subtitle = stringResource(R.string.run_settings_info),
+                        leading = { RowIcon(Icons.Rounded.Settings) }
+                    )
                 }
                 if (onStepChange != null) {
                     ChoiceRow(stringResource(R.string.quick_step_change), onStepChange, leading = {

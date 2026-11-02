@@ -40,7 +40,6 @@ import fi.aikapolku.app.programs.run.SupportMessageScreen
 import fi.aikapolku.app.timer.BackgroundTimer
 import fi.aikapolku.app.timer.BackgroundTimerPort
 import fi.aikapolku.app.timer.Tick
-import fi.aikapolku.app.timer.TimeModeChoices
 import fi.aikapolku.app.timer.playCompletionSound
 import fi.aikapolku.app.voice.VoicePlayer
 import fi.aikapolku.app.data.WeekSchedule
@@ -123,10 +122,10 @@ internal fun ProgramsScreen(
     val caregiver = LocalCaregiver.current
     val canEditPrograms = caregiver.allows(AppAction.EDIT_PROGRAMS)
     var showExitConfirmation by remember { mutableStateOf(false) }
+    // Asetukset kesken ajon: samat osiot kuin Asetukset-sivulla (ks. SettingsDialog).
     var showRunSettings by remember { mutableStateOf(false) }
-    var nextPreviewMode by rememberSaveable {
-        mutableStateOf(RunPreferences.nextMode(context))
-    }
+    val settingsRevision = fi.aikapolku.app.settings.SettingsRevision.value
+    val nextPreviewMode = remember(settingsRevision) { RunPreferences.nextMode(context) }
     val programmeScroll = rememberScrollState()
     var deleteTarget by remember { mutableStateOf<DayProgram?>(null) }
     // Yhden päiväohjelman vienti tiedostoksi (ohjelman ⋮-valikosta).
@@ -137,21 +136,17 @@ internal fun ProgramsScreen(
             initialProgramIds = setOf(id)
         ) { exportTarget = null }
     }
-    var timeSettingsOpen by remember { mutableStateOf(false) }
 
     // Jos lukitus menee päälle, ohjaajan ikkunat suljetaan. Muokkausnäkymä jätetään
     // tarkoituksella auki, jotta tallentamattomat muutokset eivät katoa.
     LaunchedEffect(caregiver.isLocked) {
         if (caregiver.isLocked) {
-            timeSettingsOpen = false
             showRunSettings = false
             showExitConfirmation = false
             deleteTarget = null
         }
     }
-    var timeMode by rememberSaveable {
-        mutableStateOf(TimeDisplayPrefs.load(context))
-    }
+    val timeMode = remember(settingsRevision) { TimeDisplayPrefs.load(context) }
 
     // Aloitusnäkymä ennen ensimmäistä tehtävää: asiakas näkee, mitä tulee, ja aloittaa itse.
     var readyDraft by rememberSaveable { mutableStateOf<String?>(null) }
@@ -403,8 +398,7 @@ internal fun ProgramsScreen(
                 run.extend(5 * 60_000L, fallbackTitle)
                 showRunActions = false
             },
-            onTimeSettings = { showRunActions = false; timeSettingsOpen = true },
-            onViewSettings = { showRunActions = false; showRunSettings = true },
+            onSettings = { showRunActions = false; showRunSettings = true },
             onShowProgram = { showRunActions = false; showFullProgram = true },
             onSkip = { showRunActions = false; skipTask() },
             onEnd = { showRunActions = false; showExitConfirmation = true },
@@ -482,28 +476,13 @@ internal fun ProgramsScreen(
         )
     }
 
-    if (timeSettingsOpen) {
-        AlertDialog(
-            onDismissRequest = { timeSettingsOpen = false },
-            title = { Text(stringResource(R.string.ajan_esitystapa)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    TimeModeChoices(timeMode) { mode ->
-                        timeMode = mode
-                        TimeDisplayPrefs.save(context, mode)
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { timeSettingsOpen = false }) { Text(stringResource(R.string.dialog_done)) }
-            }
-        )
-    }
-
     if (showRunSettings) {
-        RunSettingsDialog(
-            currentNextMode = nextPreviewMode,
-            onNextModeChange = { nextPreviewMode = it },
+        fi.aikapolku.app.settings.SettingsDialog(
+            parts = listOf(
+                fi.aikapolku.app.settings.SettingsPart.TASKS,
+                fi.aikapolku.app.settings.SettingsPart.TIME,
+                fi.aikapolku.app.settings.SettingsPart.MESSAGES
+            ),
             onDismiss = { showRunSettings = false }
         )
     }

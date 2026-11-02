@@ -77,7 +77,7 @@
     <string name="caregiver_actions">Ohjaajan toiminnot</string>
     <string name="caregiver_actions_title">Ohjaajan toiminnot</string>
     <string name="caregiver_label">Ohjaaja</string>
-    <string name="caregiver_settings_title">Ohjaajan asetukset</string>
+    <string name="caregiver_settings_title">Asetukset</string>
     <string name="choose">Valitse</string>
     <string name="choose_activity">Valitse toiminto</string>
     <string name="clock_value">Klo %1$s</string>
@@ -350,26 +350,26 @@
     <string name="voice_needs_network">vaatii verkon</string>
     <string name="voice_offline">offline</string>
 
-    <!-- Profiilit -->
-    <string name="profiles_title">Profiilit</string>
-    <string name="profiles_info">Jokaisella profiililla on omat päiväohjelmat, kortit ja asetukset. Ohjaajan lukitus on yhteinen kaikille profiileille.</string>
-    <string name="profile_unnamed">Nimetön profiili</string>
+    <!-- Asiakkaat (profiilit) -->
+    <string name="profiles_title">Asiakkaat</string>
+    <string name="profiles_info">Jokaisella asiakkaalla on omat päiväohjelmat, kortit ja asetukset. Ohjaajan lukitus on yhteinen.</string>
+    <string name="profile_unnamed">Nimetön asiakas</string>
     <string name="profile_in_use">Käytössä nyt</string>
-    <string name="profile_add">+ Lisää profiili</string>
-    <string name="profile_new_title">Uusi profiili</string>
-    <string name="profile_edit_title">Muokkaa profiilia</string>
+    <string name="profile_add">Lisää asiakas</string>
+    <string name="profile_new_title">Uusi asiakas</string>
+    <string name="profile_edit_title">Muokkaa asiakasta</string>
     <string name="profile_name_label">Nimi</string>
-    <string name="profile_name_needed">Anna profiilille nimi.</string>
+    <string name="profile_name_needed">Anna asiakkaalle nimi.</string>
     <string name="profile_photo_remove">Poista kuva</string>
     <string name="profile_use">Ota käyttöön</string>
-    <string name="profile_delete">Poista profiili</string>
+    <string name="profile_delete">Poista asiakas</string>
     <string name="profile_delete_title">Poistetaanko %1$s?</string>
-    <string name="profile_delete_text">Profiilin päiväohjelmat, kortit, asetukset ja omat kuvat poistetaan pysyvästi. Tätä ei voi perua.</string>
-    <string name="profile_self_select">Käyttäjä voi valita profiilin itse</string>
-    <string name="profile_self_select_on">Profiilin voi vaihtaa aloitusnäkymästä ilman PIN-koodia.</string>
-    <string name="profile_self_select_off">Profiilin vaihto vaatii ohjaajan PIN-koodin.</string>
+    <string name="profile_delete_text">Asiakkaan päiväohjelmat, kortit, asetukset ja omat kuvat poistetaan pysyvästi. Tätä ei voi perua.</string>
+    <string name="profile_self_select">Asiakkaan voi vaihtaa ilman PIN-koodia</string>
+    <string name="profile_self_select_on">Asiakkaan voi vaihtaa aloitusnäkymästä ilman PIN-koodia.</string>
+    <string name="profile_self_select_off">Asiakkaan vaihto vaatii ohjaajan PIN-koodin.</string>
     <string name="profile_choose_title">Kuka käyttää?</string>
-    <string name="profile_switch_a11y">Profiili: %1$s. Vaihda profiilia</string>
+    <string name="profile_switch_a11y">Asiakas: %1$s. Vaihda asiakasta</string>
 
     <!-- Viikko-ohjelma ja Tänään -->
     <string name="tab_programs">Ohjelmat</string>
@@ -443,7 +443,7 @@
     <string name="today_progress">✓ %1$d/%2$d  ›</string>
     <string name="today_progress_a11y">tehty %1$d / %2$d. Avaa koko päivä</string>
     <string name="menu_open">Valikko</string>
-    <string name="menu_switch_profile">Vaihda profiilia</string>
+    <string name="menu_switch_profile">Vaihda asiakasta</string>
     <string name="menu_caregiver_settings">Ohjaajan asetukset</string>
     <!-- Yhtenäistetty käyttöliittymä -->
     <string name="flow_mode_timer_hint">Valitse aika kellotaululta.</string>
@@ -516,9 +516,9 @@
     <string name="backup_info">Siirrä päiväohjelmat, kortit ja viikko-ohjelma toiseen puhelimeen, jaa ohjelmapohja kollegalle tai ota varmuuskopio.</string>
     <string name="backup_export">Vie tiedostoksi</string>
     <string name="backup_import">Tuo tiedostosta</string>
-    <string name="backup_scope_all">Kaikki profiilit</string>
+    <string name="backup_scope_all">Kaikki asiakkaat</string>
     <string name="backup_scope_all_info">Varmuuskopio tai puhelimen vaihto.</string>
-    <string name="backup_scope_profile">Tämä profiili: %1$s</string>
+    <string name="backup_scope_profile">Tämä asiakas: %1$s</string>
     <string name="backup_scope_profile_info">Asiakas siirtyy toiseen yksikköön tai saa uuden laitteen.</string>
     <string name="backup_scope_programs">Valitut päiväohjelmat</string>
     <string name="backup_scope_programs_info">Pohja kollegalle.</string>
@@ -546,21 +546,21 @@
     <string name="backup_preview_week">Viikko-ohjelmassa %1$d tapahtumaa</string>
     <string name="backup_preview_programs">%1$d päiväohjelmaa</string>
     <string name="backup_preview_anonymized">Ohjelmapohja ilman henkilötietoja.</string>
-    <string name="backup_target_new">Uutena profiilina</string>
+    <string name="backup_target_new">Uutena asiakkaana</string>
     <string name="backup_target_new_info">Mitään olemassa olevaa ei korvata.</string>
-    <string name="backup_target_current">Nykyiseen profiiliin</string>
+    <string name="backup_target_current">Nykyiselle asiakkaalle</string>
     <string name="backup_target_current_info">Ohjelmat ja kortit lisätään. Samanlaiset ohitetaan, samannimiset saavat perään (2).</string>
-    <string name="backup_replace_week">Korvaa tämän profiilin viikko-ohjelma</string>
+    <string name="backup_replace_week">Korvaa tämän asiakkaan viikko-ohjelma</string>
     <string name="backup_import_button">Tuo</string>
     <string name="backup_done_title">Tuonti valmis</string>
-    <string name="backup_done_summary">Profiileja %1$d · päiväohjelmia %2$d · kortteja %3$d. Samanlaisina ohitettu %4$d.</string>
+    <string name="backup_done_summary">Asiakkaita %1$d · päiväohjelmia %2$d · kortteja %3$d. Samanlaisina ohitettu %4$d.</string>
     <string name="backup_done_week">Viikko-ohjelma korvattiin.</string>
     <string name="backup_err_not">Tiedosto ei ole AikaPolun vientitiedosto.</string>
     <string name="backup_err_new">Tiedosto on tehty uudemmalla AikaPolulla. Päivitä sovellus ja yritä uudelleen.</string>
     <string name="backup_err_password">Väärä salasana.</string>
     <string name="backup_err_large">Tiedosto on liian suuri.</string>
     <string name="backup_err_broken">Tiedosto on vioittunut, eikä sitä voitu lukea.</string>
-    <string name="backup_unnamed">Nimetön profiili</string>
+    <string name="backup_unnamed">Nimetön asiakas</string>
     <string name="quick_title">Tee muutos</string>
     <string name="quick_what">Mikä muuttuu?</string>
     <string name="quick_whole_program">Koko ohjelma</string>
@@ -606,7 +606,7 @@
     <string name="home_cards">Omat kortit</string>
     <string name="home_cards_info">Kuvat, nimet ja ajankohdat</string>
     <string name="home_settings">Asetukset</string>
-    <string name="home_settings_info">Profiilit, lukitus, muistutukset, vienti ja tuonti</string>
+    <string name="home_settings_info">Asiakkaat ja heidän asetuksensa, lukitus, muistutukset, varmuuskopio</string>
     <string name="home_view_as_client">Katso asiakkaana</string>
     <string name="home_view_as_client_info">Näe, mitä asiakas näkee juuri nyt</string>
     <string name="program_start_count">%1$d tehtävää</string>
@@ -644,6 +644,34 @@
     <string name="demo_program_name">Esittelypäivä</string>
     <string name="demo_profile_name">Esittely</string>
     <string name="demo_create">Luo esittelypäivä</string>
-    <string name="demo_create_info">Testitila: oma Esittely-profiili, ohjelma alkaa heti, toinen tehtävä kestää minuutin</string>
-    <string name="demo_created">Esittelypäivä luotu profiiliin %1$s. Vaihda asiakkaaksi ja paina NYT-kortin Aloita.</string>
+    <string name="demo_create_info">Testitila: oma Esittely-asiakas, ohjelma alkaa heti, toinen tehtävä kestää minuutin</string>
+    <string name="demo_created">Esittelypäivä luotu asiakkaalle %1$s. Vaihda asiakkaan näkymään ja paina NYT-kortin Aloita.</string>
+    <!-- Asetukset -->
+    <string name="settings_section_open">avattu</string>
+    <string name="settings_section_closed">suljettu</string>
+    <string name="timer_start_info">Itsestään: aika lähtee, kun tehtävä tulee näkyviin. Painikkeella: asiakas käynnistää ajan itse, ja Valmis tulee esiin vasta sen jälkeen.</string>
+    <string name="timer_start_button_short">Painikkeella</string>
+    <string name="done_mode_info">Mitä Valmis-painike tekee, jos tehtävän aikaa on vielä jäljellä.</string>
+    <string name="next_mode_info">Näkyykö tehtävän alla, mitä tulee seuraavaksi.</string>
+    <string name="settings_home">Etusivu</string>
+    <string name="settings_home_info">Aikajana, kellonajat, väliajan kortti ja työkalut</string>
+    <string name="settings_tasks">Tehtävät</string>
+    <string name="settings_tasks_info">Ajan alku, Valmis-painike ja seuraavan esikatselu</string>
+    <string name="settings_time">Aika</string>
+    <string name="settings_time_info">Ajan näyttötapa ja äänimerkki</string>
+    <string name="settings_messages">Viestit</string>
+    <string name="settings_messages_info">Tarvitsen apua- ja Tarvitsen tauon -painikkeiden ääni</string>
+    <string name="settings_client_title">Asiakkaan asetukset</string>
+    <string name="settings_device_title">Puhelimen asetukset</string>
+    <string name="settings_device_info">Yhteiset kaikille asiakkaille tässä puhelimessa</string>
+    <string name="settings_lock_info">PIN-koodi ohjaajan toiminnoille</string>
+    <string name="settings_reminders_info">Näkyvätkö muistutukset ajallaan</string>
+    <string name="settings_backup_info">Vienti tiedostoksi ja tuonti</string>
+    <string name="settings_roles_info">Testitila: roolin vaihto lennosta</string>
+    <string name="settings_for_client">Asiakas: %1$s</string>
+    <string name="run_settings_info">Tehtävät, aika ja viestien äänet</string>
+    <string name="settings_all_hint">Kaikki asetukset löytyvät ohjaajan etusivulta kohdasta Asetukset.</string>
+    <string name="client_selected">Valittu asiakas</string>
+    <string name="client_edit">Muokkaa nimeä ja kuvaa</string>
+    <string name="client_switch_count">Vaihda asiakasta (%1$d muuta)</string>
 </resources>

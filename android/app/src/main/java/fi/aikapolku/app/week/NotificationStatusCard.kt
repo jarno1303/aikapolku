@@ -1,5 +1,9 @@
 package fi.aikapolku.app.week
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Warning
+
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -13,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -47,7 +52,7 @@ import fi.aikapolku.app.ui.AppColors
  * sekä testimuistutus. Tila päivittyy, kun ohjaaja palaa asetuksista sovellukseen.
  */
 @Composable
-internal fun NotificationStatusCard() {
+internal fun NotificationStatusCard(framed: Boolean = true) {
     val context = LocalContext.current
     var refresh by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -60,13 +65,7 @@ internal fun NotificationStatusCard() {
     val battery = remember(refresh) { ignoresBatteryOptimizations(context) }
     var testSent by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.reminder_status_title), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+    fi.aikapolku.app.settings.OptionalCard(framed, stringResource(R.string.reminder_status_title)) {
             Text(
                 stringResource(R.string.reminder_status_info),
                 fontSize = 14.sp,
@@ -109,7 +108,6 @@ internal fun NotificationStatusCard() {
             if (testSent) {
                 Text(stringResource(R.string.reminder_test_sent), fontSize = 14.sp, color = AppColors.Teal)
             }
-        }
     }
 }
 
@@ -120,11 +118,11 @@ private fun StatusRow(label: String, ok: Boolean, onFix: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text(
-            if (ok) "✓" else "!",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = if (ok) AppColors.Teal else Color(0xFFB45309)
+        androidx.compose.material3.Icon(
+            if (ok) Icons.Rounded.CheckCircle else Icons.Rounded.Warning,
+            contentDescription = null,
+            tint = if (ok) AppColors.Teal else Color(0xFFB45309),
+            modifier = Modifier.size(26.dp)
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(label, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)

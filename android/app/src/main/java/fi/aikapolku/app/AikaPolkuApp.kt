@@ -64,14 +64,16 @@ internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANU
 internal fun AikaPolkuApp() {
     val context = androidx.compose.ui.platform.LocalContext.current
     val cardStore = remember(context) { CardStore(context.applicationContext) }
-    var page by rememberSaveable { mutableStateOf(AppPage.HOME) }
+    var page by rememberSaveable {
+        // Asiakkaan vaihto Asetuksista luo tilan uudelleen: palataan Asetuksiin.
+        mutableStateOf(if (fi.aikapolku.app.profiles.ProfileSession.takeReopenSettings()) AppPage.CAREGIVER else AppPage.HOME)
+    }
     val caregiver = LocalCaregiver.current
 
     val timerPort = remember(context) { BackgroundTimerPort(context.applicationContext, "timer") }
     val timer = rememberSaveable(saver = FlowTimer.saver(timerPort)) { FlowTimer(timerPort) }
     val cards = rememberSaveable(saver = FirstThenCards.saver) { FirstThenCards(cardStore.loadSelection()) }
     val sel = cards.selection
-    var showLastTen by rememberSaveable { mutableStateOf(true) }
     // Viikko-ohjelman tapahtuma, joka avataan aloitusnäkymän Tänään-listasta.
     var pendingProgramId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingEventId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -407,7 +409,6 @@ internal fun AikaPolkuApp() {
                     remaining = timer.remaining,
                     duration = timer.duration,
                     running = timer.running,
-                    showLastTen = showLastTen,
                     activeTask = timer.activeTask,
                     firstPhoto = sel.firstPhoto,
                     nextPhoto = sel.nextPhoto,
@@ -416,7 +417,6 @@ internal fun AikaPolkuApp() {
                         timer.finishActivity()
                         afterFirst()
                     },
-                    onShowLastTen = { showLastTen = it },
                     onPreset = { minutes -> timer.setMinutes(minutes) },
                     onStartPause = {
                         timer.startPause(context.getString(R.string.timer_title)) { playFirstVoice() }

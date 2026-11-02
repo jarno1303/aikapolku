@@ -174,7 +174,6 @@ private fun CaregiverHome(
     onOpenWeek: () -> Unit
 ) {
     var showCards by remember { mutableStateOf(false) }
-    var showClientView by remember { mutableStateOf(false) }
     val menu = rememberProfileMenu(isCaregiver = true)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
         Text(
@@ -217,7 +216,6 @@ private fun CaregiverHome(
         ChoiceRow(stringResource(R.string.home_week), onOpenWeek, subtitle = stringResource(R.string.home_week_info), leading = { RowIcon(Icons.Rounded.DateRange) })
         ChoiceRow(stringResource(R.string.home_programs), { open(AppPage.PROGRAMS) }, subtitle = stringResource(R.string.home_programs_info), leading = { RowIcon(Icons.AutoMirrored.Rounded.List) })
         ChoiceRow(stringResource(R.string.home_cards), { showCards = true }, subtitle = stringResource(R.string.home_cards_info), leading = { RowIcon(AppIcons.Image) })
-        ChoiceRow(stringResource(R.string.client_view_title), { showClientView = true }, subtitle = stringResource(R.string.client_view_info), leading = { RowIcon(Icons.Rounded.Person) })
         ChoiceRow(stringResource(R.string.home_view_as_client), { fi.aikapolku.app.caregiver.RoleSession.preview() }, subtitle = stringResource(R.string.home_view_as_client_info), leading = { RowIcon(Icons.Rounded.Face) })
         ChoiceRow(stringResource(R.string.home_settings), { open(AppPage.CAREGIVER) }, subtitle = stringResource(R.string.home_settings_info), leading = { RowIcon(Icons.Rounded.Settings) })
         // Testitilassa: esittelypäivä omaan profiiliinsa yhdellä painalluksella.
@@ -236,9 +234,6 @@ private fun CaregiverHome(
     }
     if (showCards) {
         fi.aikapolku.app.cards.CardLibraryDialog(onDismiss = { showCards = false }, onSelect = { showCards = false })
-    }
-    if (showClientView) {
-        ClientViewDialog { showClientView = false }
     }
 }
 
@@ -260,88 +255,6 @@ private fun ToolsCard(title: String, content: @Composable () -> Unit) {
     }
 }
 
-/** Ohjaaja säätää asiakkaan etusivun: aikajana, kellonajat ja asiakkaan omat työkalut. */
-@Composable
-private fun ClientViewDialog(onDismiss: () -> Unit) {
-    val context = LocalContext.current
-    var prefs by remember { mutableStateOf(ClientViewPrefs.load(context)) }
-    fun update(next: ClientViewPrefs) {
-        prefs = next
-        ClientViewPrefs.save(context, next)
-    }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.client_view_title)) },
-        text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text(stringResource(R.string.client_view_timeline), fontWeight = FontWeight.SemiBold)
-                listOf(
-                    Triple(TimelineMode.FULL, R.string.client_view_full, R.string.client_view_full_info),
-                    Triple(TimelineMode.NEXT, R.string.client_view_next, R.string.client_view_next_info),
-                    Triple(TimelineMode.NONE, R.string.client_view_none, R.string.client_view_none_info)
-                ).forEach { (mode, title, info) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .selectable(selected = prefs.timeline == mode, role = Role.RadioButton) { update(prefs.copy(timeline = mode)) }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        RadioButton(selected = prefs.timeline == mode, onClick = null, modifier = Modifier.padding(top = 2.dp))
-                        Column(modifier = Modifier.padding(start = 8.dp)) {
-                            Text(stringResource(title), fontSize = 16.sp)
-                            Text(stringResource(info), fontSize = 13.sp, color = AppColors.Muted)
-                        }
-                    }
-                }
-                SwitchLine(stringResource(R.string.client_view_times), prefs.showTimes) { update(prefs.copy(showTimes = it)) }
-                // Väliajan kortti: mitä NYT-kortti näyttää, kun seuraava ei ole vielä alkanut.
-                Text(stringResource(R.string.client_view_gap), fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
-                Text(stringResource(R.string.client_view_gap_info), fontSize = 13.sp, color = AppColors.Muted)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ClientViewPrefs.GAP_CHOICES.forEach { id ->
-                        val template = fi.aikapolku.app.cards.CardArt.templates.firstOrNull { it.id == id } ?: return@forEach
-                        val name = stringResource(template.nameRes)
-                        val selected = prefs.gapCard == id
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(14.dp))
-                                .then(if (selected) Modifier.border(3.dp, AppColors.Teal, RoundedCornerShape(14.dp)) else Modifier)
-                                .selectable(selected = selected, role = Role.RadioButton) { update(prefs.copy(gapCard = id)) }
-                                .padding(6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            fi.aikapolku.app.cards.CardPhoto(name, "builtin:$id", Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)))
-                            Text(name, fontSize = 14.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
-                        }
-                    }
-                }
-                Text(stringResource(R.string.client_view_tools), fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
-                Text(stringResource(R.string.client_view_tools_info), fontSize = 13.sp, color = AppColors.Muted)
-                SwitchLine(stringResource(R.string.timer_title), prefs.showTimer) { update(prefs.copy(showTimer = it)) }
-                SwitchLine(stringResource(R.string.ensin_sitten), prefs.showFirstThen) { update(prefs.copy(showFirstThen = it)) }
-                SwitchLine(stringResource(R.string.paivaohjelmat), prefs.showPrograms) { update(prefs.copy(showPrograms = it)) }
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } }
-    )
-}
-
-@Composable
-private fun SwitchLine(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(label, modifier = Modifier.weight(1f), fontSize = 16.sp)
-        Switch(checked = checked, onCheckedChange = onChange, modifier = Modifier.semantics { contentDescription = label })
-    }
-}
 
 /**
  * Oikean yläkulman valikko: profiilikuva (kun profiileja on useampi) tai valikkokuvake.

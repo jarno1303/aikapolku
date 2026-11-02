@@ -3,7 +3,7 @@ package fi.aikapolku.app.profiles
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +30,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import fi.aikapolku.app.ui.ChoiceRow
+import fi.aikapolku.app.ui.RowIcon
+import fi.aikapolku.app.ui.RoundIconButton
+import fi.aikapolku.app.ui.SecondaryButton
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -47,72 +57,103 @@ import fi.aikapolku.app.data.ProfileStore
 import fi.aikapolku.app.data.importCardPhoto
 import fi.aikapolku.app.ui.AppColors
 
-/** Ohjaajan asetusten Profiilit-osio: luettelo, lisäys, muokkaus, käyttöönotto ja valinta-asetus. */
+/**
+ * Asetusten yläosa: valittu asiakas. Kaikki alla olevat asiakkaan asetukset koskevat tätä
+ * asiakasta. Vaihto muihin asiakkaisiin, uuden lisäys, nimen ja kuvan muokkaus sekä poisto.
+ */
 @Composable
-internal fun ProfilesSettingsCard() {
+internal fun ClientPickerCard() {
     val context = LocalContext.current
     val revision = ProfileSession.revision
     val profiles = remember(revision) { ProfileStore.list(context) }
     val currentId = remember(revision) { ProfileStore.currentId(context) }
+    val current = profiles.firstOrNull { it.id == currentId } ?: profiles.firstOrNull()
     var selfSelect by remember(revision) { mutableStateOf(ProfileStore.selfSelect(context)) }
-    var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    var editingCurrent by rememberSaveable { mutableStateOf(false) }
     var creating by rememberSaveable { mutableStateOf(false) }
+    var listOpen by rememberSaveable { mutableStateOf(false) }
+    val others = profiles.filter { it.id != current?.id }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F3FA))
+        colors = CardDefaults.cardColors(containerColor = AppColors.TealSoft)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(stringResource(R.string.profiles_title), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Text(stringResource(R.string.profiles_info), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-            profiles.forEach { profile ->
-                val current = profile.id == currentId
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 56.dp)
-                        .clickable(role = Role.Button) { editingId = profile.id },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    ProfileAvatar(profile, 44.dp)
+            if (current != null) {
+                val editLabel = stringResource(R.string.client_edit)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    ProfileAvatar(current, 60.dp)
                     Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.client_selected), fontSize = 13.sp, color = AppColors.Muted)
                         Text(
-                            profileName(profile),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            profileName(current),
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppColors.Ink,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        if (current) Text(stringResource(R.string.profile_in_use), fontSize = 14.sp, color = AppColors.Teal)
                     }
-                    Text("›", fontSize = 26.sp, color = AppColors.Teal)
+                    RoundIconButton(
+                        icon = Icons.Rounded.Edit,
+                        contentDescription = editLabel,
+                        onClick = { editingCurrent = true },
+                        container = Color.White,
+                        tint = AppColors.Teal
+                    )
                 }
             }
+            Text(stringResource(R.string.profiles_info), fontSize = 13.sp, color = AppColors.Muted)
 
-            OutlinedButton(
-                onClick = { creating = true },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
-            ) { Text(stringResource(R.string.profile_add)) }
+            if (others.isNotEmpty()) {
+                SecondaryButton(
+                    text = stringResource(R.string.client_switch_count, others.size),
+                    icon = if (listOpen) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                    onClick = { listOpen = !listOpen },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            if (listOpen || others.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color.White).padding(vertical = 4.dp)
+                ) {
+                    others.forEach { profile ->
+                        ChoiceRow(
+                            title = profileName(profile),
+                            onClick = {
+                                listOpen = false
+                                ProfileSession.switchFromSettings(context, profile.id)
+                            },
+                            modifier = Modifier.padding(horizontal = 6.dp),
+                            leading = { ProfileAvatar(profile, 44.dp) }
+                        )
+                    }
+                    ChoiceRow(
+                        title = stringResource(R.string.profile_add),
+                        onClick = { creating = true },
+                        modifier = Modifier.padding(horizontal = 6.dp),
+                        leading = { RowIcon(Icons.Rounded.Add) }
+                    )
+                }
+            }
 
             if (profiles.size > 1) {
                 val switchLabel = stringResource(R.string.profile_self_select)
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(switchLabel, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Text(switchLabel, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Ink)
                         Text(
                             stringResource(if (selfSelect) R.string.profile_self_select_on else R.string.profile_self_select_off),
                             fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = AppColors.Muted
                         )
                     }
                     Switch(
@@ -134,9 +175,11 @@ internal fun ProfilesSettingsCard() {
             isCurrent = false,
             canDelete = false,
             onSave = { name, photo ->
-                ProfileStore.add(context, name, photo)
-                ProfileSession.changed()
+                val added = ProfileStore.add(context, name, photo)
                 creating = false
+                listOpen = false
+                // Uusi asiakas valitaan heti, jotta hänen asetuksensa voi tehdä saman tien.
+                ProfileSession.switchFromSettings(context, added.id)
             },
             onUse = {},
             onDelete = {},
@@ -144,25 +187,22 @@ internal fun ProfilesSettingsCard() {
         )
     }
 
-    profiles.firstOrNull { it.id == editingId }?.let { profile ->
+    if (editingCurrent && current != null) {
         ProfileEditDialog(
-            initial = profile,
-            isCurrent = profile.id == currentId,
+            initial = current,
+            isCurrent = true,
             canDelete = profiles.size > 1,
             onSave = { name, photo ->
-                ProfileStore.update(context, profile.copy(name = name, photo = photo))
+                ProfileStore.update(context, current.copy(name = name, photo = photo))
                 ProfileSession.changed()
-                editingId = null
+                editingCurrent = false
             },
-            onUse = {
-                editingId = null
-                ProfileSession.switchTo(context, profile.id)
-            },
+            onUse = {},
             onDelete = {
-                editingId = null
-                ProfileSession.delete(context, profile.id)
+                editingCurrent = false
+                ProfileSession.deleteFromSettings(context, current.id)
             },
-            onDismiss = { editingId = null }
+            onDismiss = { editingCurrent = false }
         )
     }
 }
