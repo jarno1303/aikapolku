@@ -300,6 +300,12 @@ internal fun AikaPolkuApp() {
                     onOpenChange = {
                         changeId = it.id
                         page = AppPage.CHANGE
+                    },
+                    onMakeChange = { id ->
+                        quickDayOffset = 0
+                        quickEventId = id
+                        quickReturn = AppPage.HOME
+                        page = AppPage.QUICK_CHANGE
                     }
                 )
 

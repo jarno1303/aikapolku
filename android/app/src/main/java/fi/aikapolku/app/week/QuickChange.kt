@@ -260,6 +260,15 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
         showOriginal = target.showOriginal
     }
 
+    // Valmiiksi valittu tapahtuma (rivin muutosmerkistä): nykyinen muutos pohjaksi.
+    var preloaded by rememberSaveable { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        if (!preloaded && initialEventId != null && stage == Stage.REPLACEMENT && stepId.isEmpty()) {
+            preloaded = true
+            loadExisting(DayChanges.wholeChange(changes, date, initialEventId))
+        }
+    }
+
     fun back() {
         stage = when (stage) {
             Stage.EVENT -> { onDone(); Stage.EVENT }

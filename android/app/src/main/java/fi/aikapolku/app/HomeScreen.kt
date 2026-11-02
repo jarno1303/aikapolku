@@ -35,6 +35,10 @@ import fi.aikapolku.app.profiles.ProfilePickerDialog
 import fi.aikapolku.app.profiles.ProfileSession
 import fi.aikapolku.app.week.TodaySection
 import fi.aikapolku.app.week.ChangeAnnouncements
+import fi.aikapolku.app.ui.ChangeSymbol
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.BorderStroke
 import fi.aikapolku.app.data.EventChange
 import fi.aikapolku.app.data.WeekEvent
 
@@ -44,13 +48,16 @@ internal fun HomeScreen(
     onOpenProgram: (WeekEvent) -> Unit = {},
     onOpenCard: (WeekEvent) -> Unit = {},
     onOpenDay: () -> Unit = {},
-    onOpenChange: (EventChange) -> Unit = {}
+    onOpenChange: (EventChange) -> Unit = {},
+    /** Pikamuutos: tapahtuman tunnus (null = valitaan näkymässä). */
+    onMakeChange: (String?) -> Unit = {}
 ) {
     // Pikamuutos ohjaajalle aloitusvalikosta (PIN-koodi, kun lukitus on päällä).
     // Aloitusnäkymässä vain päivä, valikko ja toiminnot. Oikean yläkulman valikosta profiilin
     // vaihto (vain, jos profiileja on useampi) ja ohjaajan asetukset (PIN-koodin takana).
     val context = LocalContext.current
     val caregiver = LocalCaregiver.current
+    val canChange = caregiver.allows(AppAction.EDIT_PROGRAMS)
     val revision = ProfileSession.revision
     val profiles = remember(revision) { ProfileStore.list(context) }
     val currentId = remember(revision) { ProfileStore.currentId(context) }
@@ -63,7 +70,7 @@ internal fun HomeScreen(
                 else caregiver.run(AppAction.SETTINGS) { choosing = true }
             },
             onCaregiverSettings = { caregiver.run(AppAction.SETTINGS) { open(AppPage.CAREGIVER) } },
-            onMakeChange = { caregiver.run(AppAction.EDIT_PROGRAMS) { open(AppPage.QUICK_CHANGE) } }
+            onMakeChange = { caregiver.run(AppAction.EDIT_PROGRAMS) { onMakeChange(null) } }
         )
     }
     if (choosing) {
@@ -85,7 +92,9 @@ internal fun HomeScreen(
         onOpenDay = onOpenDay,
         trailing = menuButton,
         // Muutokset heti päivän otsikon alle, ennen tapahtumia.
-        afterHeader = { ChangeAnnouncements(onOpenChange) }
+        afterHeader = { ChangeAnnouncements(onOpenChange) },
+        // Ohjaajalle (lukko auki tai ei käytössä) muutosmerkki jokaisella rivillä.
+        onChange = if (canChange) { event -> onMakeChange(event.id) } else null
     )
     if (!todayShown) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
@@ -99,6 +108,24 @@ internal fun HomeScreen(
             menuButton()
         }
         ChangeAnnouncements(onOpenChange)
+    }
+    // Ohjaajalle aina löytyvä pikamuutos (myös huominen ja listan ulkopuoliset tapahtumat).
+    if (canChange) {
+        OutlinedButton(
+            onClick = { onMakeChange(null) },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(2.dp, AppColors.ChangeFill)
+        ) {
+            ChangeSymbol(Modifier.size(28.dp))
+            Text(
+                stringResource(R.string.quick_title),
+                modifier = Modifier.padding(start = 10.dp),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = AppColors.Change
+            )
+        }
     }
     Spacer(Modifier.height(2.dp))
     HomeCard(

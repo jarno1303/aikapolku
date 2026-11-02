@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -131,7 +132,9 @@ internal fun TodaySection(
     onOpenDay: () -> Unit = {},
     /** Otsikkorivin oikeaan reunaan (esim. profiilikuva). */
     trailing: @Composable () -> Unit = {},
-    afterHeader: @Composable () -> Unit = {}
+    afterHeader: @Composable () -> Unit = {},
+    /** Ohjaajalle: muutosmerkki tapahtumarivillä (null = ei näytetä). Saa alkuperäisen tapahtuman. */
+    onChange: ((WeekEvent) -> Unit)? = null
 ): Boolean {
     val state = rememberTodayState() ?: return false
     fun open(item: DayItem) {
@@ -176,7 +179,14 @@ internal fun TodaySection(
     WeekSchedule.compactIndices(state.items.map { it.event }, state.current, skipped)
         .forEach { index ->
             val item = state.items[index]
-            TodayRow(item, isCurrent = index == state.current, isPast = false, doneAt = null) { open(item) }
+            val changeLabel = stringResource(R.string.quick_title) + ": " + item.original.title
+            TodayRow(
+                item,
+                isCurrent = index == state.current,
+                isPast = false,
+                doneAt = null,
+                trailing = onChange?.let { change -> { ChangeButton(changeLabel) { change(item.entry.original) } } }
+            ) { open(item) }
         }
     return true
 }
@@ -379,5 +389,20 @@ internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDon
                 Text(stringResource(R.string.run_done_button), fontSize = 21.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp))
             }
         }
+    }
+}
+
+/** Pieni muutospainike tapahtumarivillä: oranssi muutosmerkki, kosketusalue 48 dp. */
+@Composable
+internal fun ChangeButton(description: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center
+    ) {
+        ChangeSymbol(Modifier.size(30.dp))
     }
 }

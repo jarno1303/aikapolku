@@ -367,3 +367,8 @@
 - Ensin–Sitten: kun Sitten-kortti vaihdetaan Ensin-ajastuksen ollessa kesken, kysytään "Näytetäänkö muutoksena?". Näytä muutos → muutosnäkymä (vanha ruksattuna → uusi, Selvä) ja paluu ajastimeen.
 - Aloitusnäkymän muutosrivit, päivän lista ja ohjaajan Muutokset-kortti näyttävät myös vaihemuutokset ("Koulupäivä: Uinti → Ulkoilu"). Muistutukset eivät muutu vaihemuutoksesta.
 - Uudet testit: vaihemuutokset (7), suoritus perutuin ja korvatuin vaihein (5).
+
+## Muutos näkyväksi aloitusnäkymään
+- Ohjaajalle (lukko auki tai lukitus ei käytössä) jokaisella Tänään-rivillä oranssi muutosmerkki: napautus avaa pikamuutoksen suoraan tälle tapahtumalle (kortti: Mitä tilalle?, päiväohjelma: koko ohjelma tai vaihe). Nykyinen muutos on pohjana.
+- Aloitusnäkymässä Tänään-listan alla iso "Tee muutos" -painike (myös huominen ja listan ulkopuoliset tapahtumat). Lukittuna kumpikaan ei näy; valikon "Tee muutos" säilyy.
+- Automaattinen käyttöliittymätesti (ChangeFlowUiTest, 6 testiä, ajetaan skriptissä ilman puhelinta): muutosmerkki ja Tee muutos -painike näkyvät ohjaajalle ja avaavat pikamuutoksen; kortin korvaus; päiväohjelman vaiheen peruutus etukäteen ja sen ohitus suorituksessa; muutos huomiselle; lukittuna merkit piilossa ja MUUTOS-rivi näkyy; Selvä kuittaa muutoksen.
