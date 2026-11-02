@@ -607,4 +607,26 @@
     <string name="home_view_as_client_info">Näe, mitä asiakas näkee juuri nyt</string>
     <string name="program_start_count">%1$d tehtävää</string>
     <string name="program_start_changes">Tänään on muutoksia</string>
+    <string name="client_next">SEURAAVAKSI</string>
+    <string name="client_continue">Jatka</string>
+    <string name="client_all_done">Päivän tapahtumat on tehty</string>
+    <string name="client_no_events">Tänään ei ole merkittyjä tapahtumia.</string>
+    <string name="client_my_day">Päiväni</string>
+    <string name="client_done">tehty</string>
+    <string name="caregiver_home_title">Ohjaajan etusivu</string>
+    <string name="caregiver_prepare">Valmistele asiakkaalle</string>
+    <string name="caregiver_first_then_info">Ensin–Sitten-pari ja aika; näkyy asiakkaan NYT-kortissa</string>
+    <string name="caregiver_timer_info">Ajastin; näkyy asiakkaan NYT-kortissa käynnissä ollessaan</string>
+    <string name="client_view_title">Asiakkaan näkymä</string>
+    <string name="client_view_info">Aikajana, kellonajat ja asiakkaan työkalut</string>
+    <string name="client_view_timeline">Päivän aikajana</string>
+    <string name="client_view_full">Koko päivä</string>
+    <string name="client_view_full_info">Kaikki päivän tapahtumat aamusta iltaan.</string>
+    <string name="client_view_next">Nyt ja kaksi seuraavaa</string>
+    <string name="client_view_next_info">Kevyempi: vain lähin tuleva.</string>
+    <string name="client_view_none">Ei aikajanaa</string>
+    <string name="client_view_none_info">Vain NYT-kortti.</string>
+    <string name="client_view_times">Kellonajat näkyvissä</string>
+    <string name="client_view_tools">Asiakkaan omat työkalut</string>
+    <string name="client_view_tools_info">Oletuksena piilossa: ohjaaja valmistelee toiminnan, ja se näkyy NYT-kortissa.</string>
 </resources>

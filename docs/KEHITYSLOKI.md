@@ -385,3 +385,12 @@
 ## Päiväohjelman aloitus ja asiakkaan suoritusnäkymä
 - Päiväohjelma alkaa aloitusnäkymästä (Tänään-listasta ja Päiväohjelmista): nimi, tehtävien määrä, tehtävät kuvina järjestyksessä ja iso Aloita. Tänään perutut vaiheet eivät näy; jos päivän ohjelmassa on muutoksia, "Tänään on muutoksia" muutosmerkillä. Ensimmäinen tehtävä tulee vasta Aloita-painalluksesta. Keskeytynyt ohjelma jatkuu suoraan.
 - Asiakkaalla ei Muut toiminnot -valikkoa: tilalla "Näytä koko ohjelma". Asiakkaalla vain Tarvitsen apua, Tarvitsen tauon ja Valmis. Ohita on ohjaajan toiminto (SKIP_STEP), samoin lisäaika, muutos, asetukset ja lopetus ohjaajan Muut toiminnot -valikossa.
+
+## Kummallekin roolille oma etusivu
+- Asiakkaan etusivu (oma päivä): päivän nimi, muutosrivit, iso NYT-kortti ja päivän aikajana.
+  - NYT-kortti: ohjaajan valmistelema Ensin–Sitten (pari, Aloita/Jatka), käynnissä oleva ajastin (Jatka) tai päivän nykyinen tapahtuma (iso kuva, nimi, aika, muutosmerkki, Aloita; ennen alkuaan "SEURAAVAKSI"). Kun kaikki on tehty: "Päivän tapahtumat on tehty".
+  - Aikajana "Päiväni": aamu / päivä / ilta -otsikot, kellonajat, nyt korostettuna, tehdyt kuitattuina ja himmeinä, perutut yliviivattuina, muutokset merkillä.
+  - Ajastin-, Ensin–Sitten- ja Päiväohjelmat-ruudut vain ohjaajan sallimina (oletuksena piilossa). Takaisin vie asiakkaalla aina omaan päivään.
+- Ohjaajan etusivu: "Ohjaajan etusivu", koko päivän lista (myös tehdyt ja perutut) muutosmerkein, Tee muutos, "Valmistele asiakkaalle" (Ensin–Sitten, Ajastin) ja Ohjaajan työkalut (Viikko-ohjelma, Päiväohjelmat, Omat kortit, Asiakkaan näkymä, Katso asiakkaana, Asetukset).
+- Asiakkaan näkymä -asetukset (profiilikohtaiset): aikajana koko päivä (oletus) / nyt ja kaksi seuraavaa / ei aikajanaa; kellonajat; asiakkaan omat työkalut.
+- Uudet testit: asiakkaan näkymän oletukset, päivän osat ja aikajanan rivit (3); käyttöliittymätestissä kummankin etusivun sisältö.

@@ -108,6 +108,7 @@ class ChangeFlowUiTest {
             }
         }
         // Ohjaajalla oma etusivu työkaluineen, ei asiakkaan aloituskortteja.
+        compose.onNodeWithText(t(R.string.caregiver_home_title)).assertExists()
         compose.onNodeWithText(t(R.string.caregiver_tools)).assertExists()
         compose.onNodeWithText(t(R.string.home_view_as_client)).assertExists()
         compose.onNodeWithText(t(R.string.suunnittele_kaksi_askelta)).assertDoesNotExist()
@@ -205,9 +206,12 @@ class ChangeFlowUiTest {
         compose.onNodeWithContentDescription(t(R.string.quick_title) + ": " + outdoors).assertDoesNotExist()
         compose.onNodeWithText(t(R.string.quick_title)).assertDoesNotExist()
         compose.onNodeWithText(t(R.string.change_label) + " · " + t(R.string.change_day_today), substring = true).assertExists()
-        // Asiakkaalla vain oma päivä: ei ohjaajan työkaluja.
+        // Asiakkaalla vain oma päivä: NYT-kortti ja aikajana, ei ohjaajan työkaluja eikä
+        // työkaluruutuja (oletuksena piilossa).
         compose.onNodeWithText(t(R.string.caregiver_tools)).assertDoesNotExist()
-        compose.onNodeWithText(t(R.string.suunnittele_kaksi_askelta)).assertExists()
+        compose.onNodeWithText(t(R.string.now_label)).assertExists()
+        compose.onNodeWithText(t(R.string.client_my_day)).assertExists()
+        compose.onNodeWithText(t(R.string.suunnittele_kaksi_askelta)).assertDoesNotExist()
     }
 
     @Test

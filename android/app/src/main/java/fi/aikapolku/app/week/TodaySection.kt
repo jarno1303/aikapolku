@@ -77,7 +77,7 @@ internal class DayItem(val resolved: ResolvedEvent, val entry: DayEntry, val ori
 }
 
 /** Päivän tapahtumat ja niiden tila (tehty, korostettu) kellonajan mukaan päivittyen. */
-private class TodayState(
+internal class TodayState(
     val date: LocalDate,
     val items: List<DayItem>,
     val ackTimes: Map<String, String?>,
@@ -93,7 +93,7 @@ private class TodayState(
  * näkyvät muutokset (ks. ChangeReveal). [refresh] lataa tiedot uudelleen muutoksen jälkeen.
  */
 @Composable
-private fun rememberTodayState(dayOffset: Int = 0, caregiverView: Boolean = false, refresh: Int = 0): TodayState? {
+internal fun rememberTodayState(dayOffset: Int = 0, caregiverView: Boolean = false, refresh: Int = 0): TodayState? {
     val context = LocalContext.current
     val plan = remember(context, refresh) { WeekStore(context.applicationContext).load() }
     val programs = remember(context, refresh) { ProgramStore(context.applicationContext).load() }
@@ -404,5 +404,58 @@ internal fun ChangeButton(description: String, onClick: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         ChangeSymbol(Modifier.size(30.dp))
+    }
+}
+
+/**
+ * Ohjaajan etusivun päivä: kaikki tämän päivän tapahtumat (myös perutut ja tehdyt) ja
+ * jokaisella rivillä muutosmerkki. Ohjaaja näkee muutokset heti.
+ */
+@Composable
+internal fun CaregiverDayList(
+    onOpenProgram: (WeekEvent) -> Unit,
+    onOpenCard: (WeekEvent) -> Unit,
+    onOpenChange: (EventChange) -> Unit,
+    onChange: (WeekEvent) -> Unit,
+    onOpenDay: () -> Unit
+) {
+    val state = rememberTodayState(caregiverView = true)
+    val title = stringResource(R.string.today_title, dayName(LocalDate.now().dayOfWeek.value))
+    Surface(
+        onClick = onOpenDay,
+        shape = RoundedCornerShape(14.dp),
+        color = Color.Transparent,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics(mergeDescendants = true) { heading() }
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(title, modifier = Modifier.weight(1f), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink)
+            if (state != null) {
+                Text(stringResource(R.string.today_progress, state.doneCount, state.total), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal)
+            }
+        }
+    }
+    if (state == null) {
+        Text(stringResource(R.string.week_no_events), color = AppColors.Muted)
+        return
+    }
+    state.items.forEachIndexed { index, item ->
+        val doneAt = state.ackTimes[item.event.id]
+        val isCurrent = index == state.current
+        val isPast = item.cancelled || doneAt != null || (if (state.current >= 0) index < state.current else true)
+        val changeLabel = stringResource(R.string.quick_title) + ": " + item.original.title
+        TodayRow(
+            item,
+            isCurrent = isCurrent,
+            isPast = isPast,
+            doneAt = doneAt,
+            trailing = { ChangeButton(changeLabel) { onChange(item.entry.original) } }
+        ) {
+            val change = item.change
+            when {
+                change != null && item.cancelled -> onOpenChange(change)
+                item.resolved.isProgram -> onOpenProgram(item.event)
+                else -> onOpenCard(item.event)
+            }
+        }
     }
 }

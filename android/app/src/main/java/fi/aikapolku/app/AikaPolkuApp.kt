@@ -30,6 +30,7 @@ import fi.aikapolku.app.timer.TimerScreen
 import fi.aikapolku.app.timer.TimerReturnRow
 import fi.aikapolku.app.backup.ImportLaunch
 import fi.aikapolku.app.week.ChangeScreen
+import fi.aikapolku.app.week.ClientActivity
 import fi.aikapolku.app.week.QuickChangeScreen
 import fi.aikapolku.app.week.FlowChangeScreen
 import fi.aikapolku.app.data.ChangeStore
@@ -192,7 +193,10 @@ internal fun AikaPolkuApp() {
     // Takaisin ei pysäytä aikaa: ajastin jatkuu taustalla ja siihen palataan
     // "Ajastin käynnissä" -riviltä. Tauko tehdään vain taukopainikkeella.
     val goBack: () -> Unit = {
-        if (page == AppPage.TIMER && timer.activeTask.isNotBlank()) {
+        if (!caregiver.isCaregiver && page != AppPage.FLOW_CHANGE) {
+            // Asiakkaalla takaisin vie aina omaan päivään (NYT-kortti kertoo, mikä on kesken).
+            page = AppPage.HOME
+        } else if (page == AppPage.TIMER && timer.activeTask.isNotBlank()) {
             page = AppPage.FIRST_THEN
         } else if (page == AppPage.MANUAL) {
             page = AppPage.FIRST_THEN
@@ -288,7 +292,8 @@ internal fun AikaPolkuApp() {
                     }
                 )
             }
-            if ((page == AppPage.HOME || page == AppPage.FIRST_THEN) && timer.inProgress) {
+            // Asiakkaan etusivulla kesken oleva toiminta näkyy NYT-kortissa, joten paluurivi vain ohjaajalle.
+            if (timer.inProgress && (page == AppPage.FIRST_THEN || (page == AppPage.HOME && caregiver.isCaregiver))) {
                 TimerReturnRow(
                     task = timer.activeTask,
                     photo = sel.firstPhoto,
@@ -320,7 +325,19 @@ internal fun AikaPolkuApp() {
                     onOpenWeek = {
                         programsWeek = true
                         page = AppPage.PROGRAMS
-                    }
+                    },
+                    // Ohjaajan valmistelema Ensin–Sitten (aika asetettu) tai käynnissä oleva ajastin
+                    // näkyy asiakkaan NYT-kortissa.
+                    activity = when {
+                        timer.activeTask.isNotBlank() -> ClientActivity.FirstThen(
+                            first = firstShown, firstPhoto = sel.firstPhoto,
+                            next = nextShown, nextPhoto = sel.nextPhoto,
+                            started = timer.inProgress
+                        )
+                        timer.running -> ClientActivity.Timer(stringResource(R.string.timer_title))
+                        else -> null
+                    },
+                    onOpenActivity = { page = AppPage.TIMER }
                 )
 
                 AppPage.DAY -> DayScreen(

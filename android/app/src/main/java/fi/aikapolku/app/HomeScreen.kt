@@ -28,6 +28,17 @@ import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.ui.AppColors
+import fi.aikapolku.app.week.CaregiverDayList
+import fi.aikapolku.app.week.ClientDayView
+import fi.aikapolku.app.week.ClientActivity
+import fi.aikapolku.app.data.TimelineMode
+import fi.aikapolku.app.data.ClientViewPrefs
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Refresh
 import fi.aikapolku.app.ui.AppIcons
 import fi.aikapolku.app.ui.RowIcon
 import fi.aikapolku.app.ui.ChoiceRow
@@ -59,28 +70,28 @@ internal fun HomeScreen(
     /** Pikamuutos: tapahtuman tunnus (null = valitaan näkymässä). */
     onMakeChange: (String?) -> Unit = {},
     /** Ohjaajan etusivulta suoraan viikko-ohjelmaan. */
-    onOpenWeek: () -> Unit = { open(AppPage.PROGRAMS) }
+    onOpenWeek: () -> Unit = { open(AppPage.PROGRAMS) },
+    /** Ohjaajan asiakkaalle valmistelema toiminta (Ensin–Sitten tai ajastin). */
+    activity: ClientActivity? = null,
+    onOpenActivity: () -> Unit = {}
 ) {
-    // Roolit selvästi erillään: asiakkaalla oma päivä, ohjaajalla oma etusivu ja työkalut.
+    // Kummallekin roolille oma etusivu: asiakkaalle oma päivä, ohjaajalle työkalut.
+    if (LocalCaregiver.current.isCaregiver) {
+        CaregiverHome(open, onOpenProgram, onOpenCard, onOpenDay, onOpenChange, onMakeChange, onOpenWeek)
+    } else {
+        ClientHome(open, onOpenProgram, onOpenCard, onOpenChange, activity, onOpenActivity)
+    }
+}
+
+/** Profiilin vaihto ja (asiakkaalla) ohjaajan tila oikean yläkulman valikosta. */
+@Composable
+private fun rememberProfileMenu(isCaregiver: Boolean): @Composable () -> Unit {
     val context = LocalContext.current
     val caregiver = LocalCaregiver.current
-    val isCaregiver = caregiver.isCaregiver
     val revision = ProfileSession.revision
     val profiles = remember(revision) { ProfileStore.list(context) }
     val currentId = remember(revision) { ProfileStore.currentId(context) }
     var choosing by remember { mutableStateOf(false) }
-    var showCards by remember { mutableStateOf(false) }
-    val menuButton: @Composable () -> Unit = {
-        HomeMenu(
-            profile = profiles.first { it.id == currentId }.takeIf { profiles.size > 1 },
-            isCaregiver = isCaregiver,
-            onSwitchProfile = {
-                if (isCaregiver || ProfileStore.selfSelect(context)) choosing = true
-                else caregiver.run(AppAction.SETTINGS) { choosing = true }
-            },
-            onCaregiverMode = { caregiver.unlock() }
-        )
-    }
     if (choosing) {
         ProfilePickerDialog(
             profiles = profiles,
@@ -92,79 +103,96 @@ internal fun HomeScreen(
             onDismiss = { choosing = false }
         )
     }
-
-    // Ylärivi: päivä ja (jos tapahtumia) tehty/kaikki sekä nyt- ja seuraavat tapahtumat.
-    val todayShown = TodaySection(
-        onOpenProgram = onOpenProgram,
-        onOpenCard = onOpenCard,
-        onOpenDay = onOpenDay,
-        trailing = menuButton,
-        // Asiakkaalle muutokset heti päivän otsikon alle; ohjaaja näkee ne riveillä.
-        afterHeader = { if (!isCaregiver) ChangeAnnouncements(onOpenChange) },
-        onChange = if (isCaregiver) { event -> onMakeChange(event.id) } else null
-    )
-    if (!todayShown) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-            Text(
-                dayName(LocalDate.now().dayOfWeek.value),
-                modifier = Modifier.weight(1f).semantics { heading() },
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = AppColors.Ink
-            )
-            menuButton()
-        }
-        if (!isCaregiver) ChangeAnnouncements(onOpenChange)
-    }
-
-    if (isCaregiver) {
-        CaregiverHome(
-            onMakeChange = { onMakeChange(null) },
-            onOpenWeek = onOpenWeek,
-            onOpenPrograms = { open(AppPage.PROGRAMS) },
-            onOpenCards = { showCards = true },
-            onOpenSettings = { open(AppPage.CAREGIVER) },
-            onViewAsClient = { fi.aikapolku.app.caregiver.RoleSession.preview() }
+    return {
+        HomeMenu(
+            profile = profiles.first { it.id == currentId }.takeIf { profiles.size > 1 },
+            isCaregiver = isCaregiver,
+            onSwitchProfile = {
+                if (isCaregiver || ProfileStore.selfSelect(context)) choosing = true
+                else caregiver.run(AppAction.SETTINGS) { choosing = true }
+            },
+            onCaregiverMode = { caregiver.unlock() }
         )
-        if (showCards) {
-            fi.aikapolku.app.cards.CardLibraryDialog(onDismiss = { showCards = false }, onSelect = { showCards = false })
-        }
-        return
     }
-
-    Spacer(Modifier.height(2.dp))
-    HomeCard(
-        symbol = "timer",
-        title = stringResource(R.string.timer_title),
-        subtitle = stringResource(R.string.aseta_aika_ja_keskity),
-        onClick = { open(AppPage.TIMER) }
-    )
-    HomeCard(
-        symbol = "flow",
-        title = stringResource(R.string.ensin_sitten),
-        subtitle = stringResource(R.string.suunnittele_kaksi_askelta),
-        onClick = { open(AppPage.FIRST_THEN) }
-    )
-    HomeCard(
-        symbol = "programs",
-        title = stringResource(R.string.paivaohjelmat),
-        subtitle = stringResource(R.string.nae_paivan_kulku),
-        onClick = { open(AppPage.PROGRAMS) }
-    )
 }
 
-/** Ohjaajan etusivu: Tee muutos ja ohjaajan työkalut yhdessä paikassa. */
+/**
+ * Asiakkaan etusivu: päivän nimi, muutokset, iso NYT-kortti ja päivän aikajana.
+ * Työkalut (Ajastin, Ensin–Sitten, Päiväohjelmat) vain, jos ohjaaja on ne sallinut.
+ */
+@Composable
+private fun ClientHome(
+    open: (AppPage) -> Unit,
+    onOpenProgram: (WeekEvent) -> Unit,
+    onOpenCard: (WeekEvent) -> Unit,
+    onOpenChange: (EventChange) -> Unit,
+    activity: ClientActivity?,
+    onOpenActivity: () -> Unit
+) {
+    val context = LocalContext.current
+    val revision = ProfileSession.revision
+    val prefs = remember(revision) { ClientViewPrefs.load(context) }
+    val menu = rememberProfileMenu(isCaregiver = false)
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        Text(
+            dayName(LocalDate.now().dayOfWeek.value),
+            modifier = Modifier.weight(1f).semantics { heading() },
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            color = AppColors.Ink
+        )
+        menu()
+    }
+    ChangeAnnouncements(onOpenChange)
+    ClientDayView(prefs, activity, onOpenActivity, onOpenProgram, onOpenCard, onOpenChange)
+    if (prefs.anyTool) Spacer(Modifier.height(6.dp))
+    if (prefs.showTimer) {
+        HomeCard("timer", stringResource(R.string.timer_title), stringResource(R.string.aseta_aika_ja_keskity)) { open(AppPage.TIMER) }
+    }
+    if (prefs.showFirstThen) {
+        HomeCard("flow", stringResource(R.string.ensin_sitten), stringResource(R.string.suunnittele_kaksi_askelta)) { open(AppPage.FIRST_THEN) }
+    }
+    if (prefs.showPrograms) {
+        HomeCard("programs", stringResource(R.string.paivaohjelmat), stringResource(R.string.nae_paivan_kulku)) { open(AppPage.PROGRAMS) }
+    }
+}
+
+/**
+ * Ohjaajan etusivu: koko päivä muutosmerkein, Tee muutos, asiakkaalle valmisteltavat
+ * toiminnot ja ohjaajan työkalut.
+ */
 @Composable
 private fun CaregiverHome(
-    onMakeChange: () -> Unit,
-    onOpenWeek: () -> Unit,
-    onOpenPrograms: () -> Unit,
-    onOpenCards: () -> Unit,
-    onOpenSettings: () -> Unit,
-    onViewAsClient: () -> Unit
+    open: (AppPage) -> Unit,
+    onOpenProgram: (WeekEvent) -> Unit,
+    onOpenCard: (WeekEvent) -> Unit,
+    onOpenDay: () -> Unit,
+    onOpenChange: (EventChange) -> Unit,
+    onMakeChange: (String?) -> Unit,
+    onOpenWeek: () -> Unit
 ) {
+    var showCards by remember { mutableStateOf(false) }
+    var showClientView by remember { mutableStateOf(false) }
+    val menu = rememberProfileMenu(isCaregiver = true)
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        Text(
+            stringResource(R.string.caregiver_home_title),
+            modifier = Modifier.weight(1f).semantics { heading() },
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = AppColors.Ink
+        )
+        menu()
+    }
+    CaregiverDayList(
+        onOpenProgram = onOpenProgram,
+        onOpenCard = onOpenCard,
+        onOpenChange = onOpenChange,
+        onChange = { onMakeChange(it.id) },
+        onOpenDay = onOpenDay
+    )
     OutlinedButton(
-        onClick = onMakeChange,
+        onClick = { onMakeChange(null) },
         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(2.dp, AppColors.ChangeFill)
@@ -178,8 +206,31 @@ private fun CaregiverHome(
             color = AppColors.Change
         )
     }
+
+    ToolsCard(stringResource(R.string.caregiver_prepare)) {
+        ChoiceRow(stringResource(R.string.ensin_sitten), { open(AppPage.FIRST_THEN) }, subtitle = stringResource(R.string.caregiver_first_then_info), leading = { RowIcon(Icons.AutoMirrored.Rounded.ArrowForward) })
+        ChoiceRow(stringResource(R.string.timer_title), { open(AppPage.TIMER) }, subtitle = stringResource(R.string.caregiver_timer_info), leading = { RowIcon(Icons.Rounded.Refresh) })
+    }
+    ToolsCard(stringResource(R.string.caregiver_tools)) {
+        ChoiceRow(stringResource(R.string.home_week), onOpenWeek, subtitle = stringResource(R.string.home_week_info), leading = { RowIcon(Icons.Rounded.DateRange) })
+        ChoiceRow(stringResource(R.string.home_programs), { open(AppPage.PROGRAMS) }, subtitle = stringResource(R.string.home_programs_info), leading = { RowIcon(Icons.AutoMirrored.Rounded.List) })
+        ChoiceRow(stringResource(R.string.home_cards), { showCards = true }, subtitle = stringResource(R.string.home_cards_info), leading = { RowIcon(AppIcons.Image) })
+        ChoiceRow(stringResource(R.string.client_view_title), { showClientView = true }, subtitle = stringResource(R.string.client_view_info), leading = { RowIcon(Icons.Rounded.Person) })
+        ChoiceRow(stringResource(R.string.home_view_as_client), { fi.aikapolku.app.caregiver.RoleSession.preview() }, subtitle = stringResource(R.string.home_view_as_client_info), leading = { RowIcon(Icons.Rounded.Face) })
+        ChoiceRow(stringResource(R.string.home_settings), { open(AppPage.CAREGIVER) }, subtitle = stringResource(R.string.home_settings_info), leading = { RowIcon(Icons.Rounded.Settings) })
+    }
+    if (showCards) {
+        fi.aikapolku.app.cards.CardLibraryDialog(onDismiss = { showCards = false }, onSelect = { showCards = false })
+    }
+    if (showClientView) {
+        ClientViewDialog { showClientView = false }
+    }
+}
+
+@Composable
+private fun ToolsCard(title: String, content: @Composable () -> Unit) {
     Text(
-        stringResource(R.string.caregiver_tools),
+        title,
         modifier = Modifier.padding(top = 6.dp).semantics { heading() },
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
@@ -190,13 +241,68 @@ private fun CaregiverHome(
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(modifier = Modifier.padding(vertical = 4.dp)) {
-            ChoiceRow(stringResource(R.string.home_week), onOpenWeek, subtitle = stringResource(R.string.home_week_info), leading = { RowIcon(Icons.Rounded.DateRange) })
-            ChoiceRow(stringResource(R.string.home_programs), onOpenPrograms, subtitle = stringResource(R.string.home_programs_info), leading = { RowIcon(Icons.AutoMirrored.Rounded.List) })
-            ChoiceRow(stringResource(R.string.home_cards), onOpenCards, subtitle = stringResource(R.string.home_cards_info), leading = { RowIcon(AppIcons.Image) })
-            ChoiceRow(stringResource(R.string.home_settings), onOpenSettings, subtitle = stringResource(R.string.home_settings_info), leading = { RowIcon(Icons.Rounded.Settings) })
-            ChoiceRow(stringResource(R.string.home_view_as_client), onViewAsClient, subtitle = stringResource(R.string.home_view_as_client_info), leading = { RowIcon(Icons.Rounded.Face) })
-        }
+        Column(modifier = Modifier.padding(vertical = 4.dp)) { content() }
+    }
+}
+
+/** Ohjaaja säätää asiakkaan etusivun: aikajana, kellonajat ja asiakkaan omat työkalut. */
+@Composable
+private fun ClientViewDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    var prefs by remember { mutableStateOf(ClientViewPrefs.load(context)) }
+    fun update(next: ClientViewPrefs) {
+        prefs = next
+        ClientViewPrefs.save(context, next)
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.client_view_title)) },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(stringResource(R.string.client_view_timeline), fontWeight = FontWeight.SemiBold)
+                listOf(
+                    Triple(TimelineMode.FULL, R.string.client_view_full, R.string.client_view_full_info),
+                    Triple(TimelineMode.NEXT, R.string.client_view_next, R.string.client_view_next_info),
+                    Triple(TimelineMode.NONE, R.string.client_view_none, R.string.client_view_none_info)
+                ).forEach { (mode, title, info) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .selectable(selected = prefs.timeline == mode, role = Role.RadioButton) { update(prefs.copy(timeline = mode)) }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        RadioButton(selected = prefs.timeline == mode, onClick = null, modifier = Modifier.padding(top = 2.dp))
+                        Column(modifier = Modifier.padding(start = 8.dp)) {
+                            Text(stringResource(title), fontSize = 16.sp)
+                            Text(stringResource(info), fontSize = 13.sp, color = AppColors.Muted)
+                        }
+                    }
+                }
+                SwitchLine(stringResource(R.string.client_view_times), prefs.showTimes) { update(prefs.copy(showTimes = it)) }
+                Text(stringResource(R.string.client_view_tools), fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
+                Text(stringResource(R.string.client_view_tools_info), fontSize = 13.sp, color = AppColors.Muted)
+                SwitchLine(stringResource(R.string.timer_title), prefs.showTimer) { update(prefs.copy(showTimer = it)) }
+                SwitchLine(stringResource(R.string.ensin_sitten), prefs.showFirstThen) { update(prefs.copy(showFirstThen = it)) }
+                SwitchLine(stringResource(R.string.paivaohjelmat), prefs.showPrograms) { update(prefs.copy(showPrograms = it)) }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } }
+    )
+}
+
+@Composable
+private fun SwitchLine(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, modifier = Modifier.weight(1f), fontSize = 16.sp)
+        Switch(checked = checked, onCheckedChange = onChange, modifier = Modifier.semantics { contentDescription = label })
     }
 }
 
