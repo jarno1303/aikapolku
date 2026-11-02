@@ -347,28 +347,7 @@ internal fun AikaPolkuApp() {
                 )
             }
 
-            if (page != AppPage.HOME &&
-                page != AppPage.FIRST_THEN &&
-                page != AppPage.PROGRAMS &&
-                page != AppPage.LAST &&
-                page != AppPage.DONE &&
-                page != AppPage.EVENT_CARD &&
-                page != AppPage.DAY &&
-                !(page == AppPage.TIMER && timer.activeTask.isNotBlank())) {
-                TextButton(
-                    onClick = goBack,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 56.dp)
-                ) {
-                    Text(
-    if (page == AppPage.TIMER && timer.activeTask.isNotBlank())
-        stringResource(R.string.takaisin_ensin_sitten)
-    else stringResource(R.string.takaisin_aloitukseen),
-    fontSize = 16.sp
-)
-                }
-            }
+            // Takaisin vain yläreunasta: alareunan "Takaisin aloitukseen" poistettu toistona.
         }
     }
 }

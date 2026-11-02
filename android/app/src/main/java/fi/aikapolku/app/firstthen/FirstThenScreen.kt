@@ -1,5 +1,16 @@
 package fi.aikapolku.app.firstthen
 
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.ui.semantics.Role
+import fi.aikapolku.app.ui.AppIcons
+import fi.aikapolku.app.ui.ChoiceRow
+import fi.aikapolku.app.ui.InfoButton
+import fi.aikapolku.app.ui.PrimaryButton
+import fi.aikapolku.app.ui.SecondaryButton
+import fi.aikapolku.app.ui.SegmentedChoice
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -65,7 +76,7 @@ internal fun FirstThenScreen(
     var photoError by remember { mutableStateOf("") }
     var showLibrary by remember { mutableStateOf(false) }
     var libraryTarget by remember { mutableStateOf("first") }
-    var libraryNotice by remember { mutableStateOf("") }
+    var saveToLibrary by remember { mutableStateOf(false) }
     var minutes by rememberSaveable { mutableIntStateOf(5) }
     var showCardHelp by rememberSaveable { mutableStateOf(false) }
 
@@ -111,16 +122,7 @@ internal fun FirstThenScreen(
             CaregiverLockButton(iconOnly = true)
         }
 
-        IconButton(
-            onClick = { showCardHelp = true },
-            modifier = Modifier
-                .size(48.dp)
-                .semantics {
-                    contentDescription = context.getString(R.string.korttien_kayttoohje)
-                }
-        ) {
-            Text("ⓘ", fontSize = 26.sp, color = AppColors.Teal)
-        }
+        InfoButton(stringResource(R.string.korttien_kayttoohje)) { showCardHelp = true }
     }
 
     if (showCardHelp) {
@@ -166,145 +168,98 @@ internal fun FirstThenScreen(
         )
     }
 
-    HorizontalDivider()
-
     var timerMode by rememberSaveable {
         mutableStateOf(true)
     }
 
+    // Eteneminen: ajastimella tai omaan tahtiin. Yksi valitsin ja lyhyt selitys.
+    SegmentedChoice(
+        options = listOf(stringResource(R.string.ajastimella), stringResource(R.string.omaan_tahtiin)),
+        selected = if (timerMode) 0 else 1,
+        onSelect = { timerMode = it == 0 }
+    )
     Text(
-        stringResource(R.string.miten_haluat_edeta),
-        fontSize = 19.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = AppColors.Ink
+        if (timerMode) stringResource(R.string.flow_mode_timer_hint) else stringResource(R.string.siirry_eteenpain_kun_olet_valmis),
+        fontSize = 14.sp,
+        color = AppColors.Muted
     )
 
-    FlowModePicker(
-        timerSelected = timerMode,
-        onTimer = { timerMode = true },
-        onNoLimit = { timerMode = false }
+    val placeholder = stringResource(R.string.choose_activity)
+    PrimaryButton(
+        text = if (timerMode) stringResource(R.string.siirry_kellotauluun) else stringResource(R.string.aloita_toiminto),
+        onClick = { if (timerMode) onStartTimer(5) else onDone() },
+        enabled = first.isNotBlank() && first != placeholder && next.isNotBlank() && next != placeholder
     )
-
-    Button(
-        onClick = {
-            if (timerMode) {
-                onStartTimer(5)
-            } else {
-                onDone()
-            }
-        },
-        enabled =
-            first.isNotBlank() &&
-            first != stringResource(R.string.choose_activity) &&
-            next.isNotBlank() &&
-            next != stringResource(R.string.choose_activity),
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = AppColors.Teal
-        )
-    ) {
-        Text(
-            if (timerMode) stringResource(R.string.siirry_kellotauluun)
-            else stringResource(R.string.aloita_toiminto),
-            fontSize = 18.sp
-        )
-    }
     if (photoError.isNotBlank()) {
         Text(photoError, color = MaterialTheme.colorScheme.error)
     }
 
-    if (choosing != null) {
+    // Toiminnon valinta: oma valokuva ja omat kortit ylhäällä samanlaisina painikkeina,
+    // niiden alla valmiit kortit kuvineen. Nykyisen kortin muokkaus kynästä.
+    val chooseTarget = choosing
+    if (chooseTarget != null) {
+        val isFirst = chooseTarget == "first"
+        val currentName = if (isFirst) first else next
+        val hasCurrent = currentName.isNotBlank() && currentName != stringResource(R.string.choose_activity)
         AlertDialog(
             onDismissRequest = { choosing = null },
             title = { Text(stringResource(R.string.choose_activity)) },
             text = {
                 Column(
                     modifier = Modifier
-                        .heightIn(max = 400.dp)
-                        .verticalScroll(rememberScrollState())
+                        .heightIn(max = 460.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    TextButton(
-                        onClick = {
-                            libraryTarget = choosing ?: "first"
-                            choosing = null
-                            showLibrary = true
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.omat_toimintokortit))
-                    }
-
-                    TextButton(
-                        onClick = {
-                            val isFirst = choosing == "first"
-                            val currentName = if (isFirst) first else next
-                            val currentPhoto = if (isFirst)
-                                firstPhoto else nextPhoto
-                            val currentDescription = if (isFirst)
-                                firstDescription else nextDescription
-
-                            if (
-                                currentName.isNotBlank() &&
-                                currentName != context.getString(R.string.choose_activity)
-                            ) {
-                                CardStore(
-                                    context.applicationContext
-                                ).upsert(
-                                    CardItem(
-                                        id = java.util.UUID.randomUUID().toString(),
-                                        name = currentName,
-                                        description = currentDescription,
-                                        photoPath = currentPhoto,
-                                        voicePath = if (isFirst) firstVoice else nextVoice,
-                                        autoPlayVoice = if (isFirst) firstVoiceAuto else nextVoiceAuto
-                                    )
-                                )
-                                libraryNotice =
-                                    context.getString(R.string.kortti_tallennettu, currentName)
-                            }
-                            choosing = null
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.tallenna_nykyinen_kortti_kirjastoon))
-                    }
-
-                    TextButton(
-                        onClick = {
-                            photoTarget = choosing ?: "first"
-                            choosing = null
-                            CaregiverSession.keepOpenForOwnPicker()
-                            photoPicker.launch(
-                                PickVisualMediaRequest(
-                                    ActivityResultContracts.PickVisualMedia.ImageOnly
-                                )
-                            )
-                        }
-                    ) {
-                        Text(stringResource(R.string.valitse_oma_valokuva))
-                    }
-
-                    TextButton(
-                        onClick = {
-                            editing = choosing
-                            editName = if (choosing == "first") first else next
-                            editDescription = if (choosing == "first")
-                                firstDescription else nextDescription
-                            choosing = null
-                        }
-                    ) {
-                        Text(stringResource(R.string.muokkaa_nimea_ja_kuvausta))
-                    }
-
-                    HorizontalDivider()
-
-                    CardArt.templates.map { stringResource(it.nameRes) }.forEach { name ->
-                        TextButton(
-                            modifier = Modifier.fillMaxWidth(),
+                    if (hasCurrent) {
+                        ChoiceRow(
+                            title = currentName,
+                            subtitle = stringResource(R.string.edit_current_card),
                             onClick = {
-                                if (choosing == "first") {
+                                editing = chooseTarget
+                                editName = currentName
+                                editDescription = if (isFirst) firstDescription else nextDescription
+                                saveToLibrary = false
+                                choosing = null
+                            },
+                            leading = {
+                                CardPhoto(
+                                    name = currentName,
+                                    imagePath = if (isFirst) firstPhoto else nextPhoto,
+                                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))
+                                )
+                            },
+                            trailing = { Icon(Icons.Rounded.Edit, contentDescription = null, tint = AppColors.Teal) }
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SecondaryButton(
+                            text = stringResource(R.string.photo_short),
+                            icon = AppIcons.Camera,
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                photoTarget = chooseTarget
+                                choosing = null
+                                CaregiverSession.keepOpenForOwnPicker()
+                                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            }
+                        )
+                        SecondaryButton(
+                            text = stringResource(R.string.omat_kortit),
+                            icon = Icons.AutoMirrored.Rounded.List,
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                libraryTarget = chooseTarget
+                                choosing = null
+                                showLibrary = true
+                            }
+                        )
+                    }
+                    CardArt.templates.map { stringResource(it.nameRes) }.forEach { name ->
+                        ChoiceRow(
+                            title = name,
+                            onClick = {
+                                if (isFirst) {
                                     onFirst(name)
                                     onFirstPhoto("")
                                     onFirstDescription("")
@@ -316,28 +271,21 @@ internal fun FirstThenScreen(
                                     onNextVoice("", false)
                                 }
                                 choosing = null
-                            }
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
+                            },
+                            leading = {
                                 CardPhoto(
                                     name = name,
                                     imagePath = "builtin:$name",
-                                    modifier = Modifier.size(48.dp)
-                                        .clip(RoundedCornerShape(12.dp))
+                                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))
                                 )
-                                Text(name, fontSize = 16.sp, color = AppColors.Ink)
                             }
-                        }
+                        )
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { choosing = null }) {
-                    Text(stringResource(R.string.close))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -359,17 +307,8 @@ internal fun FirstThenScreen(
                     onNextVoice(card.voicePath, card.autoPlayVoice)
                 }
 
-                libraryNotice = context.getString(R.string.valittu, card.name)
                 showLibrary = false
             }
-        )
-    }
-
-    if (libraryNotice.isNotBlank()) {
-        Text(
-            libraryNotice,
-            color = AppColors.Teal,
-            fontSize = 13.sp
         )
     }
 
@@ -392,18 +331,42 @@ internal fun FirstThenScreen(
                         minLines = 2,
                         maxLines = 3
                     )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .toggleable(value = saveToLibrary, role = Role.Checkbox) { saveToLibrary = it }
+                    ) {
+                        Checkbox(checked = saveToLibrary, onCheckedChange = null)
+                        Text(stringResource(R.string.save_to_own_cards), modifier = Modifier.padding(start = 8.dp))
+                    }
                 }
             },
             confirmButton = {
                 TextButton(
                     enabled = editName.isNotBlank(),
                     onClick = {
-                        if (editing == "first") {
+                        val isFirst = editing == "first"
+                        if (isFirst) {
                             onFirst(editName.trim())
                             onFirstDescription(editDescription.trim())
                         } else {
                             onNext(editName.trim())
                             onNextDescription(editDescription.trim())
+                        }
+                        // Valinnaisesti myös omiin kortteihin (aiemmin erillinen "Tallenna kirjastoon").
+                        if (saveToLibrary) {
+                            CardStore(context.applicationContext).upsert(
+                                CardItem(
+                                    id = java.util.UUID.randomUUID().toString(),
+                                    name = editName.trim(),
+                                    description = editDescription.trim(),
+                                    photoPath = if (isFirst) firstPhoto else nextPhoto,
+                                    voicePath = if (isFirst) firstVoice else nextVoice,
+                                    autoPlayVoice = if (isFirst) firstVoiceAuto else nextVoiceAuto
+                                )
+                            )
                         }
                         editing = null
                     }

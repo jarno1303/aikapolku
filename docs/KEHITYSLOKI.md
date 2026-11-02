@@ -289,3 +289,10 @@
 - Ylärivillä päivän nimi (ja tehty/kaikki-laskuri, kun tapahtumia on) sekä oikeassa yläkulmassa valikko: profiilikuva (useampi profiili) tai valikkokuvake. Valikossa "Vaihda profiilia" ja "Ohjaajan asetukset".
 - Poistettu: "Mitä haluat tehdä?", erillinen Ohjaajan asetukset -linkki ja alareunan esittelyteksti. Ensin–Sitten-kortin alateksti lyhennetty ("Kaksi asiaa järjestyksessä").
 - Kuitatussa kortissa ei enää toista Takaisin-painiketta (yläreunan Takaisin riittää).
+
+## Yhtenäinen käyttöliittymä, osa 1/3
+- Yhteiset osat (PrimaryButton, SecondaryButton, SegmentedChoice, ChoiceRow, OverflowMenu, InfoButton, RoundIconButton) ja kuvakkeet (Icons.Rounded + omat AppIcons: kamera, kuva, kaiutin, mikrofoni, tauko, avoin lukko). Säännöt: docs/UX_TARKISTUSLISTA.md.
+- Ensin–Sitten: ⓘ kuvakkeena; "Miten haluat edetä?" ja ⏱/✋-kortit korvattu valitsimella Ajastimella / Omaan tahtiin. Valitse toiminto -ikkuna: nykyinen kortti (muokkaus), Oma kuva + Omat kortit samanlaisina painikkeina, valmiit kortit kuvineen. "Tallenna kirjastoon" siirtyi muokkaukseen ("Tallenna myös omiin kortteihin").
+- Omat kortit: rivin napautus valitsee, Muokkaa/Kopioi/Poista ⋮-valikossa; "Tee valmiista kortista oma" poistettu. Kortin muokkaus: Valmis kuva / Oma kuva -painikkeet, puheviesti mikrofoni- ja kaiutinkuvakkeilla.
+- Ajastin (pysty ja vaaka): nollaus, aloitus/tauko, lukko ja asetukset kuvakkeina; "TOIMINTOPOLKU" poistettu.
+- Lukkopainike ja "Ohjaaja auki" -palkki kuvakkeilla. Alareunan "Takaisin aloitukseen" poistettu. Kirjoitusvirheet korjattu. 15 käyttämätöntä tekstiä poistettu.

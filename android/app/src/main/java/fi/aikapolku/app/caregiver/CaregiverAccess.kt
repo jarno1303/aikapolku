@@ -1,5 +1,10 @@
 package fi.aikapolku.app.caregiver
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
+import fi.aikapolku.app.ui.AppIcons
 import android.app.Activity
 import android.app.KeyguardManager
 import android.os.SystemClock
@@ -276,9 +281,10 @@ private fun CaregiverOpenBanner(remainingMs: Long, onLock: () -> Unit) {
                 .semantics(mergeDescendants = true) {},
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Icon(AppIcons.LockOpen, contentDescription = null, tint = Color(0xFF713F12), modifier = Modifier.size(20.dp))
             Text(
                 stringResource(R.string.ohjaaja_auki, time),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.padding(start = 8.dp).weight(1f),
                 maxLines = 1,
                 color = Color(0xFF713F12),
                 fontWeight = FontWeight.SemiBold,
@@ -296,7 +302,7 @@ private fun CaregiverOpenBanner(remainingMs: Long, onLock: () -> Unit) {
 internal fun CaregiverLockButton(
     modifier: Modifier = Modifier,
     label: String = stringResource(R.string.caregiver_label),
-    /** Ahtaisiin paikkoihin (esim. Ensin–Sitten-otsikko): pelkkä 🔒, ei tekstiä. */
+    /** Ahtaisiin paikkoihin (esim. Ensin–Sitten-otsikko): pelkkä lukkokuvake, ei tekstiä. */
     iconOnly: Boolean = false
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -309,6 +315,9 @@ internal fun CaregiverLockButton(
             .semantics { contentDescription = context.getString(R.string.ohjaajan_toiminnot_lukittu_avaa_pin) },
         contentPadding = if (iconOnly) PaddingValues(4.dp) else ButtonDefaults.TextButtonContentPadding
     ) {
-        Text(if (iconOnly) "🔒" else stringResource(R.string.lock_label, label), color = AppColors.Teal, fontSize = if (iconOnly) 20.sp else 14.sp)
+        Icon(Icons.Rounded.Lock, contentDescription = null, tint = AppColors.Teal, modifier = Modifier.size(20.dp))
+        if (!iconOnly) {
+            Text(label, color = AppColors.Teal, fontSize = 14.sp, modifier = Modifier.padding(start = 6.dp))
+        }
     }
 }

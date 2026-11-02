@@ -1,5 +1,13 @@
 package fi.aikapolku.app.cards
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Delete
+import fi.aikapolku.app.ui.AppColors
+import fi.aikapolku.app.ui.AppIcons
+import fi.aikapolku.app.ui.ChoiceRow
+import fi.aikapolku.app.ui.OverflowMenu
+import fi.aikapolku.app.ui.SecondaryButton
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -82,137 +90,61 @@ internal fun CardLibraryDialog(
     if (!editing && deleteCandidate == null) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.omat_toimintokortit)) },
+            title = { Text(stringResource(R.string.omat_kortit)) },
             text = {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 430.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                        .heightIn(max = 460.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Button(
+                    SecondaryButton(
+                        text = stringResource(R.string.uusi_kortti),
+                        icon = Icons.Rounded.Add,
                         onClick = { openEditor(null) },
                         modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.uusi_toimintokortti))
-                    }
-                    OutlinedButton(
-                        onClick = {
-                            fromTemplate = true
-                            showBuiltinPicker = true
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.tee_valmiista_kortista_oma))
-                    }
+                    )
 
                     if (cards.isEmpty()) {
                         Text(
                             stringResource(R.string.ei_viela_tallennettuja_kortteja_luo),
-                            color = Color(0xFF526773)
+                            color = AppColors.Muted
                         )
                     } else {
+                        // Rivin napautus valitsee kortin; harvinaiset toiminnot ⋮-valikossa.
+                        val menuLabel = stringResource(R.string.muut_toiminnot)
+                        val editLabel = stringResource(R.string.edit)
+                        val copyLabel = stringResource(R.string.kopioi)
+                        val deleteLabel = stringResource(R.string.delete)
                         Column(
                             modifier = Modifier
                                 .weight(1f, fill = false)
                                 .verticalScroll(rememberScrollState()),
-                            verticalArrangement =
-                                Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             cards.forEach { card ->
-                                Card(
-                                    colors = CardDefaults.cardColors(
-                                        containerColor =
-                                            MaterialTheme.colorScheme.surface
-                                    ),
-                                    shape = RoundedCornerShape(14.dp)
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(10.dp)
-                                    ) {
-                                        Row(
-                                            verticalAlignment =
-                                                Alignment.CenterVertically,
-                                            horizontalArrangement =
-                                                Arrangement.spacedBy(10.dp)
-                                        ) {
-                                            CardPhoto(
-                                                name = card.name,
-                                                imagePath = card.photoPath,
-                                                modifier = Modifier
-                                                    .size(62.dp)
-                                                    .clip(
-                                                        RoundedCornerShape(
-                                                            10.dp
-                                                        )
-                                                    )
+                                ChoiceRow(
+                                    title = card.name,
+                                    subtitle = card.description,
+                                    onClick = { onSelect(card) },
+                                    leading = {
+                                        CardPhoto(
+                                            name = card.name,
+                                            imagePath = card.photoPath,
+                                            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))
+                                        )
+                                    },
+                                    trailing = {
+                                        OverflowMenu(
+                                            contentDescription = "$menuLabel: ${card.name}",
+                                            items = listOf(
+                                                editLabel to { openEditor(card) },
+                                                copyLabel to { openEditor(card.copy(id = "")) },
+                                                deleteLabel to { deleteCandidate = card }
                                             )
-
-                                            Column(
-                                                modifier =
-                                                    Modifier.weight(1f)
-                                            ) {
-                                                Text(
-                                                    card.name,
-                                                    fontWeight =
-                                                        FontWeight.Bold,
-                                                    maxLines = 2,
-                                                    overflow =
-                                                        TextOverflow.Ellipsis
-                                                )
-
-                                                if (
-                                                    card.description
-                                                        .isNotBlank()
-                                                ) {
-                                                    Text(
-                                                        card.description,
-                                                        fontSize = 12.sp,
-                                                        maxLines = 2,
-                                                        overflow =
-                                                            TextOverflow.Ellipsis
-                                                    )
-                                                }
-                                            }
-                                        }
-
-                                        Row(
-                                            horizontalArrangement =
-                                                Arrangement.spacedBy(3.dp)
-                                        ) {
-                                            TextButton(
-                                                onClick = {
-                                                    onSelect(card)
-                                                }
-                                            ) {
-                                                Text(stringResource(R.string.choose))
-                                            }
-
-                                            TextButton(
-                                                onClick = {
-                                                    openEditor(card)
-                                                }
-                                            ) {
-                                                Text(stringResource(R.string.edit))
-                                            }
-                                            TextButton(
-                                                onClick = {
-                                                    openEditor(card.copy(id = ""))
-                                                }
-                                            ) {
-                                                Text(stringResource(R.string.kopioi))
-                                            }
-
-                                            TextButton(
-                                                onClick = {
-                                                    deleteCandidate = card
-                                                }
-                                            ) {
-                                                Text(stringResource(R.string.delete))
-                                            }
-                                        }
+                                        )
                                     }
-                                }
+                                )
                             }
                         }
                     }
@@ -220,7 +152,7 @@ internal fun CardLibraryDialog(
             },
             confirmButton = {
                 TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.close))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -270,36 +202,31 @@ internal fun CardLibraryDialog(
                         )
                     }
 
-                    OutlinedButton(
-                        onClick = {
-                            fromTemplate = false
-                            showBuiltinPicker = true
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.valitse_valmis_kuva))
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            CaregiverSession.keepOpenForOwnPicker()
-                            picker.launch(
-                                PickVisualMediaRequest(
-                                    ActivityResultContracts
-                                        .PickVisualMedia.ImageOnly
-                                )
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.valitse_valokuva))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SecondaryButton(
+                            text = stringResource(R.string.valmis_kuva_short),
+                            icon = AppIcons.Image,
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                fromTemplate = false
+                                showBuiltinPicker = true
+                            }
+                        )
+                        SecondaryButton(
+                            text = stringResource(R.string.photo_short),
+                            icon = AppIcons.Camera,
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                CaregiverSession.keepOpenForOwnPicker()
+                                picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            }
+                        )
                     }
 
                     if (photoPath.isNotBlank()) {
-                        TextButton(
-                            onClick = { photoPath = "" }
-                        ) {
-                            Text(stringResource(R.string.poista_kortin_kuva))
+                        TextButton(onClick = { photoPath = "" }) {
+                            Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Text(stringResource(R.string.poista_kortin_kuva), modifier = Modifier.padding(start = 6.dp))
                         }
                     }
 

@@ -1,5 +1,12 @@
 package fi.aikapolku.app.voice
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
+import fi.aikapolku.app.ui.AppIcons
+import fi.aikapolku.app.ui.SecondaryButton
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -51,10 +58,6 @@ internal fun VoiceControls(
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
         HorizontalDivider()
         Text(stringResource(R.string.oma_puheviesti), style = MaterialTheme.typography.titleSmall)
-        Text(
-            stringResource(R.string.tallenna_lyhyt_ohje_talle_kortille),
-            style = MaterialTheme.typography.bodySmall
-        )
 
         if (recording) {
             Text(context.getString(R.string.tallennus_kaynnissa), color = MaterialTheme.colorScheme.error)
@@ -72,16 +75,18 @@ internal fun VoiceControls(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
             ) { Text(stringResource(R.string.lopeta_tallennus)) }
         } else {
-            OutlinedButton(
+            SecondaryButton(
+                text = if (voicePath.isBlank()) stringResource(R.string.tallenna_puheviesti) else stringResource(R.string.aanita_uusi_viesti),
+                icon = AppIcons.Mic,
+                modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     if (androidx.core.content.ContextCompat.checkSelfPermission(
                             context, Manifest.permission.RECORD_AUDIO
                         ) == PackageManager.PERMISSION_GRANTED
                     ) begin()
                     else permission.launch(Manifest.permission.RECORD_AUDIO)
-                },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-            ) { Text(if (voicePath.isBlank()) stringResource(R.string.tallenna_puheviesti) else stringResource(R.string.aanita_uusi_viesti)) }
+                }
+            )
         }
 
         if (voicePath.isNotBlank() && !recording) {
@@ -97,13 +102,17 @@ internal fun VoiceControls(
                             ?: context.getString(R.string.puheviesti_toistetaan)
                     }
                 ) {
-                    Text(stringResource(R.string.voice_listen))
+                    Icon(AppIcons.Speaker, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Text(stringResource(R.string.kuuntele), modifier = Modifier.padding(start = 6.dp))
                 }
                 TextButton(onClick = {
                     VoicePlayer.stop()
                     onVoicePathChange("")
                     onAutoPlayChange(false)
-                }) { Text(stringResource(R.string.poista_aani)) }
+                }) {
+                    Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Text(stringResource(R.string.poista_aani), modifier = Modifier.padding(start = 6.dp))
+                }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {

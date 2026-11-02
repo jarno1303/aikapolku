@@ -13,7 +13,7 @@
     <string name="aanimerkki_ajan_paattyessa">Äänimerkki ajan päättyessä</string>
     <string name="aanita_oma_viesti">Äänitä oma viesti</string>
     <string name="aanita_uudelleen">Äänitä uudelleen</string>
-    <string name="aanita_uusi_viesti">● Äänitä uusi viesti</string>
+    <string name="aanita_uusi_viesti">Äänitä uusi viesti</string>
     <string name="aanitys_ei_kaynnistynyt_tarkista_mikrofonin">Äänitys ei käynnistynyt. Tarkista mikrofonin käyttöoikeus.</string>
     <string name="aanitys_kaynnissa_paina_lopeta_tallennus">Äänitys käynnissä. Paina Lopeta tallennus.</string>
     <plurals name="activities_count">
@@ -117,7 +117,6 @@
     <string name="huom_puhelimessa_ei_ole_nayton">Huom: puhelimessa ei ole näytön lukitusta. Unohtunutta PIN-koodia ei voi nollata, ennen kuin puhelimen näytön lukitus otetaan käyttöön.</string>
     <string name="hylataanko_muutokset">Hylätäänkö muutokset?</string>
     <string name="hylkaa">Hylkää</string>
-    <string name="ilman_aikarajaa">Ilman aikarajaa</string>
     <string name="jaa_tehtava_pienempiin_osiin_ajastin">Jaa tehtävä pienempiin osiin. Ajastin koskee koko tehtävää.</string>
     <string name="jarjesta">Järjestä</string>
     <string name="jatka_muokkausta">Jatka muokkausta</string>
@@ -137,15 +136,14 @@
     <string name="kopioi">Kopioi</string>
     <string name="kortilla_ei_ole_tallennettua_puheviestia">Kortilla ei ole tallennettua puheviestiä.</string>
     <string name="kortti_poistetaan_korttikirjastosta">Kortti \'%1$s\' poistetaan korttikirjastosta.</string>
-    <string name="kortti_tallennettu">Kortti tallennettu: %1$s</string>
     <string name="korttien_kaytto">Korttien käyttö</string>
     <string name="korttien_kayttoohje">Korttien käyttöohje</string>
     <string name="kumoa">Kumoa</string>
     <string name="kuuntele">Kuuntele</string>
-    <string name="kuuntele_aanimerkki">▶ Kuuntele äänimerkki</string>
+    <string name="kuuntele_aanimerkki">Kuuntele äänimerkki</string>
     <string name="kuuntele_eri_aania_android_ei">Kuuntele eri ääniä. Android ei ilmoita äänen sukupuolta luotettavasti.</string>
     <string name="kuva">Kuva</string>
-    <string name="kuvan_lisaaminen_epaonnistui">Kuvan lisaaminen epaonnistui.</string>
+    <string name="kuvan_lisaaminen_epaonnistui">Kuvan lisääminen epäonnistui.</string>
     <string name="kuvan_tallentaminen_ei_onnistunut">Kuvan tallentaminen ei onnistunut.</string>
     <string name="kuvaus_valinnainen">Kuvaus (valinnainen)</string>
     <string name="ladataan_laitteen_puheaania">Ladataan laitteen puheääniä…</string>
@@ -156,7 +154,6 @@
     <string name="lisaa_toimintoja">+ Lisää toimintoja</string>
     <string name="lisaa_uudelleen">Lisää uudelleen</string>
     <string name="lisaa_vaihe">+ Lisää vaihe</string>
-    <string name="lock_label">🔒 %1$s</string>
     <string name="lopeta">Lopeta</string>
     <string name="lopeta_ohjelma">Lopeta ohjelma</string>
     <string name="lopeta_tallennus">Lopeta tallennus</string>
@@ -172,9 +169,7 @@
     <string name="minutes_value">%1$s min</string>
     <string name="miten_aika_kulkee">Miten aika kulkee?</string>
     <string name="miten_aika_naytetaan">Miten aika näytetään?</string>
-    <string name="miten_haluat_edeta">Miten haluat edetä?</string>
     <string name="muokkaa_korttia">Muokkaa korttia</string>
-    <string name="muokkaa_nimea_ja_kuvausta">✏ Muokkaa nimea ja kuvausta</string>
     <string name="muokkaa_paivaohjelmaa">Muokkaa päiväohjelmaa</string>
     <string name="muokkaa_toimintoa">Muokkaa toimintoa</string>
     <string name="muut_toiminnot">Muut toiminnot</string>
@@ -196,7 +191,7 @@
     <string name="nykyinen_vaihe">Nykyinen vaihe</string>
     <string name="ohita_tehtava">Ohita tehtävä</string>
     <string name="ohita_vaihe">Ohita vaihe</string>
-    <string name="ohjaaja_auki">🔓 Ohjaaja auki · %1$s</string>
+    <string name="ohjaaja_auki">Ohjaaja auki · %1$s</string>
     <string name="ohjaaja_luo_ja_muokkaa_ohjelmia">Ohjaaja: luo ja muokkaa ohjelmia</string>
     <string name="ohjaajan_lukitus">Ohjaajan lukitus</string>
     <string name="ohjaajan_lukitus_on_nyt_paalla">Ohjaajan lukitus on nyt päällä. Ohjaajan toiminnot avataan 🔒-painikkeella ja PIN-koodilla. Ne ovat auki 2 minuuttia kerrallaan.</string>
@@ -211,7 +206,6 @@
     <string name="omaan_tahtiin">Omaan tahtiin</string>
     <string name="omaan_tahtiin_ei_aikoja">Omaan tahtiin · ei aikoja</string>
     <string name="omat_kortit">Omat kortit</string>
-    <string name="omat_toimintokortit">Omat toimintokortit</string>
     <string name="on_paattynyt">%1$s on tehty. Hienoa!</string>
     <string name="osavaihe">Osavaihe %1$s</string>
     <string name="ota_lukitus_kayttoon">Ota lukitus käyttöön</string>
@@ -293,22 +287,18 @@
     <string name="support_help">Tarvitsen apua</string>
     <string name="suunnittele_kaksi_askelta">Kaksi asiaa järjestyksessä</string>
     <string name="takaisin_aloitukseen">Takaisin aloitukseen</string>
-    <string name="takaisin_ensin_sitten">Takaisin Ensin – Sitten</string>
     <string name="takaisin_paivaohjelmiin">Takaisin päiväohjelmiin</string>
     <string name="tallenna_ja_valitse">Tallenna ja valitse</string>
-    <string name="tallenna_lyhyt_ohje_talle_kortille">Tallenna lyhyt ohje tälle kortille. Puhe tallennetaan vain tähän puhelimeen.</string>
-    <string name="tallenna_nykyinen_kortti_kirjastoon">Tallenna nykyinen kortti kirjastoon</string>
-    <string name="tallenna_puheviesti">● Tallenna puheviesti</string>
+    <string name="tallenna_puheviesti">Äänitä puheviesti</string>
     <string name="tallennus_ei_kaynnistynyt_tarkista_mikrofonin">Tallennus ei käynnistynyt. Tarkista mikrofonin käyttöoikeus.</string>
     <string name="tallennus_epaonnistui">Tallennus epäonnistui.</string>
     <string name="tallennus_epaonnistui_kokeile_uudelleen">Tallennus epäonnistui. Kokeile uudelleen.</string>
-    <string name="tallennus_kaynnissa">● Tallennus käynnissä</string>
+    <string name="tallennus_kaynnissa">Äänitys käynnissä…</string>
     <string name="tallentamattomat_muutokset_katoavat">Tallentamattomat muutokset katoavat.</string>
     <string name="tarkka_aika_nakyy">Tarkka aika näkyy.</string>
     <string name="tarvitsen_apua_haluan_pitaa_tauon">Tarvitsen apua. Haluan pitää tauon.</string>
     <string name="tauko_vaatii_ohjaajan_pin_koodin">Tauko vaatii ohjaajan PIN-koodin.</string>
     <string name="tauolla">Tauolla</string>
-    <string name="tee_valmiista_kortista_oma">Tee valmiista kortista oma</string>
     <string name="tehtava">Tehtävä %1$s / %2$s</string>
     <string name="teksti">Teksti</string>
     <string name="template_day_activity">Päivätoiminta</string>
@@ -327,7 +317,6 @@
     <string name="timer_title">Ajastin</string>
     <string name="times_ends_about"> · päättyy noin klo %1$s</string>
     <string name="toiminnon_nimi">Toiminnon nimi</string>
-    <string name="toimintopolku">TOIMINTOPOLKU</string>
     <string name="toista_automaattisesti_toiminnon_alkaessa">Toista automaattisesti toiminnon alkaessa</string>
     <string name="toista_viesti">🔊  Toista viesti</string>
     <string name="tts_locale">fi-FI</string>
@@ -341,23 +330,19 @@
     <string name="uusi_kortti">Uusi kortti</string>
     <string name="uusi_napautus_poistaa_pida_painettuna">Uusi napautus poistaa. Pidä painettuna, jos sama toiminto tulee päivään useamman kerran.</string>
     <string name="uusi_pin_koodi">Uusi PIN-koodi</string>
-    <string name="uusi_toimintokortti">+ Uusi toimintokortti</string>
     <string name="vaara_pin_koodi_yrityksia_jaljella">Väärä PIN-koodi. Yrityksiä jäljellä: %1$s.</string>
     <string name="vahvista_puhelimen_omalla_nayton_lukituksella">Vahvista puhelimen omalla näytön lukituksella.</string>
     <string name="vaihda_pin_koodi">Vaihda PIN-koodi</string>
     <string name="vaihe">Vaihe %1$s / %2$s</string>
     <string name="vain_rengas">Vain rengas</string>
-    <string name="valitse_aika_pyorittamalla_kellotaulua">Valitse aika napauttamalla tai pyörittämällä kellotaulua</string>
     <string name="valitse_aika_vetamalla_kellotaulua_kaynnissa">Valitse aika napauttamalla tai vetämällä kellotaulua. Käynnissä olevan ajastimen aika on lukittu.</string>
     <string name="valitse_ja_kuuntele_haluamasi_suomenkielinen">Valitse ja kuuntele haluamasi suomenkielinen ääni.</string>
     <string name="valitse_ja_kuuntele_puheaani">Valitse ja kuuntele puheääni</string>
     <string name="valitse_laitteella_kaytettavissa_oleva_aani">Valitse laitteella käytettävissä oleva ääni kuuntelemalla. Oma tallenne toimii myös ilman puhemoottoria.</string>
     <string name="valitse_nelinumeroinen_pin_koodi_jota">Valitse nelinumeroinen PIN-koodi, jota asiakas ei tiedä.</string>
-    <string name="valitse_oma_valokuva">📷 Valitse oma valokuva</string>
     <string name="valitse_puheaani">Valitse puheääni</string>
     <string name="valitse_valmis_kuva">Valitse valmis kuva</string>
     <string name="valitse_valokuva">Valitse valokuva</string>
-    <string name="valittu">Valittu: %1$s</string>
     <string name="valmis_aloittamaan">Valmis aloittamaan</string>
     <string name="valmis_seuraavaan">Valmis – seuraavaan</string>
     <string name="veda_kahvasta_muuttaaksesi_jarjestysta">Vedä ≡-kahvasta muuttaaksesi järjestystä.</string>
@@ -367,7 +352,6 @@
     <string name="viimeisten_10_sekunnin_laskenta">Viimeisten 10 sekunnin laskenta</string>
     <string name="vinkki_nayton_kiinnitys">Vinkki: näytön kiinnitys</string>
     <string name="voice_label">Ääni %1$d · %2$s</string>
-    <string name="voice_listen">▶ Kuuntele</string>
     <string name="voice_needs_network">vaatii verkon</string>
     <string name="voice_offline">offline</string>
 
@@ -469,4 +453,10 @@
     <string name="menu_open">Valikko</string>
     <string name="menu_switch_profile">Vaihda profiilia</string>
     <string name="menu_caregiver_settings">Ohjaajan asetukset</string>
+    <!-- Yhtenäistetty käyttöliittymä -->
+    <string name="flow_mode_timer_hint">Valitse aika kellotaululta.</string>
+    <string name="edit_current_card">Muokkaa nimeä ja kuvausta</string>
+    <string name="photo_short">Oma kuva</string>
+    <string name="valmis_kuva_short">Valmis kuva</string>
+    <string name="save_to_own_cards">Tallenna myös omiin kortteihin</string>
 </resources>

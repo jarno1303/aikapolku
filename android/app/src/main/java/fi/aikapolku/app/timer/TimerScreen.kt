@@ -1,5 +1,12 @@
 package fi.aikapolku.app.timer
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Settings
+import fi.aikapolku.app.ui.AppIcons
+import fi.aikapolku.app.ui.RoundIconButton
 import fi.aikapolku.app.data.ProfileScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -136,13 +143,6 @@ internal fun TimerScreen(
         }
     } else {
         if (guided) {
-            Text(
-                stringResource(R.string.toimintopolku),
-                fontSize = 13.sp,
-                letterSpacing = 1.sp,
-                fontWeight = FontWeight.Bold,
-                color = DialMuted
-            )
             TimerTaskCards(
                 first = activeTask,
                 firstPhoto = firstPhoto,
@@ -234,16 +234,11 @@ internal fun TimerScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (showReset) {
-                    IconButton(
-                        onClick = { confirmReset = true },
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Text(
-                            "↺",
-                            fontSize = 32.sp,
-                            color = AppColors.Ink
-                        )
-                    }
+                    RoundIconButton(
+                        icon = Icons.Rounded.Refresh,
+                        contentDescription = stringResource(R.string.nollaa),
+                        onClick = { confirmReset = true }
+                    )
                     Text(
                         stringResource(R.string.nollaa),
                         fontSize = 12.sp,
@@ -253,39 +248,33 @@ internal fun TimerScreen(
                     CaregiverLockButton()
                 }
             }
-            androidx.compose.material3.IconButton(
+            RoundIconButton(
+                icon = when {
+                    pauseLocked -> Icons.Rounded.Lock
+                    running -> AppIcons.Pause
+                    else -> Icons.Rounded.PlayArrow
+                },
+                contentDescription = when {
+                    pauseLocked -> stringResource(R.string.tauko_vaatii_ohjaajan_pin_koodin)
+                    running -> stringResource(R.string.pysayta_aika)
+                    else -> stringResource(R.string.aloita_aika)
+                },
                 onClick = startPause,
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(AppColors.Ink)
-            ) {
-                Text(
-                    when {
-                        pauseLocked -> "🔒"
-                        running -> "Ⅱ"
-                        else -> "▶"
-                    },
-                    fontSize = if (pauseLocked) 28.sp else if (running) 39.sp else 30.sp,
-                    color = Color.White
-                )
-            }
+                size = 72.dp,
+                container = AppColors.Ink,
+                tint = Color.White
+            )
 
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (showSettings) {
-                    TextButton(
-                        onClick = { settingsOpen = true },
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Text(
-                            "⚙",
-                            fontSize = 25.sp,
-                            color = AppColors.Ink
-                        )
-                    }
+                    RoundIconButton(
+                        icon = Icons.Rounded.Settings,
+                        contentDescription = stringResource(R.string.ajastimen_asetukset),
+                        onClick = { settingsOpen = true }
+                    )
                     Text(
                         stringResource(R.string.asetukset),
                         fontSize = 11.sp,
@@ -372,7 +361,8 @@ internal fun TimerScreen(
                         },
                         enabled = endSound != "off"
                     ) {
-                        Text(stringResource(R.string.kuuntele_aanimerkki))
+                        Icon(AppIcons.Speaker, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Text(stringResource(R.string.kuuntele_aanimerkki), modifier = Modifier.padding(start = 6.dp))
                     }
                 }
             },

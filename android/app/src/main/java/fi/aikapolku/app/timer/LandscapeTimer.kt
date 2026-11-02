@@ -1,5 +1,12 @@
 package fi.aikapolku.app.timer
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Settings
+import fi.aikapolku.app.ui.AppIcons
+import fi.aikapolku.app.ui.RoundIconButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -38,7 +45,7 @@ internal fun LandscapeTimer(
     nextPhoto: String,
     onPreset: (Int) -> Unit,
     onStartPause: () -> Unit,
-    /** P0-21e: Tauko on lukittu (näytetään 🔒; painallus kysyy PIN-koodin). */
+    /** P0-21e: Tauko on lukittu (lukkokuvake; painallus kysyy PIN-koodin). */
     pauseLocked: Boolean,
     onResetClick: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -117,33 +124,28 @@ internal fun LandscapeTimer(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 if (showReset) {
-                    IconButton(onClick = onResetClick, modifier = Modifier.size(48.dp)) {
-                        Text("↺", fontSize = 29.sp, color = LandscapeInk)
-                    }
+                    RoundIconButton(Icons.Rounded.Refresh, stringResource(R.string.nollaa), onResetClick, tint = LandscapeInk)
                 } else {
                     CaregiverLockButton()
                 }
-                IconButton(
+                RoundIconButton(
+                    icon = when {
+                        pauseLocked -> Icons.Rounded.Lock
+                        running -> AppIcons.Pause
+                        else -> Icons.Rounded.PlayArrow
+                    },
+                    contentDescription = when {
+                        pauseLocked -> stringResource(R.string.tauko_vaatii_ohjaajan_pin_koodin)
+                        running -> stringResource(R.string.pysayta_aika)
+                        else -> stringResource(R.string.aloita_aika)
+                    },
                     onClick = onStartPause,
-                    modifier = Modifier
-                        .size(58.dp)
-                        .clip(CircleShape)
-                        .background(LandscapeInk)
-                ) {
-                    Text(
-                        when {
-                            pauseLocked -> "🔒"
-                            running -> "Ⅱ"
-                            else -> "▶"
-                        },
-                        color = Color.White,
-                        fontSize = if (pauseLocked) 22.sp else 26.sp
-                    )
-                }
+                    size = 58.dp,
+                    container = LandscapeInk,
+                    tint = Color.White
+                )
                 if (showSettings) {
-                    IconButton(onClick = onSettingsClick, modifier = Modifier.size(48.dp)) {
-                        Text("⚙", fontSize = 25.sp, color = LandscapeInk)
-                    }
+                    RoundIconButton(Icons.Rounded.Settings, stringResource(R.string.ajastimen_asetukset), onSettingsClick, tint = LandscapeInk)
                 } else {
                     Spacer(Modifier.size(48.dp))
                 }

@@ -19,92 +19,6 @@ import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.ui.FlowColors
 
 @Composable
-internal fun FlowModePicker(
-    timerSelected: Boolean,
-    onTimer: () -> Unit,
-    onNoLimit: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(9.dp)
-    ) {
-        FlowModeChoice(
-            symbol = "⏱",
-            title = stringResource(R.string.ajastimella),
-            description = stringResource(R.string.valitse_aika_pyorittamalla_kellotaulua),
-            selected = timerSelected,
-            onClick = onTimer
-        )
-
-        FlowModeChoice(
-            symbol = "✋",
-            title = stringResource(R.string.ilman_aikarajaa),
-            description = stringResource(R.string.siirry_eteenpain_kun_olet_valmis),
-            selected = !timerSelected,
-            onClick = onNoLimit
-        )
-    }
-}
-
-@Composable
-private fun FlowModeChoice(
-    symbol: String,
-    title: String,
-    description: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        border = BorderStroke(
-            if (selected) 2.dp else 1.dp,
-            if (selected) AppColors.Teal
-            else Color(0xFFD9E2E3)
-        ),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected)
-                Color(0xFFE7F5F1)
-            else Color.White
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(symbol, fontSize = 25.sp)
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                Text(
-                    title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = AppColors.Ink
-                )
-                Text(
-                    description,
-                    fontSize = 13.sp,
-                    lineHeight = 17.sp,
-                    color = FlowColors.muted
-                )
-            }
-
-            RadioButton(
-                selected = selected,
-                onClick = null
-            )
-        }
-    }
-}
-
-@Composable
 internal fun ManualFlowScreen(
     first: String,
     firstPhoto: String,
@@ -113,7 +27,7 @@ internal fun ManualFlowScreen(
     onNext: () -> Unit
 ) {
     Text(
-        stringResource(R.string.ilman_aikarajaa),
+        stringResource(R.string.omaan_tahtiin),
         fontSize = 26.sp,
         fontWeight = FontWeight.Bold,
         color = AppColors.Ink

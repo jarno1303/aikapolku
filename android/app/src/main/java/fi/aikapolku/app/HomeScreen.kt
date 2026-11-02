@@ -1,11 +1,10 @@
 package fi.aikapolku.app
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.Canvas
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -135,19 +134,7 @@ private fun HomeMenu(profile: Profile?, onSwitchProfile: () -> Unit, onCaregiver
                     .semantics { contentDescription = menuLabel },
                 contentAlignment = Alignment.Center
             ) {
-                // Valikkokuvake (kolme viivaa) piirrettynä, ei emojia: sama ilme kaikissa puhelimissa.
-                Canvas(modifier = Modifier.size(22.dp)) {
-                    val stroke = 2.5.dp.toPx()
-                    listOf(0.2f, 0.5f, 0.8f).forEach { y ->
-                        drawLine(
-                            AppColors.Ink,
-                            Offset(0f, size.height * y),
-                            Offset(size.width, size.height * y),
-                            strokeWidth = stroke,
-                            cap = StrokeCap.Round
-                        )
-                    }
-                }
+                Icon(Icons.Rounded.Menu, contentDescription = null, tint = AppColors.Ink, modifier = Modifier.size(26.dp))
             }
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
