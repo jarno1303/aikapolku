@@ -27,6 +27,7 @@ import fi.aikapolku.app.data.parseDraft
 import fi.aikapolku.app.data.serializeDraft
 import fi.aikapolku.app.programs.editor.ProgramEditorScreen
 import fi.aikapolku.app.programs.run.PrefsRunProgress
+import fi.aikapolku.app.programs.run.DoneGate
 import fi.aikapolku.app.programs.run.ProgramRunController
 import fi.aikapolku.app.programs.run.RunNext
 import fi.aikapolku.app.programs.run.RunStepScreen
@@ -154,16 +155,31 @@ internal fun ProgramsScreen(
 
     var tab by rememberSaveable { mutableStateOf(ProgramsTab.PROGRAMS) }
 
-    fun next() {
-        if (run.next()) {
-            view = ProgramsView.DONE
-            // Tänään-listasta käynnistetty ohjelma merkitään tehdyksi.
-            runEventId?.let { id ->
-                val date = runEventDate?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() } ?: java.time.LocalDate.now()
-                fi.aikapolku.app.data.AckStore(context.applicationContext).ack(date, id)
-            }
-            runEventId = null
-            runEventDate = null
+    var confirmDoneLeft by remember { mutableStateOf<Long?>(null) }
+
+    fun finishRun() {
+        view = ProgramsView.DONE
+        // Tänään-listasta käynnistetty ohjelma merkitään tehdyksi.
+        runEventId?.let { id ->
+            val date = runEventDate?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() } ?: java.time.LocalDate.now()
+            fi.aikapolku.app.data.AckStore(context.applicationContext).ack(date, id)
+        }
+        runEventId = null
+        runEventDate = null
+    }
+
+    fun skipTask() {
+        if (run.skip()) finishRun()
+    }
+
+    // Valmis: vahinkonaputusten esto ja ohjaajan valitsema toiminta, kun aikaa on jäljellä.
+    fun onDonePressed() {
+        if (run.tapGuardActive()) return
+        when (run.doneGate(RunPreferences.doneMode(context), caregiverOpen = !caregiver.isLocked && caregiver.lockEnabled)) {
+            DoneGate.ALLOW -> if (run.next()) finishRun()
+            DoneGate.CONFIRM -> confirmDoneLeft = run.timeLeft()
+            DoneGate.START_TIMER -> run.startTimer()
+            DoneGate.WAIT -> Unit
         }
     }
 
@@ -244,9 +260,14 @@ internal fun ProgramsScreen(
                     onToggleTimer = { toggleStepTimer() },
                     onHelp = { run.requestSupport(SupportKind.HELP) },
                     onBreak = { run.requestSupport(SupportKind.BREAK) },
-                    onDone = { next() },
-                    onSkip = { next() },
-                    onMore = { showRunActions = true }
+                    onDone = { onDonePressed() },
+                    onMore = { showRunActions = true },
+                    doneLabel = when (run.doneGate(RunPreferences.doneMode(context), caregiverOpen = !caregiver.isLocked && caregiver.lockEnabled)) {
+                        DoneGate.START_TIMER -> stringResource(R.string.done_start_timer)
+                        DoneGate.WAIT -> stringResource(R.string.done_wait, formatLeft(run.timeLeft()))
+                        else -> null
+                    },
+                    doneEnabled = run.doneGate(RunPreferences.doneMode(context), caregiverOpen = !caregiver.isLocked && caregiver.lockEnabled) != DoneGate.WAIT
                 )
             }
         } else if (view == ProgramsView.EDIT) {
@@ -289,6 +310,7 @@ internal fun ProgramsScreen(
             },
             onStart = { startProgram(it) },
             onPrint = { ProgramPrint.open(context, it) },
+            onShare = { ProgramPrint.shareImage(context, it) },
             onEdit = {
                 draft = ProgramTiming.infer(it)
                 view = ProgramsView.EDIT
@@ -301,7 +323,7 @@ internal fun ProgramsScreen(
 
         ProgramsView.RUN -> Unit // Suoritus piirretään yllä omana näkymänään (RunStepScreen).
 
-        ProgramsView.DONE -> ProgramDoneView(run.program, onBack = { view = ProgramsView.LIST })
+        ProgramsView.DONE -> ProgramDoneView(run.program, run.skipped, onBack = { view = ProgramsView.LIST })
     }
         } // Scrollable Column
 
@@ -322,8 +344,26 @@ internal fun ProgramsScreen(
             onTimeSettings = { showRunActions = false; timeSettingsOpen = true },
             onViewSettings = { showRunActions = false; showRunSettings = true },
             onShowProgram = { showRunActions = false; showFullProgram = true },
+            onSkip = { showRunActions = false; skipTask() },
             onEnd = { showRunActions = false; showExitConfirmation = true },
             onDismiss = { showRunActions = false }
+        )
+    }
+
+    confirmDoneLeft?.let { left ->
+        AlertDialog(
+            onDismissRequest = { confirmDoneLeft = null },
+            title = { Text(stringResource(R.string.done_confirm_title, formatLeft(left))) },
+            text = { Text(stringResource(R.string.done_confirm_text)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDoneLeft = null
+                    if (run.next()) finishRun()
+                }) { Text(stringResource(R.string.done_confirm_yes)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDoneLeft = null }) { Text(stringResource(R.string.done_confirm_no)) }
+            }
         )
     }
 
@@ -417,4 +457,10 @@ internal fun ProgramsScreen(
             }
         )
     }
+}
+
+/** Jäljellä oleva aika muodossa m:ss. */
+private fun formatLeft(ms: Long): String {
+    val seconds = ((ms + 999L) / 1000L).coerceAtLeast(0L)
+    return "%d:%02d".format(seconds / 60, seconds % 60)
 }

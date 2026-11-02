@@ -13,6 +13,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import fi.aikapolku.app.data.RunPreferences
+import fi.aikapolku.app.programs.run.DoneGate
 
 /** Päiväohjelman suorituksen säännöt (ProgramRunController). Puhdas JVM-testi väärennetyllä ajastimella. */
 class ProgramRunControllerTest {
@@ -204,5 +206,74 @@ class ProgramRunControllerTest {
     fun `tyhjaa ohjelmaa ei kaynnisteta`() {
         run.start(DayProgram("x", "Tyhjä", emptyList()))
         assertFalse(run.isActive)
+    }
+
+    // --- Ohitus, vahinkonaputusten esto ja Valmis-asetus ---
+
+    @Test
+    fun `ohita ohittaa koko tehtavan osavaiheineen ja kirjaa sen`() {
+        run.start(program)
+        assertFalse(run.skip())
+        assertEquals("b", run.currentStep?.id)
+        assertEquals(setOf(0), run.skipped)
+        run.next()
+        assertEquals(setOf(0), run.skipped)
+    }
+
+    @Test
+    fun `uusi ohjelma tyhjentaa ohitetut`() {
+        run.start(program)
+        run.skip()
+        run.start(program)
+        assertEquals(emptySet<Int>(), run.skipped)
+    }
+
+    @Test
+    fun `valmis ei reagoi heti uuden vaiheen alussa`() {
+        run.start(program)
+        assertTrue(run.tapGuardActive())
+        timer.clock += ProgramRunController.TAP_GUARD_MS
+        assertFalse(run.tapGuardActive())
+        run.next()
+        assertTrue("osavaiheen vaihtuminen käynnistää eston uudelleen", run.tapGuardActive())
+    }
+
+    private fun atDurationStep() {
+        run.start(program)
+        run.next(); run.next() // a: kaksi osavaihetta -> b (10 min)
+        assertEquals("b", run.currentStep?.id)
+    }
+
+    @Test
+    fun `valmis-asetus aina sallii heti`() {
+        atDurationStep()
+        run.startTimer()
+        assertEquals(DoneGate.ALLOW, run.doneGate(RunPreferences.DONE_ALWAYS, caregiverOpen = false))
+    }
+
+    @Test
+    fun `kysy ensin kun aikaa on jaljella`() {
+        atDurationStep()
+        run.startTimer()
+        assertEquals(DoneGate.CONFIRM, run.doneGate(RunPreferences.DONE_CONFIRM, caregiverOpen = false))
+        timer.clock += 10 * 60_000L
+        assertEquals(DoneGate.ALLOW, run.doneGate(RunPreferences.DONE_CONFIRM, caregiverOpen = false))
+    }
+
+    @Test
+    fun `vasta ajan jalkeen odottaa ja ohjaaja voi ohittaa kysyen`() {
+        atDurationStep()
+        assertEquals(DoneGate.START_TIMER, run.doneGate(RunPreferences.DONE_AFTER_TIME, caregiverOpen = false))
+        run.startTimer()
+        assertEquals(DoneGate.WAIT, run.doneGate(RunPreferences.DONE_AFTER_TIME, caregiverOpen = false))
+        assertEquals(DoneGate.CONFIRM, run.doneGate(RunPreferences.DONE_AFTER_TIME, caregiverOpen = true))
+        timer.clock += 10 * 60_000L
+        assertEquals(DoneGate.ALLOW, run.doneGate(RunPreferences.DONE_AFTER_TIME, caregiverOpen = false))
+    }
+
+    @Test
+    fun `rajoitus ei koske tehtavia ilman aikaa`() {
+        run.start(program)
+        assertEquals(DoneGate.ALLOW, run.doneGate(RunPreferences.DONE_AFTER_TIME, caregiverOpen = false))
     }
 }

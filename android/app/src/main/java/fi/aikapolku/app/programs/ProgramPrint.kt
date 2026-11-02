@@ -91,6 +91,32 @@ internal object ProgramPrint {
         }
     }
 
+    /** Jaa kuvana: PNG Androidin jakovalikkoon. Kuva tallentuu vain välimuistiin. */
+    fun shareImage(context: Context, program: DayProgram) {
+        try {
+            val bitmap = ProgramPrintAdapter(context, program).renderImage()
+            val folder = java.io.File(context.cacheDir, "share").apply { mkdirs() }
+            folder.listFiles()?.forEach { it.delete() }
+            val safeName = program.name.replace(Regex("[^\\p{L}\\p{N} _-]"), "").trim().ifBlank { "paivaohjelma" }.take(40)
+            val file = java.io.File(folder, "$safeName.png")
+            FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            bitmap.recycle()
+            val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.files", file)
+            val send = android.content.Intent(android.content.Intent.ACTION_SEND)
+                .setType("image/png")
+                .putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                .putExtra(android.content.Intent.EXTRA_SUBJECT, program.name)
+                .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            val chooser = android.content.Intent.createChooser(send, context.getString(R.string.share_as_image))
+            if (context !is Activity) chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            fi.aikapolku.app.caregiver.CaregiverSession.keepOpenForOwnPicker()
+            context.startActivity(chooser)
+        } catch (e: Exception) {
+            android.util.Log.e("AikaPolkuPrint", "Kuvan jakaminen epäonnistui", e)
+            Toast.makeText(context, context.getString(R.string.share_failed), Toast.LENGTH_LONG).show()
+        }
+    }
+
     private fun findActivity(context: Context): Activity? {
         var current: Context = context
 
@@ -105,7 +131,7 @@ internal object ProgramPrint {
     }
 }
 
-private class ProgramPrintAdapter(
+internal class ProgramPrintAdapter(
     private val context: Context,
     private val program: DayProgram
 ) : PrintDocumentAdapter() {
@@ -203,7 +229,7 @@ private class ProgramPrintAdapter(
                 val page = pdf.startPage(index)
                 drawPage(
                     page.canvas,
-                    pdf,
+                    pdf.pageContentRect,
                     index,
                     count,
                     capacity
@@ -260,14 +286,38 @@ private class ProgramPrintAdapter(
         }
     }
 
+    /**
+     * Koko ohjelma yhtenä kuvana jakamista varten (WhatsApp, Teams, sähköposti …).
+     * Sama ulkoasu kuin tulosteessa, kaksinkertaisella tarkkuudella.
+     */
+    fun renderImage(): Bitmap {
+        val scale = 2f
+        val pageWidth = 595
+        val margin = 28
+        val heightPt = margin * 2 + 100 + maxOf(1, program.steps.size) * rowHeight.toInt() + 8
+        val bitmap = Bitmap.createBitmap((pageWidth * scale).toInt(), (heightPt * scale).toInt(), Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawColor(Color.WHITE)
+        canvas.scale(scale, scale)
+        drawPage(
+            canvas,
+            android.graphics.Rect(margin, margin, pageWidth - margin, heightPt - margin),
+            pageIndex = 0,
+            pageCount = 1,
+            capacity = maxOf(1, program.steps.size),
+            footer = false
+        )
+        return bitmap
+    }
+
     private fun drawPage(
         canvas: Canvas,
-        pdf: PrintedPdfDocument,
+        rect: android.graphics.Rect,
         pageIndex: Int,
         pageCount: Int,
-        capacity: Int
+        capacity: Int,
+        footer: Boolean = true
     ) {
-        val rect = pdf.pageContentRect
         val left = rect.left + 8f
         val right = rect.right - 8f
         val width = right - left
@@ -325,12 +375,14 @@ private class ProgramPrintAdapter(
             )
         }
 
-        canvas.drawText(
-            context.getString(R.string.aikapolku_sivu, pageIndex + 1, pageCount),
-            left,
-            rect.bottom - 10f,
-            paint(secondary, 10f)
-        )
+        if (footer) {
+            canvas.drawText(
+                context.getString(R.string.aikapolku_sivu, pageIndex + 1, pageCount),
+                left,
+                rect.bottom - 10f,
+                paint(secondary, 10f)
+            )
+        }
     }
 
     private fun drawStep(

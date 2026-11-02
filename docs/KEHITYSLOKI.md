@@ -304,3 +304,11 @@
 - Muokkain: Edellinen/Seuraava-painikkeet, vaiheiden ✓ kuvakkeena, ohje ⓘ:n takana, ≡/✕/🔒 kuvakkeina, ajan kulku valitsimella, kellonajat kynäkuvakkeella, osavaiheet nuolilla.
 - Suoritus: Muut toiminnot kuvakeriveinä, tukiviesti ilman "VIESTI"-otsikkoa, Toista ja Jatka kuvakkeilla, näkymä- ja ääniasetukset valitsimilla, äänitys mikrofonikuvakkeella.
 - Kaikki valmista -näkymä yhteinen (päiväohjelma ja Ensin–Sitten). Valmis-painikkeet yhtenäisesti "✓ Valmis" kuvakkeella. 11 käyttämätöntä tekstiä poistettu.
+
+## Korjaus: Valmis-painike, ohitus ja Jaa kuvana (puhelintesti)
+- Valmis, kun kestotehtävän aikaa on jäljellä: ohjaajan valinta (Näkymä ja viestiäänet, profiilikohtainen) Aina / Kysy ensin (oletus) / Ajan jälkeen. "Ajan jälkeen": painike himmeä ja näyttää jäljellä olevan ajan; jos aikaa ei ole käynnistetty, painike käynnistää sen. Avattu ohjaajan lukko sallii aina (kysyen). Tarvitsen apua ja Tarvitsen tauon toimivat aina.
+- Vahinkonaputusten esto: Valmis ei reagoi 1,5 s uuden vaiheen alussa.
+- Ohita tehtävä siirretty Muut toiminnot -ikkunaan; ohitetut näkyvät himmeinä Kaikki valmista -näkymässä.
+- Päiväohjelmakortin nimi näkyy (pyöreä käynnistyspainike). Ohjelman ⋮-valikkoon "Jaa kuvana" (PNG Androidin jakovalikkoon, FileProvider välimuistista).
+- Suorituksen aikapillerin lukko- ja tauko-merkit kuvakkeina.
+- Uudet testit: ohitus, esto ja Valmis-asetuksen kaikki tilat (7).

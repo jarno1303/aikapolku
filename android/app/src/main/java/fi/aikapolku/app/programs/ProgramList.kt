@@ -49,6 +49,7 @@ import fi.aikapolku.app.ui.ChoiceRow
 import fi.aikapolku.app.ui.OverflowMenu
 import fi.aikapolku.app.ui.PrimaryButton
 import fi.aikapolku.app.ui.RowIcon
+import fi.aikapolku.app.ui.RoundIconButton
 
 /**
  * Päiväohjelmien lista. Ohjaajalle "Uusi päiväohjelma" (tyhjä tai valmis pohja samasta
@@ -62,6 +63,7 @@ internal fun ProgramListView(
     onTemplate: (RoutineTemplates.Template) -> Unit,
     onStart: (DayProgram) -> Unit,
     onPrint: (DayProgram) -> Unit,
+    onShare: (DayProgram) -> Unit,
     onEdit: (DayProgram) -> Unit,
     onDelete: (DayProgram) -> Unit
 ) {
@@ -98,6 +100,7 @@ internal fun ProgramListView(
 
     val menuLabel = stringResource(R.string.muut_toiminnot)
     val printLabel = stringResource(R.string.tulosta_pdf)
+    val shareLabel = stringResource(R.string.share_as_image)
     val editLabel = stringResource(R.string.edit)
     val deleteLabel = stringResource(R.string.delete)
     programs.forEach { program ->
@@ -122,19 +125,20 @@ internal fun ProgramListView(
                         color = AppColors.Muted
                     )
                 }
-                Button(
+                // Pyöreä käynnistyspainike, jotta nimelle jää tilaa.
+                RoundIconButton(
+                    icon = Icons.Rounded.PlayArrow,
+                    contentDescription = stringResource(R.string.kaynnista) + ": " + program.name,
                     onClick = { onStart(program) },
-                    modifier = Modifier.heightIn(min = 48.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.Teal)
-                ) {
-                    Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Text(stringResource(R.string.kaynnista), modifier = Modifier.padding(start = 4.dp))
-                }
+                    size = 52.dp,
+                    container = AppColors.Teal,
+                    tint = Color.White
+                )
                 OverflowMenu(
                     contentDescription = "$menuLabel: ${program.name}",
                     items = buildList {
                         add(printLabel to { onPrint(program) })
+                        add(shareLabel to { onShare(program) })
                         if (canEdit) {
                             add(editLabel to { onEdit(program) })
                             add(deleteLabel to { onDelete(program) })
@@ -189,10 +193,11 @@ internal fun ProgramListView(
 
 /** Ohjelma suoritettu loppuun: yhteinen Kaikki valmista -näkymä. */
 @Composable
-internal fun ProgramDoneView(program: DayProgram, onBack: () -> Unit) {
+internal fun ProgramDoneView(program: DayProgram, skipped: Set<Int>, onBack: () -> Unit) {
     AllDoneView(
         subtitle = stringResource(R.string.on_paattynyt, program.name),
         images = program.steps.map { it.name to it.photo },
+        dimmed = skipped,
         buttonText = stringResource(R.string.takaisin_paivaohjelmiin),
         onButton = onBack
     )

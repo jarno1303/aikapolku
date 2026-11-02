@@ -15,6 +15,7 @@ import fi.aikapolku.app.R
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Lock
@@ -33,6 +34,7 @@ internal fun RunActionsDialog(
     onTimeSettings: () -> Unit,
     onViewSettings: () -> Unit,
     onShowProgram: () -> Unit,
+    onSkip: () -> Unit,
     onEnd: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -50,6 +52,8 @@ internal fun RunActionsDialog(
                     ChoiceRow(stringResource(R.string.ajan_nayttotapa), onTimeSettings, leading = { RowIcon(Icons.Rounded.Settings) })
                     ChoiceRow(stringResource(R.string.nakyma_ja_viestiaanet), onViewSettings, leading = { RowIcon(AppIcons.Speaker) })
                 }
+                // Ohitus on aina vapaa; ohitettu tehtävä näkyy himmeänä lopussa.
+                ChoiceRow(stringResource(R.string.ohita_tehtava), onSkip, leading = { RowIcon(Icons.AutoMirrored.Rounded.ArrowForward) })
                 ChoiceRow(stringResource(R.string.nayta_koko_ohjelma), onShowProgram, leading = { RowIcon(Icons.AutoMirrored.Rounded.List) })
                 if (canEnd) {
                     ChoiceRow(stringResource(R.string.lopeta_ohjelma), onEnd, leading = { RowIcon(Icons.Rounded.Close) })

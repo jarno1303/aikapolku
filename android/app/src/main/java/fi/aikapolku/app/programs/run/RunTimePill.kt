@@ -1,5 +1,10 @@
 package fi.aikapolku.app.programs.run
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.Icon
+import fi.aikapolku.app.ui.AppIcons
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
@@ -47,7 +52,7 @@ internal fun RunClockPill(time: String) {
 
 /**
  * Aika ja sen ohjaus yhdessä: napautus aloittaa tai jatkaa (aina vapaa) tai pysäyttää
- * (lukittuna PIN-koodilla, näkyy 🔒). Näyttötapa noudattaa käyttäjän valintaa:
+ * (lukittuna PIN-koodilla, näkyy lukkokuvake). Näyttötapa noudattaa käyttäjän valintaa:
  * numerot ja rengas, pelkkä rengas tai rauhallinen tila ilman edistymistä.
  */
 @Composable
@@ -56,9 +61,9 @@ internal fun RunCountdownPill(time: RunTime.Countdown, onToggle: () -> Unit) {
     val finished = time.remainingMs <= 0L
     val numbers = time.displayMode == TimeDisplayPrefs.NUMBERS
     val action = when {
-        time.pauseLocked -> "🔒"
-        time.running -> "Ⅱ"
-        else -> "▶"
+        time.pauseLocked -> Icons.Rounded.Lock
+        time.running -> AppIcons.Pause
+        else -> Icons.Rounded.PlayArrow
     }
     val spoken = buildString {
         if (finished) append(stringResource(R.string.a11y_time_ended))
@@ -102,7 +107,7 @@ internal fun RunCountdownPill(time: RunTime.Countdown, onToggle: () -> Unit) {
                     color = RunColors.ink
                 )
             }
-            Text(action, fontSize = if (time.pauseLocked) 17.sp else 19.sp, color = RunColors.ink)
+            Icon(action, contentDescription = null, tint = if (time.pauseLocked) RunColors.teal else RunColors.ink, modifier = Modifier.size(22.dp))
         }
     }
 }

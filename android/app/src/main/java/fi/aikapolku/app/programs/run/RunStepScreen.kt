@@ -2,6 +2,7 @@ package fi.aikapolku.app.programs.run
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -101,8 +102,11 @@ internal fun RunStepScreen(
     onHelp: () -> Unit,
     onBreak: () -> Unit,
     onDone: () -> Unit,
-    onSkip: () -> Unit,
-    onMore: () -> Unit
+    onMore: () -> Unit,
+    /** Valmis-painikkeen teksti, kun se poikkeaa tavallisesta (esim. "Aloita aika" tai jäljellä oleva aika). */
+    doneLabel: String? = null,
+    /** false = odotetaan ajan päättymistä (painike himmeä). */
+    doneEnabled: Boolean = true
 ) {
     val hasSubSteps = subSteps.isNotEmpty()
     val safeIndex = subStepIndex.coerceIn(0, maxOf(0, subSteps.lastIndex))
@@ -216,6 +220,7 @@ internal fun RunStepScreen(
 
             Button(
                 onClick = onDone,
+                enabled = doneEnabled,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -224,28 +229,20 @@ internal fun RunStepScreen(
                 )
             ) {
                 Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(28.dp))
-                Text(stringResource(R.string.run_done_button), fontSize = 21.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp))
+                Text(doneLabel ?: stringResource(R.string.run_done_button), fontSize = 21.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp))
             }
 
             if (next != null) {
                 RunNextRow(next = next, mode = nextMode)
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            // Ohita ja muut harvinaiset toiminnot yhden painikkeen takana.
+            TextButton(
+                onClick = onMore,
+                modifier = Modifier.align(Alignment.CenterHorizontally).heightIn(min = 48.dp)
             ) {
-                TextButton(onClick = onSkip, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(
-                        if (hasSubSteps) stringResource(R.string.ohita_vaihe) else stringResource(R.string.ohita_tehtava),
-                        color = RunColors.teal,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-                TextButton(onClick = onMore, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(stringResource(R.string.run_more), color = RunColors.teal, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                }
+                Icon(Icons.Rounded.MoreVert, contentDescription = null, tint = RunColors.teal, modifier = Modifier.size(20.dp))
+                Text(stringResource(R.string.muut_toiminnot), color = RunColors.teal, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 4.dp))
             }
         }
     }

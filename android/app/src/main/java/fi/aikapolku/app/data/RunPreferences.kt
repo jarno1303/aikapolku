@@ -17,6 +17,11 @@ internal object RunPreferences {
     const val AUDIO_TTS = "tts"
     const val AUDIO_RECORDED = "recorded"
     const val HELP = "help"
+    /** Valmis, kun kestotehtävän aikaa on jäljellä: aina, kysy ensin (oletus) tai vasta ajan päätyttyä. */
+    const val DONE_ALWAYS = "always"
+    const val DONE_CONFIRM = "confirm"
+    const val DONE_AFTER_TIME = "after_time"
+    private val doneModes = setOf(DONE_ALWAYS, DONE_CONFIRM, DONE_AFTER_TIME)
     const val BREAK = "break"
 
     private fun prefs(context: Context) = ProfileScope.prefs(context, ProfileScope.RUN_PREFS)
@@ -28,6 +33,13 @@ internal object RunPreferences {
     fun setNextMode(context: Context, mode: String) {
         if (mode in setOf(NEXT_HIDDEN, NEXT_TEXT, NEXT_CARD))
             prefs(context).edit().putString("next_mode", mode).apply()
+    }
+
+    fun doneMode(context: Context): String =
+        (prefs(context).getString("done_mode", DONE_CONFIRM) ?: DONE_CONFIRM).takeIf { it in doneModes } ?: DONE_CONFIRM
+
+    fun setDoneMode(context: Context, mode: String) {
+        if (mode in doneModes) prefs(context).edit().putString("done_mode", mode).apply()
     }
 
     fun voiceMode(context: Context, kind: String): String =

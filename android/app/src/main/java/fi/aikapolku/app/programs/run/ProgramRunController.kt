@@ -1,5 +1,6 @@
 package fi.aikapolku.app.programs.run
 
+import fi.aikapolku.app.data.RunPreferences
 import fi.aikapolku.app.data.ProfileScope
 import android.content.Context
 import android.content.SharedPreferences
@@ -17,6 +18,18 @@ import fi.aikapolku.app.data.parseDraft
 import fi.aikapolku.app.data.serializeDraft
 import fi.aikapolku.app.timer.Tick
 import fi.aikapolku.app.timer.TimerPort
+
+/** Valmis-painikkeen toiminta, kun kestotehtävän aikaa on jäljellä. */
+internal enum class DoneGate {
+    /** Valmis siirtää eteenpäin. */
+    ALLOW,
+    /** Kysy ensin ("Aikaa on vielä …"). */
+    CONFIRM,
+    /** Odota, kunnes aika on kulunut (painike himmeä, näyttää jäljellä olevan ajan). */
+    WAIT,
+    /** Aikaa ei ole käynnistetty: painike käynnistää ajan. */
+    START_TIMER
+}
 
 /** Missä kohtaa ohjelmaa ollaan; säilyy sovelluksen sulkemisen yli. */
 internal interface RunProgress {
@@ -60,6 +73,40 @@ internal class ProgramRunController(
     var remaining by mutableLongStateOf(0L)
         private set
     private var stepVoicePlayed by mutableStateOf(false)
+    /** Ohitetut tehtävät (indeksit): näkyvät himmeinä Kaikki valmista -näkymässä. */
+    var skipped by mutableStateOf<Set<Int>>(emptySet())
+        private set
+    /** Milloin nykyinen vaihe tuli näkyviin (monotoninen aika): vahinkonaputusten esto. */
+    private var stepEnteredAt = Long.MIN_VALUE / 2
+
+    /** Valmis ei reagoi heti uuden vaiheen alussa, jottei nopea naputtelu vie ohjelmaa läpi. */
+    fun tapGuardActive(): Boolean = timer.now() - stepEnteredAt < TAP_GUARD_MS
+
+    /**
+     * Mitä Valmis tekee, kun kestotehtävän aikaa on jäljellä. [policy] = ohjaajan valinta
+     * (RunPreferences.DONE_*). Ohjaajan avaama lukko ([caregiverOpen]) sallii aina, kysyen.
+     * Rajoitus koskee vain painallusta, joka päättäisi tehtävän (ei osavaiheita).
+     */
+    fun doneGate(policy: String, caregiverOpen: Boolean): DoneGate {
+        val step = currentStep ?: return DoneGate.ALLOW
+        val subCount = step.subSteps.size
+        if (subCount > 0 && subStepIndex < subCount - 1) return DoneGate.ALLOW
+        if (step.mode != StepMode.DURATION) return DoneGate.ALLOW
+        val left = timeLeft()
+        if (left <= 0L) return DoneGate.ALLOW
+        return when (policy) {
+            RunPreferences.DONE_ALWAYS -> DoneGate.ALLOW
+            RunPreferences.DONE_AFTER_TIME -> when {
+                caregiverOpen -> DoneGate.CONFIRM
+                running -> DoneGate.WAIT
+                else -> DoneGate.START_TIMER
+            }
+            else -> DoneGate.CONFIRM
+        }
+    }
+
+    /** Jäljellä oleva aika juuri nyt. */
+    fun timeLeft(): Long = if (running) (deadline - timer.now()).coerceAtLeast(0L) else remaining
 
     val currentStep: ProgramStep? get() = program.steps.getOrNull(stepIndex)
     val nextStep: ProgramStep? get() = program.steps.getOrNull(stepIndex + 1)
@@ -75,6 +122,7 @@ internal class ProgramRunController(
         deadline = timer.now() + remaining
         stepVoicePlayed = false
         support = null
+        stepEnteredAt = timer.now()
     }
 
     fun start(newProgram: DayProgram) {
@@ -82,6 +130,8 @@ internal class ProgramRunController(
         program = newProgram
         stepIndex = 0
         subStepIndex = 0
+        skipped = emptySet()
+        stepEnteredAt = timer.now()
         support = null
         running = false
         val first = newProgram.steps.first()
@@ -102,9 +152,17 @@ internal class ProgramRunController(
         val count = currentStep?.subSteps?.size ?: 0
         if (count > 0 && subStepIndex < count - 1) {
             subStepIndex += 1
+            stepEnteredAt = timer.now()
             progress.save(program.id, stepIndex, subStepIndex)
             return false
         }
+        return advance()
+    }
+
+    /** Ohita tehtävä kokonaan (myös jäljellä olevat osavaiheet). Kirjataan ohitetuksi. */
+    fun skip(): Boolean {
+        if (currentStep == null) return true
+        skipped = skipped + stepIndex
         return advance()
     }
 
@@ -117,6 +175,7 @@ internal class ProgramRunController(
         }
         stepIndex += 1
         subStepIndex = 0
+        stepEnteredAt = timer.now()
         progress.save(program.id, stepIndex, 0)
         val step = program.steps[stepIndex]
         remaining = step.minutes * 60_000L
@@ -194,13 +253,16 @@ internal class ProgramRunController(
     }
 
     companion object {
+        const val TAP_GUARD_MS = 1_500L
+
         /** Tila säilyy näytön kääntämisen ja muiden konfiguraatiomuutosten yli. */
         fun saver(timer: TimerPort, progress: RunProgress, playVoice: (String) -> Unit) =
             Saver<ProgramRunController, List<Any?>>(
                 save = {
                     listOf(
                         serializeDraft(it.program), it.stepIndex, it.subStepIndex, it.support?.name,
-                        it.resumeAfterSupport, it.running, it.stepVoicePlayed, it.deadline, it.remaining
+                        it.resumeAfterSupport, it.running, it.stepVoicePlayed, it.deadline, it.remaining,
+                        ArrayList(it.skipped)
                     )
                 },
                 restore = { v ->
@@ -214,6 +276,8 @@ internal class ProgramRunController(
                         stepVoicePlayed = v[6] as Boolean
                         deadline = v[7] as Long
                         remaining = v[8] as Long
+                        @Suppress("UNCHECKED_CAST")
+                        skipped = (v.getOrNull(9) as? List<Int>)?.toSet() ?: emptySet()
                     }
                 }
             )

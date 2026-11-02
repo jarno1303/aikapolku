@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -42,6 +43,8 @@ import fi.aikapolku.app.cards.CardPhoto
 internal fun AllDoneView(
     subtitle: String,
     images: List<Pair<String, String>>,
+    /** Himmennettävät kuvat (indeksit), esim. ohitetut tehtävät. */
+    dimmed: Set<Int> = emptySet(),
     buttonText: String,
     onButton: () -> Unit
 ) {
@@ -71,8 +74,12 @@ internal fun AllDoneView(
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                images.forEach { (name, photo) ->
-                    CardPhoto(name, photo, Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)))
+                images.forEachIndexed { index, (name, photo) ->
+                    CardPhoto(
+                        name,
+                        photo,
+                        Modifier.size(64.dp).alpha(if (index in dimmed) 0.3f else 1f).clip(RoundedCornerShape(14.dp))
+                    )
                 }
             }
         }

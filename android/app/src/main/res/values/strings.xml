@@ -188,7 +188,6 @@
     <string name="numerot_ja_rengas">Numerot ja rengas</string>
     <string name="nykyinen_vaihe">Nykyinen vaihe</string>
     <string name="ohita_tehtava">Ohita tehtävä</string>
-    <string name="ohita_vaihe">Ohita vaihe</string>
     <string name="ohjaaja_auki">Ohjaaja auki · %1$s</string>
     <string name="ohjaajan_lukitus">Ohjaajan lukitus</string>
     <string name="ohjaajan_lukitus_on_nyt_paalla">Ohjaajan lukitus on nyt päällä. Ohjaajan toiminnot avataan lukkokuvakkeesta PIN-koodilla. Ne ovat auki 2 minuuttia kerrallaan.</string>
@@ -245,7 +244,6 @@
     <string name="pysayta_aika">Pysäytä aika.</string>
     <string name="rauhallinen">Rauhallinen</string>
     <string name="run_done_button">Valmis</string>
-    <string name="run_more">Lisää</string>
     <string name="run_next_line">Seuraavaksi: %1$s</string>
     <string name="salli_aikapolkun_ilmoitukset">Salli AikaPolkun ilmoitukset.</string>
     <string name="salli_aikapolkun_tarkat_halytykset_ja">Salli AikaPolkun tarkat hälytykset ja palaa sovellukseen.</string>
@@ -315,7 +313,7 @@
     <string name="toista_viesti">Toista viesti</string>
     <string name="tts_locale">fi-FI</string>
     <string name="tulossa">TULOSSA</string>
-    <string name="tulosta_pdf">Tulosta / PDF</string>
+    <string name="tulosta_pdf">Tulosta tai PDF</string>
     <string name="tulosteen_asettelua_ei_voitu_muodostaa">Tulosteen asettelua ei voitu muodostaa.</string>
     <string name="tulostusasetukset_puuttuvat">Tulostusasetukset puuttuvat.</string>
     <string name="tulostusikkunaa_ei_voitu_avata">Tulostusikkunaa ei voitu avata.</string>
@@ -451,5 +449,17 @@
     <string name="program_empty">Tyhjä ohjelma</string>
     <string name="program_empty_hint">Valitse toiminnot itse</string>
     <string name="previous">Edellinen</string>
+    <string name="share_as_image">Jaa kuvana</string>
+    <string name="share_failed">Kuvan jakaminen ei onnistunut.</string>
+    <string name="done_start_timer">Aloita aika</string>
+    <string name="done_wait">Valmis %1$s</string>
+    <string name="done_confirm_title">Aikaa on vielä %1$s</string>
+    <string name="done_confirm_text">Oletko valmis?</string>
+    <string name="done_confirm_yes">Kyllä, valmis</string>
+    <string name="done_confirm_no">Jatka vielä</string>
+    <string name="done_mode_title">Valmis, kun aikaa on jäljellä</string>
+    <string name="done_mode_always">Aina</string>
+    <string name="done_mode_confirm">Kysy ensin</string>
+    <string name="done_mode_after">Ajan jälkeen</string>
     <string name="save_to_own_cards">Tallenna myös omiin kortteihin</string>
 </resources>

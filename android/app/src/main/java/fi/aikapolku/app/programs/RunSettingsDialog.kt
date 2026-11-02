@@ -113,6 +113,22 @@ internal fun RunSettingsDialog(
                             RunPreferences.setNextMode(context, nextModes[it])
                         }
                     )
+                    // Valmis-painike, kun kestotehtävän aikaa on jäljellä (profiilikohtainen).
+                    Text(stringResource(R.string.done_mode_title), fontWeight = FontWeight.Bold)
+                    val doneModes = listOf(RunPreferences.DONE_ALWAYS, RunPreferences.DONE_CONFIRM, RunPreferences.DONE_AFTER_TIME)
+                    var doneMode by remember { mutableStateOf(RunPreferences.doneMode(context)) }
+                    SegmentedChoice(
+                        options = listOf(
+                            stringResource(R.string.done_mode_always),
+                            stringResource(R.string.done_mode_confirm),
+                            stringResource(R.string.done_mode_after)
+                        ),
+                        selected = doneModes.indexOf(doneMode).coerceAtLeast(0),
+                        onSelect = {
+                            doneMode = doneModes[it]
+                            RunPreferences.setDoneMode(context, doneModes[it])
+                        }
+                    )
                     Text(stringResource(R.string.viestipainikkeiden_aani), fontWeight = FontWeight.Bold)
                     CompactVoiceRow(
                         label = stringResource(R.string.support_help),

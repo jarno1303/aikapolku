@@ -105,7 +105,6 @@ class UiFlowTest {
                 onHelp = { help++ },
                 onBreak = { pause++ },
                 onDone = { done++ },
-                onSkip = {},
                 onMore = {}
             )
         }
