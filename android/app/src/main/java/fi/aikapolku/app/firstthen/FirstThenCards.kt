@@ -2,6 +2,12 @@ package fi.aikapolku.app.firstthen
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,58 +28,144 @@ import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.ui.FlowColors
 
+/**
+ * Ensin–Sitten-pari: kaksi korttia vierekkäin ja iso nuoli välissä. ENSIN-kortissa tumma
+ * yläpalkki ja korostettu reunus (tehdään nyt), SITTEN-kortissa vaalea palkki. Sama ulkoasu
+ * valintanäkymässä ja ajastimen yläosassa ([compact]).
+ */
 @Composable
-internal fun EditableCard(
+internal fun FirstThenPair(
+    first: String,
+    firstPhoto: String,
+    firstDescription: String,
+    next: String,
+    nextPhoto: String,
+    nextDescription: String,
+    editable: Boolean,
+    compact: Boolean = false,
+    onFirstClick: () -> Unit = {},
+    onNextClick: () -> Unit = {}
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        PairCard(
+            label = stringResource(R.string.first_label),
+            primary = true,
+            name = first,
+            description = firstDescription,
+            imagePath = firstPhoto,
+            editable = editable,
+            compact = compact,
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+            onClick = onFirstClick
+        )
+        Box(
+            modifier = Modifier.padding(horizontal = 4.dp).size(if (compact) 30.dp else 36.dp).clip(CircleShape).background(FlowColors.teal),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.AutoMirrored.Rounded.ArrowForward,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(if (compact) 20.dp else 24.dp)
+            )
+        }
+        PairCard(
+            label = stringResource(R.string.then_label),
+            primary = false,
+            name = next,
+            description = nextDescription,
+            imagePath = nextPhoto,
+            editable = editable,
+            compact = compact,
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+            onClick = onNextClick
+        )
+    }
+}
+
+@Composable
+private fun PairCard(
     label: String,
+    primary: Boolean,
     name: String,
     description: String,
     imagePath: String,
+    editable: Boolean,
+    compact: Boolean,
     modifier: Modifier,
-    /** false = ohjaajan lukitus päällä: "Muokkaa" piilotetaan. */
-    editable: Boolean = true,
     onClick: () -> Unit
 ) {
-    Card(
-        onClick = onClick,
-        modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        elevation = CardDefaults.cardElevation(3.dp)
-    ) {
+    val shape = RoundedCornerShape(20.dp)
+    val cardModifier = modifier.semantics(mergeDescendants = true) { contentDescription = "$label: $name" }
+    val colors = CardDefaults.cardColors(containerColor = Color.White)
+    val border = BorderStroke(if (primary) 3.dp else 1.dp, if (primary) FlowColors.teal else Color(0xFFD9E2E3))
+    val elevation = CardDefaults.cardElevation(if (primary) 3.dp else 1.dp)
+    // Lukittuna ja ajastimessa kortti ei ole painike (ei "ei käytössä" -ilmoitusta ruudunlukijalle).
+    if (editable) {
+        Card(onClick = onClick, modifier = cardModifier, shape = shape, colors = colors, border = border, elevation = elevation) {
+            PairCardContent(label, primary, name, description, imagePath, editable, compact)
+        }
+    } else {
+        Card(modifier = cardModifier, shape = shape, colors = colors, border = border, elevation = elevation) {
+            PairCardContent(label, primary, name, description, imagePath, editable, compact)
+        }
+    }
+}
+
+@Composable
+private fun PairCardContent(
+    label: String,
+    primary: Boolean,
+    name: String,
+    description: String,
+    imagePath: String,
+    editable: Boolean,
+    compact: Boolean
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        // Värillinen yläpalkki: ENSIN tumma, SITTEN vaalea.
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(if (primary) FlowColors.teal else FlowColors.soft)
+                .padding(vertical = if (compact) 5.dp else 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                label,
+                color = if (primary) Color.White else FlowColors.teal,
+                fontSize = if (compact) 13.sp else 15.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+        }
         Column(
             modifier = Modifier.padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Text(
-                label,
-                color = FlowColors.teal,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
-            )
             CardPhoto(
                 name = name,
                 imagePath = imagePath,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(if (compact) 88.dp else 120.dp)
                     .clip(RoundedCornerShape(14.dp))
             )
-
             Text(
                 name,
                 color = FlowColors.ink,
-                fontSize = 17.sp,
+                fontSize = if (compact) 16.sp else 17.sp,
                 lineHeight = 21.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-
-            if (description.isNotBlank()) {
+            if (!compact && description.isNotBlank()) {
                 Text(
                     description,
                     color = FlowColors.muted,
@@ -83,8 +175,7 @@ internal fun EditableCard(
                     textAlign = TextAlign.Center
                 )
             }
-
-            if (editable) {
+            if (editable && !compact) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Rounded.Edit, contentDescription = null, tint = FlowColors.teal, modifier = Modifier.size(14.dp))
                     Text(

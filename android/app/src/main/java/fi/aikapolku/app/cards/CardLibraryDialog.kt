@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package fi.aikapolku.app.cards
 
 import androidx.compose.material.icons.Icons
@@ -31,6 +33,7 @@ import fi.aikapolku.app.R
 import fi.aikapolku.app.caregiver.CaregiverSession
 import fi.aikapolku.app.data.CardItem
 import fi.aikapolku.app.data.CardStore
+import fi.aikapolku.app.data.DayTime
 import fi.aikapolku.app.data.importCardPhoto
 import fi.aikapolku.app.voice.VoiceControls
 import java.util.UUID
@@ -56,6 +59,7 @@ internal fun CardLibraryDialog(
     var photoPath by remember { mutableStateOf("") }
     var voicePath by remember { mutableStateOf("") }
     var autoPlayVoice by remember { mutableStateOf(false) }
+    var dayTime by remember { mutableStateOf(DayTime.ANYTIME) }
     var showBuiltinPicker by remember { mutableStateOf(false) }
     var fromTemplate by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
@@ -70,6 +74,7 @@ internal fun CardLibraryDialog(
         photoPath = card?.photoPath ?: ""
         voicePath = card?.voicePath ?: ""
         autoPlayVoice = card?.autoPlayVoice ?: false
+        dayTime = card?.dayTime ?: DayTime.ANYTIME
         errorMessage = ""
         editing = true
     }
@@ -230,6 +235,26 @@ internal fun CardLibraryDialog(
                         }
                     }
 
+                    // Ajankohta: missä ryhmässä kortti näkyy valinnassa (aamu, päivä, ilta, milloin tahansa).
+                    Text(
+                        stringResource(R.string.card_day_time_label),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AppColors.Ink
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        DayTime.entries.forEach { option ->
+                            FilterChip(
+                                selected = dayTime == option,
+                                onClick = { dayTime = option },
+                                label = { Text(stringResource(option.labelRes()), fontSize = 15.sp) }
+                            )
+                        }
+                    }
+
                     VoiceControls(
                         voicePath = voicePath,
                         autoPlay = autoPlayVoice,
@@ -256,7 +281,8 @@ internal fun CardLibraryDialog(
                             description = description.trim(),
                             photoPath = photoPath,
                             voicePath = voicePath,
-                            autoPlayVoice = autoPlayVoice
+                            autoPlayVoice = autoPlayVoice,
+                            dayTime = dayTime
                         )
 
                         store.upsert(savedCard)
@@ -287,6 +313,8 @@ internal fun CardLibraryDialog(
                 if (fromTemplate) {
                     openEditor(null)
                     name = templateName
+                    // Valmiin kortin pohjalta tehty kortti saa saman ajankohdan.
+                    dayTime = CardArt.templates.firstOrNull { it.id == templateId }?.dayTime ?: DayTime.ANYTIME
                 }
                 photoPath = "builtin:$templateId"
                 showBuiltinPicker = false

@@ -32,6 +32,7 @@ import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.ui.AppTopBar
 import fi.aikapolku.app.ui.LocalTitleOverride
 import fi.aikapolku.app.ui.LocalBackOverride
+import fi.aikapolku.app.ui.LocalTopBarAction
 import fi.aikapolku.app.week.dayName
 import fi.aikapolku.app.voice.VoicePlayer
 import fi.aikapolku.app.week.EventCardScreen
@@ -101,6 +102,11 @@ internal fun AikaPolkuApp() {
 
     // Valinnat tallennetaan aina niiden muuttuessa.
     LaunchedEffect(sel) { cardStore.saveSelection(sel) }
+    // Ensin–Sitten-kulku päättyy: alkuperäinen pari takaisin (ei kahta samaa korttia).
+    // Ei FIRST_THEN-sivulla, koska "Lisää vaihe" palaa sinne kesken kulun.
+    LaunchedEffect(page) {
+        if (page == AppPage.DONE || page == AppPage.HOME) cards.finishFlow()
+    }
 
     // Näkymät näyttävät valitsemattoman kortin tekstinä "Valitse toiminto".
     val placeholder = stringResource(R.string.choose_activity)
@@ -180,12 +186,15 @@ internal fun AikaPolkuApp() {
     // Sisäkkäisen näkymän (esim. muokkain) oma otsikko yläpalkkiin.
     val titleOverride = remember { mutableStateOf<String?>(null) }
     val backOverride = remember { mutableStateOf<(() -> Unit)?>(null) }
+    val topBarAction = remember { mutableStateOf<(@Composable () -> Unit)?>(null) }
     LaunchedEffect(page) {
         titleOverride.value = null
         backOverride.value = null
+        // topBarAction tyhjenee näkymän poistuessa (TopBarAction/onDispose). Tässä nollaus
+        // ajautuisi uuden näkymän asetuksen jälkeen ja piilottaisi sen.
     }
 
-    CompositionLocalProvider(LocalTitleOverride provides titleOverride, LocalBackOverride provides backOverride) {
+    CompositionLocalProvider(LocalTitleOverride provides titleOverride, LocalBackOverride provides backOverride, LocalTopBarAction provides topBarAction) {
     Scaffold(
         containerColor = AppColors.Background,
         topBar = {
@@ -203,7 +212,8 @@ internal fun AikaPolkuApp() {
                     onBack = { (backOverride.value ?: goBack)() },
                     // Lukko aina samassa paikassa; ohjaajan asetuksissa lukko on jo auki.
                     showLock = caregiver.lockEnabled && caregiver.isLocked && page != AppPage.CAREGIVER,
-                    onUnlock = { caregiver.unlock() }
+                    onUnlock = { caregiver.unlock() },
+                    action = topBarAction.value
                 )
             }
         }

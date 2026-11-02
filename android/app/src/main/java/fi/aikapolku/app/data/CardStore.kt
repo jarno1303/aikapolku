@@ -7,13 +7,27 @@ import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 
+/** Kortin ajankohta: ryhmittelee kortit valinnassa vuorokauden kulun mukaan. */
+internal enum class DayTime(val key: String) {
+    MORNING("morning"),
+    DAY("day"),
+    EVENING("evening"),
+    ANYTIME("anytime");
+
+    companion object {
+        /** Tuntematon tai puuttuva arvo (vanhat kortit) = milloin tahansa. */
+        fun from(key: String?): DayTime = entries.firstOrNull { it.key == key } ?: ANYTIME
+    }
+}
+
 internal data class CardItem(
     val id: String,
     val name: String,
     val description: String,
     val photoPath: String,
     val voicePath: String = "",
-    val autoPlayVoice: Boolean = false
+    val autoPlayVoice: Boolean = false,
+    val dayTime: DayTime = DayTime.ANYTIME
 )
 
 internal data class FirstThenSelection(
@@ -53,7 +67,8 @@ internal class CardStore(context: Context) {
                             description = item.optString("description"),
                             photoPath = item.optString("photoPath"),
                             voicePath = item.optString("voicePath"),
-                            autoPlayVoice = item.optBoolean("autoPlayVoice", false)
+                            autoPlayVoice = item.optBoolean("autoPlayVoice", false),
+                            dayTime = DayTime.from(item.optString("dayTime"))
                         )
                     )
                 }
@@ -73,6 +88,7 @@ internal class CardStore(context: Context) {
                     put("photoPath", card.photoPath)
                     put("voicePath", card.voicePath)
                     put("autoPlayVoice", card.autoPlayVoice)
+                    put("dayTime", card.dayTime.key)
                 }
             )
         }

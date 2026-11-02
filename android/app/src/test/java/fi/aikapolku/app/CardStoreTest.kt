@@ -120,4 +120,13 @@ class CardStoreTest {
 
         assertEquals("Askartelu", CardStore(context).loadSelection().firstName)
     }
+
+    @Test
+    fun `kortin ajankohta tallentuu ja vanha kortti on milloin tahansa`() {
+        store.upsert(card("c1").copy(dayTime = fi.aikapolku.app.data.DayTime.EVENING))
+        assertEquals(fi.aikapolku.app.data.DayTime.EVENING, CardStore(context).loadCards()[0].dayTime)
+
+        rawPrefs().edit().putString("cards", """[{"id":"v","name":"Vanha"}]""").commit()
+        assertEquals(fi.aikapolku.app.data.DayTime.ANYTIME, CardStore(context).loadCards()[0].dayTime)
+    }
 }

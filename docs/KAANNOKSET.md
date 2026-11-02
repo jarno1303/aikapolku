@@ -19,7 +19,7 @@ Kaikki käyttäjälle näkyvät tekstit ovat tiedostossa
 
 ## Valmiit kortit, osavaiheet ja pohjat
 
-- Korttien (`card_…`), luokkien (`card_category_…`), osavaiheiden (`substep_…`) ja
+- Korttien (`card_…`), ajankohtien (`day_time_…`), osavaiheiden (`substep_…`) ja
   valmiiden päiväohjelmien (`template_…`) nimet käännetään kuten muutkin tekstit.
 - Uusi ohjelma tai kortti saa nimen sillä kielellä, joka puhelimessa on käytössä luontihetkellä.
   Jo tallennetut ohjelmat säilyttävät nimensä.

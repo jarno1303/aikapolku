@@ -29,65 +29,23 @@ internal fun ManualFlowScreen(
     nextPhoto: String,
     onNext: () -> Unit
 ) {
+    // Sama Ensin–Sitten-pari kuin valinnassa ja ajastimessa; tila kerrotaan pienellä tekstillä.
     Text(
         stringResource(R.string.omaan_tahtiin),
-        fontSize = 26.sp,
-        fontWeight = FontWeight.Bold,
-        color = AppColors.Ink
+        fontSize = 15.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = AppColors.Muted
     )
 
-    Text(
-        stringResource(R.string.now_label),
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Bold,
-        color = AppColors.Teal
+    FirstThenPair(
+        first = first,
+        firstPhoto = firstPhoto,
+        firstDescription = "",
+        next = next,
+        nextPhoto = nextPhoto,
+        nextDescription = "",
+        editable = false
     )
-
-    HeroCard(
-        label = stringResource(R.string.now_label),
-        name = first,
-        imagePath = firstPhoto,
-        large = false
-    )
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            CardPhoto(
-                name = next,
-                imagePath = nextPhoto,
-                modifier = Modifier
-                    .size(76.dp)
-                    .clip(RoundedCornerShape(12.dp))
-            )
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    stringResource(R.string.seuraavaksi),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.Teal
-                )
-                Text(
-                    next,
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = AppColors.Ink
-                )
-            }
-        }
-    }
 
     Spacer(Modifier.height(8.dp))
 

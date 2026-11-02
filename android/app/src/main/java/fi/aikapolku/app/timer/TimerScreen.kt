@@ -393,82 +393,15 @@ private fun TimerTaskCards(
     next: String,
     nextPhoto: String
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        TimerTaskCard(
-            label = stringResource(R.string.first_label),
-            name = first,
-            photo = firstPhoto,
-            modifier = Modifier.weight(1f)
-        )
-        TimerTaskCard(
-            label = stringResource(R.string.then_label),
-            name = next,
-            photo = nextPhoto,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun TimerTaskCard(
-    label: String,
-    name: String,
-    photo: String,
-    modifier: Modifier
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(17.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Surface(
-                shape = RoundedCornerShape(50.dp),
-                color = if (label == stringResource(R.string.first_label))
-                    AppColors.Teal else Color(0xFFE7F5F1)
-            ) {
-                Text(
-                    label,
-                    modifier = Modifier.padding(
-                        horizontal = 14.dp,
-                        vertical = 5.dp
-                    ),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (label == stringResource(R.string.first_label))
-                        Color.White else AppColors.Teal
-                )
-            }
-
-            CardPhoto(
-                name = name,
-                imagePath = photo,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(88.dp)
-                    .clip(RoundedCornerShape(12.dp))
-            )
-
-            Text(
-                name,
-                modifier = Modifier.fillMaxWidth(),
-                color = AppColors.Ink,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
+    // Sama Ensin–Sitten-pari kuin valintanäkymässä, tiiviinä.
+    fi.aikapolku.app.firstthen.FirstThenPair(
+        first = first,
+        firstPhoto = firstPhoto,
+        firstDescription = "",
+        next = next,
+        nextPhoto = nextPhoto,
+        nextDescription = "",
+        editable = false,
+        compact = true
+    )
 }

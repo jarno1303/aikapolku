@@ -312,3 +312,12 @@
 - Päiväohjelmakortin nimi näkyy (pyöreä käynnistyspainike). Ohjelman ⋮-valikkoon "Jaa kuvana" (PNG Androidin jakovalikkoon, FileProvider välimuistista).
 - Suorituksen aikapillerin lukko- ja tauko-merkit kuvakkeina.
 - Uudet testit: ohitus, esto ja Valmis-asetuksen kaikki tilat (7).
+
+## Ensin–Sitten: selkeämmät kortit ja kortit vuorokauden mukaan (puhelintesti)
+- Korjaus: kulun päätyttyä (valmis tai paluu aloitukseen) Ensin–Sitten näyttää taas alkuperäisen parin. Aiemmin molemmissa korteissa jäi näkymään viimeinen toiminto (esim. "Ruokailu"). Kesken oleva kulku säilyy näytön kääntämisen yli.
+- Viimeisen toiminnon otsikko "VIIMEINEN TOIMINTO" → "NYT".
+- Uusi korttipari: kummassakin kortissa värillinen otsikkopalkki (ENSIN tumma, SITTEN vaalea), välissä iso nuoli ympyrässä, Ensin-kortissa paksumpi reunus. Sama ulkoasu valinnassa, ajastimen yläosassa ja Omaan tahtiin -näkymässä. "1 ENSIN → 2 SITTEN" -rivi poistettu; ohje ⓘ yläpalkissa (TopBarAction).
+- Kortit ryhmitelty vuorokauden mukaan otsikoin: Aamu, Päivä, Ilta, Milloin tahansa – sekä Ensin–Sitten-valinnassa että päiväohjelman muokkaimessa. Omat kortit ryhmänsä alussa; oma kortti korvaa samannimisen valmiin. Vanhat sisältöluokat poistettu.
+- Omalle kortille valitaan Ajankohta (oletus Milloin tahansa; valmiin kortin pohjalta tehty saa sen ajankohdan). Vanhat kortit ovat Milloin tahansa.
+- Tulossa käyttäjän kuvilla: Lounas, Päivällinen, Iltapala, Lääkkeet.
+- Uudet testit: kulun palautus ja tilan tallennus (4), ryhmittely (5), ajankohdan tallennus (1).

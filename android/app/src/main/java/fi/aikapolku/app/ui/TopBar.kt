@@ -34,7 +34,13 @@ import fi.aikapolku.app.R
  * sivun otsikko ja (kun ohjaajan toiminnot ovat lukossa) lukkopainike aina samassa paikassa.
  */
 @Composable
-internal fun AppTopBar(title: String, onBack: () -> Unit, showLock: Boolean, onUnlock: () -> Unit) {
+internal fun AppTopBar(
+    title: String,
+    onBack: () -> Unit,
+    showLock: Boolean,
+    onUnlock: () -> Unit,
+    action: (@Composable () -> Unit)? = null
+) {
     val backLabel = stringResource(R.string.back_a11y)
     val lockLabel = stringResource(R.string.ohjaajan_toiminnot_lukittu_avaa_pin)
     Surface(color = AppColors.Background) {
@@ -61,6 +67,7 @@ internal fun AppTopBar(title: String, onBack: () -> Unit, showLock: Boolean, onU
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            action?.invoke()
             if (showLock) {
                 IconButton(
                     onClick = onUnlock,
@@ -100,6 +107,20 @@ internal fun BackOverride(action: () -> Unit) {
     val current = androidx.compose.runtime.rememberUpdatedState(action)
     DisposableEffect(Unit) {
         val wrapper: () -> Unit = { current.value() }
+        holder.value = wrapper
+        onDispose { if (holder.value === wrapper) holder.value = null }
+    }
+}
+
+/** Näkymäkohtainen toiminto yläpalkin oikeaan reunaan (esim. ohjeen ⓘ). */
+internal val LocalTopBarAction = compositionLocalOf<MutableState<(@Composable () -> Unit)?>?> { null }
+
+@Composable
+internal fun TopBarAction(content: @Composable () -> Unit) {
+    val holder = LocalTopBarAction.current ?: return
+    val current = androidx.compose.runtime.rememberUpdatedState(content)
+    DisposableEffect(Unit) {
+        val wrapper: @Composable () -> Unit = { current.value() }
         holder.value = wrapper
         onDispose { if (holder.value === wrapper) holder.value = null }
     }

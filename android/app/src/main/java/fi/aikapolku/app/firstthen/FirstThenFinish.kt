@@ -32,7 +32,7 @@ internal fun LastActivityScreen(
     Spacer(Modifier.height(10.dp))
 
     HeroCard(
-        label = stringResource(R.string.viimeinen_toiminto),
+        label = stringResource(R.string.now_label),
         name = name,
         imagePath = imagePath,
         large = true

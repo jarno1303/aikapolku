@@ -8,6 +8,7 @@ import androidx.compose.ui.semantics.Role
 import fi.aikapolku.app.ui.AppIcons
 import fi.aikapolku.app.ui.ChoiceRow
 import fi.aikapolku.app.ui.InfoButton
+import fi.aikapolku.app.ui.TopBarAction
 import fi.aikapolku.app.ui.PrimaryButton
 import fi.aikapolku.app.ui.SecondaryButton
 import fi.aikapolku.app.ui.SegmentedChoice
@@ -32,14 +33,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
-import fi.aikapolku.app.cards.CardArt
+import fi.aikapolku.app.cards.cardsByDayTime
+import fi.aikapolku.app.cards.labelRes
+import fi.aikapolku.app.data.CardStore
+import androidx.compose.ui.semantics.heading
+import androidx.compose.foundation.layout.padding
 import fi.aikapolku.app.cards.CardLibraryDialog
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.CaregiverSession
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.data.CardItem
-import fi.aikapolku.app.data.CardStore
 import fi.aikapolku.app.data.importCardPhoto
 import fi.aikapolku.app.ui.AppColors
 
@@ -108,17 +112,8 @@ internal fun FirstThenScreen(
         }
     }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        FlowHeader(
-            modifier = Modifier.weight(1f),
-            compact = true
-        )
-
-        InfoButton(stringResource(R.string.korttien_kayttoohje)) { showCardHelp = true }
-    }
+    // Ohje yläpalkin oikeaan reunaan; "1 ENSIN → 2 SITTEN" -rivi poistettu (tieto on korteissa).
+    TopBarAction { InfoButton(stringResource(R.string.korttien_kayttoohje)) { showCardHelp = true } }
 
     if (showCardHelp) {
         AlertDialog(
@@ -139,29 +134,17 @@ internal fun FirstThenScreen(
         )
     }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        EditableCard(
-            label = stringResource(R.string.first_label),
-            name = first,
-            description = firstDescription,
-            imagePath = firstPhoto,
-            modifier = Modifier.weight(1f),
-            editable = canEditCards,
-            onClick = { if (canEditCards) choosing = "first" }
-        )
-        EditableCard(
-            label = stringResource(R.string.then_label),
-            name = next,
-            description = nextDescription,
-            imagePath = nextPhoto,
-            modifier = Modifier.weight(1f),
-            editable = canEditCards,
-            onClick = { if (canEditCards) choosing = "next" }
-        )
-    }
+    FirstThenPair(
+        first = first,
+        firstPhoto = firstPhoto,
+        firstDescription = firstDescription,
+        next = next,
+        nextPhoto = nextPhoto,
+        nextDescription = nextDescription,
+        editable = canEditCards,
+        onFirstClick = { if (canEditCards) choosing = "first" },
+        onNextClick = { if (canEditCards) choosing = "next" }
+    )
 
     var timerMode by rememberSaveable {
         mutableStateOf(true)
@@ -196,6 +179,11 @@ internal fun FirstThenScreen(
         val isFirst = chooseTarget == "first"
         val currentName = if (isFirst) first else next
         val hasCurrent = currentName.isNotBlank() && currentName != stringResource(R.string.choose_activity)
+        // Luetaan joka avauksella, jotta juuri tallennetut omat kortit näkyvät.
+        val cardGroups = remember(chooseTarget) {
+            val custom = runCatching { CardStore(context).loadCards() }.getOrDefault(emptyList())
+            cardsByDayTime(custom) { context.getString(it) }
+        }
         AlertDialog(
             onDismissRequest = { choosing = null },
             title = { Text(stringResource(R.string.choose_activity)) },
@@ -250,31 +238,44 @@ internal fun FirstThenScreen(
                             }
                         )
                     }
-                    CardArt.templates.map { stringResource(it.nameRes) }.forEach { name ->
-                        ChoiceRow(
-                            title = name,
-                            onClick = {
-                                if (isFirst) {
-                                    onFirst(name)
-                                    onFirstPhoto("")
-                                    onFirstDescription("")
-                                    onFirstVoice("", false)
-                                } else {
-                                    onNext(name)
-                                    onNextPhoto("")
-                                    onNextDescription("")
-                                    onNextVoice("", false)
-                                }
-                                choosing = null
-                            },
-                            leading = {
-                                CardPhoto(
-                                    name = name,
-                                    imagePath = "builtin:$name",
-                                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))
-                                )
-                            }
+                    // Kortit vuorokauden kulun mukaan; omat kortit ryhmänsä alussa.
+                    cardGroups.forEach { (time, group) ->
+                        Text(
+                            stringResource(time.labelRes()),
+                            modifier = Modifier.padding(top = 8.dp).semantics { heading() },
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppColors.Teal
                         )
+                        group.forEach { card ->
+                            // Valmiin kortin kuva haetaan nimestä (kuten ennenkin); omalla kortilla oma kuva.
+                            val photo = if (card.photoPath.startsWith("builtin:")) "" else card.photoPath
+                            ChoiceRow(
+                                title = card.name,
+                                subtitle = card.description.takeIf { it.isNotBlank() },
+                                onClick = {
+                                    if (isFirst) {
+                                        onFirst(card.name)
+                                        onFirstPhoto(photo)
+                                        onFirstDescription(card.description)
+                                        onFirstVoice(card.voicePath, card.autoPlayVoice)
+                                    } else {
+                                        onNext(card.name)
+                                        onNextPhoto(photo)
+                                        onNextDescription(card.description)
+                                        onNextVoice(card.voicePath, card.autoPlayVoice)
+                                    }
+                                    choosing = null
+                                },
+                                leading = {
+                                    CardPhoto(
+                                        name = card.name,
+                                        imagePath = card.photoPath,
+                                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             },

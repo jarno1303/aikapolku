@@ -4,13 +4,15 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import fi.aikapolku.app.R
+import fi.aikapolku.app.data.CardItem
+import fi.aikapolku.app.data.DayTime
 import java.util.Locale
 
 /** Resurssitekstin haku (Androidissa `{ context.getString(it) }`, testeissä mikä tahansa funktio). Pitää tietokerroksen erillään Contextista. */
 internal typealias Texts = (Int) -> String
 
 /**
- * Valmiit korttikuvat. Nimi ja luokka ovat käännettäviä resursseja ([nameRes], [categoryRes]).
+ * Valmiit korttikuvat. Nimi on käännettävä resurssi ([nameRes]); [dayTime] ryhmittelee kortit valinnassa.
  * [legacyName] on suomenkielinen nimi, jolla vanhat tallennetut ohjelmat ja kortit tunnistetaan
  * kielestä riippumatta – sitä ei näytetä käyttäjälle eikä käännetä.
  */
@@ -19,32 +21,33 @@ internal object CardArt {
         val id: String,
         val legacyName: String,
         val nameRes: Int,
-        val categoryRes: Int,
+        val dayTime: DayTime,
         val drawable: Int
     )
 
+    /** Järjestys: aamu, päivä, ilta, milloin tahansa – ryhmän sisällä tavallinen kulku. */
     val templates: List<Template> = listOf(
-        Template("breakfast", "Aamupala", R.string.card_breakfast, R.string.card_category_meals, R.drawable.ap_card_breakfast),
-        Template("lunch", "Ruokailu", R.string.card_lunch, R.string.card_category_meals, R.drawable.ap_card_lunch),
-        Template("snack", "Välipala", R.string.card_snack, R.string.card_category_meals, R.drawable.ap_card_snack),
-        Template("dress", "Pukeutuminen", R.string.card_dress, R.string.card_category_self_care, R.drawable.ap_card_dress),
-        Template("wash_hands", "Käsienpesu", R.string.card_wash_hands, R.string.card_category_self_care, R.drawable.ap_card_wash_hands),
-        Template("toilet", "WC", R.string.card_toilet, R.string.card_category_self_care, R.drawable.ap_card_toilet),
-        Template("brush_teeth", "Hampaiden pesu", R.string.card_brush_teeth, R.string.card_category_self_care, R.drawable.ap_card_brush_teeth),
-        Template("outdoors", "Ulkoilu", R.string.card_outdoors, R.string.card_category_movement, R.drawable.ap_card_outdoors),
-        Template("exercise", "Liikunta", R.string.card_exercise, R.string.card_category_movement, R.drawable.ap_card_exercise),
-        Template("crafts", "Askartelu", R.string.card_crafts, R.string.card_category_activities, R.drawable.ap_card_crafts),
-        Template("gaming", "Pelaaminen", R.string.card_gaming, R.string.card_category_activities, R.drawable.ap_card_gaming),
-        Template("reading", "Lukeminen", R.string.card_reading, R.string.card_category_activities, R.drawable.ap_card_reading),
-        Template("music", "Musiikki", R.string.card_music, R.string.card_category_activities, R.drawable.ap_card_music),
-        Template("schoolwork", "Koulutyö", R.string.card_schoolwork, R.string.card_category_school, R.drawable.ap_card_schoolwork),
-        Template("homework", "Kotitehtävät", R.string.card_homework, R.string.card_category_school, R.drawable.ap_card_homework),
-        Template("break", "Tauko", R.string.card_break, R.string.card_category_transitions, R.drawable.ap_card_break),
-        Template("waiting", "Odota", R.string.card_waiting, R.string.card_category_transitions, R.drawable.ap_card_waiting),
-        Template("leaving", "Lähtö", R.string.card_leaving, R.string.card_category_transitions, R.drawable.ap_card_leaving),
-        Template("rest", "Lepo", R.string.card_rest, R.string.card_category_rest, R.drawable.ap_card_rest),
-        Template("sleep", "Nukkumaan", R.string.card_sleep, R.string.card_category_rest, R.drawable.ap_card_sleep),
-        Template("morning_meeting", "Aamukokous", R.string.card_morning_meeting, R.string.card_category_group, R.drawable.ap_card_morning_meeting)
+        Template("breakfast", "Aamupala", R.string.card_breakfast, DayTime.MORNING, R.drawable.ap_card_breakfast),
+        Template("brush_teeth", "Hampaiden pesu", R.string.card_brush_teeth, DayTime.MORNING, R.drawable.ap_card_brush_teeth),
+        Template("dress", "Pukeutuminen", R.string.card_dress, DayTime.MORNING, R.drawable.ap_card_dress),
+        Template("morning_meeting", "Aamukokous", R.string.card_morning_meeting, DayTime.MORNING, R.drawable.ap_card_morning_meeting),
+        Template("leaving", "Lähtö", R.string.card_leaving, DayTime.MORNING, R.drawable.ap_card_leaving),
+        Template("schoolwork", "Koulutyö", R.string.card_schoolwork, DayTime.DAY, R.drawable.ap_card_schoolwork),
+        Template("snack", "Välipala", R.string.card_snack, DayTime.DAY, R.drawable.ap_card_snack),
+        Template("outdoors", "Ulkoilu", R.string.card_outdoors, DayTime.DAY, R.drawable.ap_card_outdoors),
+        Template("exercise", "Liikunta", R.string.card_exercise, DayTime.DAY, R.drawable.ap_card_exercise),
+        Template("crafts", "Askartelu", R.string.card_crafts, DayTime.DAY, R.drawable.ap_card_crafts),
+        Template("music", "Musiikki", R.string.card_music, DayTime.DAY, R.drawable.ap_card_music),
+        Template("homework", "Kotitehtävät", R.string.card_homework, DayTime.EVENING, R.drawable.ap_card_homework),
+        Template("reading", "Lukeminen", R.string.card_reading, DayTime.EVENING, R.drawable.ap_card_reading),
+        Template("gaming", "Pelaaminen", R.string.card_gaming, DayTime.EVENING, R.drawable.ap_card_gaming),
+        Template("sleep", "Nukkumaan", R.string.card_sleep, DayTime.EVENING, R.drawable.ap_card_sleep),
+        Template("lunch", "Ruokailu", R.string.card_lunch, DayTime.ANYTIME, R.drawable.ap_card_lunch),
+        Template("toilet", "WC", R.string.card_toilet, DayTime.ANYTIME, R.drawable.ap_card_toilet),
+        Template("wash_hands", "Käsienpesu", R.string.card_wash_hands, DayTime.ANYTIME, R.drawable.ap_card_wash_hands),
+        Template("break", "Tauko", R.string.card_break, DayTime.ANYTIME, R.drawable.ap_card_break),
+        Template("waiting", "Odota", R.string.card_waiting, DayTime.ANYTIME, R.drawable.ap_card_waiting),
+        Template("rest", "Lepo", R.string.card_rest, DayTime.ANYTIME, R.drawable.ap_card_rest)
     )
 
     private val legacyAliases = mapOf(
@@ -73,4 +76,38 @@ internal object CardArt {
         val res = imageRes(name, imagePath) { context.getString(it) } ?: return null
         return BitmapFactory.decodeResource(context.resources, res)
     }
+}
+
+/**
+ * Valittavat kortit vuorokauden mukaan ryhmiteltyinä (aamu, päivä, ilta, milloin tahansa).
+ * Omat kortit ovat ryhmänsä alussa. Sama nimi näytetään kerran: oma kortti korvaa
+ * samannimisen valmiin. Tyhjät ryhmät jätetään pois.
+ */
+internal fun cardsByDayTime(custom: List<CardItem>, texts: Texts): List<Pair<DayTime, List<CardItem>>> {
+    fun key(name: String) = name.trim().lowercase(Locale.ROOT)
+    val own = custom.distinctBy { key(it.name) }
+    val ownNames = own.map { key(it.name) }.toSet()
+    val builtIn = CardArt.templates
+        .filter { key(texts(it.nameRes)) !in ownNames }
+        .map { t ->
+            CardItem(
+                id = "basic_${t.id}",
+                name = texts(t.nameRes),
+                description = "",
+                photoPath = "builtin:${t.id}",
+                dayTime = t.dayTime
+            )
+        }
+    return DayTime.entries.mapNotNull { time ->
+        val group = own.filter { it.dayTime == time } + builtIn.filter { it.dayTime == time }
+        if (group.isEmpty()) null else time to group
+    }
+}
+
+/** Ajankohdan nimi käyttäjälle. */
+internal fun DayTime.labelRes(): Int = when (this) {
+    DayTime.MORNING -> R.string.day_time_morning
+    DayTime.DAY -> R.string.day_time_day
+    DayTime.EVENING -> R.string.day_time_evening
+    DayTime.ANYTIME -> R.string.day_time_anytime
 }

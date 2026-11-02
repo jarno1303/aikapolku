@@ -28,7 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
-import fi.aikapolku.app.cards.CardArt
+import fi.aikapolku.app.cards.cardsByDayTime
+import fi.aikapolku.app.cards.labelRes
 import fi.aikapolku.app.cards.Texts
 import fi.aikapolku.app.data.CardItem
 import fi.aikapolku.app.data.CardStore
@@ -42,23 +43,11 @@ import java.util.UUID
 
 private val pageTitles = listOf(R.string.choose, R.string.jarjesta, R.string.ajat, R.string.save)
 
-/**
- * Valittavat kortit ryhmittäin: omat kortit ensin, sitten valmiit luokittain.
- * Sama nimi näytetään kerran; oma kortti korvaa samannimisen valmiin.
- */
+/** Valittavat kortit vuorokauden mukaan; otsikkona ajankohdan nimi. */
 internal fun programEditorCardGroups(context: Context): List<Pair<String, List<CardItem>>> {
     val custom = runCatching { CardStore(context).loadCards() }.getOrDefault(emptyList())
-        .distinctBy { it.name.trim().lowercase() }
-    val customNames = custom.map { it.name.trim().lowercase() }.toSet()
-    val builtIn = CardArt.templates
-        .filter { context.getString(it.nameRes).trim().lowercase() !in customNames }
-        .groupBy { it.categoryRes }
-        .map { (category, items) ->
-            context.getString(category) to items.map { t ->
-                CardItem(id = "basic_${t.id}", name = context.getString(t.nameRes), description = "", photoPath = "builtin:${t.id}")
-            }
-        }
-    return (if (custom.isEmpty()) emptyList() else listOf(context.getString(R.string.omat_kortit) to custom)) + builtIn
+    return cardsByDayTime(custom) { context.getString(it) }
+        .map { (time, cards) -> context.getString(time.labelRes()) to cards }
 }
 
 internal fun stepFromCard(card: CardItem, texts: Texts): ProgramStep = ProgramStep(

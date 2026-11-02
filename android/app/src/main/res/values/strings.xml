@@ -52,14 +52,6 @@
     <string name="card_break">Tauko</string>
     <string name="card_breakfast">Aamupala</string>
     <string name="card_brush_teeth">Hampaiden pesu</string>
-    <string name="card_category_activities">Tekeminen</string>
-    <string name="card_category_group">Ryhmätoiminta</string>
-    <string name="card_category_meals">Ruokailu</string>
-    <string name="card_category_movement">Liikunta</string>
-    <string name="card_category_rest">Lepo</string>
-    <string name="card_category_school">Koulu</string>
-    <string name="card_category_self_care">Omat toimet</string>
-    <string name="card_category_transitions">Siirtymät</string>
     <string name="card_crafts">Askartelu</string>
     <string name="card_dress">Pukeutuminen</string>
     <string name="card_edit_link">Muokkaa</string>
@@ -185,6 +177,11 @@
     <string name="nollaa_ohjaajan_pin_koodi">Nollaa ohjaajan PIN-koodi</string>
     <string name="nollataanko_ajastin">Nollataanko ajastin?</string>
     <string name="now_label">NYT</string>
+    <string name="day_time_morning">Aamu</string>
+    <string name="day_time_day">Päivä</string>
+    <string name="day_time_evening">Ilta</string>
+    <string name="day_time_anytime">Milloin tahansa</string>
+    <string name="card_day_time_label">Ajankohta</string>
     <string name="numerot_ja_rengas">Numerot ja rengas</string>
     <string name="nykyinen_vaihe">Nykyinen vaihe</string>
     <string name="ohita_tehtava">Ohita tehtävä</string>
@@ -338,7 +335,6 @@
     <string name="valmis_seuraavaan">Valmis</string>
     <string name="veda_kahvasta_muuttaaksesi_jarjestysta">Vedä kahvasta muuttaaksesi järjestystä.</string>
     <string name="viestipainikkeiden_aani">Viestipainikkeiden ääni</string>
-    <string name="viimeinen_toiminto">VIIMEINEN TOIMINTO</string>
     <string name="viimeisten_10_sekunnin_laskenta">Viimeisten 10 sekunnin laskenta</string>
     <string name="vinkki_nayton_kiinnitys">Vinkki: näytön kiinnitys</string>
     <string name="voice_label">Ääni %1$d · %2$s</string>

@@ -55,6 +55,51 @@ class FirstThenFlowTest {
     }
 
     @Test
+    fun `kulun paatyttya alkuperainen pari palaa`() {
+        // Puhelintesti 2.11.2026: lopussa molemmissa korteissa näkyi "Ruokailu".
+        val cards = FirstThenCards(selection)
+        assertTrue(cards.promoteNext())
+        assertEquals("Ruokailu", cards.selection.firstName)
+        cards.finishFlow()
+        assertEquals(selection, cards.selection)
+        assertEquals(null, cards.original)
+    }
+
+    @Test
+    fun `lisatty vaihe ei muuta alkuperaista paria`() {
+        val cards = FirstThenCards(selection)
+        cards.promoteNext()
+        cards.clearNext()
+        cards.update { it.copy(nextName = "Lepo") }
+        assertTrue(cards.promoteNext())
+        assertEquals("Lepo", cards.selection.firstName)
+        cards.finishFlow()
+        assertEquals("Askartelu", cards.selection.firstName)
+        assertEquals("Ruokailu", cards.selection.nextName)
+    }
+
+    @Test
+    fun `ilman siirtoa lopetus ei muuta valintaa`() {
+        val cards = FirstThenCards(selection)
+        cards.update { it.copy(firstName = "Lepo") }
+        cards.finishFlow()
+        assertEquals("Lepo", cards.selection.firstName)
+    }
+
+    @Test
+    fun `kesken oleva kulku sailyy tilan tallennuksessa`() {
+        val cards = FirstThenCards(selection)
+        cards.promoteNext()
+        val scope = androidx.compose.runtime.saveable.SaverScope { true }
+        val saved = with(FirstThenCards.saver) { scope.save(cards) }!!
+        val restored = FirstThenCards.saver.restore(saved)!!
+        assertEquals(cards.selection, restored.selection)
+        assertEquals(selection, restored.original)
+        restored.finishFlow()
+        assertEquals(selection, restored.selection)
+    }
+
+    @Test
     fun `vanhan version Valitse toiminto -teksti tulkitaan valitsemattomaksi`() {
         val cards = FirstThenCards(selection.copy(nextName = "Valitse toiminto"))
         assertFalse(cards.hasNext)

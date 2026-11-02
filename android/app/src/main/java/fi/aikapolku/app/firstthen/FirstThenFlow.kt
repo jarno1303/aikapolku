@@ -13,8 +13,15 @@ import fi.aikapolku.app.timer.TimerPort
  * Ensin–Sitten-kortit. Tyhjä nimi tarkoittaa "ei valittua toimintoa" kielestä riippumatta;
  * näkymät näyttävät sen tekstinä "Valitse toiminto".
  */
-internal class FirstThenCards(initial: FirstThenSelection) {
+internal class FirstThenCards(initial: FirstThenSelection, original: FirstThenSelection? = null) {
     var selection by mutableStateOf(normalized(initial))
+        private set
+
+    /**
+     * Pari sellaisena kuin kulku aloitettiin. Talletetaan ensimmäisellä siirrolla, jotta
+     * kulun päätyttyä Ensin–Sitten näyttää taas alkuperäiset kortit eikä kahta samaa.
+     */
+    var original by mutableStateOf(original)
         private set
 
     val hasNext: Boolean get() = selection.nextName.isNotBlank()
@@ -27,6 +34,7 @@ internal class FirstThenCards(initial: FirstThenSelection) {
     fun promoteNext(): Boolean {
         if (!hasNext) return false
         val s = selection
+        if (original == null) original = s
         selection = s.copy(
             firstName = s.nextName, firstPhoto = s.nextPhoto, firstDescription = s.nextDescription,
             firstVoice = s.nextVoice, firstVoiceAuto = s.nextVoiceAuto
@@ -39,6 +47,12 @@ internal class FirstThenCards(initial: FirstThenSelection) {
         selection = selection.copy(nextName = "", nextPhoto = "", nextDescription = "", nextVoice = "", nextVoiceAuto = false)
     }
 
+    /** Kulku päättyi (valmis tai poistuttiin aloitukseen): alkuperäinen pari takaisin. */
+    fun finishFlow() {
+        original?.let { selection = it }
+        original = null
+    }
+
     companion object {
         /** Vanhat versiot tallensivat valitsemattoman kortin tekstinä "Valitse toiminto". */
         private const val LEGACY_PLACEHOLDER = "Valitse toiminto"
@@ -48,17 +62,21 @@ internal class FirstThenCards(initial: FirstThenSelection) {
             nextName = s.nextName.takeUnless { it == LEGACY_PLACEHOLDER } ?: ""
         )
 
+        private fun fields(s: FirstThenSelection): List<Any> = listOf(
+            s.firstName, s.nextName, s.firstPhoto, s.nextPhoto, s.firstDescription, s.nextDescription,
+            s.firstVoice, s.nextVoice, s.firstVoiceAuto, s.nextVoiceAuto
+        )
+
+        private fun selectionOf(v: List<Any>, at: Int) = FirstThenSelection(
+            v[at] as String, v[at + 1] as String, v[at + 2] as String, v[at + 3] as String, v[at + 4] as String,
+            v[at + 5] as String, v[at + 6] as String, v[at + 7] as String, v[at + 8] as Boolean, v[at + 9] as Boolean
+        )
+
+        /** Nykyinen pari (10 kenttää) ja kulun alkuperäinen pari, jos kulku on kesken (+10). */
         val saver = Saver<FirstThenCards, List<Any>>(
-            save = {
-                val s = it.selection
-                listOf(s.firstName, s.nextName, s.firstPhoto, s.nextPhoto, s.firstDescription, s.nextDescription,
-                    s.firstVoice, s.nextVoice, s.firstVoiceAuto, s.nextVoiceAuto)
-            },
+            save = { cards -> fields(cards.selection) + (cards.original?.let { fields(it) } ?: emptyList()) },
             restore = { v ->
-                FirstThenCards(FirstThenSelection(
-                    v[0] as String, v[1] as String, v[2] as String, v[3] as String, v[4] as String,
-                    v[5] as String, v[6] as String, v[7] as String, v[8] as Boolean, v[9] as Boolean
-                ))
+                FirstThenCards(selectionOf(v, 0), if (v.size >= 20) selectionOf(v, 10) else null)
             }
         )
     }
