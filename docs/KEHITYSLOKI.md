@@ -394,3 +394,9 @@
 - Ohjaajan etusivu: "Ohjaajan etusivu", koko päivän lista (myös tehdyt ja perutut) muutosmerkein, Tee muutos, "Valmistele asiakkaalle" (Ensin–Sitten, Ajastin) ja Ohjaajan työkalut (Viikko-ohjelma, Päiväohjelmat, Omat kortit, Asiakkaan näkymä, Katso asiakkaana, Asetukset).
 - Asiakkaan näkymä -asetukset (profiilikohtaiset): aikajana koko päivä (oletus) / nyt ja kaksi seuraavaa / ei aikajanaa; kellonajat; asiakkaan omat työkalut.
 - Uudet testit: asiakkaan näkymän oletukset, päivän osat ja aikajanan rivit (3); käyttöliittymätestissä kummankin etusivun sisältö.
+
+## NYT-kortti: etusija, väliajat ja kestävät tapahtumat
+- Etusijasääntö: ohjaajan valmistelema Ensin–Sitten tai käynnissä oleva ajastin näkyy NYT-kortissa ensin; kortin alla "Sen jälkeen päivä jatkuu: …", ja aikajana näyttää päivän nykyisen kohdan.
+- Väliaika: kun edellinen on tehty eikä seuraava ole vielä alkanut (myös ennen päivän ensimmäistä tapahtumaa), NYT-kortissa on väliajan kortti (oletus Odota; ohjaaja voi valita Lepo tai Tauko Asiakkaan näkymä -asetuksista) ja "SEURAAVAKSI KLO 12.00" sekä seuraava tapahtuma pienenä. Ei isoa Aloita-painiketta.
+- Kestävä tapahtuma (viikko-ohjelman korttitapahtuman valinta "Kestää seuraavaan tapahtumaan asti", esim. koulu): ei kuitata, NYT-kortissa ilman painiketta ja aikavälinä "klo 8.00–14.00", ei Valmis-painiketta kortissa eikä ilmoituksessa, ei mukana tehty/kaikki-laskurissa.
+- Uudet testit: NYT-kortin laji, kestävän loppu, väliajan oletus (3), kestävän tallennus (1).

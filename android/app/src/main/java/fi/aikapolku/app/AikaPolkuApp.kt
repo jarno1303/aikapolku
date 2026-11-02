@@ -80,6 +80,7 @@ internal fun AikaPolkuApp() {
     var eventCardPhoto by rememberSaveable { mutableStateOf("") }
     var eventCardId by rememberSaveable { mutableStateOf("") }
     var eventCardDate by rememberSaveable { mutableStateOf("") }
+    var eventCardOngoing by rememberSaveable { mutableStateOf(false) }
     var changeId by rememberSaveable { mutableStateOf("") }
     var programsWeek by rememberSaveable { mutableStateOf(false) }
     // Pikamuutos: valmiiksi valittu päivä ja tapahtuma (koko päivän näkymän ⋮-valikosta).
@@ -122,6 +123,7 @@ internal fun AikaPolkuApp() {
                 eventCardPhoto = event.cardPhoto
                 eventCardId = event.id
                 eventCardDate = request.date.toString()
+                eventCardOngoing = event.ongoing
                 page = AppPage.EVENT_CARD
             }
         }
@@ -220,6 +222,7 @@ internal fun AikaPolkuApp() {
         eventCardPhoto = event.cardPhoto
         eventCardId = event.id
         eventCardDate = LocalDate.now().toString()
+        eventCardOngoing = event.ongoing
         page = AppPage.EVENT_CARD
     }
 
@@ -373,6 +376,7 @@ internal fun AikaPolkuApp() {
                 AppPage.CHANGE -> ChangeScreen(changeId) { page = AppPage.HOME }
 
                 AppPage.EVENT_CARD -> EventCardScreen(
+                    ongoing = eventCardOngoing,
                     name = eventCardName,
                     photo = eventCardPhoto,
                     doneAt = remember(eventCardId, eventCardDate) {

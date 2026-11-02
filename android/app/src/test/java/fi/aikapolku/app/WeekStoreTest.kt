@@ -40,6 +40,15 @@ class WeekStoreTest {
     }
 
     @Test
+    fun `kestava tapahtuma sailyy`() {
+        val p = WeekPlan(listOf(WeekEvent("koulu", 1, 0, "08:00", EventKind.CARD, cardName = "Koulu", ongoing = true)))
+        WeekStore(context).save(p)
+        assertEquals(true, WeekStore(context).load().events.single().ongoing)
+        // Vanha tallennus ilman kenttää: ei kestävä.
+        assertEquals(false, WeekStore.decode("""{"events":[{"id":"a","day":1,"time":"08:00","kind":"card"}]}""").events.single().ongoing)
+    }
+
+    @Test
     fun `tyhja ja rikkinainen tallennus palauttaa tyhjan viikon`() {
         assertEquals(WeekPlan(), WeekStore(context).load())
         assertEquals(WeekPlan(), WeekStore.decode("{rikki"))

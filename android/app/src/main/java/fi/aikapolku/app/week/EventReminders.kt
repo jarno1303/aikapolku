@@ -211,7 +211,7 @@ internal object EventReminders {
             builder.setLargeIcon(bitmap)
             builder.setStyle(Notification.BigPictureStyle().bigPicture(bitmap).setSummaryText(text))
         }
-        if (r.event.kind == EventKind.CARD && r.change?.type != ChangeType.CANCEL) {
+        if (r.event.kind == EventKind.CARD && r.change?.type != ChangeType.CANCEL && !r.event.ongoing) {
             val done = PendingIntent.getBroadcast(
                 c, id,
                 Intent(c, EventAckReceiver::class.java)

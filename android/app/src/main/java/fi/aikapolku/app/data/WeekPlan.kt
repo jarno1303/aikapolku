@@ -36,7 +36,12 @@ internal data class WeekEvent(
     val cardPhoto: String = "",
     /** Ilmoitus tapahtumasta: alkaessa ([notifyBefore] = 0) tai 5/10/15 min ennen. */
     val notify: Boolean = false,
-    val notifyBefore: Int = 0
+    val notifyBefore: Int = 0,
+    /**
+     * Kestävä tapahtuma (esim. koulu, päivätoiminta): ei kuitata, vaan se on "nyt", kunnes
+     * seuraava tapahtuma alkaa. Vain korttitapahtumille.
+     */
+    val ongoing: Boolean = false
 )
 
 /** Yksi tuleva ilmoitus: kenen profiilin tapahtuma, minä päivänä ja milloin ilmoitetaan. */
@@ -211,6 +216,7 @@ internal class WeekStore(context: Context, profileId: String = ProfileStore.curr
                         .put("cardPhoto", e.cardPhoto)
                         .put("notify", e.notify)
                         .put("notifyBefore", e.notifyBefore)
+                        .put("ongoing", e.ongoing)
                 )
             }
             return JSONObject()
@@ -240,7 +246,8 @@ internal class WeekStore(context: Context, profileId: String = ProfileStore.curr
                     cardName = o.optString("cardName"),
                     cardPhoto = o.optString("cardPhoto"),
                     notify = o.optBoolean("notify", false),
-                    notifyBefore = o.optInt("notifyBefore", 0).coerceIn(0, 60)
+                    notifyBefore = o.optInt("notifyBefore", 0).coerceIn(0, 60),
+                    ongoing = o.optBoolean("ongoing", false)
                 )
             }
             return WeekPlan(

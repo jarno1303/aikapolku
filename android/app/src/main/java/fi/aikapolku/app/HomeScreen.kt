@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -284,6 +285,28 @@ private fun ClientViewDialog(onDismiss: () -> Unit) {
                     }
                 }
                 SwitchLine(stringResource(R.string.client_view_times), prefs.showTimes) { update(prefs.copy(showTimes = it)) }
+                // Väliajan kortti: mitä NYT-kortti näyttää, kun seuraava ei ole vielä alkanut.
+                Text(stringResource(R.string.client_view_gap), fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
+                Text(stringResource(R.string.client_view_gap_info), fontSize = 13.sp, color = AppColors.Muted)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ClientViewPrefs.GAP_CHOICES.forEach { id ->
+                        val template = fi.aikapolku.app.cards.CardArt.templates.firstOrNull { it.id == id } ?: return@forEach
+                        val name = stringResource(template.nameRes)
+                        val selected = prefs.gapCard == id
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(14.dp))
+                                .then(if (selected) Modifier.border(3.dp, AppColors.Teal, RoundedCornerShape(14.dp)) else Modifier)
+                                .selectable(selected = selected, role = Role.RadioButton) { update(prefs.copy(gapCard = id)) }
+                                .padding(6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            fi.aikapolku.app.cards.CardPhoto(name, "builtin:$id", Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)))
+                            Text(name, fontSize = 14.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+                        }
+                    }
+                }
                 Text(stringResource(R.string.client_view_tools), fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
                 Text(stringResource(R.string.client_view_tools_info), fontSize = 13.sp, color = AppColors.Muted)
                 SwitchLine(stringResource(R.string.timer_title), prefs.showTimer) { update(prefs.copy(showTimer = it)) }

@@ -26,12 +26,16 @@ internal data class ClientViewPrefs(
     val showTimes: Boolean = true,
     val showTimer: Boolean = false,
     val showFirstThen: Boolean = false,
-    val showPrograms: Boolean = false
+    val showPrograms: Boolean = false,
+    /** Väliajan kortti (valmis kortti): näkyy NYT-kortissa, kun seuraava ei ole vielä alkanut. */
+    val gapCard: String = GAP_WAITING
 ) {
     val anyTool: Boolean get() = showTimer || showFirstThen || showPrograms
 
     companion object {
         private const val PREFIX = "client_"
+        const val GAP_WAITING = "waiting"
+        val GAP_CHOICES = listOf(GAP_WAITING, "rest", "break")
 
         fun load(context: Context): ClientViewPrefs {
             val p = ProfileScope.prefs(context, ProfileScope.RUN_PREFS)
@@ -40,7 +44,8 @@ internal data class ClientViewPrefs(
                 showTimes = p.getBoolean(PREFIX + "times", true),
                 showTimer = p.getBoolean(PREFIX + "timer", false),
                 showFirstThen = p.getBoolean(PREFIX + "first_then", false),
-                showPrograms = p.getBoolean(PREFIX + "programs", false)
+                showPrograms = p.getBoolean(PREFIX + "programs", false),
+                gapCard = p.getString(PREFIX + "gap", GAP_WAITING)?.takeIf { it in GAP_CHOICES } ?: GAP_WAITING
             )
         }
 
@@ -51,9 +56,20 @@ internal data class ClientViewPrefs(
                 .putBoolean(PREFIX + "timer", prefs.showTimer)
                 .putBoolean(PREFIX + "first_then", prefs.showFirstThen)
                 .putBoolean(PREFIX + "programs", prefs.showPrograms)
+                .putString(PREFIX + "gap", prefs.gapCard)
                 .apply()
         }
     }
+}
+
+/** Mitä NYT-kortti näyttää päivän nykyisestä kohdasta. */
+internal enum class NowKind {
+    /** Alkanut tehtävä: iso kuva ja Aloita. */
+    EVENT,
+    /** Kestävä tapahtuma (koulu, päivätoiminta): ei painiketta, päättyy seuraavaan. */
+    ONGOING,
+    /** Väliaika: edellinen tehty, seuraava ei vielä alkanut. Väliajan kortti ja "Seuraavaksi". */
+    GAP
 }
 
 /** Päivän osat aikajanalle: aamu ennen klo 11, päivä ennen klo 17, sitten ilta. */
@@ -66,6 +82,17 @@ internal object DayParts {
             else -> DayTime.EVENING
         }
     }
+
+    /** NYT-kortin sisältö: [currentTime] = nykyisen tapahtuman aika, [nowMinutes] = kello. */
+    fun nowKind(currentTime: String, nowMinutes: Int, ongoing: Boolean): NowKind = when {
+        WeekSchedule.minutesOf(currentTime) > nowMinutes -> NowKind.GAP
+        ongoing -> NowKind.ONGOING
+        else -> NowKind.EVENT
+    }
+
+    /** Kestävän tapahtuman loppu: seuraavan (ei peruttu) tapahtuman alku, tai null. */
+    fun endTime(times: List<String>, cancelled: List<Boolean>, index: Int): String? =
+        (index + 1 until times.size).firstOrNull { !cancelled[it] }?.let { times[it] }
 
     /** Aikajanan rivit [mode]n mukaan: kaikki, tai nykyinen ja kaksi seuraavaa tekemätöntä. */
     fun visible(count: Int, current: Int, skipped: (Int) -> Boolean, mode: TimelineMode): List<Int> = when (mode) {

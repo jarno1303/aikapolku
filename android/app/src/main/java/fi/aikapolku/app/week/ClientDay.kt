@@ -42,6 +42,9 @@ import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.labelRes
 import fi.aikapolku.app.data.ClientViewPrefs
 import fi.aikapolku.app.data.DayParts
+import fi.aikapolku.app.data.NowKind
+import fi.aikapolku.app.cards.CardArt
+import androidx.compose.runtime.remember
 import fi.aikapolku.app.data.EventChange
 import fi.aikapolku.app.data.TimelineMode
 import fi.aikapolku.app.data.WeekEvent
@@ -130,7 +133,20 @@ internal fun ClientDayView(
         }
     }
 
-    // NYT: ohjaajan valmistelema toiminta ensin, muuten päivän nykyinen tapahtuma.
+    val dayItem = state?.takeIf { it.current >= 0 }?.let { it.items[it.current] }
+    // Etusijasääntö: ohjaajan valmistelema toiminta ensin; päivän kohta näkyy sen alla,
+    // jotta päivän rakenne ei katoa.
+    @Composable
+    fun DayContinues() {
+        if (dayItem != null) {
+            Text(
+                stringResource(R.string.client_continues_after, dayItem.resolved.title),
+                fontSize = 15.sp,
+                color = AppColors.Muted,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
     when {
         activity is ClientActivity.FirstThen -> NowFrame {
             NowLabel(stringResource(R.string.now_label))
@@ -140,29 +156,79 @@ internal fun ClientDayView(
                 editable = false, compact = true
             )
             BigButton(stringResource(if (activity.started) R.string.client_continue else R.string.today_start), onOpenActivity)
+            DayContinues()
         }
         activity is ClientActivity.Timer -> NowFrame {
             NowLabel(stringResource(R.string.now_label))
             Text(activity.title, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, textAlign = TextAlign.Center)
             Text(stringResource(R.string.timer_running_row), fontSize = 17.sp, color = AppColors.Muted)
             BigButton(stringResource(R.string.client_continue), onOpenActivity)
+            DayContinues()
         }
-        state != null && state.current >= 0 -> {
-            val item = state.items[state.current]
-            val upcoming = WeekSchedule.minutesOf(item.event.time) > LocalTime.now().let { it.hour * 60 + it.minute }
-            NowFrame {
-                NowLabel(stringResource(if (upcoming) R.string.client_next else R.string.now_label))
-                Box {
-                    EventImage(item.resolved, Modifier.fillMaxWidth().sizeIn(maxWidth = 220.dp, maxHeight = 220.dp).aspectRatio(1f).clip(RoundedCornerShape(22.dp)))
-                    if (item.change != null || item.entry.stepChanges.isNotEmpty()) {
-                        ChangeSymbol(Modifier.size(40.dp).align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp))
+        state != null && dayItem != null -> {
+            val item = dayItem
+            val nowMinutes = LocalTime.now().let { it.hour * 60 + it.minute }
+            when (DayParts.nowKind(item.event.time, nowMinutes, item.event.ongoing)) {
+                NowKind.GAP -> NowFrame {
+                    // Väliaika: edellinen tehty, seuraava ei vielä alkanut.
+                    NowLabel(stringResource(R.string.now_label))
+                    val gap = remember(prefs.gapCard) { CardArt.templates.firstOrNull { it.id == prefs.gapCard } }
+                    val gapName = gap?.let { stringResource(it.nameRes) } ?: ""
+                    fi.aikapolku.app.cards.CardPhoto(
+                        gapName, "builtin:${prefs.gapCard}",
+                        Modifier.fillMaxWidth().sizeIn(maxWidth = 160.dp, maxHeight = 160.dp).aspectRatio(1f).clip(RoundedCornerShape(22.dp))
+                    )
+                    Text(gapName, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, textAlign = TextAlign.Center)
+                    Text(
+                        if (prefs.showTimes) stringResource(R.string.client_gap_next_at, item.event.time.replace(':', '.'))
+                        else stringResource(R.string.seuraavaksi),
+                        fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AppColors.Teal
+                    )
+                    Surface(
+                        onClick = { open(item) },
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.White,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            EventImage(item.resolved, Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)))
+                            Text(item.resolved.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Ink, modifier = Modifier.weight(1f))
+                        }
                     }
                 }
-                Text(item.resolved.title, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, textAlign = TextAlign.Center)
-                if (prefs.showTimes) {
-                    Text(stringResource(R.string.change_time_now, item.event.time.replace(':', '.')), fontSize = 18.sp, color = AppColors.Muted)
+                NowKind.ONGOING -> NowFrame {
+                    // Kestävä tapahtuma: ei kuitata, päättyy seuraavaan.
+                    NowLabel(stringResource(R.string.now_label))
+                    EventImage(item.resolved, Modifier.fillMaxWidth().sizeIn(maxWidth = 220.dp, maxHeight = 220.dp).aspectRatio(1f).clip(RoundedCornerShape(22.dp)))
+                    Text(item.resolved.title, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, textAlign = TextAlign.Center)
+                    if (prefs.showTimes) {
+                        val end = DayParts.endTime(state.items.map { it.event.time }, state.items.map { it.cancelled }, state.current)
+                        Text(
+                            if (end != null) stringResource(R.string.client_time_range, item.event.time.replace(':', '.'), end.replace(':', '.'))
+                            else stringResource(R.string.change_time_now, item.event.time.replace(':', '.')),
+                            fontSize = 18.sp,
+                            color = AppColors.Muted
+                        )
+                    }
                 }
-                BigButton(stringResource(R.string.today_start)) { open(item) }
+                NowKind.EVENT -> NowFrame {
+                    NowLabel(stringResource(R.string.now_label))
+                    Box {
+                        EventImage(item.resolved, Modifier.fillMaxWidth().sizeIn(maxWidth = 220.dp, maxHeight = 220.dp).aspectRatio(1f).clip(RoundedCornerShape(22.dp)))
+                        if (item.change != null || item.entry.stepChanges.isNotEmpty()) {
+                            ChangeSymbol(Modifier.size(40.dp).align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp))
+                        }
+                    }
+                    Text(item.resolved.title, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, textAlign = TextAlign.Center)
+                    if (prefs.showTimes) {
+                        Text(stringResource(R.string.change_time_now, item.event.time.replace(':', '.')), fontSize = 18.sp, color = AppColors.Muted)
+                    }
+                    BigButton(stringResource(R.string.today_start)) { open(item) }
+                }
             }
         }
         state != null -> NowFrame {

@@ -83,7 +83,8 @@ internal class TodayState(
     val ackTimes: Map<String, String?>,
     val current: Int
 ) {
-    private val active get() = items.filterNot { it.cancelled }
+    // Perutut ja kestävät (ei kuitata) eivät ole tehtäviä laskurissa.
+    private val active get() = items.filterNot { it.cancelled || it.event.ongoing }
     val doneCount: Int get() = active.count { ackTimes[it.event.id] != null }
     val total: Int get() = active.size
 }
@@ -325,7 +326,7 @@ private fun TodayRow(
                 }
                 if (doneText != null) {
                     Text(doneText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal)
-                } else if (isCurrent) {
+                } else if (isCurrent && !item.event.ongoing) {
                     // Koko rivi on painike; "Aloita" näyttää, mistä päivä jatkuu.
                     Surface(color = AppColors.Teal, shape = RoundedCornerShape(12.dp)) {
                         Text(
@@ -348,7 +349,7 @@ private fun TodayRow(
  * ([doneAt]), Valmiin tilalla näkyy kuittausaika (takaisin yläreunasta), eikä aika muutu.
  */
 @Composable
-internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDone: () -> Unit) {
+internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDone: () -> Unit, ongoing: Boolean = false) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -371,7 +372,9 @@ internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDon
             color = AppColors.Ink,
             textAlign = TextAlign.Center
         )
-        if (doneAt != null) {
+        if (ongoing) {
+            // Kestävä tapahtuma: ei kuitata.
+        } else if (doneAt != null) {
             Text(
                 stringResource(R.string.ack_done_at, doneAt.replace(':', '.')),
                 fontSize = 22.sp,

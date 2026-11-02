@@ -77,6 +77,7 @@ internal fun WeekEventDialog(
     var notify by remember { mutableStateOf(initial?.notify ?: (kind == EventKind.CARD)) }
     var notifyTouched by remember { mutableStateOf(initial != null) }
     var notifyBefore by remember { mutableIntStateOf(initial?.notifyBefore ?: 0) }
+    var ongoing by remember { mutableStateOf(initial?.ongoing ?: false) }
     val context = androidx.compose.ui.platform.LocalContext.current
     var permissionsOk by remember {
         mutableStateOf(BackgroundTimer.notificationsAllowed(context) && BackgroundTimer.exactAlarmsAllowed(context))
@@ -160,6 +161,22 @@ internal fun WeekEventDialog(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { showLibrary = true }) { Text(stringResource(R.string.week_own_cards)) }
                         OutlinedButton(onClick = { showBuiltin = true }) { Text(stringResource(R.string.week_builtin_cards)) }
+                    }
+                }
+
+                // Kestävä tapahtuma (koulu, päivätoiminta): ei kuitata, päättyy seuraavaan.
+                if (kind == EventKind.CARD) {
+                    val ongoingLabel = stringResource(R.string.week_ongoing)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(ongoingLabel, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.week_ongoing_info), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Switch(
+                            checked = ongoing,
+                            onCheckedChange = { ongoing = it },
+                            modifier = Modifier.semantics { contentDescription = ongoingLabel }
+                        )
                     }
                 }
 
@@ -251,7 +268,8 @@ internal fun WeekEventDialog(
                             cardName = if (kind == EventKind.CARD) cardName else "",
                             cardPhoto = if (kind == EventKind.CARD) cardPhoto else "",
                             notify = notify,
-                            notifyBefore = if (notify) notifyBefore else 0
+                            notifyBefore = if (notify) notifyBefore else 0,
+                            ongoing = kind == EventKind.CARD && ongoing
                         )
                         onSave(
                             if (initial != null) listOf(build(initial.id, initial.day))
