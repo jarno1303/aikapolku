@@ -57,7 +57,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Sovelluksen näkymät. */
-internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD, DAY, CHANGE, QUICK_CHANGE, FLOW_CHANGE }
+internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD, DAY, CHANGE, QUICK_CHANGE, FLOW_CHANGE, GROUPS }
 
 /** Sovelluksen navigointi ja Ensin–Sitten-kulun yhteinen tila. */
 @Composable
@@ -143,7 +143,7 @@ internal fun AikaPolkuApp() {
     // Asiakkaaksi vaihdettaessa ohjaajan näkymistä palataan aloitukseen.
     val isCaregiver = caregiver.isCaregiver
     LaunchedEffect(isCaregiver) {
-        if (!isCaregiver && (page == AppPage.CAREGIVER || page == AppPage.QUICK_CHANGE)) page = AppPage.HOME
+        if (!isCaregiver && (page == AppPage.CAREGIVER || page == AppPage.QUICK_CHANGE || page == AppPage.GROUPS)) page = AppPage.HOME
     }
 
     // Valinnat tallennetaan aina niiden muuttuessa.
@@ -264,6 +264,7 @@ internal fun AikaPolkuApp() {
                         AppPage.CHANGE -> stringResource(R.string.change_title)
                         AppPage.QUICK_CHANGE -> stringResource(R.string.quick_title)
                         AppPage.FLOW_CHANGE -> stringResource(R.string.change_title)
+                        AppPage.GROUPS -> stringResource(R.string.groups_title)
                         AppPage.HOME -> ""
                     },
                     onBack = { (backOverride.value ?: goBack)() },
@@ -483,6 +484,8 @@ internal fun AikaPolkuApp() {
                 )
 
                 AppPage.CAREGIVER -> CaregiverSettingsScreen()
+
+                AppPage.GROUPS -> fi.aikapolku.app.week.GroupsScreen(canEdit = caregiver.allows(AppAction.EDIT_PROGRAMS))
 
                 AppPage.MANUAL -> ManualFlowScreen(
                     first = firstShown,

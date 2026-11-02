@@ -63,12 +63,19 @@ internal fun WeekEventDialog(
     programs: List<DayProgram>,
     onSave: (List<WeekEvent>) -> Unit,
     onDelete: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    /** Uuden kohdan ehdotettu aika (aikajanan "+"). */
+    initialTime: String? = null,
+    initialKind: EventKind? = null,
+    /** Ryhmän rungossa vain kortit: Päiväohjelma-valintaa ei näytetä. */
+    allowPrograms: Boolean = true
 ) {
-    val startMinutes = initial?.let { WeekSchedule.minutesOf(it.time) } ?: (8 * 60)
+    val startMinutes = initial?.let { WeekSchedule.minutesOf(it.time) } ?: initialTime?.let { WeekSchedule.minutesOf(it) } ?: (8 * 60)
     var hour by remember { mutableIntStateOf(startMinutes / 60) }
     var minute by remember { mutableIntStateOf(startMinutes % 60) }
-    var kind by remember { mutableStateOf(initial?.kind ?: if (programs.isNotEmpty()) EventKind.PROGRAM else EventKind.CARD) }
+    var kind by remember {
+        mutableStateOf(initial?.kind ?: initialKind ?: if (allowPrograms && programs.isNotEmpty()) EventKind.PROGRAM else EventKind.CARD)
+    }
     var programId by remember { mutableStateOf(initial?.programId ?: "") }
     var cardName by remember { mutableStateOf(initial?.cardName ?: "") }
     var cardPhoto by remember { mutableStateOf(initial?.cardPhoto ?: "") }
@@ -111,7 +118,7 @@ internal fun WeekEventDialog(
                 }
 
                 Text(stringResource(R.string.week_content), fontWeight = FontWeight.SemiBold)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (allowPrograms) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = kind == EventKind.PROGRAM,
                         onClick = {

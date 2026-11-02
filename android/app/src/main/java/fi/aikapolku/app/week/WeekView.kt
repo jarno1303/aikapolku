@@ -52,174 +52,97 @@ import fi.aikapolku.app.data.WeekEvent
 import fi.aikapolku.app.data.WeekPlan
 import fi.aikapolku.app.data.WeekSchedule
 import fi.aikapolku.app.data.WeekStore
+import fi.aikapolku.app.data.GroupStore
+import fi.aikapolku.app.data.ProfileStore
+import fi.aikapolku.app.data.Runko
 import fi.aikapolku.app.ui.AppColors
 import java.time.LocalDate
 
-/** Päiväohjelmat-näkymän Viikko-välilehti: viikonpäivien tapahtumat ja vuoroviikot. */
+/**
+ * Asiakkaan viikko: omat kohdat aikajanalla (RunkoEditor). Ryhmien kohdat näkyvät samalla
+ * aikajanalla ryhmän nimellä merkittyinä; niiden napautus avaa asiakkaan toistuvan
+ * poikkeuksen (ei osallistu / tilalla muuta). Ryhmän runkoa muokataan Ryhmät-näkymässä.
+ */
 @Composable
 internal fun WeekView(programs: List<DayProgram>, canEdit: Boolean) {
     val context = LocalContext.current
-    val store = remember(context) { WeekStore(context.applicationContext) }
+    val app = context.applicationContext
+    val store = remember(context) { WeekStore(app) }
     val today = remember { LocalDate.now() }
+    val me = remember { ProfileStore.currentId(app) }
+    val clientName = remember { ProfileStore.list(app).firstOrNull { it.id == me }?.name.orEmpty() }
     var plan by remember {
         mutableStateOf(WeekSchedule.withoutMissingPrograms(store.load(), programs.map { it.id }.toSet()))
     }
+    var groups by remember { mutableStateOf(GroupStore(app).load()) }
+    val myGroups = groups.filter { me in it.members }
+    var exceptionRow by remember { mutableStateOf<GroupRow?>(null) }
+
     fun update(next: WeekPlan) {
         plan = next
         store.save(next)
-        // Poistetun tapahtuman päivän muutoskin poistuu.
-        ChangeStore(context.applicationContext).clean(today, next.events.map { it.id }.toSet())
-        EventReminders.reschedule(context.applicationContext)
+        // Poistetun kohdan päivän muutoskin poistuu (ryhmien kohdat säilyvät).
+        ChangeStore(app).clean(today, ClientWeek.load(app, me, own = next).eventIds())
+        EventReminders.reschedule(app)
     }
 
-    val currentWeek = WeekSchedule.weekOf(plan, today)
-    var day by rememberSaveable { mutableStateOf(today.dayOfWeek.value) }
-    var week by rememberSaveable { mutableStateOf(currentWeek) }
-    var editing by remember { mutableStateOf<WeekEvent?>(null) }
-    var adding by remember { mutableStateOf(false) }
-    val shownWeek = if (plan.alternating) week else WeekSchedule.WEEK_A
-
-
-    if (plan.alternating) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            listOf(WeekSchedule.WEEK_A, WeekSchedule.WEEK_B).forEach { w ->
-                val label = weekLabel(w) + if (w == currentWeek) " · " + stringResource(R.string.week_this_week) else ""
-                ChoiceButton(label, selected = week == w, modifier = Modifier.weight(1f)) { week = w }
+    // Ryhmän kohdat valitulle viikonpäivälle: lähin sellainen päivä (oma A/B-viikko huomioiden).
+    fun groupRows(day: Int, week: Int): List<GroupRow> {
+        if (myGroups.isEmpty()) return emptyList()
+        var date = today.plusDays(((day - today.dayOfWeek.value + 7) % 7).toLong())
+        if (plan.alternating && WeekSchedule.weekOf(plan, date) != week) date = date.plusWeeks(1)
+        return myGroups.flatMap { g ->
+            WeekSchedule.eventsFor(g.plan, date).filter { it.kind == EventKind.CARD }.map { e ->
+                GroupRow(g, e, g.exceptions.firstOrNull { it.eventId == e.id && it.memberId == me })
             }
         }
     }
 
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
-        (1..7).forEach { d ->
-            val hasEvents = WeekSchedule.eventsOn(plan, d, shownWeek).isNotEmpty()
-            DayButton(
-                day = d,
-                selected = d == day,
-                hasEvents = hasEvents,
-                modifier = Modifier.weight(1f)
-            ) { day = d }
-        }
-    }
-
-    Text(dayName(day), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
-    val events = WeekSchedule.eventsOn(plan, day, shownWeek)
-    if (events.isEmpty()) {
-        Text(stringResource(R.string.week_no_events), color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-    events.forEach { event ->
-        val resolved = resolveEvent(event, programs)
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(if (canEdit) Modifier.clickable(role = Role.Button) { editing = event } else Modifier),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Row(
-                modifier = Modifier.padding(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(event.time, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(56.dp))
-                EventImage(resolved, Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        resolved.title.ifBlank { stringResource(R.string.week_missing_program) },
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        stringResource(if (resolved.isProgram) R.string.week_kind_program else R.string.week_kind_card),
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                if (canEdit) Text("›", fontSize = 24.sp, color = AppColors.Teal)
-            }
-        }
-    }
-
-    if (canEdit) {
-        Button(
-            onClick = { adding = true },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
-        ) { Text(stringResource(R.string.week_add_event)) }
-
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = AppColors.TealSoft)
-        ) {
-            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                val switchLabel = stringResource(R.string.week_alternating)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(switchLabel, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                        Text(stringResource(R.string.week_alternating_info), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(
-                        checked = plan.alternating,
-                        onCheckedChange = { on ->
-                            var next = plan.copy(alternating = on)
-                            if (on && plan.anchorMonday == 0L) next = WeekSchedule.withCurrentWeek(next, today, WeekSchedule.WEEK_A)
-                            update(next)
-                            week = WeekSchedule.weekOf(next, today)
-                        },
-                        modifier = Modifier.semantics { contentDescription = switchLabel }
-                    )
-                }
-                if (plan.alternating) {
-                    Text(stringResource(R.string.week_current_is), fontSize = 15.sp)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        listOf(WeekSchedule.WEEK_A, WeekSchedule.WEEK_B).forEach { w ->
-                            ChoiceButton(weekLabel(w), selected = currentWeek == w, modifier = Modifier.weight(1f)) {
-                                update(WeekSchedule.withCurrentWeek(plan, today, w))
-                                week = w
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (canEdit) {
-        ChangeOverview(remember(plan) { ClientWeek.load(context.applicationContext, own = plan) }, programs, today)
-        AckOverview(plan, today)
-    }
-
-    if (adding) {
-        WeekEventDialog(
-            initial = null,
-            day = day,
-            week = shownWeek,
-            programs = programs,
-            onSave = { created ->
-                update(plan.copy(events = plan.events + created))
-                adding = false
-            },
-            onDelete = {},
-            onDismiss = { adding = false }
+    if (myGroups.isNotEmpty()) {
+        Text(
+            stringResource(R.string.runko_client_groups, myGroups.joinToString(", ") { it.name }),
+            fontSize = 14.sp,
+            color = AppColors.Muted
         )
     }
-    editing?.let { event ->
-        WeekEventDialog(
-            initial = event,
-            day = event.day,
-            week = event.week,
-            programs = programs,
-            onSave = { changed ->
-                update(plan.copy(events = plan.events.filterNot { it.id == event.id } + changed))
-                editing = null
+
+    val copySources = remember(groups) {
+        ProfileStore.list(app).filter { it.id != me }.mapNotNull { p ->
+            val other = WeekStore(app, p.id).load()
+            if (other.events.none { it.kind == EventKind.CARD }) null else p.name to other
+        } + groups.filter { it.plan.events.isNotEmpty() }.map { context.getString(R.string.runko_group_source, it.name) to it.plan }
+    }
+
+    RunkoEditor(
+        plan = plan,
+        onChange = ::update,
+        programs = programs,
+        canEdit = canEdit,
+        allowPrograms = true,
+        groupRows = ::groupRows,
+        onGroupRow = { exceptionRow = it },
+        copySources = copySources
+    )
+
+    if (canEdit) {
+        ChangeOverview(remember(plan, groups) { ClientWeek.load(app, me, own = plan) }, programs, today)
+        AckOverview(remember(plan, groups) { ClientWeek.load(app, me, own = plan) }, today)
+    }
+
+    exceptionRow?.let { row ->
+        GroupExceptionDialog(
+            row = row,
+            clientName = clientName,
+            onSet = { exception ->
+                val group = GroupStore(app).load().firstOrNull { it.id == row.group.id }
+                if (group != null) {
+                    GroupStore(app).upsert(Runko.withException(group, row.event.id, me, exception?.copy(memberId = me)))
+                    groups = GroupStore(app).load()
+                    EventReminders.reschedule(app)
+                }
+                exceptionRow = null
             },
-            onDelete = {
-                update(plan.copy(events = plan.events.filterNot { it.id == event.id }))
-                editing = null
-            },
-            onDismiss = { editing = null }
+            onDismiss = { exceptionRow = null }
         )
     }
 }
@@ -244,48 +167,12 @@ internal fun ChoiceButton(label: String, selected: Boolean, modifier: Modifier =
     }
 }
 
-@Composable
-private fun DayButton(day: Int, selected: Boolean, hasEvents: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val full = dayName(day)
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        color = if (selected) AppColors.Teal else Color.White,
-        modifier = modifier
-            .heightIn(min = 52.dp)
-            .border(1.dp, if (selected) AppColors.Teal else AppColors.Border, RoundedCornerShape(12.dp))
-            .semantics {
-                contentDescription = full
-                this.selected = selected
-            }
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(vertical = 6.dp)
-        ) {
-            Text(
-                dayShort(day),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (selected) Color.White else AppColors.Ink
-            )
-            // Pieni piste kertoo, että päivälle on tapahtumia.
-            Text(
-                if (hasEvents) "•" else " ",
-                fontSize = 14.sp,
-                color = if (selected) Color.White else AppColors.Teal
-            )
-        }
-    }
-}
-
 /**
  * Ohjaajalle: korttitapahtumien kuittaukset eiliseltä ja tältä päivältä.
  * Vanhempia ei säilytetä (ks. AckStore).
  */
 @Composable
-private fun AckOverview(plan: WeekPlan, today: LocalDate) {
+private fun AckOverview(plan: DaySource, today: LocalDate) {
     val context = LocalContext.current
     val acks = remember(context) { AckStore(context.applicationContext) }
     val now = remember { java.time.LocalTime.now() }
@@ -296,7 +183,7 @@ private fun AckOverview(plan: WeekPlan, today: LocalDate) {
         Triple(
             date,
             label,
-            DayChanges.entries(WeekSchedule.eventsFor(plan, date), changes, date, null)
+            DayChanges.entries(plan.eventsFor(date), changes, date, null)
                 .filterNot { it.cancelled }
                 .map { it.event }
                 .filter { it.kind == EventKind.CARD }

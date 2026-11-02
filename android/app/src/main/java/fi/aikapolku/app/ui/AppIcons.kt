@@ -120,6 +120,15 @@ internal object AppIcons {
         }.build()
     }
 
+    /** Miinus (vähennä, esim. aika aiemmaksi). */
+    val Minus: ImageVector by lazy {
+        ImageVector.Builder("Minus", 24.dp, 24.dp, 24f, 24f).apply {
+            path(fill = SolidColor(Color.Black)) {
+                moveTo(5f, 11f); lineTo(19f, 11f); lineTo(19f, 13f); lineTo(5f, 13f); close()
+            }
+        }.build()
+    }
+
     /** Lukko auki (ohjaajan toiminnot avattu). */
     val LockOpen: ImageVector by lazy {
         stroked("LockOpen") {

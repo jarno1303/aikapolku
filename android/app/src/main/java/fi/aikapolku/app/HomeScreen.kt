@@ -214,6 +214,7 @@ private fun CaregiverHome(
     }
     ToolsCard(stringResource(R.string.caregiver_tools)) {
         ChoiceRow(stringResource(R.string.home_week), onOpenWeek, subtitle = stringResource(R.string.home_week_info), leading = { RowIcon(Icons.Rounded.DateRange) })
+        ChoiceRow(stringResource(R.string.groups_title), { open(AppPage.GROUPS) }, subtitle = stringResource(R.string.groups_home_info), leading = { RowIcon(Icons.Rounded.Face) })
         ChoiceRow(stringResource(R.string.home_programs), { open(AppPage.PROGRAMS) }, subtitle = stringResource(R.string.home_programs_info), leading = { RowIcon(Icons.AutoMirrored.Rounded.List) })
         ChoiceRow(stringResource(R.string.home_cards), { showCards = true }, subtitle = stringResource(R.string.home_cards_info), leading = { RowIcon(AppIcons.Image) })
         ChoiceRow(stringResource(R.string.home_view_as_client), { fi.aikapolku.app.caregiver.RoleSession.preview() }, subtitle = stringResource(R.string.home_view_as_client_info), leading = { RowIcon(Icons.Rounded.Face) })
