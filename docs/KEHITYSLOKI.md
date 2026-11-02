@@ -270,3 +270,8 @@
 - Muistutukset herätyskellon tavoin (setAlarmClock): OnePlus ja muut tiukan akunhallinnan puhelimet toimittavat ne ajallaan. Muistutuskanava luodaan heti.
 - Ohjaajan asetuksiin "Muistutusten tila": ilmoitukset, tarkat hälytykset ja akun optimointi, korjauspainikkeet ja testimuistutus (1 min).
 - Uudet testit: korostus tehtyjen ohi, ensimmäinen kuittausaika säilyy, tehty ilman Aloita-painiketta.
+
+## Tänään-lista aina tiiviinä
+- Aloitusnäkymässä enintään: "✓ Tehty tänään: N" -rivi, korostettu nyt-tapahtuma ja kaksi seuraavaa tekemätöntä sekä "Koko päivä (N) ›".
+- Koko päivä -näkymässä kaikki tapahtumat: tehdyt ("✓ Tehty 07.50"), väliin jääneet ja tulevat. Väliin jääneet eivät kasaannu aloitusnäkymään.
+- Uudet testit: tiivis lista (logiikka ja käyttöliittymä).

@@ -17,6 +17,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,13 +51,18 @@ import java.time.LocalDate
 import java.time.LocalTime
 import kotlinx.coroutines.delay
 
-/**
- * Aloitusnäkymän "Tänään": päivän tapahtumat kellonajan mukaan. Näkyy vain, kun päivälle
- * on tapahtumia. Nykyinen (tai ensimmäinen tuleva) tapahtuma on korostettu ja alkaa
- * yhdellä napautuksella; menneet ovat himmeitä.
- */
+/** Päivän tapahtumat ja niiden tila (tehty, korostettu) kellonajan mukaan päivittyen. */
+private class TodayState(
+    val date: LocalDate,
+    val events: List<ResolvedEvent>,
+    val ackTimes: Map<String, String?>,
+    val current: Int
+) {
+    val doneCount: Int get() = ackTimes.values.count { it != null }
+}
+
 @Composable
-internal fun TodaySection(onOpenProgram: (WeekEvent) -> Unit, onOpenCard: (WeekEvent) -> Unit) {
+private fun rememberTodayState(): TodayState? {
     val context = LocalContext.current
     val plan = remember(context) { WeekStore(context.applicationContext).load() }
     val programs = remember(context) { ProgramStore(context.applicationContext).load() }
@@ -67,7 +73,7 @@ internal fun TodaySection(onOpenProgram: (WeekEvent) -> Unit, onOpenCard: (WeekE
     val events = WeekSchedule.eventsFor(plan, date)
         .map { resolveEvent(it, programs) }
         .filter { it.title.isNotBlank() }
-    if (events.isEmpty()) return
+    if (events.isEmpty()) return null
     // Korostus siirtyy ajan kuluessa (puolen minuutin välein). Vain kun listassa on jotain.
     LaunchedEffect(Unit) {
         while (true) {
@@ -79,77 +85,139 @@ internal fun TodaySection(onOpenProgram: (WeekEvent) -> Unit, onOpenCard: (WeekE
     // Kuitatut (tehdyt) eivät enää ole korostettuina; korostus siirtyy seuraavaan tekemättömään.
     val ackTimes = events.associate { it.event.id to acks.ackTime(date, it.event.id) }
     val done = ackTimes.filterValues { it != null }.keys
-    val current = WeekSchedule.currentIndex(events.map { it.event }, now, done)
+    return TodayState(date, events, ackTimes, WeekSchedule.currentIndex(events.map { it.event }, now, done))
+}
 
+/**
+ * Aloitusnäkymän "Tänään": aina tiivis, oli päivässä tapahtumia kuinka monta tahansa.
+ * Tehdyt yhtenä rivinä, korostettu "nyt"-tapahtuma, kaksi seuraavaa ja linkki koko päivään.
+ * Väliin jääneet näkyvät vain koko päivän näkymässä ja ohjaajan kuittauksissa.
+ */
+@Composable
+internal fun TodaySection(
+    onOpenProgram: (WeekEvent) -> Unit,
+    onOpenCard: (WeekEvent) -> Unit,
+    onOpenDay: () -> Unit = {}
+) {
+    val state = rememberTodayState() ?: return
     fun open(item: ResolvedEvent) {
         if (item.isProgram) onOpenProgram(item.event) else onOpenCard(item.event)
     }
 
     Text(
-        stringResource(R.string.today_title, dayName(date.dayOfWeek.value)),
+        stringResource(R.string.today_title, dayName(state.date.dayOfWeek.value)),
         modifier = Modifier.semantics { heading() },
         fontSize = 22.sp,
         fontWeight = FontWeight.Bold,
         color = AppColors.Ink
     )
-    val nowLabel = stringResource(R.string.now_label)
-    events.forEachIndexed { index, item ->
-        val isCurrent = index == current
-        val ackTime = ackTimes[item.event.id]
-        val isDone = ackTime != null
-        // Himmeä: tehty, tai jo mennyt korostettua edeltävä (tai kaikki, jos päivä on ohi).
-        val isPast = isDone || (if (current >= 0) index < current else true)
-        val doneText = ackTime?.let { stringResource(R.string.ack_done_at, it.replace(':', '.')) }
-        val a11y = item.event.time + " " + item.title + (if (isCurrent) ", $nowLabel" else "") + (doneText?.let { ", $it" } ?: "")
+    if (state.doneCount > 0) {
         Surface(
-            onClick = { open(item) },
-            shape = RoundedCornerShape(18.dp),
-            color = if (isCurrent) AppColors.TealSoft else Color.White,
-            modifier = Modifier
-                .fillMaxWidth()
-                .alpha(if (isPast) 0.45f else 1f)
-                .then(if (isCurrent) Modifier.border(2.dp, AppColors.Teal, RoundedCornerShape(18.dp)) else Modifier)
-                .semantics(mergeDescendants = true) { contentDescription = a11y }
+            onClick = onOpenDay,
+            shape = RoundedCornerShape(14.dp),
+            color = AppColors.TealSoft,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = if (isCurrent) 12.dp else 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            Text(
+                stringResource(R.string.today_done_count, state.doneCount),
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = AppColors.Teal
+            )
+        }
+    }
+    WeekSchedule.compactIndices(state.events.map { it.event }, state.current, state.ackTimes.filterValues { it != null }.keys)
+        .forEach { index ->
+            TodayRow(state.events[index], isCurrent = index == state.current, isPast = false, doneAt = null) {
+                open(state.events[index])
+            }
+        }
+    TextButton(
+        onClick = onOpenDay,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+    ) {
+        Text(stringResource(R.string.today_whole_day, state.events.size), color = AppColors.Teal, fontSize = 16.sp)
+    }
+}
+
+/** Koko päivän tapahtumat omana näkymänään: tehdyt, väliin jääneet, nyt ja tulevat. */
+@Composable
+internal fun DayScreen(onOpenProgram: (WeekEvent) -> Unit, onOpenCard: (WeekEvent) -> Unit) {
+    val state = rememberTodayState()
+    Text(
+        stringResource(R.string.today_title, dayName(LocalDate.now().dayOfWeek.value)),
+        modifier = Modifier.semantics { heading() },
+        fontSize = 28.sp,
+        fontWeight = FontWeight.Bold,
+        color = AppColors.Ink
+    )
+    if (state == null) {
+        Text(stringResource(R.string.week_no_events), color = AppColors.Muted)
+        return
+    }
+    state.events.forEachIndexed { index, item ->
+        val doneAt = state.ackTimes[item.event.id]
+        val isCurrent = index == state.current
+        val isPast = doneAt != null || (if (state.current >= 0) index < state.current else true)
+        TodayRow(item, isCurrent = isCurrent, isPast = isPast, doneAt = doneAt) {
+            if (item.isProgram) onOpenProgram(item.event) else onOpenCard(item.event)
+        }
+    }
+}
+
+@Composable
+private fun TodayRow(item: ResolvedEvent, isCurrent: Boolean, isPast: Boolean, doneAt: String?, onClick: () -> Unit) {
+    val nowLabel = stringResource(R.string.now_label)
+    val doneText = doneAt?.let { stringResource(R.string.ack_done_at, it.replace(':', '.')) }
+    val a11y = item.event.time + " " + item.title + (if (isCurrent) ", $nowLabel" else "") + (doneText?.let { ", $it" } ?: "")
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(18.dp),
+        color = if (isCurrent) AppColors.TealSoft else Color.White,
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (isPast) 0.45f else 1f)
+            .then(if (isCurrent) Modifier.border(2.dp, AppColors.Teal, RoundedCornerShape(18.dp)) else Modifier)
+            .semantics(mergeDescendants = true) { contentDescription = a11y }
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = if (isCurrent) 12.dp else 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                item.event.time,
+                modifier = Modifier.width(54.dp),
+                fontSize = if (isCurrent) 18.sp else 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isCurrent) AppColors.Teal else AppColors.Muted
+            )
+            EventImage(
+                item,
+                Modifier.size(if (isCurrent) 64.dp else 44.dp).clip(RoundedCornerShape(if (isCurrent) 16.dp else 12.dp))
+            )
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    item.event.time,
-                    modifier = Modifier.width(54.dp),
-                    fontSize = if (isCurrent) 18.sp else 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isCurrent) AppColors.Teal else AppColors.Muted
+                    item.title,
+                    fontSize = if (isCurrent) 20.sp else 17.sp,
+                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
+                    color = AppColors.Ink,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
-                EventImage(
-                    item,
-                    Modifier.size(if (isCurrent) 64.dp else 44.dp).clip(RoundedCornerShape(if (isCurrent) 16.dp else 12.dp))
-                )
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        item.title,
-                        fontSize = if (isCurrent) 20.sp else 17.sp,
-                        fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
-                        color = AppColors.Ink,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    if (doneText != null) {
-                        Text(doneText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal)
-                    } else if (isCurrent) {
-                        // Koko rivi on painike; "Aloita" näyttää, mistä päivä jatkuu. Nimen alla,
-                        // jotta pitkäkin nimi mahtuu yhdelle riville.
-                        Surface(color = AppColors.Teal, shape = RoundedCornerShape(12.dp)) {
-                            Text(
-                                stringResource(R.string.today_start) + " ›",
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                                color = Color.White,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                if (doneText != null) {
+                    Text(doneText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal)
+                } else if (isCurrent) {
+                    // Koko rivi on painike; "Aloita" näyttää, mistä päivä jatkuu.
+                    Surface(color = AppColors.Teal, shape = RoundedCornerShape(12.dp)) {
+                        Text(
+                            stringResource(R.string.today_start) + " ›",
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }

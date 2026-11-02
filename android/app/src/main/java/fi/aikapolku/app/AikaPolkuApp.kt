@@ -31,6 +31,8 @@ import fi.aikapolku.app.timer.playCompletionSound
 import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.voice.VoicePlayer
 import fi.aikapolku.app.week.EventCardScreen
+import fi.aikapolku.app.week.DayScreen
+import fi.aikapolku.app.data.WeekEvent
 import fi.aikapolku.app.week.EventLaunch
 import fi.aikapolku.app.data.AckStore
 import fi.aikapolku.app.data.EventKind
@@ -41,7 +43,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Sovelluksen näkymät. */
-internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD }
+internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD, DAY }
 
 /** Sovelluksen navigointi ja Ensin–Sitten-kulun yhteinen tila. */
 @Composable
@@ -149,6 +151,22 @@ internal fun AikaPolkuApp() {
         }
     }
 
+    // Viikko-ohjelman tapahtuman avaus Tänään-listasta tai koko päivän näkymästä.
+    fun openProgramEvent(event: WeekEvent) {
+        pendingProgramId = event.programId
+        pendingEventId = event.id
+        pendingEventDate = LocalDate.now().toString()
+        page = AppPage.PROGRAMS
+    }
+
+    fun openCardEvent(event: WeekEvent) {
+        eventCardName = event.cardName
+        eventCardPhoto = event.cardPhoto
+        eventCardId = event.id
+        eventCardDate = LocalDate.now().toString()
+        page = AppPage.EVENT_CARD
+    }
+
     BackHandler(enabled = page != AppPage.HOME) {
         goBack()
     }
@@ -197,19 +215,14 @@ internal fun AikaPolkuApp() {
                         page = destination
                         if (destination == AppPage.TIMER) timer.activeTask = ""
                     },
-                    onOpenProgram = { event ->
-                        pendingProgramId = event.programId
-                        pendingEventId = event.id
-                        pendingEventDate = LocalDate.now().toString()
-                        page = AppPage.PROGRAMS
-                    },
-                    onOpenCard = { event ->
-                        eventCardName = event.cardName
-                        eventCardPhoto = event.cardPhoto
-                        eventCardId = event.id
-                        eventCardDate = LocalDate.now().toString()
-                        page = AppPage.EVENT_CARD
-                    }
+                    onOpenProgram = { openProgramEvent(it) },
+                    onOpenCard = { openCardEvent(it) },
+                    onOpenDay = { page = AppPage.DAY }
+                )
+
+                AppPage.DAY -> DayScreen(
+                    onOpenProgram = { openProgramEvent(it) },
+                    onOpenCard = { openCardEvent(it) }
                 )
 
                 AppPage.EVENT_CARD -> EventCardScreen(
@@ -341,6 +354,7 @@ internal fun AikaPolkuApp() {
                 page != AppPage.LAST &&
                 page != AppPage.DONE &&
                 page != AppPage.EVENT_CARD &&
+                page != AppPage.DAY &&
                 !(page == AppPage.TIMER && timer.activeTask.isNotBlank())) {
                 TextButton(
                     onClick = goBack,

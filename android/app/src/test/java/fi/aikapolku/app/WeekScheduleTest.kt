@@ -95,4 +95,13 @@ class WeekScheduleTest {
         // Päivä ohi ja viimeinen tehty: ei korostusta.
         assertEquals(-1, WeekSchedule.currentIndex(events, LocalTime.of(23, 0), done = setOf("c")))
     }
+
+    @Test
+    fun `tiivis lista on nyt ja enintaan kaksi seuraavaa tekematonta`() {
+        val events = (1..6).map { ev("e$it", 1, "%02d:00".format(it + 6)) }
+        assertEquals(listOf(1, 2, 3), WeekSchedule.compactIndices(events, current = 1, done = emptySet()))
+        assertEquals(listOf(1, 3, 5), WeekSchedule.compactIndices(events, current = 1, done = setOf("e3", "e5")))
+        assertEquals(listOf(5), WeekSchedule.compactIndices(events, current = 5, done = emptySet()))
+        assertEquals(emptyList<Int>(), WeekSchedule.compactIndices(events, current = -1, done = emptySet()))
+    }
 }

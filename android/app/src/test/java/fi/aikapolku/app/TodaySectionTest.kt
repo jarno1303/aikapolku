@@ -57,7 +57,24 @@ class TodaySectionTest {
         fi.aikapolku.app.data.AckStore(context).ack(LocalDate.now(), "e", java.time.LocalTime.of(7, 50))
         compose.mainClock.autoAdvance = false
         compose.setContent { Column { TodaySection(onOpenProgram = {}, onOpenCard = {}) } }
-        compose.onNodeWithText(t(R.string.ack_done_at, "07.50")).assertExists()
+        // Tehdyt kootaan yhdeksi riviksi; tehty ei näy omana rivinään eikä Aloita-painikkeena.
+        compose.onNodeWithText(t(R.string.today_done_count, 1)).assertExists()
+        compose.onNodeWithText("Lääkkeet").assertDoesNotExist()
         compose.onNodeWithText(t(R.string.today_start) + " ›").assertDoesNotExist()
+    }
+
+    @Test
+    fun `paljon tapahtumia - aloitusnakymassa vain nyt ja kaksi seuraavaa`() {
+        val events = (0 until 8).map { i ->
+            WeekEvent("e$i", today, 0, if (i == 0) "00:00" else "23:5$i", EventKind.CARD, cardName = "Kortti $i", cardPhoto = "builtin:rest")
+        }
+        WeekStore(context).save(WeekPlan(events))
+        compose.mainClock.autoAdvance = false
+        compose.setContent { Column { TodaySection(onOpenProgram = {}, onOpenCard = {}) } }
+        compose.onNodeWithText("Kortti 0").assertExists()
+        compose.onNodeWithText("Kortti 1").assertExists()
+        compose.onNodeWithText("Kortti 2").assertExists()
+        compose.onNodeWithText("Kortti 3").assertDoesNotExist()
+        compose.onNodeWithText(t(R.string.today_whole_day, 8)).assertExists()
     }
 }

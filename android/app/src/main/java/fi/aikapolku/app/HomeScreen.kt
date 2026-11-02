@@ -30,7 +30,8 @@ import fi.aikapolku.app.data.WeekEvent
 internal fun HomeScreen(
     open: (AppPage) -> Unit,
     onOpenProgram: (WeekEvent) -> Unit = {},
-    onOpenCard: (WeekEvent) -> Unit = {}
+    onOpenCard: (WeekEvent) -> Unit = {},
+    onOpenDay: () -> Unit = {}
 ) {
     Spacer(Modifier.height(10.dp))
 
@@ -78,7 +79,7 @@ internal fun HomeScreen(
 
     // Viikko-ohjelman päivä, jos tälle päivälle on tapahtumia.
     Spacer(Modifier.height(12.dp))
-    TodaySection(onOpenProgram = onOpenProgram, onOpenCard = onOpenCard)
+    TodaySection(onOpenProgram = onOpenProgram, onOpenCard = onOpenCard, onOpenDay = onOpenDay)
 
     Spacer(Modifier.height(10.dp))
     Text(stringResource(R.string.mita_haluat_tehda), fontSize = 22.sp,

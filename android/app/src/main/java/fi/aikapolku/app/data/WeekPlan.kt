@@ -106,6 +106,16 @@ internal object WeekSchedule {
         return (from until events.size).firstOrNull { events[it].id !in done } ?: -1
     }
 
+    /**
+     * Aloitusnäkymän tiivis lista: korostettu tapahtuma ja enintään [upcoming] seuraavaa
+     * tekemätöntä. Tehdyt ja väliin jääneet jätetään pois (ne näkyvät koko päivän näkymässä).
+     */
+    fun compactIndices(events: List<WeekEvent>, current: Int, done: Set<String>, upcoming: Int = 2): List<Int> {
+        if (current < 0) return emptyList()
+        val next = (current + 1 until events.size).filter { events[it].id !in done }.take(upcoming)
+        return listOf(current) + next
+    }
+
     fun minutesOf(time: String): Int {
         val parts = time.split(":")
         val h = parts.getOrNull(0)?.toIntOrNull()?.coerceIn(0, 23) ?: 0
