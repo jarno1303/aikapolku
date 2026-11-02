@@ -336,3 +336,15 @@
 - Ajan valinta kellotaululta toimii ennen käynnistystä kaikissa näyttötavoissa (ennen vain "Numerot ja rengas"). Asetettu kesto näkyy kellotaulun alla ("Aika: 5 min"; rauhallisessa tilassa vain ohjaajalle).
 - Rauhallinen: rengas neljässä osassa, yksi poistuu kerrallaan, joten eteneminen näkyy ilman numeroita.
 - Sama vaaka-asennon ajastimeen. Uudet testit: kesken oleva ajastus (2), rauhallisen osat (1).
+
+## Vaihe 4: muutoskortti
+- Ohjaaja tekee koko päivän näkymässä (Tänään / Huomenna) tapahtuman ⋮-valikosta muutoksen yhdelle päivälle: Peruttu, Tilalle muuta (kortti tai päiväohjelma) tai Uusi aika (saman päivän sisällä). Syy tekstinä ja äänitteenä (valinnainen automaattitoisto). Viikko-ohjelma ei muutu. Muutoksen voi muokata tai perua.
+- Milloin käyttäjä näkee muutoksen valitaan muutoskohtaisesti: Heti (huomisen muutos jo tänään), Muutospäivän aamuna tai Vasta tapahtuman aikaan (aikaisin alkuperäinen/uusi aika tai ennakkomuistutus). Edellinen valinta on valmiina (profiilikohtainen).
+- "Näytä mikä korvattiin" (oletus päällä): pois päältä käyttäjä näkee vain uuden toiminnan ja muutosmerkin. Perutussa alkuperäinen näkyy aina.
+- Muutoksen vakiomerkki: oranssi kolmio ja kaksi vastakkaista nuolta, sama joka paikassa. Muutosväri oranssi erottuu tavallisesta turkoosista.
+- Käyttäjä: aloitusnäkymän päivän otsikon alla muutosrivi ("MUUTOS · Tänään / Huomenna"), muutosnäkymä (ruksattu alkuperäinen → uusi, uusi aika, syy, Kuuntele, Selvä). Selvä kuittaa muutoksen nähdyksi. Päivän listoissa muutettu tapahtuma merkillä, peruttu yliviivattuna ja himmeänä.
+- Muistutukset seuraavat muutosta: siirretty uuteen aikaan, korvattu uudella sisällöllä ("Muutos: Ulkoilu"), peruttu muutosilmoituksena alkuperäiseen aikaan ("Muutos: Uinti on peruttu").
+- Ohjaaja: Viikko-välilehdellä Muutokset-kortti (tänään ja huomenna, milloin näkyy käyttäjälle, nähty klo). Kuittauksissa korvatut uudella nimellä, perutut pois.
+- Muutokset ovat profiilikohtaisia (ProfileScope.CHANGES), yli viikon vanhat ja poistettujen tapahtumien muutokset siivotaan. Koskee vain tätä puhelinta (ei synkronointia).
+- Huom: ilman ohjaajan lukitusta ohjaajan ja käyttäjän näkymää ei erotella; ajastettu näkyminen toimii vain käyttäjän näkymässä.
+- Uudet testit: muutoslogiikka ja muistutukset (13), tallennus (4).

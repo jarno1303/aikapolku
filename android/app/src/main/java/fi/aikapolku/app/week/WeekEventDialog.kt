@@ -291,7 +291,7 @@ internal fun WeekEventDialog(
 }
 
 @Composable
-private fun Stepper(description: String, symbol: String, onClick: () -> Unit) {
+internal fun Stepper(description: String, symbol: String, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
         modifier = Modifier.size(48.dp).semantics { contentDescription = description },

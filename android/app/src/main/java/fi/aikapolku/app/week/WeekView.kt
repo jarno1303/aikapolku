@@ -42,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
 import fi.aikapolku.app.data.AckStore
+import fi.aikapolku.app.data.ChangeStore
+import fi.aikapolku.app.data.DayChanges
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.EventKind
 import fi.aikapolku.app.data.WeekEvent
@@ -63,6 +65,8 @@ internal fun WeekView(programs: List<DayProgram>, canEdit: Boolean) {
     fun update(next: WeekPlan) {
         plan = next
         store.save(next)
+        // Poistetun tapahtuman päivän muutoskin poistuu.
+        ChangeStore(context.applicationContext).clean(today, next.events.map { it.id }.toSet())
         EventReminders.reschedule(context.applicationContext)
     }
 
@@ -181,6 +185,7 @@ internal fun WeekView(programs: List<DayProgram>, canEdit: Boolean) {
     }
 
     if (canEdit) {
+        ChangeOverview(plan, programs, today)
         AckOverview(plan, today)
     }
 
@@ -283,8 +288,17 @@ private fun AckOverview(plan: WeekPlan, today: LocalDate) {
     val acks = remember(context) { AckStore(context.applicationContext) }
     val now = remember { java.time.LocalTime.now() }
     val days = listOf(today.minusDays(1) to R.string.ack_yesterday, today to R.string.ack_today)
+    val changes = remember(plan) { ChangeStore(context.applicationContext).load() }
+    // Päivän muutokset huomioiden: perutut pois, korvatut uudella nimellä.
     val rows = days.map { (date, label) ->
-        Triple(date, label, WeekSchedule.eventsFor(plan, date).filter { it.kind == EventKind.CARD })
+        Triple(
+            date,
+            label,
+            DayChanges.entries(WeekSchedule.eventsFor(plan, date), changes, date, null)
+                .filterNot { it.cancelled }
+                .map { it.event }
+                .filter { it.kind == EventKind.CARD }
+        )
     }
     if (rows.all { it.third.isEmpty() }) return
 

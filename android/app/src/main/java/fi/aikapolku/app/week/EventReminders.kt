@@ -18,6 +18,9 @@ import fi.aikapolku.app.MainActivity
 import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardArt
 import fi.aikapolku.app.data.AckStore
+import fi.aikapolku.app.data.ChangeStore
+import fi.aikapolku.app.data.ChangeType
+import fi.aikapolku.app.data.EventChange
 import fi.aikapolku.app.data.EventKind
 import fi.aikapolku.app.data.ProfileStore
 import fi.aikapolku.app.data.ProgramStore
@@ -52,6 +55,9 @@ internal object EventReminders {
     private fun plans(c: Context): Map<String, WeekPlan> =
         ProfileStore.list(c).associate { it.id to WeekStore(c, it.id).load() }
 
+    private fun changes(c: Context): Map<String, List<EventChange>> =
+        ProfileStore.list(c).associate { it.id to ChangeStore(c, it.id).load() }
+
     private fun alarmIntent(c: Context, at: LocalDateTime?): PendingIntent =
         PendingIntent.getBroadcast(
             c, ALARM_REQUEST,
@@ -62,14 +68,17 @@ internal object EventReminders {
     /** Sovellus käynnistyy: vanhat kuittaukset pois ja ilmoitukset ajan tasalle. */
     fun onAppStart(c: Context) {
         val today = LocalDate.now()
-        ProfileStore.list(c).forEach { AckStore(c, it.id).prune(today) }
+        ProfileStore.list(c).forEach {
+            AckStore(c, it.id).prune(today)
+            ChangeStore(c, it.id).clean(today, WeekStore(c, it.id).load().events.map { e -> e.id }.toSet())
+        }
         reschedule(c)
     }
 
     /** Ajastaa seuraavan ilmoitushetken (tai perii ajastuksen, jos ilmoituksia ei ole). */
     fun reschedule(c: Context) {
         val am = c.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val next = WeekSchedule.nextReminderAt(plans(c), LocalDateTime.now())
+        val next = WeekSchedule.nextReminderAt(plans(c), LocalDateTime.now(), changes(c))
         am.cancel(alarmIntent(c, null))
         // Kanava luodaan heti, jotta se näkyy puhelimen asetuksissa jo ennen ensimmäistä muistutusta.
         createChannel(c, c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
@@ -145,7 +154,7 @@ internal object EventReminders {
         val at = atText?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() }
         if (at != null) {
             val plans = plans(c)
-            WeekSchedule.dueReminders(plans, at).forEach { show(c, it, plans.size > 1) }
+            WeekSchedule.dueReminders(plans, at, changes(c)).forEach { show(c, it, plans.size > 1) }
         }
         reschedule(c)
     }
@@ -167,12 +176,18 @@ internal object EventReminders {
             }
         }
         val profileName = ProfileStore.list(c).firstOrNull { it.id == r.profileId }?.name.orEmpty()
-        val shownTitle = if (manyProfiles && profileName.isNotBlank()) "$profileName: $title" else title
+        // Muutos kerrotaan jo otsikossa ("Muutos: Ulkoilu", "Muutos: Uinti on peruttu").
+        val changedTitle = when (r.change?.type) {
+            null -> title
+            ChangeType.CANCEL -> c.getString(R.string.change_notification_cancelled, title)
+            else -> c.getString(R.string.change_notification, title)
+        }
+        val shownTitle = if (manyProfiles && profileName.isNotBlank()) "$profileName: $changedTitle" else changedTitle
         val time = r.event.time.replace(':', '.')
-        val text = if (r.event.notifyBefore > 0) {
-            c.getString(R.string.reminder_in_minutes, r.event.notifyBefore, time)
-        } else {
-            c.getString(R.string.reminder_now, time)
+        val text = when {
+            r.change?.type == ChangeType.CANCEL -> r.change.reason.ifBlank { c.getString(R.string.change_open_hint) }
+            r.event.notifyBefore > 0 -> c.getString(R.string.reminder_in_minutes, r.event.notifyBefore, time)
+            else -> c.getString(R.string.reminder_now, time)
         }
         val id = notificationId(r)
 
@@ -196,7 +211,7 @@ internal object EventReminders {
             builder.setLargeIcon(bitmap)
             builder.setStyle(Notification.BigPictureStyle().bigPicture(bitmap).setSummaryText(text))
         }
-        if (r.event.kind == EventKind.CARD) {
+        if (r.event.kind == EventKind.CARD && r.change?.type != ChangeType.CANCEL) {
             val done = PendingIntent.getBroadcast(
                 c, id,
                 Intent(c, EventAckReceiver::class.java)

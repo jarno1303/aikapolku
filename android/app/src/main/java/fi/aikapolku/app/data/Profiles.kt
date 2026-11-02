@@ -27,9 +27,10 @@ internal object ProfileScope {
     const val TIMER_PREFS = "aikapolku_timer_preferences"
     const val WEEK = "aikapolku_week_v1"
     const val ACKS = "aikapolku_acks_v1"
+    const val CHANGES = "aikapolku_changes_v1"
 
     /** Kaikki profiilikohtaiset tiedostot. Uusi profiilikohtainen tieto lisätään tähän. */
-    val SCOPED = listOf(PROGRAMS, CARDS, RUN_PREFS, PROGRESS, TIMER_PREFS, WEEK, ACKS)
+    val SCOPED = listOf(PROGRAMS, CARDS, RUN_PREFS, PROGRESS, TIMER_PREFS, WEEK, ACKS, CHANGES)
 
     fun prefsName(base: String, profileId: String): String =
         if (profileId == DEFAULT_ID) base else "${base}__$profileId"

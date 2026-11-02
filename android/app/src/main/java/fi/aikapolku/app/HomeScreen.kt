@@ -34,6 +34,8 @@ import fi.aikapolku.app.profiles.ProfileAvatarButton
 import fi.aikapolku.app.profiles.ProfilePickerDialog
 import fi.aikapolku.app.profiles.ProfileSession
 import fi.aikapolku.app.week.TodaySection
+import fi.aikapolku.app.week.ChangeAnnouncements
+import fi.aikapolku.app.data.EventChange
 import fi.aikapolku.app.data.WeekEvent
 
 @Composable
@@ -41,7 +43,8 @@ internal fun HomeScreen(
     open: (AppPage) -> Unit,
     onOpenProgram: (WeekEvent) -> Unit = {},
     onOpenCard: (WeekEvent) -> Unit = {},
-    onOpenDay: () -> Unit = {}
+    onOpenDay: () -> Unit = {},
+    onOpenChange: (EventChange) -> Unit = {}
 ) {
     // Aloitusnäkymässä vain päivä, valikko ja toiminnot. Oikean yläkulman valikosta profiilin
     // vaihto (vain, jos profiileja on useampi) ja ohjaajan asetukset (PIN-koodin takana).
@@ -78,7 +81,9 @@ internal fun HomeScreen(
         onOpenProgram = onOpenProgram,
         onOpenCard = onOpenCard,
         onOpenDay = onOpenDay,
-        trailing = menuButton
+        trailing = menuButton,
+        // Muutokset heti päivän otsikon alle, ennen tapahtumia.
+        afterHeader = { ChangeAnnouncements(onOpenChange) }
     )
     if (!todayShown) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
@@ -91,6 +96,7 @@ internal fun HomeScreen(
             )
             menuButton()
         }
+        ChangeAnnouncements(onOpenChange)
     }
     Spacer(Modifier.height(2.dp))
     HomeCard(

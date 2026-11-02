@@ -44,7 +44,9 @@ internal data class Reminder(
     val profileId: String,
     val event: WeekEvent,
     val date: LocalDate,
-    val at: LocalDateTime
+    val at: LocalDateTime,
+    /** Päivän muutos: ilmoitus kertoo muutoksesta (peruttu, tilalle, uusi aika). */
+    val change: EventChange? = null
 )
 
 /**
@@ -128,28 +130,52 @@ internal object WeekSchedule {
 
     val NOTIFY_BEFORE_CHOICES = listOf(0, 5, 10, 15)
 
-    /** Ilmoitukset päiviltä [from] … [from] + [days] - 1 kaikista profiileista. */
-    fun reminders(plans: Map<String, WeekPlan>, from: LocalDate, days: Int): List<Reminder> =
+    /**
+     * Ilmoitukset päiviltä [from] … [from] + [days] - 1 kaikista profiileista. Päivän muutokset
+     * ([changes] profiileittain) huomioidaan: siirretty ilmoitetaan uuteen aikaan, korvattu
+     * uudella sisällöllä ja peruttu alkuperäiseen aikaan muutosilmoituksena.
+     */
+    fun reminders(
+        plans: Map<String, WeekPlan>,
+        from: LocalDate,
+        days: Int,
+        changes: Map<String, List<EventChange>> = emptyMap()
+    ): List<Reminder> =
         (0 until days).flatMap { offset ->
             val date = from.plusDays(offset.toLong())
             plans.flatMap { (profileId, plan) ->
-                eventsFor(plan, date).filter { it.notify }.map { event ->
-                    val start = date.atStartOfDay().plusMinutes(minutesOf(event.time).toLong())
-                    Reminder(profileId, event, date, start.minusMinutes(event.notifyBefore.coerceIn(0, 60).toLong()))
-                }
+                DayChanges.entries(eventsFor(plan, date), changes[profileId].orEmpty(), date, null)
+                    .filter { it.original.notify }
+                    .map { entry ->
+                        val event = entry.event.copy(notify = true, notifyBefore = entry.original.notifyBefore)
+                        val start = date.atStartOfDay().plusMinutes(minutesOf(event.time).toLong())
+                        Reminder(
+                            profileId, event, date,
+                            start.minusMinutes(event.notifyBefore.coerceIn(0, 60).toLong()),
+                            entry.change
+                        )
+                    }
             }
         }
 
     /** Seuraava ilmoitushetki [now]:n jälkeen (minuutin tarkkuudella), tai null. */
-    fun nextReminderAt(plans: Map<String, WeekPlan>, now: LocalDateTime): LocalDateTime? {
+    fun nextReminderAt(
+        plans: Map<String, WeekPlan>,
+        now: LocalDateTime,
+        changes: Map<String, List<EventChange>> = emptyMap()
+    ): LocalDateTime? {
         val minute = now.withSecond(0).withNano(0)
-        return reminders(plans, minute.toLocalDate(), 16).map { it.at }.filter { it.isAfter(minute) }.minOrNull()
+        return reminders(plans, minute.toLocalDate(), 16, changes).map { it.at }.filter { it.isAfter(minute) }.minOrNull()
     }
 
     /** Ilmoitukset, jotka kuuluvat hetkelle [at]. Ennakkoilmoitus voi osua edelliselle päivälle. */
-    fun dueReminders(plans: Map<String, WeekPlan>, at: LocalDateTime): List<Reminder> {
+    fun dueReminders(
+        plans: Map<String, WeekPlan>,
+        at: LocalDateTime,
+        changes: Map<String, List<EventChange>> = emptyMap()
+    ): List<Reminder> {
         val minute = at.withSecond(0).withNano(0)
-        return reminders(plans, minute.toLocalDate(), 2).filter { it.at == minute }
+        return reminders(plans, minute.toLocalDate(), 2, changes).filter { it.at == minute }
     }
 
     /** Poistaa tapahtumat, joiden päiväohjelmaa ei enää ole. */

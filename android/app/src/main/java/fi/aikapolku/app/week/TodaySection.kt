@@ -42,6 +42,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.style.TextDecoration
+import fi.aikapolku.app.caregiver.AppAction
+import fi.aikapolku.app.caregiver.LocalCaregiver
+import fi.aikapolku.app.data.ChangeStore
+import fi.aikapolku.app.data.DayChanges
+import fi.aikapolku.app.data.DayEntry
+import fi.aikapolku.app.data.EventChange
+import fi.aikapolku.app.ui.ChangeSymbol
+import fi.aikapolku.app.ui.OverflowMenu
+import fi.aikapolku.app.ui.SegmentedChoice
+import java.time.LocalDateTime
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.ProgramStore
 import fi.aikapolku.app.data.AckStore
@@ -53,47 +68,61 @@ import java.time.LocalDate
 import java.time.LocalTime
 import kotlinx.coroutines.delay
 
+/** Päivän rivi näyttämistä varten: muutosten jälkeinen tapahtuma ja sen muutos. */
+internal class DayItem(val resolved: ResolvedEvent, val entry: DayEntry, val original: ResolvedEvent) {
+    val event: WeekEvent get() = entry.event
+    val change: EventChange? get() = entry.change
+    val cancelled: Boolean get() = entry.cancelled
+}
+
 /** Päivän tapahtumat ja niiden tila (tehty, korostettu) kellonajan mukaan päivittyen. */
 private class TodayState(
     val date: LocalDate,
-    val events: List<ResolvedEvent>,
+    val items: List<DayItem>,
     val ackTimes: Map<String, String?>,
     val current: Int
 ) {
-    val doneCount: Int get() = ackTimes.values.count { it != null }
+    private val active get() = items.filterNot { it.cancelled }
+    val doneCount: Int get() = active.count { ackTimes[it.event.id] != null }
+    val total: Int get() = active.size
 }
 
+/**
+ * [caregiverView] = ohjaajan näkymä: kaikki muutokset heti. Muuten vain käyttäjälle jo
+ * näkyvät muutokset (ks. ChangeReveal). [refresh] lataa tiedot uudelleen muutoksen jälkeen.
+ */
 @Composable
-private fun rememberTodayState(): TodayState? {
+private fun rememberTodayState(dayOffset: Int = 0, caregiverView: Boolean = false, refresh: Int = 0): TodayState? {
     val context = LocalContext.current
-    val plan = remember(context) { WeekStore(context.applicationContext).load() }
-    val programs = remember(context) { ProgramStore(context.applicationContext).load() }
+    val plan = remember(context, refresh) { WeekStore(context.applicationContext).load() }
+    val programs = remember(context, refresh) { ProgramStore(context.applicationContext).load() }
+    val changes = remember(context, refresh) { ChangeStore(context.applicationContext).load() }
     val acks = remember(context) { AckStore(context.applicationContext) }
-    var now by remember { mutableStateOf(LocalTime.now()) }
-    var date by remember { mutableStateOf(LocalDate.now()) }
+    var now by remember { mutableStateOf(LocalDateTime.now()) }
+    val date = now.toLocalDate().plusDays(dayOffset.toLong())
 
-    val events = WeekSchedule.eventsFor(plan, date)
-        .map { resolveEvent(it, programs) }
-        .filter { it.title.isNotBlank() }
-    if (events.isEmpty()) return null
+    val items = DayChanges.entries(WeekSchedule.eventsFor(plan, date), changes, date, if (caregiverView) null else now)
+        .map { DayItem(resolveEvent(it.event, programs), it, resolveEvent(it.original, programs)) }
+        .filter { it.resolved.title.isNotBlank() }
+    if (items.isEmpty()) return null
     // Korostus siirtyy ajan kuluessa (puolen minuutin välein). Vain kun listassa on jotain.
     LaunchedEffect(Unit) {
         while (true) {
             delay(30_000L)
-            now = LocalTime.now()
-            date = LocalDate.now()
+            now = LocalDateTime.now()
         }
     }
-    // Kuitatut (tehdyt) eivät enää ole korostettuina; korostus siirtyy seuraavaan tekemättömään.
-    val ackTimes = events.associate { it.event.id to acks.ackTime(date, it.event.id) }
-    val done = ackTimes.filterValues { it != null }.keys
-    return TodayState(date, events, ackTimes, WeekSchedule.currentIndex(events.map { it.event }, now, done))
+    // Kuitatut (tehdyt) ja perutut eivät ole korostettuina; korostus siirtyy seuraavaan.
+    val ackTimes = items.associate { it.event.id to acks.ackTime(date, it.event.id) }
+    val skipped = ackTimes.filterValues { it != null }.keys + items.filter { it.cancelled }.map { it.event.id }
+    val current = if (dayOffset == 0) WeekSchedule.currentIndex(items.map { it.event }, now.toLocalTime(), skipped) else -1
+    return TodayState(date, items, ackTimes, current)
 }
 
 /**
  * Aloitusnäkymän "Tänään": aina tiivis, oli päivässä tapahtumia kuinka monta tahansa.
- * Tehdyt yhtenä rivinä, korostettu "nyt"-tapahtuma, kaksi seuraavaa ja linkki koko päivään.
- * Väliin jääneet näkyvät vain koko päivän näkymässä ja ohjaajan kuittauksissa.
+ * Korostettu "nyt"-tapahtuma, kaksi seuraavaa ja linkki koko päivään. Tehdyt, perutut ja
+ * väliin jääneet näkyvät vain koko päivän näkymässä. [afterHeader] = muutosrivit otsikon alle.
  */
 @Composable
 internal fun TodaySection(
@@ -101,18 +130,19 @@ internal fun TodaySection(
     onOpenCard: (WeekEvent) -> Unit,
     onOpenDay: () -> Unit = {},
     /** Otsikkorivin oikeaan reunaan (esim. profiilikuva). */
-    trailing: @Composable () -> Unit = {}
+    trailing: @Composable () -> Unit = {},
+    afterHeader: @Composable () -> Unit = {}
 ): Boolean {
     val state = rememberTodayState() ?: return false
-    fun open(item: ResolvedEvent) {
-        if (item.isProgram) onOpenProgram(item.event) else onOpenCard(item.event)
+    fun open(item: DayItem) {
+        if (item.resolved.isProgram) onOpenProgram(item.event) else onOpenCard(item.event)
     }
 
     // Otsikko ja yhteenveto yhdellä rivillä; koko rivi avaa koko päivän. Kun kaikki on tehty,
     // osio on pelkkä tämä rivi.
     val title = stringResource(R.string.today_title, dayName(state.date.dayOfWeek.value))
-    val progress = stringResource(R.string.today_progress, state.doneCount, state.events.size)
-    val a11y = title + ", " + stringResource(R.string.today_progress_a11y, state.doneCount, state.events.size)
+    val progress = stringResource(R.string.today_progress, state.doneCount, state.total)
+    val a11y = title + ", " + stringResource(R.string.today_progress_a11y, state.doneCount, state.total)
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
     Surface(
         onClick = onOpenDay,
@@ -141,39 +171,114 @@ internal fun TodaySection(
     }
     trailing()
     }
-    WeekSchedule.compactIndices(state.events.map { it.event }, state.current, state.ackTimes.filterValues { it != null }.keys)
+    afterHeader()
+    val skipped = state.ackTimes.filterValues { it != null }.keys + state.items.filter { it.cancelled }.map { it.event.id }
+    WeekSchedule.compactIndices(state.items.map { it.event }, state.current, skipped)
         .forEach { index ->
-            TodayRow(state.events[index], isCurrent = index == state.current, isPast = false, doneAt = null) {
-                open(state.events[index])
-            }
+            val item = state.items[index]
+            TodayRow(item, isCurrent = index == state.current, isPast = false, doneAt = null) { open(item) }
         }
     return true
 }
 
-/** Koko päivän tapahtumat omana näkymänään: tehdyt, väliin jääneet, nyt ja tulevat. */
+/**
+ * Koko päivän tapahtumat omana näkymänään: tehdyt, perutut, väliin jääneet, nyt ja tulevat.
+ * Ohjaaja voi tehdä tämän päivän tai huomisen tapahtumaan muutoksen (⋮).
+ */
 @Composable
-internal fun DayScreen(onOpenProgram: (WeekEvent) -> Unit, onOpenCard: (WeekEvent) -> Unit) {
-    val state = rememberTodayState()
+internal fun DayScreen(
+    onOpenProgram: (WeekEvent) -> Unit,
+    onOpenCard: (WeekEvent) -> Unit,
+    onOpenChange: (EventChange) -> Unit = {}
+) {
+    val context = LocalContext.current
+    val caregiver = LocalCaregiver.current
+    val canChange = caregiver.allows(AppAction.EDIT_PROGRAMS)
+    // Ohjaaja näkee muutokset heti; käyttäjä vasta valitulla hetkellä.
+    val caregiverView = caregiver.lockEnabled && !caregiver.isLocked
+    var chosenOffset by rememberSaveable { mutableIntStateOf(0) }
+    var refresh by remember { mutableIntStateOf(0) }
+    var editing by remember { mutableStateOf<DayItem?>(null) }
+    // Huominen vain ohjaajalle; lukittuna aina tämä päivä.
+    val dayOffset = if (canChange) chosenOffset else 0
+
+    if (canChange) {
+        SegmentedChoice(
+            options = listOf(stringResource(R.string.change_day_today), stringResource(R.string.change_day_tomorrow)),
+            selected = dayOffset,
+            onSelect = { chosenOffset = it }
+        )
+    }
+    val state = rememberTodayState(dayOffset, caregiverView || dayOffset > 0, refresh)
+    val programs = remember(context, refresh) { ProgramStore(context.applicationContext).load() }
     // Otsikko (päivän nimi) on yläpalkissa.
     if (state == null) {
         Text(stringResource(R.string.week_no_events), color = AppColors.Muted)
         return
     }
-    state.events.forEachIndexed { index, item ->
+    val changeLabel = stringResource(R.string.change_make)
+    val editLabel = stringResource(R.string.change_edit)
+    val menuLabel = stringResource(R.string.muut_toiminnot)
+    state.items.forEachIndexed { index, item ->
         val doneAt = state.ackTimes[item.event.id]
         val isCurrent = index == state.current
-        val isPast = doneAt != null || (if (state.current >= 0) index < state.current else true)
-        TodayRow(item, isCurrent = isCurrent, isPast = isPast, doneAt = doneAt) {
-            if (item.isProgram) onOpenProgram(item.event) else onOpenCard(item.event)
+        val isPast = dayOffset == 0 && (item.cancelled || doneAt != null || (if (state.current >= 0) index < state.current else true))
+        TodayRow(
+            item,
+            isCurrent = isCurrent,
+            isPast = isPast,
+            doneAt = doneAt,
+            trailing = if (canChange) {
+                {
+                    OverflowMenu(
+                        contentDescription = "$menuLabel: ${item.original.title}",
+                        items = listOf((if (item.change != null) editLabel else changeLabel) to { editing = item })
+                    )
+                }
+            } else null
+        ) {
+            val change = item.change
+            when {
+                change != null && item.cancelled -> onOpenChange(change)
+                item.resolved.isProgram -> onOpenProgram(item.event)
+                else -> onOpenCard(item.event)
+            }
         }
+    }
+
+    editing?.let { item ->
+        ChangeDialog(
+            date = state.date,
+            original = item.entry.original,
+            existing = remember(item, refresh) {
+                ChangeStore(context.applicationContext).load()
+                    .firstOrNull { it.date == state.date && it.eventId == item.entry.original.id }
+            },
+            programs = programs,
+            onSaved = {
+                editing = null
+                refresh++
+            },
+            onDismiss = { editing = null }
+        )
     }
 }
 
 @Composable
-private fun TodayRow(item: ResolvedEvent, isCurrent: Boolean, isPast: Boolean, doneAt: String?, onClick: () -> Unit) {
+private fun TodayRow(
+    item: DayItem,
+    isCurrent: Boolean,
+    isPast: Boolean,
+    doneAt: String?,
+    trailing: (@Composable () -> Unit)? = null,
+    onClick: () -> Unit
+) {
     val nowLabel = stringResource(R.string.now_label)
     val doneText = doneAt?.let { stringResource(R.string.ack_done_at, it.replace(':', '.')) }
-    val a11y = item.event.time + " " + item.title + (if (isCurrent) ", $nowLabel" else "") + (doneText?.let { ", $it" } ?: "")
+    val change = item.change
+    val changeText = change?.let { changeSummary(it, item.original, item.resolved) }
+    val a11y = item.event.time + " " + item.resolved.title + (if (isCurrent) ", $nowLabel" else "") +
+        (changeText?.let { ", ${stringResource(R.string.change_title)}: $it" } ?: "") + (doneText?.let { ", $it" } ?: "")
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(18.dp),
@@ -181,11 +286,17 @@ private fun TodayRow(item: ResolvedEvent, isCurrent: Boolean, isPast: Boolean, d
         modifier = Modifier
             .fillMaxWidth()
             .alpha(if (isPast) 0.45f else 1f)
-            .then(if (isCurrent) Modifier.border(2.dp, AppColors.Teal, RoundedCornerShape(18.dp)) else Modifier)
+            .then(
+                when {
+                    isCurrent -> Modifier.border(2.dp, AppColors.Teal, RoundedCornerShape(18.dp))
+                    change != null -> Modifier.border(2.dp, AppColors.ChangeFill, RoundedCornerShape(18.dp))
+                    else -> Modifier
+                }
+            )
             .semantics(mergeDescendants = true) { contentDescription = a11y }
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = if (isCurrent) 12.dp else 8.dp),
+            modifier = Modifier.padding(start = 12.dp, end = if (trailing != null) 0.dp else 12.dp, top = if (isCurrent) 12.dp else 8.dp, bottom = if (isCurrent) 12.dp else 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -196,19 +307,27 @@ private fun TodayRow(item: ResolvedEvent, isCurrent: Boolean, isPast: Boolean, d
                 fontWeight = FontWeight.Bold,
                 color = if (isCurrent) AppColors.Teal else AppColors.Muted
             )
-            EventImage(
-                item,
-                Modifier.size(if (isCurrent) 64.dp else 44.dp).clip(RoundedCornerShape(if (isCurrent) 16.dp else 12.dp))
-            )
+            Box {
+                EventImage(
+                    item.resolved,
+                    Modifier.size(if (isCurrent) 64.dp else 44.dp).clip(RoundedCornerShape(if (isCurrent) 16.dp else 12.dp))
+                )
+                // Muutosmerkki kuvan kulmassa: sama merkki kuin muutosnäkymässä.
+                if (change != null) ChangeSymbol(Modifier.size(22.dp).align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp))
+            }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    item.title,
+                    item.resolved.title,
                     fontSize = if (isCurrent) 20.sp else 17.sp,
                     fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
                     color = AppColors.Ink,
+                    textDecoration = if (item.cancelled) TextDecoration.LineThrough else null,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+                if (changeText != null && !item.cancelled) {
+                    Text(changeText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Change, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
                 if (doneText != null) {
                     Text(doneText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal)
                 } else if (isCurrent) {
@@ -224,6 +343,7 @@ private fun TodayRow(item: ResolvedEvent, isCurrent: Boolean, isPast: Boolean, d
                     }
                 }
             }
+            trailing?.invoke()
         }
     }
 }

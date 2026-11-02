@@ -22,4 +22,9 @@ internal object AppColors {
     val Border = Color(0xFFCBD5E1)
     /** Ajan kuluminen / ajastimen rengas. */
     val Coral = Color(0xFFC2413A)
+
+    /** Muutos: lämmin oranssi, erottuu tavallisten tapahtumien turkoosista. */
+    val Change = Color(0xFFC2410C)
+    val ChangeFill = Color(0xFFEA580C)
+    val ChangeSoft = Color(0xFFFFEDD5)
 }

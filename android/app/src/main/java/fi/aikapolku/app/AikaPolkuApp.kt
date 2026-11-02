@@ -28,6 +28,10 @@ import fi.aikapolku.app.timer.BackgroundTimerPort
 import fi.aikapolku.app.timer.Tick
 import fi.aikapolku.app.timer.TimerScreen
 import fi.aikapolku.app.timer.TimerReturnRow
+import fi.aikapolku.app.week.ChangeScreen
+import fi.aikapolku.app.data.ChangeStore
+import fi.aikapolku.app.data.ChangeType
+import fi.aikapolku.app.data.DayChanges
 import fi.aikapolku.app.timer.playCompletionSound
 import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.ui.AppTopBar
@@ -49,7 +53,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Sovelluksen näkymät. */
-internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD, DAY }
+internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD, DAY, CHANGE }
 
 /** Sovelluksen navigointi ja Ensin–Sitten-kulun yhteinen tila. */
 @Composable
@@ -72,6 +76,7 @@ internal fun AikaPolkuApp() {
     var eventCardPhoto by rememberSaveable { mutableStateOf("") }
     var eventCardId by rememberSaveable { mutableStateOf("") }
     var eventCardDate by rememberSaveable { mutableStateOf("") }
+    var changeId by rememberSaveable { mutableStateOf("") }
 
     // Ilmoituksesta avattu tapahtuma avataan, jos se kuuluu nykyiseen profiiliin.
     val launch = EventLaunch.pending.value
@@ -82,9 +87,17 @@ internal fun AikaPolkuApp() {
             page = AppPage.HOME
             return@LaunchedEffect
         }
-        val event = WeekStore(context).load().events.firstOrNull { it.id == request.eventId }
+        val original = WeekStore(context).load().events.firstOrNull { it.id == request.eventId }
+        // Päivän muutos: kuittaamaton muutos näytetään ensin, muuten avataan voimassa oleva tapahtuma.
+        val change = ChangeStore(context).load().firstOrNull { it.date == request.date && it.eventId == request.eventId }
+        val event = if (original != null && change != null) DayChanges.effective(original, change) else original
         when {
             event == null -> page = AppPage.HOME
+            change != null && (change.type == ChangeType.CANCEL ||
+                AckStore(context).ackTime(change.date, change.ackId) == null) -> {
+                changeId = change.id
+                page = AppPage.CHANGE
+            }
             event.kind == EventKind.PROGRAM -> {
                 pendingProgramId = event.programId
                 pendingEventId = event.id
@@ -207,6 +220,7 @@ internal fun AikaPolkuApp() {
                         AppPage.CAREGIVER -> stringResource(R.string.caregiver_settings_title)
                         AppPage.DAY -> dayName(LocalDate.now().dayOfWeek.value)
                         AppPage.EVENT_CARD -> dayName(LocalDate.now().dayOfWeek.value)
+                        AppPage.CHANGE -> stringResource(R.string.change_title)
                         AppPage.HOME -> ""
                     },
                     onBack = { (backOverride.value ?: goBack)() },
@@ -245,13 +259,23 @@ internal fun AikaPolkuApp() {
                     },
                     onOpenProgram = { openProgramEvent(it) },
                     onOpenCard = { openCardEvent(it) },
-                    onOpenDay = { page = AppPage.DAY }
+                    onOpenDay = { page = AppPage.DAY },
+                    onOpenChange = {
+                        changeId = it.id
+                        page = AppPage.CHANGE
+                    }
                 )
 
                 AppPage.DAY -> DayScreen(
                     onOpenProgram = { openProgramEvent(it) },
-                    onOpenCard = { openCardEvent(it) }
+                    onOpenCard = { openCardEvent(it) },
+                    onOpenChange = {
+                        changeId = it.id
+                        page = AppPage.CHANGE
+                    }
                 )
+
+                AppPage.CHANGE -> ChangeScreen(changeId) { page = AppPage.HOME }
 
                 AppPage.EVENT_CARD -> EventCardScreen(
                     name = eventCardName,
