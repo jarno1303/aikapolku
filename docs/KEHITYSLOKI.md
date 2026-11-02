@@ -400,3 +400,6 @@
 - Väliaika: kun edellinen on tehty eikä seuraava ole vielä alkanut (myös ennen päivän ensimmäistä tapahtumaa), NYT-kortissa on väliajan kortti (oletus Odota; ohjaaja voi valita Lepo tai Tauko Asiakkaan näkymä -asetuksista) ja "SEURAAVAKSI KLO 12.00" sekä seuraava tapahtuma pienenä. Ei isoa Aloita-painiketta.
 - Kestävä tapahtuma (viikko-ohjelman korttitapahtuman valinta "Kestää seuraavaan tapahtumaan asti", esim. koulu): ei kuitata, NYT-kortissa ilman painiketta ja aikavälinä "klo 8.00–14.00", ei Valmis-painiketta kortissa eikä ilmoituksessa, ei mukana tehty/kaikki-laskurissa.
 - Uudet testit: NYT-kortin laji, kestävän loppu, väliajan oletus (3), kestävän tallennus (1).
+
+## Ensin–Sitten asiakkaalle yhdellä painalluksella
+- Asiakkaan NYT-kortin Aloita käynnistää ohjaajan valmisteleman Ensin–Sitten-ajan heti ja avaa kellotaulun aika jo käynnissä (ennen: kaksi painallusta). Tauolla tai jo käynnistetty kulku vain avataan (Jatka). Ohjaaja voi edelleen käynnistää ajan itse ennen roolin vaihtoa.

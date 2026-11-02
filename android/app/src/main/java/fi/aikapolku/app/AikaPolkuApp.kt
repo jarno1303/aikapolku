@@ -340,7 +340,14 @@ internal fun AikaPolkuApp() {
                         timer.running -> ClientActivity.Timer(stringResource(R.string.timer_title))
                         else -> null
                     },
-                    onOpenActivity = { page = AppPage.TIMER }
+                    // Asiakkaan yksi painallus: valmisteltu Ensin–Sitten-aika käynnistyy heti ja
+                    // kellotaulu aukeaa (aika jo käynnissä). Kesken oleva vain avataan.
+                    onOpenActivity = {
+                        if (timer.activeTask.isNotBlank() && !timer.running && timer.remaining > 0L && !timer.inProgress) {
+                            timer.startPause(context.getString(R.string.timer_title)) { playFirstVoice() }
+                        }
+                        page = AppPage.TIMER
+                    }
                 )
 
                 AppPage.DAY -> DayScreen(
