@@ -206,7 +206,7 @@ internal fun DayScreen(
     val caregiver = LocalCaregiver.current
     val canChange = caregiver.allows(AppAction.EDIT_PROGRAMS)
     // Ohjaaja näkee muutokset heti; käyttäjä vasta valitulla hetkellä.
-    val caregiverView = caregiver.lockEnabled && !caregiver.isLocked
+    val caregiverView = caregiver.isCaregiver
     var chosenOffset by rememberSaveable { mutableIntStateOf(0) }
     // Huominen vain ohjaajalle; lukittuna aina tämä päivä.
     val dayOffset = if (canChange) chosenOffset else 0

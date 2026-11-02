@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.MainActivity
 import fi.aikapolku.app.R
 import fi.aikapolku.app.ui.AppColors
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import fi.aikapolku.app.profiles.ProfilesSettingsCard
 import fi.aikapolku.app.week.NotificationStatusCard
 import fi.aikapolku.app.backup.BackupSettingsCard
@@ -37,6 +39,8 @@ import fi.aikapolku.app.backup.BackupSettingsCard
 internal fun CaregiverSettingsScreen() {
     val caregiver = LocalCaregiver.current
     var confirmDisable by remember { mutableStateOf(false) }
+
+    RoleSettingsCard()
 
     ProfilesSettingsCard()
 
@@ -131,5 +135,32 @@ internal fun CaregiverSettingsScreen() {
                 TextButton(onClick = { confirmDisable = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
+    }
+}
+
+/** Roolit: testitilan vapaa Asiakas / Ohjaaja -vaihto. */
+@Composable
+private fun RoleSettingsCard() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val label = stringResource(R.string.role_test_switch)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.role_settings_title), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(label, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.role_test_switch_info), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                androidx.compose.material3.Switch(
+                    checked = RoleSession.testMode,
+                    onCheckedChange = { RoleSession.setTestMode(context, it) },
+                    modifier = Modifier.semantics { contentDescription = label }
+                )
+            }
+        }
     }
 }

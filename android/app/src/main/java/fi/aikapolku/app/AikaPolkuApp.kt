@@ -80,6 +80,7 @@ internal fun AikaPolkuApp() {
     var eventCardId by rememberSaveable { mutableStateOf("") }
     var eventCardDate by rememberSaveable { mutableStateOf("") }
     var changeId by rememberSaveable { mutableStateOf("") }
+    var programsWeek by rememberSaveable { mutableStateOf(false) }
     // Pikamuutos: valmiiksi valittu päivä ja tapahtuma (koko päivän näkymän ⋮-valikosta).
     var quickDayOffset by rememberSaveable { mutableIntStateOf(0) }
     var quickEventId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -128,7 +129,16 @@ internal fun AikaPolkuApp() {
     // Sähköpostin liitteestä avattu vientitiedosto: tuonti on ohjaajan toiminto (PIN).
     val importUri = ImportLaunch.pending.value
     LaunchedEffect(importUri) {
-        if (importUri != null) caregiver.run(AppAction.SETTINGS) { page = AppPage.CAREGIVER }
+        if (importUri != null) caregiver.run(AppAction.SETTINGS) {
+            fi.aikapolku.app.caregiver.RoleSession.toCaregiver()
+            page = AppPage.CAREGIVER
+        }
+    }
+
+    // Asiakkaaksi vaihdettaessa ohjaajan näkymistä palataan aloitukseen.
+    val isCaregiver = caregiver.isCaregiver
+    LaunchedEffect(isCaregiver) {
+        if (!isCaregiver && (page == AppPage.CAREGIVER || page == AppPage.QUICK_CHANGE)) page = AppPage.HOME
     }
 
     // Valinnat tallennetaan aina niiden muuttuessa.
@@ -246,7 +256,7 @@ internal fun AikaPolkuApp() {
                     },
                     onBack = { (backOverride.value ?: goBack)() },
                     // Lukko aina samassa paikassa; ohjaajan asetuksissa lukko on jo auki.
-                    showLock = caregiver.lockEnabled && caregiver.isLocked && page != AppPage.CAREGIVER,
+                    showLock = caregiver.isLocked && !caregiver.testMode && page != AppPage.CAREGIVER,
                     onUnlock = { caregiver.unlock() },
                     action = topBarAction.value
                 )
@@ -306,6 +316,10 @@ internal fun AikaPolkuApp() {
                         quickEventId = id
                         quickReturn = AppPage.HOME
                         page = AppPage.QUICK_CHANGE
+                    },
+                    onOpenWeek = {
+                        programsWeek = true
+                        page = AppPage.PROGRAMS
                     }
                 )
 
@@ -425,6 +439,7 @@ internal fun AikaPolkuApp() {
                 )
 
                 AppPage.PROGRAMS -> ProgramsScreen(
+                    initialWeekTab = programsWeek.also { programsWeek = false },
                     startProgramId = pendingProgramId,
                     startEventId = pendingEventId,
                     startEventDate = pendingEventDate,

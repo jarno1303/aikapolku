@@ -583,4 +583,26 @@
     <string name="change_summary_step_cancel">%1$s: %2$s on peruttu</string>
     <string name="change_summary_step_replace">%1$s: %2$s → %3$s</string>
     <string name="change_summary_step_replace_short">%1$s: tilalla %2$s</string>
+    <string name="role_caregiver_bar">OHJAAJAN TILA</string>
+    <string name="role_client_name">Asiakas: %1$s</string>
+    <string name="role_to_client">Asiakkaaksi</string>
+    <string name="role_to_caregiver">Ohjaajaksi</string>
+    <string name="role_test_client">Testitila · asiakkaan näkymä</string>
+    <string name="role_preview">Esikatselu: asiakkaan näkymä</string>
+    <string name="role_back_caregiver">Palaa ohjaajaksi</string>
+    <string name="role_settings_title">Roolit</string>
+    <string name="role_test_switch">Testitila: roolin vaihto ilman PIN-koodia</string>
+    <string name="role_test_switch_info">Yläreunassa on aina Asiakas / Ohjaaja -vaihto. Kytke pois, kun sovellus annetaan asiakkaan käyttöön; silloin ohjaajaksi siirrytään PIN-koodilla (jos lukitus on käytössä).</string>
+    <string name="menu_caregiver_mode">Ohjaajan tila</string>
+    <string name="caregiver_tools">Ohjaajan työkalut</string>
+    <string name="home_week">Viikko-ohjelma</string>
+    <string name="home_week_info">Toistuvat tapahtumat ja muistutukset</string>
+    <string name="home_programs">Päiväohjelmat</string>
+    <string name="home_programs_info">Tee ja muokkaa ohjelmia</string>
+    <string name="home_cards">Omat kortit</string>
+    <string name="home_cards_info">Kuvat, nimet ja ajankohdat</string>
+    <string name="home_settings">Asetukset</string>
+    <string name="home_settings_info">Profiilit, lukitus, muistutukset, vienti ja tuonti</string>
+    <string name="home_view_as_client">Katso asiakkaana</string>
+    <string name="home_view_as_client_info">Näe, mitä asiakas näkee juuri nyt</string>
 </resources>

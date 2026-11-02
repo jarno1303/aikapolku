@@ -66,10 +66,17 @@ internal class CaregiverAccess(
     val disableLock: () -> Unit,
     val lockNow: () -> Unit,
     val forgotPin: () -> Unit,
-    val deviceSecure: Boolean
+    val deviceSecure: Boolean,
+    /** Ohjaajaksi: testitilassa ja ilman lukitusta heti, muuten PIN-koodilla. */
+    private val becomeCaregiver: (() -> Unit)? = null,
+    /** Testitila: Asiakas / Ohjaaja -vaihdin näkyy kaikille. */
+    val testMode: Boolean = false
 ) {
     val lockEnabled: Boolean get() = state.lockEnabled
     val isLocked: Boolean get() = state.isLocked
+    val isCaregiver: Boolean get() = state.caregiverRole
+    /** Vaatiiko suojattu toiminto PIN-koodin (lukitus käytössä eikä testitila). */
+    val pinRequired: Boolean get() = state.lockEnabled && !testMode
 
     fun allows(action: AppAction): Boolean = state.allows(action)
 
@@ -78,8 +85,8 @@ internal class CaregiverAccess(
         if (allows(action)) block() else requestUnlock(block)
     }
 
-    /** Avaa ohjaajan toiminnot (PIN-kysely), jos ne ovat lukossa. */
-    fun unlock() = requestUnlock {}
+    /** Siirtyy ohjaajan rooliin (PIN-kysely, jos lukitus on käytössä). */
+    fun unlock() = becomeCaregiver?.invoke() ?: requestUnlock {}
 }
 
 internal val LocalCaregiver = compositionLocalOf {
@@ -113,6 +120,14 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
         }
     }
     val sessionOpen = openUntil > now
+    val testMode = RoleSession.testMode
+    LaunchedEffect(Unit) { RoleSession.load(context) }
+    // PIN-avauksen aikakatkaisu palauttaa asiakkaaksi (ei testitilassa eikä ilman lukitusta).
+    val pinGuarded = enabled && !testMode
+    LaunchedEffect(sessionOpen, pinGuarded) {
+        if (pinGuarded && !sessionOpen && RoleSession.role == AppRole.CAREGIVER) RoleSession.toClient()
+    }
+    val caregiverRole = RoleSession.role == AppRole.CAREGIVER && !RoleSession.previewing && (!pinGuarded || sessionOpen)
 
     var pending by remember { mutableStateOf<(() -> Unit)?>(null) }
     var askPin by remember { mutableStateOf(false) }
@@ -146,13 +161,21 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
     }
 
     val access = CaregiverAccess(
-        state = CaregiverAccessState(enabled, sessionOpen),
+        state = CaregiverAccessState(enabled, sessionOpen, caregiverRole),
+        // Yksittäinen suojattu toiminto (esim. tauko): ilman PIN-suojaa suoraan, roolia vaihtamatta.
         requestUnlock = { block ->
-            if (!enabled || sessionOpen) block() else {
+            if (!pinGuarded || sessionOpen) block() else {
                 pending = block
                 askPin = true
             }
         },
+        becomeCaregiver = {
+            if (!pinGuarded || sessionOpen) RoleSession.toCaregiver() else {
+                pending = { RoleSession.toCaregiver() }
+                askPin = true
+            }
+        },
+        testMode = testMode,
         openSetup = { setupOpen = true },
         offerLockOnce = {
             if (!enabled && !store.lockOfferShown) {
@@ -165,19 +188,35 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
             enabled = false
             CaregiverSession.close()
         },
-        lockNow = { CaregiverSession.close() },
+        lockNow = {
+            CaregiverSession.close()
+            RoleSession.toClient()
+        },
         forgotPin = forgotPin,
         deviceSecure = deviceSecure
     )
 
     CompositionLocalProvider(LocalCaregiver provides access) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Näkyvä muistutus aina, kun ohjaajan toiminnot ovat auki.
-            val bannerVisible = enabled && sessionOpen
-            if (bannerVisible) {
-                CaregiverOpenBanner(
-                    remainingMs = (openUntil - now).coerceAtLeast(0L),
-                    onLock = { CaregiverSession.close() }
+            // Rooli näkyy aina selvästi: ohjaajalla tumma palkki, esikatselussa ja testitilassa oma palkki.
+            val bannerVisible = caregiverRole || RoleSession.previewing || testMode
+            when {
+                caregiverRole -> CaregiverRoleBanner(
+                    remainingMs = if (pinGuarded) (openUntil - now).coerceAtLeast(0L) else null,
+                    onClient = {
+                        if (pinGuarded) CaregiverSession.close()
+                        RoleSession.toClient()
+                    }
+                )
+                RoleSession.previewing -> RoleBanner(
+                    text = stringResource(R.string.role_preview),
+                    button = stringResource(R.string.role_back_caregiver),
+                    onClick = { RoleSession.endPreview() }
+                )
+                testMode -> RoleBanner(
+                    text = stringResource(R.string.role_test_client),
+                    button = stringResource(R.string.role_to_caregiver),
+                    onClick = { RoleSession.toCaregiver() }
                 )
             }
             // Palkki ottaa tilarivin tilan; sisältö ei lisää sitä uudelleen.
@@ -200,6 +239,8 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
                 onSuccess = {
                     askPin = false
                     CaregiverSession.open(SystemClock.elapsedRealtime())
+                    // PIN-koodilla avattu ohjaaja on ohjaajan roolissa avauksen ajan.
+                    RoleSession.toCaregiver()
                     val action = pending
                     pending = null
                     action?.invoke()
@@ -227,6 +268,7 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
                     } else {
                         // Käyttöönoton jälkeen lukko on heti päällä.
                         CaregiverSession.close()
+                        RoleSession.toClient()
                         info = context.getString(R.string.ohjaajan_lukitus_on_nyt_paalla)
                     }
                 },
@@ -266,35 +308,71 @@ internal fun CaregiverLockHost(content: @Composable () -> Unit) {
     }
 }
 
-/** Yläpalkki: ohjaajan toiminnot ovat auki. Näkyy kaikissa näkymissä avauksen ajan. */
+/** Ohjaajan tila: tumma palkki kaikissa näkymissä. [remainingMs] = PIN-avauksen aika (null = ei aikarajaa). */
 @Composable
-private fun CaregiverOpenBanner(remainingMs: Long, onLock: () -> Unit) {
-    val seconds = ((remainingMs + 999L) / 1000L).toInt()
-    val time = "%d:%02d".format(seconds / 60, seconds % 60)
-    Surface(color = Color(0xFFFDE68A), modifier = Modifier.fillMaxWidth()) {
+private fun CaregiverRoleBanner(remainingMs: Long?, onClient: () -> Unit) {
+    val time = remainingMs?.let {
+        val seconds = ((it + 999L) / 1000L).toInt()
+        " · %d:%02d".format(seconds / 60, seconds % 60)
+    } ?: ""
+    val context = LocalContext.current
+    val revision = fi.aikapolku.app.profiles.ProfileSession.revision
+    val client = remember(revision) { fi.aikapolku.app.data.ProfileStore.current(context).name }
+    Surface(color = RoleColors.caregiverBar, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding() // tilarivin alapuolelle
-                .heightIn(min = 48.dp)
-                .padding(start = 16.dp, end = 4.dp)
-                .semantics(mergeDescendants = true) {},
+                .statusBarsPadding()
+                .heightIn(min = 52.dp)
+                .padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(AppIcons.LockOpen, contentDescription = null, tint = Color(0xFF713F12), modifier = Modifier.size(20.dp))
-            Text(
-                stringResource(R.string.ohjaaja_auki, time),
-                modifier = Modifier.padding(start = 8.dp).weight(1f),
-                maxLines = 1,
-                color = Color(0xFF713F12),
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp
-            )
-            TextButton(onClick = onLock, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.lukitse), color = Color(0xFF713F12), fontWeight = FontWeight.Bold)
+            Icon(AppIcons.LockOpen, contentDescription = null, tint = RoleColors.caregiverAccent, modifier = Modifier.size(20.dp))
+            Column(modifier = Modifier.padding(start = 10.dp).weight(1f).semantics(mergeDescendants = true) {}) {
+                Text(
+                    stringResource(R.string.role_caregiver_bar) + time,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    maxLines = 1
+                )
+                if (client.isNotBlank()) {
+                    Text(stringResource(R.string.role_client_name, client), color = Color(0xFFCBD5E1), fontSize = 13.sp, maxLines = 1)
+                }
+            }
+            TextButton(onClick = onClient, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.role_to_client), color = RoleColors.caregiverAccent, fontWeight = FontWeight.Bold)
             }
         }
     }
+}
+
+/** Testitilan ja esikatselun palkki asiakkaan näkymässä: vaihto ohjaajaksi yhdellä napautuksella. */
+@Composable
+private fun RoleBanner(text: String, button: String, onClick: () -> Unit) {
+    Surface(color = RoleColors.clientBar, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .heightIn(min = 44.dp)
+                .padding(start = 16.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text, modifier = Modifier.weight(1f), color = RoleColors.clientInk, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            TextButton(onClick = onClick, modifier = Modifier.heightIn(min = 44.dp)) {
+                Text(button, color = RoleColors.caregiverBar, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+internal object RoleColors {
+    /** Ohjaajan tila: tumma sininen, selvästi eri kuin asiakkaan vaalea turkoosi. */
+    val caregiverBar = Color(0xFF1E293B)
+    val caregiverAccent = Color(0xFFFCD34D)
+    val clientBar = Color(0xFFE2E8F0)
+    val clientInk = Color(0xFF334155)
 }
 
 /** Pieni lukkopainike lukittujen ohjaajan toimintojen tilalle. */

@@ -76,6 +76,8 @@ private fun ProgramsTabs(selected: ProgramsTab, onSelect: (ProgramsTab) -> Unit)
 
 @Composable
 internal fun ProgramsScreen(
+    /** Ohjaajan etusivun "Viikko-ohjelma": avautuu Viikko-välilehdelle. */
+    initialWeekTab: Boolean = false,
     /** Tänään-listasta käynnistettävä päiväohjelma. */
     startProgramId: String? = null,
     /** Viikko-ohjelman tapahtuma (tunnus ja päivä), joka kuitataan, kun ohjelma viedään loppuun. */
@@ -168,7 +170,7 @@ internal fun ProgramsScreen(
         startProgram(program)
     }
 
-    var tab by rememberSaveable { mutableStateOf(ProgramsTab.PROGRAMS) }
+    var tab by rememberSaveable { mutableStateOf(if (initialWeekTab) ProgramsTab.WEEK else ProgramsTab.PROGRAMS) }
 
     var confirmDoneLeft by remember { mutableStateOf<Long?>(null) }
 
@@ -190,7 +192,7 @@ internal fun ProgramsScreen(
     // Valmis: vahinkonaputusten esto ja ohjaajan valitsema toiminta, kun aikaa on jäljellä.
     fun onDonePressed() {
         if (run.tapGuardActive()) return
-        when (run.doneGate(RunPreferences.doneMode(context), caregiverOpen = !caregiver.isLocked && caregiver.lockEnabled)) {
+        when (run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver)) {
             DoneGate.ALLOW -> if (run.next()) finishRun()
             DoneGate.CONFIRM -> confirmDoneLeft = run.timeLeft()
             DoneGate.START_TIMER -> run.startTimer()
@@ -261,7 +263,7 @@ internal fun ProgramsScreen(
                             durationMs = maxOf(runStep.minutes * 60_000L, run.remaining),
                             running = run.running,
                             displayMode = timeMode,
-                            pauseLocked = run.running && caregiver.isLocked
+                            pauseLocked = run.running && caregiver.isLocked && caregiver.pinRequired
                         )
                         StepMode.CLOCK -> RunTime.Clock(runStep.clock)
                         StepMode.MANUAL -> null
@@ -278,12 +280,12 @@ internal fun ProgramsScreen(
                     onBreak = { run.requestSupport(SupportKind.BREAK) },
                     onDone = { onDonePressed() },
                     onMore = { showRunActions = true },
-                    doneLabel = when (run.doneGate(RunPreferences.doneMode(context), caregiverOpen = !caregiver.isLocked && caregiver.lockEnabled)) {
+                    doneLabel = when (run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver)) {
                         DoneGate.START_TIMER -> stringResource(R.string.done_start_timer)
                         DoneGate.WAIT -> stringResource(R.string.done_wait, formatLeft(run.timeLeft()))
                         else -> null
                     },
-                    doneEnabled = run.doneGate(RunPreferences.doneMode(context), caregiverOpen = !caregiver.isLocked && caregiver.lockEnabled) != DoneGate.WAIT
+                    doneEnabled = run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver) != DoneGate.WAIT
                 )
             }
         } else if (view == ProgramsView.EDIT) {

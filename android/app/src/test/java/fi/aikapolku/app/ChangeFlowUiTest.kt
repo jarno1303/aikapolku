@@ -107,6 +107,10 @@ class ChangeFlowUiTest {
                 HomeScreen(open = {}, onMakeChange = { chosen = it })
             }
         }
+        // Ohjaajalla oma etusivu työkaluineen, ei asiakkaan aloituskortteja.
+        compose.onNodeWithText(t(R.string.caregiver_tools)).assertExists()
+        compose.onNodeWithText(t(R.string.home_view_as_client)).assertExists()
+        compose.onNodeWithText(t(R.string.suunnittele_kaksi_askelta)).assertDoesNotExist()
         compose.onNodeWithText(t(R.string.quick_title)).performScrollTo().performClick()
         assertEquals("Tee muutos -painike avaa pikamuutoksen alusta", null, chosen)
         compose.onNodeWithContentDescription(t(R.string.quick_title) + ": " + outdoors).performScrollTo().performClick()
@@ -201,6 +205,9 @@ class ChangeFlowUiTest {
         compose.onNodeWithContentDescription(t(R.string.quick_title) + ": " + outdoors).assertDoesNotExist()
         compose.onNodeWithText(t(R.string.quick_title)).assertDoesNotExist()
         compose.onNodeWithText(t(R.string.change_label) + " · " + t(R.string.change_day_today), substring = true).assertExists()
+        // Asiakkaalla vain oma päivä: ei ohjaajan työkaluja.
+        compose.onNodeWithText(t(R.string.caregiver_tools)).assertDoesNotExist()
+        compose.onNodeWithText(t(R.string.suunnittele_kaksi_askelta)).assertExists()
     }
 
     @Test

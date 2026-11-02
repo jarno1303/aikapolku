@@ -372,3 +372,12 @@
 - Ohjaajalle (lukko auki tai lukitus ei käytössä) jokaisella Tänään-rivillä oranssi muutosmerkki: napautus avaa pikamuutoksen suoraan tälle tapahtumalle (kortti: Mitä tilalle?, päiväohjelma: koko ohjelma tai vaihe). Nykyinen muutos on pohjana.
 - Aloitusnäkymässä Tänään-listan alla iso "Tee muutos" -painike (myös huominen ja listan ulkopuoliset tapahtumat). Lukittuna kumpikaan ei näy; valikon "Tee muutos" säilyy.
 - Automaattinen käyttöliittymätesti (ChangeFlowUiTest, 6 testiä, ajetaan skriptissä ilman puhelinta): muutosmerkki ja Tee muutos -painike näkyvät ohjaajalle ja avaavat pikamuutoksen; kortin korvaus; päiväohjelman vaiheen peruutus etukäteen ja sen ohitus suorituksessa; muutos huomiselle; lukittuna merkit piilossa ja MUUTOS-rivi näkyy; Selvä kuittaa muutoksen.
+
+## Roolit: asiakas ja ohjaaja selvästi erillään
+- Kaksi roolia: asiakas (oletus) ja ohjaaja. Asiakkaalla vain oma päivä (Tänään, muutosrivit, Ajastin, Ensin–Sitten, Päiväohjelmat); ei ohjaajan merkkejä, painikkeita eikä muokkausta – myöskään ilman PIN-lukitusta.
+- Ohjaajan tila: tumma palkki kaikissa näkymissä ("OHJAAJAN TILA", asiakkaan nimi, PIN-avauksen aika, Asiakkaaksi). Oma etusivu: Tänään muutosmerkein, Tee muutos ja Ohjaajan työkalut (Viikko-ohjelma suoraan Viikko-välilehdelle, Päiväohjelmat, Omat kortit, Asetukset, Katso asiakkaana).
+- Katso asiakkaana: asiakkaan näkymä esikatseluna, paluu ohjaajaksi ilman PIN-koodia.
+- Testitila (Ohjaajan asetukset → Roolit, oletus päällä kehitysvaiheessa): yläreunassa aina "Testitila · asiakkaan näkymä – Ohjaajaksi" ja ohjaajan palkissa Asiakkaaksi; vaihto ilman PIN-koodia, rooli säilyy taustalle siirryttäessä. Pois päältä: ohjaajaksi PIN-koodilla (jos lukitus käytössä), aikakatkaisu ja taustalle siirtyminen palauttavat asiakkaaksi.
+- Asiakkaaksi vaihdettaessa ohjaajan näkymistä palataan aloitukseen. Asiakkaan valikossa vain profiilin vaihto (jos sallittu) ja Ohjaajan tila.
+- Korjattu: valintaympyrät otsikon kohdalle (muutoksen näkyminen, vientivalinnat); Lisävalinnat-kuvaus vain suljettuna.
+- Uudet testit: roolit (5), käyttöliittymätestiin ohjaajan ja asiakkaan etusivun erot.

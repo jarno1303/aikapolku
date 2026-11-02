@@ -35,12 +35,14 @@ internal enum class AppAction(val caregiverOnly: Boolean) {
 /** Lukituksen tila yhdellä hetkellä: puhdas, testattava päätös siitä, mikä on sallittua. */
 internal class CaregiverAccessState(
     val lockEnabled: Boolean,
-    val sessionOpen: Boolean
+    val sessionOpen: Boolean,
+    /** Ohjaajan rooli. Oletus vanhan mallin mukaan: ilman lukitusta tai avattuna ohjaaja. */
+    val caregiverRole: Boolean = !lockEnabled || sessionOpen
 ) {
-    /** true, kun ohjaajan toiminnot ovat piilossa ja vaativat PIN-koodin. */
-    val isLocked: Boolean get() = lockEnabled && !sessionOpen
+    /** true = asiakkaan rooli: ohjaajan toiminnot piilossa. */
+    val isLocked: Boolean get() = !caregiverRole
 
-    fun allows(action: AppAction): Boolean = !action.caregiverOnly || !isLocked
+    fun allows(action: AppAction): Boolean = !action.caregiverOnly || caregiverRole
 }
 
 /** PIN-koodin tarkistuksen tulos. */
@@ -214,6 +216,11 @@ internal object CaregiverSession {
 
     /** Sovellus siirtyi taustalle: lukitaan, ellei kyse ole omasta valitsimesta. */
     fun onAppBackground() {
-        if (keepOnNextBackground) keepOnNextBackground = false else close()
+        if (keepOnNextBackground) {
+            keepOnNextBackground = false
+        } else {
+            close()
+            RoleSession.onBackgroundLock()
+        }
     }
 }

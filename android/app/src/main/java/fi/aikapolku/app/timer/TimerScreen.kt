@@ -67,7 +67,7 @@ internal fun TimerScreen(
     val showReset = caregiver.allows(AppAction.RESET_TIMER)
     val showSettings = caregiver.allows(AppAction.SETTINGS)
     // Tauko vaatii lukittuna PIN-koodin; Aloita ja Jatka ovat aina vapaita.
-    val pauseLocked = running && !caregiver.allows(AppAction.PAUSE_TIMER)
+    val pauseLocked = running && !caregiver.allows(AppAction.PAUSE_TIMER) && caregiver.pinRequired
     val currentRunning by rememberUpdatedState(running)
     val startPause: () -> Unit = {
         if (pauseLocked) {

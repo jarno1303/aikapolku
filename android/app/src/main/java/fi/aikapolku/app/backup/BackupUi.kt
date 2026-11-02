@@ -352,10 +352,11 @@ private fun OptionRow(title: String, info: String, selected: Boolean, onClick: (
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 52.dp)
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.Top
     ) {
-        RadioButton(selected = selected, onClick = null)
+        RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(top = 2.dp))
         Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(title, fontSize = 16.sp)
             Text(info, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)

@@ -446,7 +446,8 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
             ) {
                 Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
                     Text((if (showMore) "▾ " else "▸ ") + stringResource(R.string.quick_more), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal)
-                    Text(stringResource(R.string.quick_more_info), fontSize = 13.sp, color = AppColors.Muted)
+                    // Kuvaus vain suljettuna; avattuna kentät kertovat saman.
+                    if (!showMore) Text(stringResource(R.string.quick_more_info), fontSize = 13.sp, color = AppColors.Muted)
                 }
             }
             if (showMore) {
@@ -475,10 +476,12 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = 52.dp)
-                            .selectable(selected = reveal == option, role = Role.RadioButton) { reveal = option },
-                        verticalAlignment = Alignment.CenterVertically
+                            .selectable(selected = reveal == option, role = Role.RadioButton) { reveal = option }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.Top
                     ) {
-                        RadioButton(selected = reveal == option, onClick = null)
+                        // Valintaympyrä otsikon kohdalla, kuvaus sen alla.
+                        RadioButton(selected = reveal == option, onClick = null, modifier = Modifier.padding(top = 2.dp))
                         Column(modifier = Modifier.padding(start = 8.dp)) {
                             Text(stringResource(title), fontSize = 16.sp)
                             Text(stringResource(info), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
