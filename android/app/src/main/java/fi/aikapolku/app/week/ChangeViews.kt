@@ -46,6 +46,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
+import fi.aikapolku.app.data.ClientWeek
+import fi.aikapolku.app.data.DaySource
 import fi.aikapolku.app.data.AckStore
 import fi.aikapolku.app.data.ChangeReveal
 import fi.aikapolku.app.data.ChangeStore
@@ -102,7 +104,7 @@ private fun dayLabel(date: LocalDate): String =
 internal fun ChangeAnnouncements(onOpen: (EventChange) -> Unit): Boolean {
     val context = LocalContext.current
     val items = remember(context) {
-        val plan = WeekStore(context).load()
+        val plan = ClientWeek.load(context)
         val programs = ProgramStore(context).load()
         val acks = AckStore(context)
         DayChanges.announced(plan, ChangeStore(context).load(), LocalDateTime.now()) { acks.ackTime(it.date, it.ackId) != null }
@@ -182,7 +184,7 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
     val context = LocalContext.current
     val data = remember(changeId) {
         val change = ChangeStore(context).load().firstOrNull { it.id == changeId }
-        val original = change?.let { c -> WeekStore(context).load().events.firstOrNull { it.id == c.eventId } }
+        val original = change?.let { c -> ClientWeek.load(context).event(c.eventId) }
         val programs = ProgramStore(context).load()
         if (change == null || original == null) null
         else Triple(change, resolveEvent(original, programs), resolveEvent(DayChanges.effective(original, change), programs))
@@ -327,13 +329,13 @@ private fun ChangeView(
 
 /** Ohjaajalle: tämän päivän ja huomisen muutokset, milloin ne näkyvät ja onko ne nähty. */
 @Composable
-internal fun ChangeOverview(plan: WeekPlan, programs: List<DayProgram>, today: LocalDate) {
+internal fun ChangeOverview(plan: DaySource, programs: List<DayProgram>, today: LocalDate) {
     val context = LocalContext.current
     val rows = remember(plan) {
         val changes = ChangeStore(context).load()
         val acks = AckStore(context)
         listOf(today, today.plusDays(1)).flatMap { date ->
-            WeekSchedule.eventsFor(plan, date).flatMap { e ->
+            plan.eventsFor(date).flatMap { e ->
                 changes.filter { it.date == date && it.eventId == e.id }.sortedBy { it.isStep }.map { c ->
                     ChangeInfo(c, e, DayChanges.revealAt(c, e), acks.ackTime(date, c.ackId))
                 }

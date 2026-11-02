@@ -17,6 +17,8 @@ import androidx.compose.runtime.mutableStateOf
 import fi.aikapolku.app.MainActivity
 import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardArt
+import fi.aikapolku.app.data.ClientWeek
+import fi.aikapolku.app.data.DaySource
 import fi.aikapolku.app.data.AckStore
 import fi.aikapolku.app.data.ChangeStore
 import fi.aikapolku.app.data.ChangeType
@@ -52,8 +54,9 @@ internal object EventReminders {
     const val EXTRA_DATE = "event_date"
     const val EXTRA_NOTIFICATION = "notification_id"
 
-    private fun plans(c: Context): Map<String, WeekPlan> =
-        ProfileStore.list(c).associate { it.id to WeekStore(c, it.id).load() }
+    /** Asiakkaiden koko päivät (omat kohdat ja ryhmien rungot). */
+    private fun plans(c: Context): Map<String, DaySource> =
+        ProfileStore.list(c).associate { it.id to ClientWeek.load(c, it.id) }
 
     private fun changes(c: Context): Map<String, List<EventChange>> =
         ProfileStore.list(c).associate { it.id to ChangeStore(c, it.id).load() }
@@ -70,7 +73,7 @@ internal object EventReminders {
         val today = LocalDate.now()
         ProfileStore.list(c).forEach {
             AckStore(c, it.id).prune(today)
-            ChangeStore(c, it.id).clean(today, WeekStore(c, it.id).load().events.map { e -> e.id }.toSet())
+            ChangeStore(c, it.id).clean(today, ClientWeek.load(c, it.id).eventIds())
         }
         reschedule(c)
     }

@@ -50,6 +50,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.style.TextDecoration
 import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.LocalCaregiver
+import fi.aikapolku.app.data.ClientWeek
+import fi.aikapolku.app.data.DaySource
 import fi.aikapolku.app.data.ChangeStore
 import fi.aikapolku.app.data.DayChanges
 import fi.aikapolku.app.data.DayEntry
@@ -96,14 +98,15 @@ internal class TodayState(
 @Composable
 internal fun rememberTodayState(dayOffset: Int = 0, caregiverView: Boolean = false, refresh: Int = 0): TodayState? {
     val context = LocalContext.current
-    val plan = remember(context, refresh) { WeekStore(context.applicationContext).load() }
+    // Asiakkaan koko päivä: omat kohdat ja ryhmien rungot (ks. ClientWeek).
+    val plan = remember(context, refresh) { ClientWeek.load(context.applicationContext) }
     val programs = remember(context, refresh) { ProgramStore(context.applicationContext).load() }
     val changes = remember(context, refresh) { ChangeStore(context.applicationContext).load() }
     val acks = remember(context) { AckStore(context.applicationContext) }
     var now by remember { mutableStateOf(LocalDateTime.now()) }
     val date = now.toLocalDate().plusDays(dayOffset.toLong())
 
-    val items = DayChanges.entries(WeekSchedule.eventsFor(plan, date), changes, date, if (caregiverView) null else now)
+    val items = DayChanges.entries(plan.eventsFor(date), changes, date, if (caregiverView) null else now)
         .map { DayItem(resolveEvent(it.event, programs), it, resolveEvent(it.original, programs)) }
         .filter { it.resolved.title.isNotBlank() }
     if (items.isEmpty()) return null

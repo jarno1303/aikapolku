@@ -41,6 +41,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
+import fi.aikapolku.app.data.ClientWeek
+import fi.aikapolku.app.data.DaySource
 import fi.aikapolku.app.data.AckStore
 import fi.aikapolku.app.data.ChangeStore
 import fi.aikapolku.app.data.DayChanges
@@ -185,7 +187,7 @@ internal fun WeekView(programs: List<DayProgram>, canEdit: Boolean) {
     }
 
     if (canEdit) {
-        ChangeOverview(plan, programs, today)
+        ChangeOverview(remember(plan) { ClientWeek.load(context.applicationContext, own = plan) }, programs, today)
         AckOverview(plan, today)
     }
 

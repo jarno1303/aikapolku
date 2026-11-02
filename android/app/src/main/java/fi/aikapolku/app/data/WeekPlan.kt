@@ -62,7 +62,25 @@ internal data class WeekPlan(
     val events: List<WeekEvent> = emptyList(),
     val alternating: Boolean = false,
     val anchorMonday: Long = 0L
-)
+) : DaySource {
+    override fun eventsFor(date: LocalDate): List<WeekEvent> = WeekSchedule.eventsFor(this, date)
+    override fun event(id: String): WeekEvent? = events.firstOrNull { it.id == id }
+    override fun eventIds(): Set<String> = events.map { it.id }.toSet()
+}
+
+/**
+ * Päivän tapahtumien lähde. Asiakkaan oma viikko-ohjelma ([WeekPlan]) tai asiakkaan koko
+ * päivä ryhmineen ([ClientDay]). Näkymät, muistutukset ja muutokset lukevat päivän tämän
+ * kautta, joten niiden ei tarvitse tietää ryhmistä.
+ */
+internal interface DaySource {
+    /** Päivän tapahtumat kellonajan mukaan. */
+    fun eventsFor(date: LocalDate): List<WeekEvent>
+    /** Tapahtuma tunnuksella (esim. ilmoituksesta tai muutoksesta avattaessa). */
+    fun event(id: String): WeekEvent?
+    /** Kaikki tunnukset, joihin muutos voi viitata (vanhojen muutosten siivous). */
+    fun eventIds(): Set<String>
+}
 
 /** Viikko-ohjelman päättely: puhdas logiikka, testattavissa ilman laitetta. */
 internal object WeekSchedule {
@@ -141,7 +159,7 @@ internal object WeekSchedule {
      * uudella sisällöllä ja peruttu alkuperäiseen aikaan muutosilmoituksena.
      */
     fun reminders(
-        plans: Map<String, WeekPlan>,
+        plans: Map<String, DaySource>,
         from: LocalDate,
         days: Int,
         changes: Map<String, List<EventChange>> = emptyMap()
@@ -149,7 +167,7 @@ internal object WeekSchedule {
         (0 until days).flatMap { offset ->
             val date = from.plusDays(offset.toLong())
             plans.flatMap { (profileId, plan) ->
-                DayChanges.entries(eventsFor(plan, date), changes[profileId].orEmpty(), date, null)
+                DayChanges.entries(plan.eventsFor(date), changes[profileId].orEmpty(), date, null)
                     .filter { it.original.notify }
                     .map { entry ->
                         val event = entry.event.copy(notify = true, notifyBefore = entry.original.notifyBefore)
@@ -165,7 +183,7 @@ internal object WeekSchedule {
 
     /** Seuraava ilmoitushetki [now]:n jälkeen (minuutin tarkkuudella), tai null. */
     fun nextReminderAt(
-        plans: Map<String, WeekPlan>,
+        plans: Map<String, DaySource>,
         now: LocalDateTime,
         changes: Map<String, List<EventChange>> = emptyMap()
     ): LocalDateTime? {
@@ -175,7 +193,7 @@ internal object WeekSchedule {
 
     /** Ilmoitukset, jotka kuuluvat hetkelle [at]. Ennakkoilmoitus voi osua edelliselle päivälle. */
     fun dueReminders(
-        plans: Map<String, WeekPlan>,
+        plans: Map<String, DaySource>,
         at: LocalDateTime,
         changes: Map<String, List<EventChange>> = emptyMap()
     ): List<Reminder> {

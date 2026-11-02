@@ -103,7 +103,7 @@ internal fun AikaPolkuApp() {
             page = AppPage.HOME
             return@LaunchedEffect
         }
-        val original = WeekStore(context).load().events.firstOrNull { it.id == request.eventId }
+        val original = fi.aikapolku.app.data.ClientWeek.load(context).event(request.eventId)
         // Päivän muutos: kuittaamaton muutos näytetään ensin, muuten avataan voimassa oleva tapahtuma.
         val change = DayChanges.wholeChange(ChangeStore(context).load(), request.date, request.eventId)
         val event = if (original != null && change != null) DayChanges.effective(original, change) else original

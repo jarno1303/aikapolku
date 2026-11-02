@@ -52,6 +52,8 @@ import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.cards.cardsByDayTime
 import fi.aikapolku.app.cards.labelRes
+import fi.aikapolku.app.data.ClientWeek
+import fi.aikapolku.app.data.DaySource
 import fi.aikapolku.app.data.CardItem
 import fi.aikapolku.app.data.CardStore
 import fi.aikapolku.app.data.ChangeReveal
@@ -206,7 +208,7 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
     val context = LocalContext.current
     val app = context.applicationContext
     val store = remember { ChangeStore(app) }
-    val plan = remember { WeekStore(app).load() }
+    val plan = remember { ClientWeek.load(app) }
     val programs = remember { ProgramStore(app).load() }
     var refresh by remember { mutableIntStateOf(0) }
     val changes = remember(refresh) { store.load() }
@@ -218,7 +220,7 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
         mutableStateOf(
             when {
                 initialEventId == null -> Stage.EVENT
-                plan.events.firstOrNull { it.id == initialEventId }?.kind == EventKind.PROGRAM -> Stage.STEP
+                plan.event(initialEventId)?.kind == EventKind.PROGRAM -> Stage.STEP
                 else -> Stage.REPLACEMENT
             }
         )
@@ -238,7 +240,7 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
     var showMore by rememberSaveable { mutableStateOf(false) }
 
     val date = LocalDate.now().plusDays(dayOffset.toLong())
-    val events = WeekSchedule.eventsFor(plan, date)
+    val events = plan.eventsFor(date)
     val event = events.firstOrNull { it.id == eventId }
     val program = event?.takeIf { it.kind == EventKind.PROGRAM }?.let { e -> programs.firstOrNull { it.id == e.programId } }
     val step = program?.steps?.firstOrNull { it.id == stepId }

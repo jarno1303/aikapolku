@@ -107,6 +107,8 @@ internal object ProfileStore {
             context.applicationContext.deleteSharedPreferences(name)
         }
         write(context, remaining)
+        // Poistettu asiakas pois ryhmistä, poikkeuksista ja poissaoloista.
+        GroupStore(context).removeMember(id)
         if (registry(context).getString(KEY_CURRENT, null) == id) {
             registry(context).edit().putString(KEY_CURRENT, remaining.first().id).commit()
         }

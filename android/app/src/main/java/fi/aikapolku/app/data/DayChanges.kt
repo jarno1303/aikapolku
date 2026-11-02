@@ -129,14 +129,14 @@ internal object DayChanges {
 
     /** Muutokset, jotka näytetään käyttäjälle aloitusnäkymässä: näkyvät ja kuittaamattomat. */
     fun announced(
-        plan: WeekPlan,
+        plan: DaySource,
         changes: List<EventChange>,
         now: LocalDateTime,
         acked: (EventChange) -> Boolean
     ): List<Pair<EventChange, WeekEvent>> {
         val today = now.toLocalDate()
         return listOf(today, today.plusDays(1)).flatMap { date ->
-            WeekSchedule.eventsFor(plan, date).flatMap { e ->
+            plan.eventsFor(date).flatMap { e ->
                 changes.filter { it.date == date && it.eventId == e.id && isRevealed(it, e, now) && !acked(it) }
                     .sortedBy { it.isStep }
                     .map { it to e }
@@ -190,8 +190,8 @@ internal object DayChanges {
     }
 
     /** Päivän vaihemuutokset ohjelmalle: kaikki sen päivän tapahtumat, joissa ohjelma on. */
-    fun stepChangesFor(plan: WeekPlan, changes: List<EventChange>, date: LocalDate, programId: String): List<EventChange> {
-        val eventIds = WeekSchedule.eventsFor(plan, date)
+    fun stepChangesFor(plan: DaySource, changes: List<EventChange>, date: LocalDate, programId: String): List<EventChange> {
+        val eventIds = plan.eventsFor(date)
             .filter { it.kind == EventKind.PROGRAM && it.programId == programId && wholeChange(changes, date, it.id) == null }
             .map { it.id }.toSet()
         return changes.filter { it.date == date && it.isStep && it.eventId in eventIds }.distinctBy { it.stepId }

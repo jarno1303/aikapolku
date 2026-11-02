@@ -535,7 +535,7 @@ internal fun withTodayChanges(context: android.content.Context, program: DayProg
     val app = context.applicationContext
     val today = java.time.LocalDate.now()
     val changes = fi.aikapolku.app.data.DayChanges.stepChangesFor(
-        fi.aikapolku.app.data.WeekStore(app).load(),
+        fi.aikapolku.app.data.ClientWeek.load(app),
         fi.aikapolku.app.data.ChangeStore(app).load(),
         today,
         program.id
@@ -558,8 +558,8 @@ internal fun saveRunStepChange(
 ) {
     val app = context.applicationContext
     val today = java.time.LocalDate.now()
-    val plan = fi.aikapolku.app.data.WeekStore(app).load()
-    val todays = fi.aikapolku.app.data.WeekSchedule.eventsFor(plan, today)
+    val plan = fi.aikapolku.app.data.ClientWeek.load(app)
+    val todays = plan.eventsFor(today)
         .filter { it.kind == fi.aikapolku.app.data.EventKind.PROGRAM && it.programId == program.id }
     val eventId = todays.firstOrNull { it.id == runEventId }?.id ?: todays.firstOrNull()?.id ?: return
     val saved = ProgramStore(app).load().firstOrNull { it.id == program.id }?.steps?.firstOrNull { it.id == step.id }
