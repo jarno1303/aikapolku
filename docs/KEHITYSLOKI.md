@@ -279,3 +279,8 @@
 ## Tiiviimpi aloitusnäkymä
 - Tänään-osion otsikko ja yhteenveto yhdellä rivillä ("Tänään · Maanantai   ✓ 1/1 ›"), joka avaa koko päivän. Kun kaikki on tehty, osio on pelkkä tämä rivi.
 - Pienempi logo ja otsikko yläreunassa, pienemmät välit: toiminnot näkyvät ilman vieritystä.
+
+## Aloitusnäkymä ilman logoa
+- Logo, sovelluksen nimi ja iskulause poistettu aloitusnäkymästä: ylimpänä päivän tilanne ("Tänään · Maanantai ✓ 1/1 ›").
+- Profiili oikeassa yläkulmassa pienenä kuvana (vain, kun profiileja on useampi); napautus avaa vaihdon samoin säännöin.
+- Ilman päivän tapahtumia ylimpänä "Mitä haluat tehdä?" ja profiilikuva.

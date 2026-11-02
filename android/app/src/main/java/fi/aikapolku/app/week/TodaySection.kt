@@ -97,9 +97,11 @@ private fun rememberTodayState(): TodayState? {
 internal fun TodaySection(
     onOpenProgram: (WeekEvent) -> Unit,
     onOpenCard: (WeekEvent) -> Unit,
-    onOpenDay: () -> Unit = {}
-) {
-    val state = rememberTodayState() ?: return
+    onOpenDay: () -> Unit = {},
+    /** Otsikkorivin oikeaan reunaan (esim. profiilikuva). */
+    trailing: @Composable () -> Unit = {}
+): Boolean {
+    val state = rememberTodayState() ?: return false
     fun open(item: ResolvedEvent) {
         if (item.isProgram) onOpenProgram(item.event) else onOpenCard(item.event)
     }
@@ -109,12 +111,13 @@ internal fun TodaySection(
     val title = stringResource(R.string.today_title, dayName(state.date.dayOfWeek.value))
     val progress = stringResource(R.string.today_progress, state.doneCount, state.events.size)
     val a11y = title + ", " + stringResource(R.string.today_progress_a11y, state.doneCount, state.events.size)
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
     Surface(
         onClick = onOpenDay,
         shape = RoundedCornerShape(14.dp),
         color = Color.Transparent,
         modifier = Modifier
-            .fillMaxWidth()
+            .weight(1f)
             .heightIn(min = 48.dp)
             .semantics(mergeDescendants = true) {
                 heading()
@@ -134,12 +137,15 @@ internal fun TodaySection(
             Text(progress, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal)
         }
     }
+    trailing()
+    }
     WeekSchedule.compactIndices(state.events.map { it.event }, state.current, state.ackTimes.filterValues { it != null }.keys)
         .forEach { index ->
             TodayRow(state.events[index], isCurrent = index == state.current, isPast = false, doneAt = null) {
                 open(state.events[index])
             }
         }
+    return true
 }
 
 /** Koko päivän tapahtumat omana näkymänään: tehdyt, väliin jääneet, nyt ja tulevat. */

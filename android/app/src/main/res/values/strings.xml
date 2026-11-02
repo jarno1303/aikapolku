@@ -268,7 +268,6 @@
     <string name="save">Tallenna</string>
     <string name="sekuntia">SEKUNTIA</string>
     <string name="selkea_piippaus">Selkeä piippaus</string>
-    <string name="selkeytta_arkeen_askel_kerrallaan">Selkeyttä arkeen, askel kerrallaan</string>
     <string name="selva">Selvä</string>
     <string name="seuraavaksi">SEURAAVAKSI</string>
     <string name="seuraavan_vaiheen_esikatselu">Seuraavan vaiheen esikatselu</string>
@@ -395,7 +394,6 @@
     <string name="profile_self_select_on">Profiilin voi vaihtaa aloitusnäkymästä ilman PIN-koodia.</string>
     <string name="profile_self_select_off">Profiilin vaihto vaatii ohjaajan PIN-koodin.</string>
     <string name="profile_choose_title">Kuka käyttää?</string>
-    <string name="profile_switch">Vaihda</string>
     <string name="profile_switch_a11y">Profiili: %1$s. Vaihda profiilia</string>
 
     <!-- Viikko-ohjelma ja Tänään -->

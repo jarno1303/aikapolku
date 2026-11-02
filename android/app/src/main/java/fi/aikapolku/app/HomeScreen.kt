@@ -20,7 +20,7 @@ import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.ui.AppColors
 import androidx.compose.ui.platform.LocalContext
 import fi.aikapolku.app.data.ProfileStore
-import fi.aikapolku.app.profiles.CurrentProfileRow
+import fi.aikapolku.app.profiles.ProfileAvatarButton
 import fi.aikapolku.app.profiles.ProfilePickerDialog
 import fi.aikapolku.app.profiles.ProfileSession
 import fi.aikapolku.app.week.TodaySection
@@ -33,42 +33,21 @@ internal fun HomeScreen(
     onOpenCard: (WeekEvent) -> Unit = {},
     onOpenDay: () -> Unit = {}
 ) {
-    Spacer(Modifier.height(4.dp))
-
-    // Tiivis yläreuna: tila jää päivän tapahtumille ja toiminnoille.
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(R.drawable.ap_home_brand),
-            contentDescription = null,
-            modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp))
-        )
-        Column {
-            Text("AikaPolku", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink)
-            Text(
-                stringResource(R.string.selkeytta_arkeen_askel_kerrallaan),
-                fontSize = 13.sp,
-                color = AppColors.Muted,
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-            )
-        }
-    }
-
-    // Profiilit: kuka käyttää nyt. Vaihto vaatii ohjaajan PIN-koodin, ellei ohjaaja ole sallinut omaa valintaa.
+    // Ei logoa eikä iskulausetta: ylimpänä päivän tilanne ja oikeassa yläkulmassa profiili
+    // (vain, jos profiileja on useampi). Vaihto vaatii ohjaajan PIN-koodin, ellei ohjaaja
+    // ole sallinut omaa valintaa.
     val context = LocalContext.current
     val caregiverAccess = LocalCaregiver.current
     val revision = ProfileSession.revision
     val profiles = remember(revision) { ProfileStore.list(context) }
     val currentId = remember(revision) { ProfileStore.currentId(context) }
     var choosing by remember { mutableStateOf(false) }
-    if (profiles.size > 1) {
-        CurrentProfileRow(profiles.first { it.id == currentId }) {
-            if (ProfileStore.selfSelect(context)) choosing = true
-            else caregiverAccess.run(AppAction.SETTINGS) { choosing = true }
+    val profileButton: @Composable () -> Unit = {
+        if (profiles.size > 1) {
+            ProfileAvatarButton(profiles.first { it.id == currentId }) {
+                if (ProfileStore.selfSelect(context)) choosing = true
+                else caregiverAccess.run(AppAction.SETTINGS) { choosing = true }
+            }
         }
     }
     if (choosing) {
@@ -84,11 +63,23 @@ internal fun HomeScreen(
     }
 
     // Viikko-ohjelman päivä, jos tälle päivälle on tapahtumia.
-    TodaySection(onOpenProgram = onOpenProgram, onOpenCard = onOpenCard, onOpenDay = onOpenDay)
+    val todayShown = TodaySection(
+        onOpenProgram = onOpenProgram,
+        onOpenCard = onOpenCard,
+        onOpenDay = onOpenDay,
+        trailing = profileButton
+    )
 
-    Spacer(Modifier.height(4.dp))
-    Text(stringResource(R.string.mita_haluat_tehda), fontSize = 20.sp,
-        fontWeight = FontWeight.Bold, color = AppColors.Ink)
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        Text(
+            stringResource(R.string.mita_haluat_tehda),
+            modifier = Modifier.weight(1f),
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = AppColors.Ink
+        )
+        if (!todayShown) profileButton()
+    }
     HomeCard(
         symbol = "timer",
         title = stringResource(R.string.timer_title),

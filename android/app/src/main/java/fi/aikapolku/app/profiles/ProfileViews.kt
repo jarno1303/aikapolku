@@ -70,34 +70,19 @@ internal fun ProfileAvatar(profile: Profile, size: Dp) {
     }
 }
 
-/** Aloitusnäkymän rivi: kuka käyttää nyt, ja vaihtopainike. Näkyy vain, kun profiileja on useampi. */
+/** Aloitusnäkymän oikean yläkulman profiilikuva; napautus avaa profiilin vaihdon. */
 @Composable
-internal fun CurrentProfileRow(profile: Profile, onSwitch: () -> Unit) {
-    val name = profileName(profile)
-    val a11y = stringResource(R.string.profile_switch_a11y, name)
-    Surface(
-        onClick = onSwitch,
-        color = Color.White,
-        shape = RoundedCornerShape(18.dp),
-        modifier = Modifier.fillMaxWidth().semantics { contentDescription = a11y }
+internal fun ProfileAvatarButton(profile: Profile, onSwitch: () -> Unit) {
+    val a11y = stringResource(R.string.profile_switch_a11y, profileName(profile))
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable(role = Role.Button, onClick = onSwitch)
+            .semantics { contentDescription = a11y },
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).heightIn(min = 48.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ProfileAvatar(profile, 44.dp)
-            Text(
-                name,
-                modifier = Modifier.weight(1f),
-                fontSize = 19.sp,
-                fontWeight = FontWeight.Bold,
-                color = AppColors.Ink,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(stringResource(R.string.profile_switch), color = AppColors.Teal, fontSize = 16.sp)
-        }
+        ProfileAvatar(profile, 40.dp)
     }
 }
 
