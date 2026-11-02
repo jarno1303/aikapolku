@@ -57,7 +57,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Sovelluksen näkymät. */
-internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD, DAY, CHANGE, QUICK_CHANGE, FLOW_CHANGE, GROUPS }
+internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD, DAY, CHANGE, QUICK_CHANGE, FLOW_CHANGE, GROUPS, WEEK }
 
 /** Sovelluksen navigointi ja Ensin–Sitten-kulun yhteinen tila. */
 @Composable
@@ -84,7 +84,6 @@ internal fun AikaPolkuApp() {
     var eventCardDate by rememberSaveable { mutableStateOf("") }
     var eventCardOngoing by rememberSaveable { mutableStateOf(false) }
     var changeId by rememberSaveable { mutableStateOf("") }
-    var programsWeek by rememberSaveable { mutableStateOf(false) }
     // Pikamuutos: valmiiksi valittu päivä ja tapahtuma (koko päivän näkymän ⋮-valikosta).
     var quickDayOffset by rememberSaveable { mutableIntStateOf(0) }
     var quickEventId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -143,7 +142,7 @@ internal fun AikaPolkuApp() {
     // Asiakkaaksi vaihdettaessa ohjaajan näkymistä palataan aloitukseen.
     val isCaregiver = caregiver.isCaregiver
     LaunchedEffect(isCaregiver) {
-        if (!isCaregiver && (page == AppPage.CAREGIVER || page == AppPage.QUICK_CHANGE || page == AppPage.GROUPS)) page = AppPage.HOME
+        if (!isCaregiver && (page == AppPage.CAREGIVER || page == AppPage.QUICK_CHANGE || page == AppPage.GROUPS || page == AppPage.WEEK)) page = AppPage.HOME
     }
 
     // Valinnat tallennetaan aina niiden muuttuessa.
@@ -265,6 +264,7 @@ internal fun AikaPolkuApp() {
                         AppPage.QUICK_CHANGE -> stringResource(R.string.quick_title)
                         AppPage.FLOW_CHANGE -> stringResource(R.string.change_title)
                         AppPage.GROUPS -> stringResource(R.string.groups_title)
+                        AppPage.WEEK -> stringResource(R.string.home_week)
                         AppPage.HOME -> ""
                     },
                     onBack = { (backOverride.value ?: goBack)() },
@@ -331,10 +331,7 @@ internal fun AikaPolkuApp() {
                         quickReturn = AppPage.HOME
                         page = AppPage.QUICK_CHANGE
                     },
-                    onOpenWeek = {
-                        programsWeek = true
-                        page = AppPage.PROGRAMS
-                    },
+                    onOpenWeek = { page = AppPage.WEEK },
                     // Ohjaajan valmistelema Ensin–Sitten (aika asetettu) tai käynnissä oleva ajastin
                     // näkyy asiakkaan NYT-kortissa.
                     activity = when {
@@ -472,7 +469,6 @@ internal fun AikaPolkuApp() {
 
                 AppPage.PROGRAMS -> ProgramsScreen(
                     onExitToHome = { page = AppPage.HOME },
-                    initialWeekTab = programsWeek.also { programsWeek = false },
                     startProgramId = pendingProgramId,
                     startEventId = pendingEventId,
                     startEventDate = pendingEventDate,
@@ -486,6 +482,11 @@ internal fun AikaPolkuApp() {
                 AppPage.CAREGIVER -> CaregiverSettingsScreen()
 
                 AppPage.GROUPS -> fi.aikapolku.app.week.GroupsScreen(canEdit = caregiver.allows(AppAction.EDIT_PROGRAMS))
+
+                AppPage.WEEK -> {
+                    val programs = remember { fi.aikapolku.app.data.ProgramStore(context.applicationContext).load() }
+                    fi.aikapolku.app.week.WeekView(programs = programs, canEdit = caregiver.allows(AppAction.EDIT_PROGRAMS))
+                }
 
                 AppPage.MANUAL -> ManualFlowScreen(
                     first = firstShown,

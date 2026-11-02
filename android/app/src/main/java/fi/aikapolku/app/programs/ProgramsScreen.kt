@@ -62,24 +62,11 @@ private val programDraftSaver = Saver<DayProgram, String>(
 /** Päiväohjelmien näkymät. */
 internal enum class ProgramsView { LIST, EDIT, READY, RUN, DONE }
 
-/** Luettelon välilehdet: ohjelmat ja viikko-ohjelma. */
-internal enum class ProgramsTab { PROGRAMS, WEEK }
-
-@Composable
-private fun ProgramsTabs(selected: ProgramsTab, onSelect: (ProgramsTab) -> Unit) {
-    SegmentedChoice(
-        options = listOf(stringResource(R.string.tab_programs), stringResource(R.string.tab_week)),
-        selected = selected.ordinal,
-        onSelect = { onSelect(ProgramsTab.entries[it]) }
-    )
-}
-
 @Composable
 internal fun ProgramsScreen(
     /** Asiakkaan paluu omaan päivään (aloitusnäkymästä ja Kaikki valmista -näkymästä). */
     onExitToHome: () -> Unit = {},
     /** Ohjaajan etusivun "Viikko-ohjelma": avautuu Viikko-välilehdelle. */
-    initialWeekTab: Boolean = false,
     /** Tänään-listasta käynnistettävä päiväohjelma. */
     startProgramId: String? = null,
     /** Viikko-ohjelman tapahtuma (tunnus ja päivä), joka kuitataan, kun ohjelma viedään loppuun. */
@@ -179,7 +166,6 @@ internal fun ProgramsScreen(
         startProgram(program)
     }
 
-    var tab by rememberSaveable { mutableStateOf(if (initialWeekTab) ProgramsTab.WEEK else ProgramsTab.PROGRAMS) }
 
     var confirmDoneLeft by remember { mutableStateOf<Long?>(null) }
 
@@ -337,9 +323,7 @@ internal fun ProgramsScreen(
         ) {
     when (view) {
         ProgramsView.LIST -> {
-            ProgramsTabs(tab) { tab = it }
-            if (tab == ProgramsTab.WEEK) WeekView(programs = programs, canEdit = canEditPrograms)
-            else ProgramListView(
+            ProgramListView(
             programs = programs,
             canEdit = canEditPrograms,
             onNew = {

@@ -72,7 +72,7 @@ internal fun HomeScreen(
     /** Pikamuutos: tapahtuman tunnus (null = valitaan näkymässä). */
     onMakeChange: (String?) -> Unit = {},
     /** Ohjaajan etusivulta suoraan viikko-ohjelmaan. */
-    onOpenWeek: () -> Unit = { open(AppPage.PROGRAMS) },
+    onOpenWeek: () -> Unit = { open(AppPage.WEEK) },
     /** Ohjaajan asiakkaalle valmistelema toiminta (Ensin–Sitten tai ajastin). */
     activity: ClientActivity? = null,
     onOpenActivity: () -> Unit = {}
@@ -192,20 +192,46 @@ private fun CaregiverHome(
         onChange = { onMakeChange(it.id) },
         onOpenDay = onOpenDay
     )
-    OutlinedButton(
-        onClick = { onMakeChange(null) },
-        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(2.dp, AppColors.ChangeFill)
-    ) {
-        ChangeSymbol(Modifier.size(28.dp))
-        Text(
-            stringResource(R.string.quick_title),
-            modifier = Modifier.padding(start = 10.dp),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = AppColors.Change
-        )
+    // Ohjaajan kaksi tärkeintä toimintoa vierekkäin: asiakkaan viikko ja päivän muutos.
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        OutlinedButton(
+            onClick = onOpenWeek,
+            modifier = Modifier.weight(1f).heightIn(min = 76.dp),
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(2.dp, AppColors.Teal),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                androidx.compose.material3.Icon(Icons.Rounded.DateRange, contentDescription = null, tint = AppColors.Teal, modifier = Modifier.size(28.dp))
+                Text(
+                    stringResource(R.string.home_week),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.Teal,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    maxLines = 2
+                )
+            }
+        }
+        OutlinedButton(
+            onClick = { onMakeChange(null) },
+            modifier = Modifier.weight(1f).heightIn(min = 76.dp),
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(2.dp, AppColors.ChangeFill),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                ChangeSymbol(Modifier.size(28.dp))
+                Text(
+                    stringResource(R.string.quick_title),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.Change,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    maxLines = 2
+                )
+            }
+        }
     }
 
     ToolsCard(stringResource(R.string.caregiver_prepare)) {
@@ -213,7 +239,6 @@ private fun CaregiverHome(
         ChoiceRow(stringResource(R.string.timer_title), { open(AppPage.TIMER) }, subtitle = stringResource(R.string.caregiver_timer_info), leading = { RowIcon(Icons.Rounded.Refresh) })
     }
     ToolsCard(stringResource(R.string.caregiver_tools)) {
-        ChoiceRow(stringResource(R.string.home_week), onOpenWeek, subtitle = stringResource(R.string.home_week_info), leading = { RowIcon(Icons.Rounded.DateRange) })
         ChoiceRow(stringResource(R.string.groups_title), { open(AppPage.GROUPS) }, subtitle = stringResource(R.string.groups_home_info), leading = { RowIcon(Icons.Rounded.Face) })
         ChoiceRow(stringResource(R.string.home_programs), { open(AppPage.PROGRAMS) }, subtitle = stringResource(R.string.home_programs_info), leading = { RowIcon(Icons.AutoMirrored.Rounded.List) })
         ChoiceRow(stringResource(R.string.home_cards), { showCards = true }, subtitle = stringResource(R.string.home_cards_info), leading = { RowIcon(AppIcons.Image) })

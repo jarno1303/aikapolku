@@ -98,6 +98,12 @@ internal fun WeekView(programs: List<DayProgram>, canEdit: Boolean) {
         }
     }
 
+    Text(
+        stringResource(R.string.settings_for_client, clientName.ifBlank { stringResource(R.string.profile_unnamed) }),
+        fontSize = 17.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = AppColors.Teal
+    )
     if (myGroups.isNotEmpty()) {
         Text(
             stringResource(R.string.runko_client_groups, myGroups.joinToString(", ") { it.name }),
