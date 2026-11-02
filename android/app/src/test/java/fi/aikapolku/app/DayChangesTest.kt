@@ -158,4 +158,92 @@ class DayChangesTest {
         // Ilman muutoksia ennallaan.
         assertNull(WeekSchedule.dueReminders(plans, monday.atTime(9, 45)).single().change)
     }
+
+    // --- Päiväohjelman vaiheen muutos (myös etukäteen) ---
+
+    private val school = WeekEvent("koulu", 1, 0, "08:00", EventKind.PROGRAM, programId = "p1")
+    private val schoolProgram = fi.aikapolku.app.data.DayProgram(
+        "p1", "Koulupäivä",
+        listOf(
+            fi.aikapolku.app.data.ProgramStep("s1", "Aamupiiri", "", ""),
+            fi.aikapolku.app.data.ProgramStep("s2", "Uinti", "/uinti.jpg", "Halli", voicePath = "/v.m4a", subSteps = listOf("Uimapuku")),
+            fi.aikapolku.app.data.ProgramStep("s3", "Lounas", "", "")
+        )
+    )
+
+    private fun stepChange(type: ChangeType, stepId: String = "s2", showOriginal: Boolean = true) = EventChange(
+        id = "sc-$stepId-$type", date = monday, eventId = school.id, type = type,
+        cardName = if (type == ChangeType.REPLACE) "Ulkoilu" else "", cardPhoto = if (type == ChangeType.REPLACE) "builtin:outdoors" else "",
+        stepId = stepId, stepName = "Uinti", showOriginal = showOriginal
+    )
+
+    @Test
+    fun `vaihemuutos ei muuta tapahtumaa mutta nakyy rivilla`() {
+        val e = DayChanges.entries(listOf(school), listOf(stepChange(ChangeType.REPLACE)), monday, null).single()
+        assertEquals(school, e.event)
+        assertNull(e.change)
+        assertEquals(1, e.stepChanges.size)
+        assertEquals(school, DayChanges.effective(school, stepChange(ChangeType.REPLACE)))
+    }
+
+    @Test
+    fun `koko ohjelman muutos ohittaa vaihemuutokset`() {
+        val whole = EventChange("w", monday, school.id, ChangeType.CANCEL)
+        val e = DayChanges.entries(listOf(school), listOf(whole, stepChange(ChangeType.REPLACE)), monday, null).single()
+        assertTrue(e.cancelled)
+        assertTrue(e.stepChanges.isEmpty())
+        assertTrue(DayChanges.stepChangesFor(WeekPlan(listOf(school)), listOf(whole, stepChange(ChangeType.REPLACE)), monday, "p1").isEmpty())
+    }
+
+    @Test
+    fun `saman tapahtuman eri vaiheilla on omat muutoksensa`() {
+        val all = DayChanges.upsert(DayChanges.upsert(emptyList(), stepChange(ChangeType.CANCEL, "s1")), stepChange(ChangeType.REPLACE, "s2"))
+        assertEquals(2, all.size)
+        val whole = EventChange("w", monday, school.id, ChangeType.MOVE, time = "09:00")
+        assertEquals(3, DayChanges.upsert(all, whole).size)
+        assertEquals("w", DayChanges.wholeChange(DayChanges.upsert(all, whole), monday, school.id)?.id)
+    }
+
+    @Test
+    fun `ohjelmaan sovelletaan vaihemuutokset`() {
+        val applied = DayChanges.applyToProgram(
+            schoolProgram,
+            listOf(stepChange(ChangeType.CANCEL, "s1"), stepChange(ChangeType.REPLACE, "s2"))
+        ) { name, _ -> listOf("Kengät", name) }
+        assertTrue(applied.steps[0].cancelledToday)
+        val replaced = applied.steps[1]
+        assertEquals("Ulkoilu", replaced.name)
+        assertEquals("builtin:outdoors", replaced.photo)
+        assertEquals("", replaced.voicePath)
+        assertEquals(listOf("Kengät", "Ulkoilu"), replaced.subSteps)
+        assertEquals("Uinti", replaced.changedFrom)
+        assertEquals("s2", replaced.id)
+        assertEquals(schoolProgram.steps[2], applied.steps[2])
+    }
+
+    @Test
+    fun `ilman alkuperaisen nayttoa korvattu vaihe ei kerro vanhaa nimea`() {
+        val applied = DayChanges.applyToProgram(schoolProgram, listOf(stepChange(ChangeType.REPLACE, showOriginal = false))) { _, _ -> emptyList() }
+        assertTrue(applied.steps[1].changedToday)
+        assertEquals("", applied.steps[1].changedFrom)
+    }
+
+    @Test
+    fun `etukateen tehty vaihemuutos koskee vain sen paivan ohjelmaa`() {
+        val plan = WeekPlan(listOf(school))
+        val c = stepChange(ChangeType.CANCEL)
+        assertEquals(listOf(c), DayChanges.stepChangesFor(plan, listOf(c), monday, "p1"))
+        assertTrue(DayChanges.stepChangesFor(plan, listOf(c), monday.plusDays(7), "p1").isEmpty())
+        assertTrue(DayChanges.stepChangesFor(plan, listOf(c), monday, "toinen").isEmpty())
+    }
+
+    @Test
+    fun `aloitusnakyma kertoo myos vaihemuutoksen ja muistutus pysyy ennallaan`() {
+        val plan = WeekPlan(listOf(school.copy(notify = true)))
+        val c = stepChange(ChangeType.REPLACE)
+        assertEquals(listOf(c.id), DayChanges.announced(plan, listOf(c), monday.atTime(7, 0)) { false }.map { it.first.id })
+        val due = WeekSchedule.dueReminders(mapOf("p" to plan), monday.atTime(8, 0), mapOf("p" to listOf(c)))
+        assertNull(due.single().change)
+        assertEquals(EventKind.PROGRAM, due.single().event.kind)
+    }
 }

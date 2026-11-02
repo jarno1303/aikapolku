@@ -41,6 +41,10 @@ internal data class ProgramStep(
     val voicePath: String = "",
     val autoPlayVoice: Boolean = false,
     val subSteps: List<String> = emptyList(),
+    /** Vain suorituksessa: päivän muutos. [cancelledToday] ohitetaan, [changedFrom] = korvattu vaihe. */
+    val changedToday: Boolean = false,
+    val cancelledToday: Boolean = false,
+    val changedFrom: String = "",
     /** P0-23: kellonaikatilassa toiminto on lukittu kellonaikaan [clock]. */
     val fixedClock: Boolean = false
 )
@@ -66,6 +70,10 @@ internal fun stepToJson(step: ProgramStep): JSONObject = JSONObject().apply {
     put("autoPlayVoice", step.autoPlayVoice)
     put("subSteps", writeSubSteps(step.subSteps))
     put("fixedClock", step.fixedClock)
+    // Päivän muutos vain suorituksen tilassa (näytön kääntö); tallennetuissa ohjelmissa ei koskaan.
+    if (step.changedToday) put("changedToday", true)
+    if (step.cancelledToday) put("cancelledToday", true)
+    if (step.changedFrom.isNotEmpty()) put("changedFrom", step.changedFrom)
 }
 
 internal fun stepFromJson(s: JSONObject): ProgramStep = ProgramStep(
@@ -79,7 +87,10 @@ internal fun stepFromJson(s: JSONObject): ProgramStep = ProgramStep(
     voicePath = s.optString("voicePath"),
     autoPlayVoice = s.optBoolean("autoPlayVoice", false),
     subSteps = readSubSteps(s),
-    fixedClock = s.optBoolean("fixedClock", false)
+    fixedClock = s.optBoolean("fixedClock", false),
+    changedToday = s.optBoolean("changedToday", false),
+    cancelledToday = s.optBoolean("cancelledToday", false),
+    changedFrom = s.optString("changedFrom")
 )
 
 internal fun programToJson(program: DayProgram): JSONObject = JSONObject().apply {

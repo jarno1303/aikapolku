@@ -1,5 +1,6 @@
 package fi.aikapolku.app.programs
 
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,7 +37,9 @@ internal fun RunActionsDialog(
     onShowProgram: () -> Unit,
     onSkip: () -> Unit,
     onEnd: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    /** Ohjaajalle: muutos nykyiseen vaiheeseen (null = ei näytetä). */
+    onStepChange: (() -> Unit)? = null
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -51,6 +54,11 @@ internal fun RunActionsDialog(
                 if (canChangeSettings) {
                     ChoiceRow(stringResource(R.string.ajan_nayttotapa), onTimeSettings, leading = { RowIcon(Icons.Rounded.Settings) })
                     ChoiceRow(stringResource(R.string.nakyma_ja_viestiaanet), onViewSettings, leading = { RowIcon(AppIcons.Speaker) })
+                }
+                if (onStepChange != null) {
+                    ChoiceRow(stringResource(R.string.quick_step_change), onStepChange, leading = {
+                        fi.aikapolku.app.ui.ChangeSymbol(Modifier.size(36.dp))
+                    })
                 }
                 // Ohitus on aina vapaa; ohitettu tehtävä näkyy himmeänä lopussa.
                 ChoiceRow(stringResource(R.string.ohita_tehtava), onSkip, leading = { RowIcon(Icons.AutoMirrored.Rounded.ArrowForward) })

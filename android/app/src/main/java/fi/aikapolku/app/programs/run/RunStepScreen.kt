@@ -106,7 +106,9 @@ internal fun RunStepScreen(
     /** Valmis-painikkeen teksti, kun se poikkeaa tavallisesta (esim. "Aloita aika" tai jäljellä oleva aika). */
     doneLabel: String? = null,
     /** false = odotetaan ajan päättymistä (painike himmeä). */
-    doneEnabled: Boolean = true
+    doneEnabled: Boolean = true,
+    /** Päivän muutos: null = ei muutosta, tyhjä = muutos ilman alkuperäistä, muuten korvattu vaihe. */
+    changedFrom: String? = null
 ) {
     val hasSubSteps = subSteps.isNotEmpty()
     val safeIndex = subStepIndex.coerceIn(0, maxOf(0, subSteps.lastIndex))
@@ -152,6 +154,19 @@ internal fun RunStepScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically)
                 ) {
+                    // Muutosmerkki: sama kuin muutosnäkymässä ja päivän listassa.
+                    if (changedFrom != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            fi.aikapolku.app.ui.ChangeSymbol(Modifier.size(28.dp))
+                            Text(
+                                if (changedFrom.isBlank()) stringResource(R.string.run_changed)
+                                else stringResource(R.string.run_changed_from, changedFrom),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = fi.aikapolku.app.ui.AppColors.Change
+                            )
+                        }
+                    }
                     val imageModifier = if (compact) {
                         Modifier.size(160.dp)
                     } else {

@@ -276,4 +276,54 @@ class ProgramRunControllerTest {
         run.start(program)
         assertEquals(DoneGate.ALLOW, run.doneGate(RunPreferences.DONE_AFTER_TIME, caregiverOpen = false))
     }
+
+    // --- Päivän muutokset: peruttu vaihe ohitetaan, korvattu vaihdetaan ---
+
+    private fun cancelled(p: DayProgram, vararg ids: String) =
+        p.copy(steps = p.steps.map { if (it.id in ids) it.copy(changedToday = true, cancelledToday = true) else it })
+
+    @Test
+    fun `peruttu ensimmainen vaihe ohitetaan aloituksessa`() {
+        run.start(cancelled(program, "a"))
+        assertEquals("b", run.currentStep?.id)
+        assertEquals(0, run.activeIndex)
+        assertEquals(2, run.activeCount)
+        assertEquals(1, progress.stepIndex)
+        assertTrue(0 in run.skipped)
+    }
+
+    @Test
+    fun `peruttu valivaihe ohitetaan ja seuraava nayttaa oikean`() {
+        run.start(cancelled(program, "b"))
+        assertEquals("c", run.nextStep?.id)
+        run.next(); run.next() // osavaiheet
+        assertEquals("c", run.currentStep?.id)
+        assertEquals(1, run.activeIndex)
+    }
+
+    @Test
+    fun `viimeinen peruttu paattaa ohjelman`() {
+        run.start(cancelled(program, "c"))
+        run.next(); run.next()
+        assertEquals("b", run.currentStep?.id)
+        assertTrue(run.next())
+    }
+
+    @Test
+    fun `jatkettaessa peruttu kohta ohitetaan`() {
+        progress.save("p", 1, 0)
+        run.resume(cancelled(program, "b"))
+        assertEquals("c", run.currentStep?.id)
+    }
+
+    @Test
+    fun `kesken suorituksen korvattu vaihe vaihtuu ja osavaiheet alkavat alusta`() {
+        run.start(program)
+        run.next()
+        assertEquals(1, run.subStepIndex)
+        run.replaceCurrent(program.steps[0].copy(name = "Lepo", subSteps = emptyList(), changedToday = true, changedFrom = "Tehtävä a"))
+        assertEquals("Lepo", run.currentStep?.name)
+        assertEquals(0, run.subStepIndex)
+        assertEquals("a", run.currentStep?.id)
+    }
 }

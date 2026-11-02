@@ -46,6 +46,7 @@ internal fun HomeScreen(
     onOpenDay: () -> Unit = {},
     onOpenChange: (EventChange) -> Unit = {}
 ) {
+    // Pikamuutos ohjaajalle aloitusvalikosta (PIN-koodi, kun lukitus on päällä).
     // Aloitusnäkymässä vain päivä, valikko ja toiminnot. Oikean yläkulman valikosta profiilin
     // vaihto (vain, jos profiileja on useampi) ja ohjaajan asetukset (PIN-koodin takana).
     val context = LocalContext.current
@@ -61,7 +62,8 @@ internal fun HomeScreen(
                 if (ProfileStore.selfSelect(context)) choosing = true
                 else caregiver.run(AppAction.SETTINGS) { choosing = true }
             },
-            onCaregiverSettings = { caregiver.run(AppAction.SETTINGS) { open(AppPage.CAREGIVER) } }
+            onCaregiverSettings = { caregiver.run(AppAction.SETTINGS) { open(AppPage.CAREGIVER) } },
+            onMakeChange = { caregiver.run(AppAction.EDIT_PROGRAMS) { open(AppPage.QUICK_CHANGE) } }
         )
     }
     if (choosing) {
@@ -125,7 +127,7 @@ internal fun HomeScreen(
  * Valikossa profiilin vaihto ja ohjaajan asetukset.
  */
 @Composable
-private fun HomeMenu(profile: Profile?, onSwitchProfile: () -> Unit, onCaregiverSettings: () -> Unit) {
+private fun HomeMenu(profile: Profile?, onSwitchProfile: () -> Unit, onCaregiverSettings: () -> Unit, onMakeChange: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val menuLabel = stringResource(R.string.menu_open)
     Box {
@@ -150,6 +152,10 @@ private fun HomeMenu(profile: Profile?, onSwitchProfile: () -> Unit, onCaregiver
                     onClick = { expanded = false; onSwitchProfile() }
                 )
             }
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.quick_title), fontSize = 17.sp) },
+                onClick = { expanded = false; onMakeChange() }
+            )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.menu_caregiver_settings), fontSize = 17.sp) },
                 onClick = { expanded = false; onCaregiverSettings() }

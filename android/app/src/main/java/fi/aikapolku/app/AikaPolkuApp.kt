@@ -30,6 +30,8 @@ import fi.aikapolku.app.timer.TimerScreen
 import fi.aikapolku.app.timer.TimerReturnRow
 import fi.aikapolku.app.backup.ImportLaunch
 import fi.aikapolku.app.week.ChangeScreen
+import fi.aikapolku.app.week.QuickChangeScreen
+import fi.aikapolku.app.week.FlowChangeScreen
 import fi.aikapolku.app.data.ChangeStore
 import fi.aikapolku.app.data.ChangeType
 import fi.aikapolku.app.data.DayChanges
@@ -54,7 +56,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Sovelluksen näkymät. */
-internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD, DAY, CHANGE }
+internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD, DAY, CHANGE, QUICK_CHANGE, FLOW_CHANGE }
 
 /** Sovelluksen navigointi ja Ensin–Sitten-kulun yhteinen tila. */
 @Composable
@@ -78,6 +80,14 @@ internal fun AikaPolkuApp() {
     var eventCardId by rememberSaveable { mutableStateOf("") }
     var eventCardDate by rememberSaveable { mutableStateOf("") }
     var changeId by rememberSaveable { mutableStateOf("") }
+    // Pikamuutos: valmiiksi valittu päivä ja tapahtuma (koko päivän näkymän ⋮-valikosta).
+    var quickDayOffset by rememberSaveable { mutableIntStateOf(0) }
+    var quickEventId by rememberSaveable { mutableStateOf<String?>(null) }
+    var quickReturn by rememberSaveable { mutableStateOf(AppPage.HOME) }
+    // Ensin–Sitten: kesken kulun vaihdettu Sitten-kortti (vanha nimi ja kuva).
+    var flowOldName by rememberSaveable { mutableStateOf("") }
+    var flowOldPhoto by rememberSaveable { mutableStateOf("") }
+    var askFlowChange by rememberSaveable { mutableStateOf(false) }
 
     // Ilmoituksesta avattu tapahtuma avataan, jos se kuuluu nykyiseen profiiliin.
     val launch = EventLaunch.pending.value
@@ -90,7 +100,7 @@ internal fun AikaPolkuApp() {
         }
         val original = WeekStore(context).load().events.firstOrNull { it.id == request.eventId }
         // Päivän muutos: kuittaamaton muutos näytetään ensin, muuten avataan voimassa oleva tapahtuma.
-        val change = ChangeStore(context).load().firstOrNull { it.date == request.date && it.eventId == request.eventId }
+        val change = DayChanges.wholeChange(ChangeStore(context).load(), request.date, request.eventId)
         val event = if (original != null && change != null) DayChanges.effective(original, change) else original
         when {
             event == null -> page = AppPage.HOME
@@ -176,6 +186,8 @@ internal fun AikaPolkuApp() {
             page = AppPage.FIRST_THEN
         } else if (page == AppPage.MANUAL) {
             page = AppPage.FIRST_THEN
+        } else if (page == AppPage.FLOW_CHANGE) {
+            page = if (timer.inProgress) AppPage.TIMER else AppPage.FIRST_THEN
         } else {
             page = AppPage.HOME
         }
@@ -228,6 +240,8 @@ internal fun AikaPolkuApp() {
                         AppPage.DAY -> dayName(LocalDate.now().dayOfWeek.value)
                         AppPage.EVENT_CARD -> dayName(LocalDate.now().dayOfWeek.value)
                         AppPage.CHANGE -> stringResource(R.string.change_title)
+                        AppPage.QUICK_CHANGE -> stringResource(R.string.quick_title)
+                        AppPage.FLOW_CHANGE -> stringResource(R.string.change_title)
                         AppPage.HOME -> ""
                     },
                     onBack = { (backOverride.value ?: goBack)() },
@@ -248,6 +262,22 @@ internal fun AikaPolkuApp() {
                 .padding(horizontal = 12.dp, vertical = 9.dp),
             verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {
+            if (askFlowChange) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { askFlowChange = false },
+                    title = { Text(stringResource(R.string.flow_change_ask_title)) },
+                    text = { Text(stringResource(R.string.flow_change_ask_text, flowOldName, nextShown)) },
+                    confirmButton = {
+                        androidx.compose.material3.TextButton(onClick = {
+                            askFlowChange = false
+                            page = AppPage.FLOW_CHANGE
+                        }) { Text(stringResource(R.string.flow_change_show)) }
+                    },
+                    dismissButton = {
+                        androidx.compose.material3.TextButton(onClick = { askFlowChange = false }) { Text(stringResource(R.string.flow_change_no)) }
+                    }
+                )
+            }
             if ((page == AppPage.HOME || page == AppPage.FIRST_THEN) && timer.inProgress) {
                 TimerReturnRow(
                     task = timer.activeTask,
@@ -279,8 +309,29 @@ internal fun AikaPolkuApp() {
                     onOpenChange = {
                         changeId = it.id
                         page = AppPage.CHANGE
+                    },
+                    onMakeChange = { offset, id ->
+                        quickDayOffset = offset
+                        quickEventId = id
+                        quickReturn = AppPage.DAY
+                        page = AppPage.QUICK_CHANGE
                     }
                 )
+
+                AppPage.QUICK_CHANGE -> key(quickEventId, quickDayOffset) {
+                    QuickChangeScreen(quickDayOffset, quickEventId) {
+                        val back = quickReturn
+                        quickEventId = null
+                        quickDayOffset = 0
+                        quickReturn = AppPage.HOME
+                        page = back
+                    }
+                }
+
+                AppPage.FLOW_CHANGE -> FlowChangeScreen(flowOldName, flowOldPhoto, nextShown, sel.nextPhoto) {
+                    // Takaisin käynnissä olevaan ajastukseen, jos se on kesken.
+                    page = if (timer.inProgress) AppPage.TIMER else AppPage.FIRST_THEN
+                }
 
                 AppPage.CHANGE -> ChangeScreen(changeId) { page = AppPage.HOME }
 
@@ -334,7 +385,16 @@ internal fun AikaPolkuApp() {
                     firstVoiceAuto = sel.firstVoiceAuto,
                     nextVoiceAuto = sel.nextVoiceAuto,
                     onFirst = { name -> cards.update { it.copy(firstName = chosen(name)) } },
-                    onNext = { name -> cards.update { it.copy(nextName = chosen(name)) } },
+                    onNext = { name ->
+                        // Kesken kulun vaihdettu Sitten-kortti voidaan näyttää käyttäjälle muutoksena.
+                        val old = cards.selection
+                        if (timer.inProgress && old.nextName.isNotBlank() && chosen(name).isNotBlank() && chosen(name) != old.nextName) {
+                            flowOldName = old.nextName
+                            flowOldPhoto = old.nextPhoto
+                            askFlowChange = true
+                        }
+                        cards.update { it.copy(nextName = chosen(name)) }
+                    },
                     onFirstPhoto = { path -> cards.update { it.copy(firstPhoto = path) } },
                     onNextPhoto = { path -> cards.update { it.copy(nextPhoto = path) } },
                     onFirstDescription = { text -> cards.update { it.copy(firstDescription = text) } },

@@ -109,13 +109,39 @@ internal class ProgramRunController(
     fun timeLeft(): Long = if (running) (deadline - timer.now()).coerceAtLeast(0L) else remaining
 
     val currentStep: ProgramStep? get() = program.steps.getOrNull(stepIndex)
-    val nextStep: ProgramStep? get() = program.steps.getOrNull(stepIndex + 1)
+    val nextStep: ProgramStep? get() = firstActive(stepIndex + 1)?.let { program.steps[it] }
+
+    /** Ensimmäinen tänään tehtävä vaihe alkaen [from] (perutut ohitetaan). */
+    private fun firstActive(from: Int): Int? =
+        (from.coerceAtLeast(0) until program.steps.size).firstOrNull { !program.steps[it].cancelledToday }
+
+    private fun cancelledIndices(p: DayProgram): Set<Int> = p.steps.indices.filter { p.steps[it].cancelledToday }.toSet()
+
+    /** Näytettävä sijainti: perutut eivät ole mukana laskussa ("2/4"). */
+    val activeIndex: Int get() = (0 until stepIndex).count { !program.steps[it].cancelledToday }
+    val activeCount: Int get() = program.steps.count { !it.cancelledToday }
+
+    /**
+     * Ohjaajan muutos nykyiseen vaiheeseen kesken suorituksen: vaihe korvataan (aika ja
+     * ajoitus säilyvät). Osavaiheet alkavat alusta.
+     */
+    fun replaceCurrent(step: ProgramStep) {
+        if (currentStep == null) return
+        program = program.copy(steps = program.steps.mapIndexed { i, s -> if (i == stepIndex) step else s })
+        subStepIndex = 0
+        stepEnteredAt = timer.now()
+        progress.save(program.id, stepIndex, 0)
+        if (step.autoPlayVoice && step.voicePath.isNotBlank()) playVoice(step.voicePath)
+    }
     val isActive: Boolean get() = currentStep != null
 
     /** Jatkaa keskeytynyttä ohjelmaa (esim. sovellus suljettiin kesken). */
     fun resume(saved: DayProgram) {
         program = saved
         stepIndex = progress.stepIndex.coerceIn(0, (saved.steps.size - 1).coerceAtLeast(0))
+        // Tänään peruttu vaihe ohitetaan myös jatkettaessa.
+        stepIndex = firstActive(stepIndex) ?: stepIndex
+        skipped = cancelledIndices(saved)
         subStepIndex = progress.subStepIndex.coerceAtLeast(0)
         running = timer.isRunning()
         remaining = timer.remaining(0L)
@@ -128,17 +154,19 @@ internal class ProgramRunController(
     fun start(newProgram: DayProgram) {
         if (newProgram.steps.isEmpty()) return
         program = newProgram
-        stepIndex = 0
+        // Tänään perutut vaiheet ohitetaan ja näkyvät lopussa ohitettuina.
+        val start = firstActive(0) ?: return
+        stepIndex = start
         subStepIndex = 0
-        skipped = emptySet()
+        skipped = cancelledIndices(newProgram)
         stepEnteredAt = timer.now()
         support = null
         running = false
-        val first = newProgram.steps.first()
+        val first = newProgram.steps[start]
         timer.stop(first.minutes * 60_000L)
         deadline = 0L
         remaining = first.minutes * 60_000L
-        progress.save(newProgram.id, 0, 0)
+        progress.save(newProgram.id, start, 0)
         enterStep(first)
     }
 
@@ -169,11 +197,12 @@ internal class ProgramRunController(
     private fun advance(): Boolean {
         running = false
         timer.stop(0L)
-        if (stepIndex + 1 >= program.steps.size) {
+        val nextIndex = firstActive(stepIndex + 1)
+        if (nextIndex == null) {
             progress.clear()
             return true
         }
-        stepIndex += 1
+        stepIndex = nextIndex
         subStepIndex = 0
         stepEnteredAt = timer.now()
         progress.save(program.id, stepIndex, 0)

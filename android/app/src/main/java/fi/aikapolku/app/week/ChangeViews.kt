@@ -67,10 +67,22 @@ import fi.aikapolku.app.voice.VoicePlayer
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-/** Muutoksen lyhyt kuvaus: "Uinti on peruttu", "Uinti → Ulkoilu", "Uinti klo 13.00". */
+/** Kortti näytettävänä tapahtumana (vaihemuutokset ja Ensin–Sitten). */
+internal fun cardResolved(name: String, photo: String): ResolvedEvent =
+    ResolvedEvent(WeekEvent("", 1, 0, "00:00", fi.aikapolku.app.data.EventKind.CARD, cardName = name, cardPhoto = photo), name, name, photo, false)
+
+/**
+ * Muutoksen lyhyt kuvaus: "Uinti on peruttu", "Uinti → Ulkoilu", "Uinti klo 13.00",
+ * vaiheelle "Koulupäivä: Uinti → Ulkoilu". [original] = tapahtuma, [effective] = muutoksen jälkeen.
+ */
 @Composable
 internal fun changeSummary(change: EventChange, original: ResolvedEvent, effective: ResolvedEvent): String =
-    when (change.type) {
+    if (change.isStep) when (change.type) {
+        ChangeType.REPLACE ->
+            if (change.showOriginal) stringResource(R.string.change_summary_step_replace, original.title, change.stepName, change.cardName)
+            else stringResource(R.string.change_summary_step_replace_short, original.title, change.cardName)
+        else -> stringResource(R.string.change_summary_step_cancel, original.title, change.stepName)
+    } else when (change.type) {
         ChangeType.CANCEL -> stringResource(R.string.change_summary_cancel, original.title)
         ChangeType.REPLACE ->
             if (change.showOriginal) stringResource(R.string.change_summary_replace, original.title, effective.title)
@@ -179,9 +191,61 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
         Text(stringResource(R.string.week_no_events), color = AppColors.Muted)
         return
     }
-    val (change, original, effective) = data
-    LaunchedEffect(changeId) {
-        if (change.autoPlayVoice && change.voicePath.isNotBlank()) VoicePlayer.play(context, change.voicePath)
+    val (change, event, effectiveEvent) = data
+    // Vaihemuutoksessa näytetään vaihe ja korvaava kortti, otsikkona ohjelman nimi.
+    val original = if (change.isStep) cardResolved(change.stepName, change.stepPhoto) else event
+    val effective = when {
+        change.isStep && change.type == ChangeType.REPLACE -> cardResolved(change.cardName, change.cardPhoto)
+        change.isStep -> original
+        else -> effectiveEvent
+    }
+    ChangeView(
+        subtitle = dayLabel(change.date) + if (change.isStep) " · " + event.title else "",
+        type = change.type,
+        original = original,
+        effective = effective,
+        showOriginal = change.showOriginal,
+        reason = change.reason,
+        voicePath = change.voicePath,
+        autoPlayVoice = change.autoPlayVoice,
+        onOk = {
+            AckStore(context).ack(change.date, change.ackId)
+            onDone()
+        }
+    )
+}
+
+/** Ensin–Sitten: Sitten-kortti vaihdettiin kesken kulun ja ohjaaja halusi näyttää sen muutoksena. */
+@Composable
+internal fun FlowChangeScreen(oldName: String, oldPhoto: String, newName: String, newPhoto: String, onOk: () -> Unit) {
+    ChangeView(
+        subtitle = stringResource(R.string.ensin_sitten),
+        type = ChangeType.REPLACE,
+        original = cardResolved(oldName, oldPhoto),
+        effective = cardResolved(newName, newPhoto),
+        showOriginal = true,
+        reason = "",
+        voicePath = "",
+        autoPlayVoice = false,
+        onOk = onOk
+    )
+}
+
+@Composable
+private fun ChangeView(
+    subtitle: String,
+    type: ChangeType,
+    original: ResolvedEvent,
+    effective: ResolvedEvent,
+    showOriginal: Boolean,
+    reason: String,
+    voicePath: String,
+    autoPlayVoice: Boolean,
+    onOk: () -> Unit
+) {
+    val context = LocalContext.current
+    LaunchedEffect(voicePath) {
+        if (autoPlayVoice && voicePath.isNotBlank()) VoicePlayer.play(context, voicePath)
     }
 
     Column(
@@ -197,16 +261,16 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
             ChangeSymbol(Modifier.size(56.dp))
             Column {
                 Text(stringResource(R.string.change_label), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = AppColors.Change)
-                Text(dayLabel(change.date), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Muted)
+                Text(subtitle, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Muted)
             }
         }
 
-        when (change.type) {
+        when (type) {
             ChangeType.CANCEL -> {
                 ImageWithName(original, 200, crossed = true)
                 Text(stringResource(R.string.change_cancelled_text), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink)
             }
-            ChangeType.REPLACE -> if (change.showOriginal) {
+            ChangeType.REPLACE -> if (showOriginal) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { ImageWithName(original, 130, crossed = true) }
                     Box(
@@ -223,7 +287,7 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
             ChangeType.MOVE -> {
                 ImageWithName(effective, 200, crossed = false)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (change.showOriginal) {
+                    if (showOriginal) {
                         Text(
                             stringResource(R.string.change_time_now, original.event.time.replace(':', '.')),
                             fontSize = 20.sp,
@@ -242,23 +306,20 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
             }
         }
 
-        if (change.reason.isNotBlank()) {
-            Text(change.reason, fontSize = 20.sp, color = AppColors.Ink, textAlign = TextAlign.Center)
+        if (reason.isNotBlank()) {
+            Text(reason, fontSize = 20.sp, color = AppColors.Ink, textAlign = TextAlign.Center)
         }
-        if (change.voicePath.isNotBlank()) {
+        if (voicePath.isNotBlank()) {
             SecondaryButton(
                 text = stringResource(R.string.change_listen),
                 icon = AppIcons.Speaker,
-                onClick = { VoicePlayer.play(context, change.voicePath) }
+                onClick = { VoicePlayer.play(context, voicePath) }
             )
         }
         PrimaryButton(
             text = stringResource(R.string.change_ok),
             icon = Icons.Rounded.Check,
-            onClick = {
-                AckStore(context).ack(change.date, change.ackId)
-                onDone()
-            },
+            onClick = onOk,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -272,8 +333,8 @@ internal fun ChangeOverview(plan: WeekPlan, programs: List<DayProgram>, today: L
         val changes = ChangeStore(context).load()
         val acks = AckStore(context)
         listOf(today, today.plusDays(1)).flatMap { date ->
-            WeekSchedule.eventsFor(plan, date).mapNotNull { e ->
-                changes.firstOrNull { it.date == date && it.eventId == e.id }?.let { c ->
+            WeekSchedule.eventsFor(plan, date).flatMap { e ->
+                changes.filter { it.date == date && it.eventId == e.id }.sortedBy { it.isStep }.map { c ->
                     ChangeInfo(c, e, DayChanges.revealAt(c, e), acks.ackTime(date, c.ackId))
                 }
             }

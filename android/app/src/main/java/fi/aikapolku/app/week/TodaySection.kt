@@ -189,16 +189,15 @@ internal fun TodaySection(
 internal fun DayScreen(
     onOpenProgram: (WeekEvent) -> Unit,
     onOpenCard: (WeekEvent) -> Unit,
-    onOpenChange: (EventChange) -> Unit = {}
+    onOpenChange: (EventChange) -> Unit = {},
+    /** Pikamuutos valmiiksi valitulle tapahtumalle (päivä 0 = tänään, 1 = huomenna). */
+    onMakeChange: (dayOffset: Int, eventId: String) -> Unit = { _, _ -> }
 ) {
-    val context = LocalContext.current
     val caregiver = LocalCaregiver.current
     val canChange = caregiver.allows(AppAction.EDIT_PROGRAMS)
     // Ohjaaja näkee muutokset heti; käyttäjä vasta valitulla hetkellä.
     val caregiverView = caregiver.lockEnabled && !caregiver.isLocked
     var chosenOffset by rememberSaveable { mutableIntStateOf(0) }
-    var refresh by remember { mutableIntStateOf(0) }
-    var editing by remember { mutableStateOf<DayItem?>(null) }
     // Huominen vain ohjaajalle; lukittuna aina tämä päivä.
     val dayOffset = if (canChange) chosenOffset else 0
 
@@ -209,8 +208,7 @@ internal fun DayScreen(
             onSelect = { chosenOffset = it }
         )
     }
-    val state = rememberTodayState(dayOffset, caregiverView || dayOffset > 0, refresh)
-    val programs = remember(context, refresh) { ProgramStore(context.applicationContext).load() }
+    val state = rememberTodayState(dayOffset, caregiverView || dayOffset > 0)
     // Otsikko (päivän nimi) on yläpalkissa.
     if (state == null) {
         Text(stringResource(R.string.week_no_events), color = AppColors.Muted)
@@ -232,7 +230,10 @@ internal fun DayScreen(
                 {
                     OverflowMenu(
                         contentDescription = "$menuLabel: ${item.original.title}",
-                        items = listOf((if (item.change != null) editLabel else changeLabel) to { editing = item })
+                        items = listOf(
+                            (if (item.change != null || item.entry.stepChanges.isNotEmpty()) editLabel else changeLabel) to
+                                { onMakeChange(dayOffset, item.entry.original.id) }
+                        )
                     )
                 }
             } else null
@@ -246,22 +247,6 @@ internal fun DayScreen(
         }
     }
 
-    editing?.let { item ->
-        ChangeDialog(
-            date = state.date,
-            original = item.entry.original,
-            existing = remember(item, refresh) {
-                ChangeStore(context.applicationContext).load()
-                    .firstOrNull { it.date == state.date && it.eventId == item.entry.original.id }
-            },
-            programs = programs,
-            onSaved = {
-                editing = null
-                refresh++
-            },
-            onDismiss = { editing = null }
-        )
-    }
 }
 
 @Composable
@@ -275,7 +260,7 @@ private fun TodayRow(
 ) {
     val nowLabel = stringResource(R.string.now_label)
     val doneText = doneAt?.let { stringResource(R.string.ack_done_at, it.replace(':', '.')) }
-    val change = item.change
+    val change = item.change ?: item.entry.stepChanges.firstOrNull()
     val changeText = change?.let { changeSummary(it, item.original, item.resolved) }
     val a11y = item.event.time + " " + item.resolved.title + (if (isCurrent) ", $nowLabel" else "") +
         (changeText?.let { ", ${stringResource(R.string.change_title)}: $it" } ?: "") + (doneText?.let { ", $it" } ?: "")

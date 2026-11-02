@@ -16,6 +16,9 @@ import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.ProgramStore
+import fi.aikapolku.app.data.SubstepDefaults
+import fi.aikapolku.app.week.StepChangeDialog
+import fi.aikapolku.app.week.replacementStep
 import fi.aikapolku.app.data.ProgramTiming
 import fi.aikapolku.app.data.RoutineTemplates
 import fi.aikapolku.app.data.RunPreferences
@@ -91,7 +94,10 @@ internal fun ProgramsScreen(
     val initialPrograms = remember(store) { store.load() }
     var programs by remember { mutableStateOf(initialPrograms) }
     // Keskeytynyt ohjelma jatkuu, jos se on yhä tallessa.
-    val resumable = remember { initialPrograms.firstOrNull { it.id == runProgress.programId && it.steps.isNotEmpty() } }
+    // Tämän päivän vaihemuutokset mukana, jotta keskeytynyt ohjelma jatkuu samasta vaiheesta.
+    val resumable = remember {
+        initialPrograms.firstOrNull { it.id == runProgress.programId && it.steps.isNotEmpty() }?.let { withTodayChanges(context, it) }
+    }
     val run = rememberSaveable(saver = ProgramRunController.saver(runTimer, runProgress, playVoice)) {
         ProgramRunController(runTimer, runProgress, playVoice).also { c -> resumable?.let { c.resume(it) } }
     }
@@ -106,6 +112,7 @@ internal fun ProgramsScreen(
 
     var showFullProgram by rememberSaveable { mutableStateOf(false) }
     var showRunActions by remember { mutableStateOf(false) }
+    var stepChangeOpen by remember { mutableStateOf(false) }
 
     // P0-21e: ohjaajan lukitus. Käynnistys, tulostus, apu, tauko, Valmis ja ohitus ovat aina vapaita.
     val caregiver = LocalCaregiver.current
@@ -144,7 +151,7 @@ internal fun ProgramsScreen(
     fun startProgram(program: DayProgram) {
         if (program.steps.isEmpty()) return
         showFullProgram = false
-        run.start(program)
+        run.start(withTodayChanges(context, program))
         view = ProgramsView.RUN
     }
 
@@ -245,8 +252,9 @@ internal fun ProgramsScreen(
                     description = runStep.description,
                     subSteps = runStep.subSteps,
                     subStepIndex = run.subStepIndex,
-                    taskIndex = run.stepIndex,
-                    taskCount = run.program.steps.size,
+                    taskIndex = run.activeIndex,
+                    taskCount = run.activeCount,
+                    changedFrom = runStep.changedFrom.takeIf { runStep.changedToday },
                     time = when (runStep.mode) {
                         StepMode.DURATION -> RunTime.Countdown(
                             remainingMs = run.remaining,
@@ -355,7 +363,31 @@ internal fun ProgramsScreen(
             onShowProgram = { showRunActions = false; showFullProgram = true },
             onSkip = { showRunActions = false; skipTask() },
             onEnd = { showRunActions = false; showExitConfirmation = true },
-            onDismiss = { showRunActions = false }
+            onDismiss = { showRunActions = false },
+            onStepChange = if (canEditPrograms) {
+                { showRunActions = false; stepChangeOpen = true }
+            } else null
+        )
+    }
+
+    // Ohjaajan muutos nykyiseen vaiheeseen kesken suorituksen.
+    if (stepChangeOpen && view == ProgramsView.RUN) {
+        StepChangeDialog(
+            onCancelStep = {
+                stepChangeOpen = false
+                run.currentStep?.let { saveRunStepChange(context, run.program, it, runEventId, null) }
+                skipTask()
+            },
+            onReplace = { card ->
+                stepChangeOpen = false
+                val current = run.currentStep
+                if (current != null) {
+                    saveRunStepChange(context, run.program, current, runEventId, card)
+                    val texts: (Int) -> String = { context.getString(it) }
+                    run.replaceCurrent(replacementStep(current, card, SubstepDefaults.forCard(card.name, texts, card.photoPath)))
+                }
+            },
+            onDismiss = { stepChangeOpen = false }
         )
     }
 
@@ -380,7 +412,7 @@ internal fun ProgramsScreen(
         AlertDialog(
             onDismissRequest = { showFullProgram = false },
             title = { Text(stringResource(R.string.koko_paivaohjelma)) },
-            text = { ProgramOverview(run.program.steps, run.stepIndex) },
+            text = { ProgramOverview(run.program.steps.filterNot { it.cancelledToday }, run.activeIndex) },
             confirmButton = {
                 TextButton(onClick = { showFullProgram = false }) { Text(stringResource(R.string.close)) }
             }
@@ -472,4 +504,55 @@ internal fun ProgramsScreen(
 private fun formatLeft(ms: Long): String {
     val seconds = ((ms + 999L) / 1000L).coerceAtLeast(0L)
     return "%d:%02d".format(seconds / 60, seconds % 60)
+}
+
+/** Päiväohjelma tämän päivän vaihemuutoksin (perutut ohitetaan, korvatut vaihdetaan). */
+internal fun withTodayChanges(context: android.content.Context, program: DayProgram): DayProgram {
+    val app = context.applicationContext
+    val today = java.time.LocalDate.now()
+    val changes = fi.aikapolku.app.data.DayChanges.stepChangesFor(
+        fi.aikapolku.app.data.WeekStore(app).load(),
+        fi.aikapolku.app.data.ChangeStore(app).load(),
+        today,
+        program.id
+    )
+    val texts: (Int) -> String = { app.getString(it) }
+    return fi.aikapolku.app.data.DayChanges.applyToProgram(program, changes) { name, photo -> SubstepDefaults.forCard(name, texts, photo) }
+}
+
+/**
+ * Kesken suorituksen tehty vaihemuutos tallennetaan tämän päivän tapahtumaan, jotta se säilyy,
+ * jos ohjelma keskeytyy. Käyttäjä näki muutoksen jo suorituksessa, joten se kuitataan nähdyksi.
+ * [card] null = vaihe ohitetaan tänään.
+ */
+internal fun saveRunStepChange(
+    context: android.content.Context,
+    program: DayProgram,
+    step: fi.aikapolku.app.data.ProgramStep,
+    runEventId: String?,
+    card: fi.aikapolku.app.data.CardItem?
+) {
+    val app = context.applicationContext
+    val today = java.time.LocalDate.now()
+    val plan = fi.aikapolku.app.data.WeekStore(app).load()
+    val todays = fi.aikapolku.app.data.WeekSchedule.eventsFor(plan, today)
+        .filter { it.kind == fi.aikapolku.app.data.EventKind.PROGRAM && it.programId == program.id }
+    val eventId = todays.firstOrNull { it.id == runEventId }?.id ?: todays.firstOrNull()?.id ?: return
+    val saved = ProgramStore(app).load().firstOrNull { it.id == program.id }?.steps?.firstOrNull { it.id == step.id }
+    val store = fi.aikapolku.app.data.ChangeStore(app)
+    val change = fi.aikapolku.app.data.EventChange(
+        id = java.util.UUID.randomUUID().toString(),
+        date = today,
+        eventId = eventId,
+        type = if (card == null) fi.aikapolku.app.data.ChangeType.CANCEL else fi.aikapolku.app.data.ChangeType.REPLACE,
+        cardName = card?.name ?: "",
+        cardPhoto = card?.photoPath ?: "",
+        reveal = fi.aikapolku.app.data.ChangeReveal.NOW,
+        showOriginal = true,
+        stepId = step.id,
+        stepName = saved?.name ?: step.name,
+        stepPhoto = saved?.photo ?: step.photo
+    )
+    store.upsert(change)
+    fi.aikapolku.app.data.AckStore(app).ack(today, change.ackId)
 }

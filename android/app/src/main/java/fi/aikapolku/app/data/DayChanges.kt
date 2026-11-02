@@ -51,8 +51,17 @@ internal data class EventChange(
     val autoPlayVoice: Boolean = false,
     val reveal: ChangeReveal = ChangeReveal.NOW,
     /** Näytetäänkö käyttäjälle, mikä korvattiin (yliviivattuna). Perutussa aina. */
-    val showOriginal: Boolean = true
+    val showOriginal: Boolean = true,
+    /**
+     * Päiväohjelman yksittäinen vaihe ([stepId]); tyhjä = koko tapahtuma. Vaiheen nimi ja kuva
+     * talletetaan muutokseen näyttämistä varten. Vaihemuutos: vain CANCEL tai REPLACE (kortti).
+     */
+    val stepId: String = "",
+    val stepName: String = "",
+    val stepPhoto: String = ""
 ) {
+    val isStep: Boolean get() = stepId.isNotBlank()
+
     /** Kuittausavain AckStoreen ("Selvä" muutosnäkymässä). */
     val ackId: String get() = "change:$id"
 }
@@ -61,7 +70,9 @@ internal data class EventChange(
 internal data class DayEntry(
     val event: WeekEvent,
     val original: WeekEvent,
-    val change: EventChange?
+    val change: EventChange?,
+    /** Päiväohjelman vaiheiden muutokset (näkyvät). */
+    val stepChanges: List<EventChange> = emptyList()
 ) {
     val cancelled: Boolean get() = change?.type == ChangeType.CANCEL
 }
@@ -70,7 +81,8 @@ internal data class DayEntry(
 internal object DayChanges {
     const val KEEP_DAYS = 7L
 
-    fun effective(original: WeekEvent, change: EventChange): WeekEvent = when (change.type) {
+    /** Tapahtuma muutoksen jälkeen. Vaihemuutos ei muuta tapahtumaa (vain ohjelman vaihetta). */
+    fun effective(original: WeekEvent, change: EventChange): WeekEvent = if (change.isStep) original else when (change.type) {
         ChangeType.CANCEL -> original
         ChangeType.REPLACE -> original.copy(
             kind = change.kind,
@@ -108,9 +120,11 @@ internal object DayChanges {
      */
     fun entries(events: List<WeekEvent>, changes: List<EventChange>, date: LocalDate, now: LocalDateTime?): List<DayEntry> =
         events.map { e ->
-            val change = changes.firstOrNull { it.date == date && it.eventId == e.id }
-                ?.takeIf { now == null || isRevealed(it, e, now) }
-            DayEntry(if (change != null) effective(e, change) else e, e, change)
+            val own = changes.filter { it.date == date && it.eventId == e.id && (now == null || isRevealed(it, e, now)) }
+            val change = own.firstOrNull { !it.isStep }
+            // Koko tapahtuman muutos korvaa vaihemuutokset (esim. peruttu ohjelma).
+            val steps = if (change == null) own.filter { it.isStep } else emptyList()
+            DayEntry(if (change != null) effective(e, change) else e, e, change, steps)
         }.sortedWith(compareBy({ WeekSchedule.minutesOf(it.event.time) }, { it.event.id }))
 
     /** Muutokset, jotka näytetään käyttäjälle aloitusnäkymässä: näkyvät ja kuittaamattomat. */
@@ -122,10 +136,10 @@ internal object DayChanges {
     ): List<Pair<EventChange, WeekEvent>> {
         val today = now.toLocalDate()
         return listOf(today, today.plusDays(1)).flatMap { date ->
-            WeekSchedule.eventsFor(plan, date).mapNotNull { e ->
-                changes.firstOrNull { it.date == date && it.eventId == e.id }
-                    ?.takeIf { isRevealed(it, e, now) && !acked(it) }
-                    ?.let { it to e }
+            WeekSchedule.eventsFor(plan, date).flatMap { e ->
+                changes.filter { it.date == date && it.eventId == e.id && isRevealed(it, e, now) && !acked(it) }
+                    .sortedBy { it.isStep }
+                    .map { it to e }
             }
         }
     }
@@ -134,9 +148,54 @@ internal object DayChanges {
     fun cleaned(changes: List<EventChange>, today: LocalDate, eventIds: Set<String>?): List<EventChange> =
         changes.filter { !it.date.isBefore(today.minusDays(KEEP_DAYS)) && (eventIds == null || it.eventId in eventIds) }
 
-    /** Tallentaa muutoksen; samalle päivälle ja tapahtumalle on vain yksi muutos. */
+    /** Tallentaa muutoksen; samalle päivälle, tapahtumalle ja vaiheelle on vain yksi muutos. */
     fun upsert(changes: List<EventChange>, change: EventChange): List<EventChange> =
-        changes.filterNot { it.id == change.id || (it.date == change.date && it.eventId == change.eventId) } + change
+        changes.filterNot {
+            it.id == change.id || (it.date == change.date && it.eventId == change.eventId && it.stepId == change.stepId)
+        } + change
+
+    /** Tapahtuman koko muutos (ei vaihemuutos) päivälle. */
+    fun wholeChange(changes: List<EventChange>, date: LocalDate, eventId: String): EventChange? =
+        changes.firstOrNull { it.date == date && it.eventId == eventId && !it.isStep }
+
+    /**
+     * Päiväohjelman suoritus: päivän vaihemuutokset ohjelman vaiheisiin. Peruttua vaihetta ei
+     * poisteta (keskeytetty ohjelma jatkuu oikeasta kohdasta), vaan se merkitään ohitettavaksi.
+     * [substeps] = valmiit osavaiheet korvaavalle kortille.
+     */
+    fun applyToProgram(
+        program: DayProgram,
+        stepChanges: List<EventChange>,
+        substeps: (name: String, photo: String) -> List<String>
+    ): DayProgram {
+        if (stepChanges.isEmpty()) return program
+        return program.copy(steps = program.steps.map { step ->
+            val c = stepChanges.firstOrNull { it.stepId == step.id } ?: return@map step
+            val from = if (c.showOriginal || c.type == ChangeType.CANCEL) step.name else ""
+            when (c.type) {
+                ChangeType.CANCEL -> step.copy(changedToday = true, cancelledToday = true, changedFrom = from)
+                ChangeType.REPLACE -> step.copy(
+                    name = c.cardName,
+                    photo = c.cardPhoto,
+                    description = "",
+                    voicePath = "",
+                    autoPlayVoice = false,
+                    subSteps = substeps(c.cardName, c.cardPhoto),
+                    changedToday = true,
+                    changedFrom = from
+                )
+                ChangeType.MOVE -> step
+            }
+        })
+    }
+
+    /** Päivän vaihemuutokset ohjelmalle: kaikki sen päivän tapahtumat, joissa ohjelma on. */
+    fun stepChangesFor(plan: WeekPlan, changes: List<EventChange>, date: LocalDate, programId: String): List<EventChange> {
+        val eventIds = WeekSchedule.eventsFor(plan, date)
+            .filter { it.kind == EventKind.PROGRAM && it.programId == programId && wholeChange(changes, date, it.id) == null }
+            .map { it.id }.toSet()
+        return changes.filter { it.date == date && it.isStep && it.eventId in eventIds }.distinctBy { it.stepId }
+    }
 }
 
 /** Profiilin muutokset. */
@@ -194,6 +253,9 @@ internal class ChangeStore(context: Context, profileId: String = ProfileStore.cu
                         .put("autoPlayVoice", c.autoPlayVoice)
                         .put("reveal", c.reveal.key)
                         .put("showOriginal", c.showOriginal)
+                        .put("stepId", c.stepId)
+                        .put("stepName", c.stepName)
+                        .put("stepPhoto", c.stepPhoto)
                 )
             }
             return array.toString()
@@ -225,7 +287,10 @@ internal class ChangeStore(context: Context, profileId: String = ProfileStore.cu
                     voicePath = o.optString("voicePath"),
                     autoPlayVoice = o.optBoolean("autoPlayVoice", false),
                     reveal = ChangeReveal.from(o.optString("reveal")),
-                    showOriginal = o.optBoolean("showOriginal", true)
+                    showOriginal = o.optBoolean("showOriginal", true),
+                    stepId = o.optString("stepId"),
+                    stepName = o.optString("stepName"),
+                    stepPhoto = o.optString("stepPhoto")
                 )
             }
         }

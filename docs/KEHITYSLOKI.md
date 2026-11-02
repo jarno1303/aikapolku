@@ -358,3 +358,12 @@
 - Kohde: uutena profiilina (oletus profiileille, mitään ei korvata; samanniminen profiili saa "(2)") tai nykyiseen profiiliin (oletus ohjelmapohjille): ohjelmat ja kortit lisätään, täysin samanlaiset ohitetaan, samannimiset saavat "(2)"; viikko-ohjelma korvataan vain erikseen valittaessa, ja sen tapahtumat osoittavat tuotuihin ohjelmiin. Kaikkien profiilien tiedosto tuodaan aina uusina profiileina.
 - Uudemman version tiedosto torjutaan selkeällä viestillä (formaatin versio 1).
 - Uudet testit: paketointi, salaus ja mediaviittaukset (8, myös Windows-polut), yhdistäminen ja anonymisointi (5), vienti–tuonti kokonaisuutena (3).
+
+## Pikamuutos (muutoskortin helpompi teko)
+- Ohjaajalle "Tee muutos" aloitusnäkymän valikossa (PIN-koodi lukittuna). Myös koko päivän näkymän ⋮-valikko vie samaan näkymään valmiiksi valitulla tapahtumalla. Vanha muutosikkuna poistettu.
+- Kolme vaihetta isoin painikkein: Mikä muuttuu? (Tänään / Huomenna, tapahtumat kuvineen; päiväohjelmassa Koko ohjelma tai yksittäinen vaihe) → Mitä tilalle? (Peruttu, Siirrä aikaa, toinen päiväohjelma tai kortti samasta kuvallisesta valinnasta kuin Ensin–Sitten) → Valmis? (yhteenveto). Syy, äänite, näkymisen ajankohta ja "Näytä mikä korvattiin" Lisävalinnoissa (kiinni, edellisen muutoksen arvoilla). Olemassa olevan muutoksen voi muokata tai perua.
+- Päiväohjelman vaiheen muutos myös etukäteen: vaihe perutaan tai korvataan kortilla sinä päivänä. Ohjelmaa käynnistettäessä (ja keskeytynyttä jatkettaessa) perutut vaiheet ohitetaan ja näkyvät lopussa ohitettuina, korvatut vaihtuvat (ajoitus säilyy, osavaiheet kortin mukaan). Suorituksessa muutosmerkki ja "Muutos · ennen: Uinti". Laskuri ("2/4") ei laske peruttuja.
+- Kesken suorituksen: Muut toiminnot → "Muutos tähän vaiheeseen" (ohjaaja): Ohitetaan tänään tai kortti tilalle. Tallentuu päivän muutokseksi (säilyy, jos ohjelma keskeytyy) ja merkitään nähdyksi.
+- Ensin–Sitten: kun Sitten-kortti vaihdetaan Ensin-ajastuksen ollessa kesken, kysytään "Näytetäänkö muutoksena?". Näytä muutos → muutosnäkymä (vanha ruksattuna → uusi, Selvä) ja paluu ajastimeen.
+- Aloitusnäkymän muutosrivit, päivän lista ja ohjaajan Muutokset-kortti näyttävät myös vaihemuutokset ("Koulupäivä: Uinti → Ulkoilu"). Muistutukset eivät muutu vaihemuutoksesta.
+- Uudet testit: vaihemuutokset (7), suoritus perutuin ja korvatuin vaihein (5).
