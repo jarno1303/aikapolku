@@ -245,7 +245,7 @@ internal fun RunkoEditor(
                                 val now = ownNow()
                                 val from = now.indexOfFirst { it.id == row.id }
                                 val to = drag.target(now.filter { it.id != row.id }.map { it.id })
-                                drag.dragId = null
+                                drag.end()
                                 if (from >= 0 && to != from) {
                                     move(from, to)
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -262,7 +262,7 @@ internal fun RunkoEditor(
                             )
                         }
                 ) {
-                    OwnRow(row, programs, canEdit) { editing = row }
+                    OwnRow(row, programs, canEdit) { if (drag.clickAllowed()) editing = row }
                     if (lineAbove && targetTime != null) DropLine(targetTime, Modifier.align(Alignment.TopCenter))
                     if (lineBelow && targetTime != null) DropLine(targetTime, Modifier.align(Alignment.BottomCenter))
                 }
@@ -277,7 +277,7 @@ internal fun RunkoEditor(
                         val rest = rows.filter { rowKey(it.second) != key }
                         val to = drag.target(rest.map { rowKey(it.second) })
                         val newTime = Runko.suggestTime(rest.getOrNull(to - 1)?.first, rest.getOrNull(to)?.first)
-                        drag.dragId = null
+                        drag.end()
                         onGroupMove?.invoke(row, newTime)
                     },
                     onBlocked = if (canEdit && onGroupMove == null) {
@@ -285,7 +285,7 @@ internal fun RunkoEditor(
                     } else null
                 )
             ) {
-                GroupEventRow(row, canEdit) { onGroupRow(row) }
+                GroupEventRow(row, canEdit) { if (drag.clickAllowed()) onGroupRow(row) }
                 if (lineAbove && targetTime != null) DropLine(targetTime, Modifier.align(Alignment.TopCenter))
                 if (lineBelow && targetTime != null) DropLine(targetTime, Modifier.align(Alignment.BottomCenter))
             }

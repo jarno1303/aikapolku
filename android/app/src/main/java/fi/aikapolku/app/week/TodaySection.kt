@@ -495,7 +495,7 @@ internal fun CaregiverDayList(
                     val rest = state.items.filter { it.event.id != item.event.id }
                     val to = drag.target(rest.map { it.event.id })
                     val time = Runko.suggestTime(rest.getOrNull(to - 1)?.event?.time, rest.getOrNull(to)?.event?.time)
-                    drag.dragId = null
+                    drag.end()
                     moving = item to time
                 },
                 onBlocked = if (canMove && item.cancelled) {
@@ -508,8 +508,9 @@ internal fun CaregiverDayList(
                 isCurrent = isCurrent,
                 isPast = isPast,
                 doneAt = doneAt,
-                trailing = { ChangeButton(changeLabel) { onChange(item.entry.original) } }
+                trailing = { ChangeButton(changeLabel) { if (drag.clickAllowed()) onChange(item.entry.original) } }
             ) {
+                if (!drag.clickAllowed()) return@TodayRow
                 val change = item.change
                 when {
                     change != null && item.cancelled -> onOpenChange(change)

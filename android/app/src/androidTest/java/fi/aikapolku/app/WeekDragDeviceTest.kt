@@ -4,7 +4,11 @@ import android.content.Context
 import android.view.WindowManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.semantics.SemanticsNode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -120,8 +124,28 @@ class WeekDragDeviceTest {
         compose.waitForIdle()
     }
 
+    /** Kaikki ruudulla (myös ikkunoissa) näkyvät tekstit: virheilmoitukseen, kun jotain ei löydy. */
+    private fun visibleTexts(): String = runCatching {
+        compose.onAllNodes(isRoot(), useUnmergedTree = true).fetchSemanticsNodes().flatMap { root ->
+            fun walk(n: SemanticsNode): List<String> =
+                n.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } + n.children.flatMap { walk(it) }
+            walk(root)
+        }.distinct().joinToString(" | ")
+    }.getOrElse { "(ei saatu: ${it.message})" }
+
     private fun waitForText(text: String) {
-        compose.waitUntil(10_000L) { compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty() }
+        try {
+            compose.waitUntil(10_000L) { compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty() }
+        } catch (e: Throwable) {
+            throw AssertionError("Tekstiä \"$text\" ei löytynyt. Ruudulla: ${visibleTexts()}", e)
+        }
+    }
+
+    /** Odottaa painikkeen ja painaa sitä heti (ei taukoa välissä). */
+    private fun clickWhenShown(text: String) {
+        waitForText(text)
+        node(text).performClick()
+        pause()
     }
 
     private fun node(text: String) = compose.onAllNodesWithText(text).onFirst()
@@ -146,6 +170,7 @@ class WeekDragDeviceTest {
         pause(800L)
         compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
         pause(800L)
+        waitForText(t(R.string.home_week))
     }
 
     private fun openClientWeek(first: String) {
@@ -232,10 +257,7 @@ class WeekDragDeviceTest {
         longPressDrag(node(names[0]), last.bottom - start.center.y + 40f)
 
         // Siirtoikkuna: kohta saa ajan viimeisen jälkeen (10:00 + 1 h).
-        waitForText(t(R.string.move_today))
-        pause()
-        node(t(R.string.move_today)).performClick()
-        pause()
+        clickWhenShown(t(R.string.move_today))
 
         val change = ChangeStore(context, testProfile).load().firstOrNull { it.eventId == "siirto-0" && it.date == today }
         assertNotNull("päivän muutos tallentui", change)
@@ -264,10 +286,7 @@ class WeekDragDeviceTest {
         longPressDrag(node(groupName), first.top - group.center.y - 40f)
 
         // Ensimmäisen eteen: 08:00 - 1 h = 07:00.
-        waitForText(t(R.string.move_weekly))
-        pause()
-        node(t(R.string.move_weekly)).performClick()
-        pause()
+        clickWhenShown(t(R.string.move_weekly))
 
         val g = GroupStore(context).load().first { it.id == GROUP_ID }
         assertEquals(

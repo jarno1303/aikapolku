@@ -1,5 +1,11 @@
 package fi.aikapolku.app.week
 
+import kotlinx.coroutines.flow.first
+
+import androidx.compose.runtime.snapshotFlow
+
+import android.os.SystemClock
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -52,6 +58,26 @@ internal class RowDrag {
     var grab by mutableFloatStateOf(0f)
     /** Tunnus → (yläreuna, korkeus) ikkunassa. */
     val bounds = mutableStateMapOf<String, Pair<Float, Float>>()
+    /** Milloin edellinen raahaus päättyi (uptime ms); null = ei raahattu. Heti perään tuleva napautus ohitetaan. */
+    var lastEndAt: Long? = null
+
+    /** Rivin napautus on sallittu (ei raahausta käynnissä eikä juuri päättynyt). */
+    fun clickAllowed(): Boolean {
+        if (dragId != null) return false
+        val end = lastEndAt ?: return true
+        return SystemClock.uptimeMillis() - end > 600L
+    }
+
+    /** Paikka tallennetaan vain muuttuessaan; muuten jokainen piirto aiheuttaisi uuden piirron. */
+    fun place(id: String, top: Float, height: Float) {
+        val value = top to height
+        if (bounds[id] != value) bounds[id] = value
+    }
+
+    fun end() {
+        dragId = null
+        lastEndAt = SystemClock.uptimeMillis()
+    }
 
     /** Monenneksi raahattu rivi tulisi muiden joukossa ([others] ylhäältä alas). */
     fun target(others: List<String>): Int =
@@ -72,15 +98,21 @@ internal fun AutoScrollWhileDragging(drag: RowDrag) {
         if (dragging == null) return@LaunchedEffect
         val edge = with(density) { 88.dp.toPx() }
         val maxSpeed = with(density) { 22.dp.toPx() }
+        fun speedAt(y: Float): Float = when {
+            y < scroll.viewportTop + edge -> -maxSpeed * ((scroll.viewportTop + edge - y) / edge).coerceIn(0f, 1f)
+            y > scroll.viewportBottom - edge -> maxSpeed * ((y - (scroll.viewportBottom - edge)) / edge).coerceIn(0f, 1f)
+            else -> 0f
+        }
         while (drag.dragId != null) {
             val y = drag.pointerY
-            val speed = when {
-                y < scroll.viewportTop + edge -> -maxSpeed * ((scroll.viewportTop + edge - y) / edge).coerceIn(0f, 1f)
-                y > scroll.viewportBottom - edge -> maxSpeed * ((y - (scroll.viewportBottom - edge)) / edge).coerceIn(0f, 1f)
-                else -> 0f
+            val speed = speedAt(y)
+            // Ei reunan lähellä tai sivu jo päässä: odotetaan sormen liikettä (ei turhia kuvia).
+            val used = if (speed != 0f) scroll.state.scrollBy(speed) else 0f
+            if (used == 0f) {
+                snapshotFlow { drag.dragId to drag.pointerY }.first { (id, py) -> id == null || py != y }
+            } else {
+                withFrameNanos { }
             }
-            if (speed != 0f) scroll.state.scrollBy(speed)
-            withFrameNanos { }
         }
     }
 }
@@ -97,7 +129,7 @@ internal fun Modifier.dragRow(
     onDrop: () -> Unit,
     onBlocked: (() -> Unit)? = null
 ): Modifier = this
-    .onGloballyPositioned { c -> drag.bounds[id] = c.positionInWindow().y to c.size.height.toFloat() }
+    .onGloballyPositioned { c -> drag.place(id, c.positionInWindow().y, c.size.height.toFloat()) }
     .then(
         when {
             enabled -> Modifier.pointerInput(id) {
@@ -112,8 +144,11 @@ internal fun Modifier.dragRow(
                         change.consume()
                         drag.pointerY = (drag.bounds[id]?.first ?: 0f) + change.position.y
                     },
-                    onDragEnd = { if (drag.dragId == id) onDrop() },
-                    onDragCancel = { if (drag.dragId == id) drag.dragId = null }
+                    onDragEnd = {
+                        if (drag.dragId == id) onDrop()
+                        drag.end()
+                    },
+                    onDragCancel = { if (drag.dragId == id) drag.end() }
                 )
             }
             onBlocked != null -> Modifier.pointerInput(id) {
