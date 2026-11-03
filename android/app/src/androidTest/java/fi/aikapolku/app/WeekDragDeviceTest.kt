@@ -218,8 +218,10 @@ class WeekDragDeviceTest {
         val rootHeight = compose.onRoot().fetchSemanticsNode().size.height.toFloat()
         val first = node(names[0])
         val start = first.fetchSemanticsNode().boundsInRoot
+        // Todellinen sijainti (boundsInRoot rajautuu ruutuun, jolloin kaikki näyttäisivät näkyviltä).
         val visibleBefore = names.count { n ->
-            compose.onAllNodesWithText(n).fetchSemanticsNodes().firstOrNull()?.boundsInRoot?.let { it.bottom <= rootHeight } == true
+            compose.onAllNodesWithText(n).fetchSemanticsNodes().firstOrNull()
+                ?.let { it.positionInRoot.y + it.size.height <= rootHeight } == true
         }
 
         first.performTouchInput {
