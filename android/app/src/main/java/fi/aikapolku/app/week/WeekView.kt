@@ -156,6 +156,7 @@ internal fun WeekView(programs: List<DayProgram>, canEdit: Boolean) {
                     result.group?.let { GroupStore(app).upsert(it) }
                     groups = GroupStore(app).load()
                     update(result.own)
+                    GroupSession.changed()
                 }
                 groupMove = null
             },
@@ -173,6 +174,7 @@ internal fun WeekView(programs: List<DayProgram>, canEdit: Boolean) {
                     GroupStore(app).upsert(Runko.withException(group, row.event.id, me, exception?.copy(memberId = me)))
                     groups = GroupStore(app).load()
                     EventReminders.reschedule(app)
+                    GroupSession.changed()
                 }
                 exceptionRow = null
             },
@@ -211,7 +213,10 @@ private fun AckOverview(plan: DaySource, today: LocalDate) {
     val acks = remember(context) { AckStore(context.applicationContext) }
     val now = remember { java.time.LocalTime.now() }
     val days = listOf(today.minusDays(1) to R.string.ack_yesterday, today to R.string.ack_today)
-    val changes = remember(plan) { ChangeStore(context.applicationContext).load() }
+    val changes = remember(plan) {
+        val own = ChangeStore(context.applicationContext).load()
+        (plan as? fi.aikapolku.app.data.ClientDay)?.withGroupChanges(own) ?: own
+    }
     // Päivän muutokset huomioiden: perutut pois, korvatut uudella nimellä.
     val rows = days.map { (date, label) ->
         Triple(

@@ -115,9 +115,11 @@ internal class TodayState(
 internal fun rememberTodayState(dayOffset: Int = 0, caregiverView: Boolean = false, refresh: Int = 0): TodayState? {
     val context = LocalContext.current
     // Asiakkaan koko päivä: omat kohdat ja ryhmien rungot (ks. ClientWeek).
-    val plan = remember(context, refresh) { ClientWeek.load(context.applicationContext) }
+    val groupsRevision = GroupSession.revision
+    val plan = remember(context, refresh, groupsRevision) { ClientWeek.load(context.applicationContext) }
     val programs = remember(context, refresh) { ProgramStore(context.applicationContext).load() }
-    val changes = remember(context, refresh) { ChangeStore(context.applicationContext).load() }
+    // Asiakkaan omat ja ryhmien muutokset (oma edellä).
+    val changes = remember(context, refresh, groupsRevision) { plan.withGroupChanges(ChangeStore(context.applicationContext).load()) }
     val acks = remember(context) { AckStore(context.applicationContext) }
     var now by remember { mutableStateOf(LocalDateTime.now()) }
     val date = now.toLocalDate().plusDays(dayOffset.toLong())
@@ -538,7 +540,7 @@ internal fun CaregiverDayList(
             isGroup = GroupSchedule.isGroupEvent(original.id),
             onToday = { chosen ->
                 val store = ChangeStore(app)
-                Moves.dayChange(store.load(), original.id, state.date, chosen, store.lastReveal, store.lastShowOriginal) {
+                Moves.dayChange(ClientWeek.changes(app), original.id, state.date, chosen, store.lastReveal, store.lastShowOriginal) {
                     java.util.UUID.randomUUID().toString()
                 }?.let { store.upsert(it) }
                 EventReminders.reschedule(app)
@@ -553,7 +555,7 @@ internal fun CaregiverDayList(
                 ) { java.util.UUID.randomUUID().toString() }
                 if (result != null) {
                     WeekStore(app, me).save(result.own)
-                    result.group?.let { groups.upsert(it) }
+                    result.group?.let { groups.upsert(it); GroupSession.changed() }
                     // Tämän päivän siirto samalle kohdalle ei enää tarvita (viikko-ohjelma muuttui).
                     val store = ChangeStore(app)
                     DayChanges.wholeChange(store.load(), state.date, original.id)

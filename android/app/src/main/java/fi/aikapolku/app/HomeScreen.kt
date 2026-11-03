@@ -234,6 +234,9 @@ private fun CaregiverHome(
         }
     }
 
+    // Ryhmä tänään: paikalla/poissa ja ryhmän päivän muutokset (näkyy, jos ryhmiä on).
+    fi.aikapolku.app.week.GroupTodayCard()
+
     ToolsCard(stringResource(R.string.caregiver_prepare)) {
         ChoiceRow(stringResource(R.string.ensin_sitten), { open(AppPage.FIRST_THEN) }, subtitle = stringResource(R.string.caregiver_first_then_info), leading = { RowIcon(Icons.AutoMirrored.Rounded.ArrowForward) })
         ChoiceRow(stringResource(R.string.timer_title), { open(AppPage.TIMER) }, subtitle = stringResource(R.string.caregiver_timer_info), leading = { RowIcon(Icons.Rounded.Refresh) })

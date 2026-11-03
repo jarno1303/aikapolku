@@ -753,5 +753,18 @@
     <string name="move_cancelled_blocked">Peruttua kohtaa ei voi siirtää. Avaa muutos napauttamalla, jos haluat palauttaa sen.</string>
     <string name="runko_drag_only_one">Tällä päivällä on vain yksi oma kohta. Vaihda sen aikaa napauttamalla kohtaa.</string>
     <string name="runko_drag_group_blocked">Ryhmän kohtaa siirretään ryhmän rungossa (Ryhmät) tai asiakkaan viikossa.</string>
+    <string name="group_today_title">Ryhmä tänään</string>
+    <string name="group_today_present">Paikalla %1$d/%2$d</string>
+    <string name="group_today_here">Paikalla</string>
+    <string name="group_today_absent">Poissa</string>
+    <string name="group_today_toggle">%1$s: vaihda paikalla tai poissa</string>
+    <string name="group_today_hint">Napauta asiakasta merkitäksesi hänet poissaolevaksi. Napauta kohtaa muuttaaksesi sitä koko ryhmälle tänään, tai paina pitkään ja raahaa.</string>
+    <string name="group_change_info">Muutos koskee tänään kaikkia ryhmän %1$s paikalla olevia asiakkaita. Yhden asiakkaan muutos tehdään hänen Tänään-listallaan.</string>
+    <string name="group_change_cancel">Peru tänään</string>
+    <string name="group_change_replace">Vaihda toiseen tänään</string>
+    <string name="group_change_move">Siirrä toiseen aikaan</string>
+    <string name="group_change_restore">Palauta ennalleen</string>
+    <string name="group_move_today_info">Päivän muutos koko ryhmälle %1$s. Asiakkaat näkevät muutoksen, ja muistutukset siirtyvät.</string>
+    <string name="group_move_weekly_info">Muuttaa ryhmän %1$s runkoa joka viikko kaikille ryhmän asiakkaille.</string>
     <string name="runko_selected">Valittu</string>
 </resources>

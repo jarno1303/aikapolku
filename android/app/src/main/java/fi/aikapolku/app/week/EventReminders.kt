@@ -59,7 +59,7 @@ internal object EventReminders {
         ProfileStore.list(c).associate { it.id to ClientWeek.load(c, it.id) }
 
     private fun changes(c: Context): Map<String, List<EventChange>> =
-        ProfileStore.list(c).associate { it.id to ChangeStore(c, it.id).load() }
+        ProfileStore.list(c).associate { it.id to ClientWeek.changes(c, it.id) }
 
     private fun alarmIntent(c: Context, at: LocalDateTime?): PendingIntent =
         PendingIntent.getBroadcast(

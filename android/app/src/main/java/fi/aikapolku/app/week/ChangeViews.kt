@@ -107,7 +107,7 @@ internal fun ChangeAnnouncements(onOpen: (EventChange) -> Unit): Boolean {
         val plan = ClientWeek.load(context)
         val programs = ProgramStore(context).load()
         val acks = AckStore(context)
-        DayChanges.announced(plan, ChangeStore(context).load(), LocalDateTime.now()) { acks.ackTime(it.date, it.ackId) != null }
+        DayChanges.announced(plan, plan.withGroupChanges(ChangeStore(context).load()), LocalDateTime.now()) { acks.ackTime(it.date, it.ackId) != null }
             .map { (change, original) ->
                 Triple(change, resolveEvent(original, programs), resolveEvent(DayChanges.effective(original, change), programs))
             }
@@ -183,7 +183,7 @@ private fun ImageWithName(item: ResolvedEvent, size: Int, crossed: Boolean) {
 internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
     val context = LocalContext.current
     val data = remember(changeId) {
-        val change = ChangeStore(context).load().firstOrNull { it.id == changeId }
+        val change = ClientWeek.changes(context).firstOrNull { it.id == changeId }
         val original = change?.let { c -> ClientWeek.load(context).event(c.eventId) }
         val programs = ProgramStore(context).load()
         if (change == null || original == null) null
@@ -332,7 +332,8 @@ private fun ChangeView(
 internal fun ChangeOverview(plan: DaySource, programs: List<DayProgram>, today: LocalDate) {
     val context = LocalContext.current
     val rows = remember(plan) {
-        val changes = ChangeStore(context).load()
+        val own = ChangeStore(context).load()
+        val changes = (plan as? fi.aikapolku.app.data.ClientDay)?.withGroupChanges(own) ?: own
         val acks = AckStore(context)
         listOf(today, today.plusDays(1)).flatMap { date ->
             plan.eventsFor(date).flatMap { e ->

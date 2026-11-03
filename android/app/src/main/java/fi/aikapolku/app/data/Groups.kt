@@ -77,6 +77,9 @@ internal object GroupSchedule {
         return WeekSchedule.eventsFor(group.plan, date).mapNotNull { forMember(group, memberId, it) }
     }
 
+    /** Ryhmän päivämuutos asiakkaalle: tunnus asiakkaan päivän muotoon. */
+    fun toMember(groupId: String, change: EventChange): EventChange = change.copy(eventId = eventId(groupId, change.eventId))
+
     fun eventIds(group: Group, memberId: String): Set<String> =
         if (memberId !in group.members) emptySet()
         else group.plan.events.map { eventId(group.id, it.id) }.toSet()
@@ -90,8 +93,19 @@ internal class ClientDay(
     val own: WeekPlan,
     val groups: List<Group>,
     val memberId: String,
+    /** Ryhmien päivämuutokset asiakkaan päivän tunnuksin (koskevat kaikkia paikalla olevia). */
+    val groupChanges: List<EventChange> = emptyList(),
     private val absent: (groupId: String, date: LocalDate) -> Boolean = { _, _ -> false }
 ) : DaySource {
+
+    /**
+     * Asiakkaan muutokset ja ryhmien muutokset yhdessä. Asiakkaan oma muutos samaan kohtaan
+     * samana päivänä menee ryhmän muutoksen edelle (esim. ryhmän uinti peruttu, Mikolla oma).
+     */
+    fun withGroupChanges(ownChanges: List<EventChange>): List<EventChange> =
+        ownChanges + groupChanges.filter { g ->
+            ownChanges.none { it.date == g.date && it.eventId == g.eventId && it.stepId == g.stepId }
+        }
 
     override fun eventsFor(date: LocalDate): List<WeekEvent> {
         val fromGroups = groups.flatMap { GroupSchedule.eventsFor(it, memberId, date, absent(it.id, date)) }
@@ -121,8 +135,17 @@ internal object ClientWeek {
         val groups = store.load().filter { profileId in it.members }
         if (groups.isEmpty()) return ClientDay(own, emptyList(), profileId)
         val absences = store.absences()
-        return ClientDay(own, groups, profileId) { groupId, date -> profileId in absences[groupId]?.get(date).orEmpty() }
+        val changes = store.allChanges()
+        return ClientDay(
+            own, groups, profileId,
+            absent = { groupId, date -> profileId in absences[groupId]?.get(date).orEmpty() },
+            groupChanges = groups.flatMap { g -> changes[g.id].orEmpty().map { GroupSchedule.toMember(g.id, it) } }
+        )
     }
+
+    /** Asiakkaan päivän muutokset: omat ja ryhmien (oma edellä). */
+    fun changes(context: Context, profileId: String = ProfileStore.currentId(context)): List<EventChange> =
+        load(context, profileId).withGroupChanges(ChangeStore(context, profileId).load())
 }
 
 /** Ryhmät ja poissaolot tässä laitteessa (kaikille asiakkaille yhteiset). */
@@ -140,6 +163,35 @@ internal class GroupStore(context: Context) {
     fun delete(groupId: String) {
         save(load().filterNot { it.id == groupId })
         saveAbsences(absences() - groupId)
+        saveChanges(allChanges() - groupId)
+    }
+
+    /** Ryhmän päivämuutokset (tunnuksena ryhmän rungon kohta). Ryhmä → muutokset. */
+    fun allChanges(): Map<String, List<EventChange>> {
+        val text = prefs.getString(KEY_CHANGES, null) ?: return emptyMap()
+        val root = runCatching { JSONObject(text) }.getOrElse { return emptyMap() }
+        return root.keys().asSequence().associateWith { ChangeStore.decode(root.optString(it)) }
+    }
+
+    fun changes(groupId: String): List<EventChange> = allChanges()[groupId].orEmpty()
+
+    /** Ryhmän muutos tälle päivälle; samalle kohdalle ja päivälle vain yksi. Yli viikon vanhat pois. */
+    fun upsertChange(groupId: String, change: EventChange, today: LocalDate = LocalDate.now()) {
+        val all = allChanges().toMutableMap()
+        all[groupId] = DayChanges.cleaned(DayChanges.upsert(all[groupId].orEmpty(), change), today, null)
+        saveChanges(all)
+    }
+
+    fun deleteChange(groupId: String, changeId: String) {
+        val all = allChanges().toMutableMap()
+        all[groupId] = all[groupId].orEmpty().filterNot { it.id == changeId }
+        saveChanges(all)
+    }
+
+    private fun saveChanges(value: Map<String, List<EventChange>>) {
+        val root = JSONObject()
+        value.filterValues { it.isNotEmpty() }.forEach { (groupId, list) -> root.put(groupId, ChangeStore.encode(list)) }
+        prefs.edit().putString(KEY_CHANGES, root.toString()).commit()
     }
 
     /** Ryhmä → päivä → poissa olevat asiakkaat. */
@@ -176,6 +228,7 @@ internal class GroupStore(context: Context) {
         private const val PREFS = "aikapolku_groups_v1"
         private const val KEY_GROUPS = "groups"
         private const val KEY_ABSENCES = "absences"
+        private const val KEY_CHANGES = "changes"
         private const val KEEP_DAYS = 7L
 
         fun encode(groups: List<Group>): String {

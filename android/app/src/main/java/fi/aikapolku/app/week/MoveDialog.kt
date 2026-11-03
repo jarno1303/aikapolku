@@ -43,7 +43,10 @@ internal fun MoveDialog(
     isGroup: Boolean,
     onToday: ((String) -> Unit)?,
     onWeekly: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    /** Ryhmän koko päivä: omat selitystekstit (muuten asiakasta koskevat). */
+    todayInfo: String? = null,
+    weeklyInfo: String? = null
 ) {
     var minutes by remember { mutableIntStateOf(WeekSchedule.minutesOf(initialTime)) }
     val time = WeekSchedule.formatTime(minutes / 60, minutes % 60)
@@ -82,7 +85,7 @@ internal fun MoveDialog(
                 }
                 if (onToday != null) {
                     PrimaryButton(stringResource(R.string.move_today), { onToday(time) })
-                    Text(stringResource(R.string.move_today_info, clientName), fontSize = 13.sp, color = AppColors.Muted)
+                    Text(todayInfo ?: stringResource(R.string.move_today_info, clientName), fontSize = 13.sp, color = AppColors.Muted)
                 }
                 if (onToday != null) {
                     SecondaryButton(stringResource(R.string.move_weekly), { onWeekly(time) }, modifier = Modifier.fillMaxWidth())
@@ -90,7 +93,7 @@ internal fun MoveDialog(
                     PrimaryButton(stringResource(R.string.move_weekly), { onWeekly(time) })
                 }
                 Text(
-                    stringResource(if (isGroup) R.string.move_weekly_group_info else R.string.move_weekly_info, clientName),
+                    weeklyInfo ?: stringResource(if (isGroup) R.string.move_weekly_group_info else R.string.move_weekly_info, clientName),
                     fontSize = 13.sp,
                     color = AppColors.Muted
                 )

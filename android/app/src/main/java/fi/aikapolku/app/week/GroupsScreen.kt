@@ -76,6 +76,7 @@ internal fun GroupsScreen(canEdit: Boolean) {
         store.upsert(group.copy(exceptions = group.exceptions.filter { it.eventId in ids }))
         groups = store.load().sortedBy { it.name.lowercase() }
         EventReminders.reschedule(app)
+        GroupSession.changed()
     }
 
     val open = groups.firstOrNull { it.id == openId }
@@ -94,6 +95,7 @@ internal fun GroupsScreen(canEdit: Boolean) {
                 groups = store.load().sortedBy { it.name.lowercase() }
                 openId = null
                 EventReminders.reschedule(app)
+                GroupSession.changed()
             }
         )
         return

@@ -88,4 +88,21 @@ class GroupStoreTest {
         assertTrue(g.exceptions.isEmpty())
         assertFalse(GroupStore(context).isAbsent("tammi", other.id, monday))
     }
+
+    @Test
+    fun `ryhman paivamuutos tallentuu, nakyy jasenen muutoksissa ja poistuu ryhman mukana`() {
+        val me = ProfileStore.currentId(context)
+        val store = GroupStore(context)
+        store.save(listOf(group(listOf("muu", me))))
+        val change = fi.aikapolku.app.data.EventChange("g1", monday, "lounas", fi.aikapolku.app.data.ChangeType.CANCEL)
+        store.upsertChange("tammi", change, today = monday)
+        assertEquals(listOf(change), store.changes("tammi"))
+        val mine = ClientWeek.changes(context)
+        assertEquals(listOf("grp:tammi:lounas"), mine.map { it.eventId })
+        store.deleteChange("tammi", "g1")
+        assertTrue(store.changes("tammi").isEmpty())
+        store.upsertChange("tammi", change, today = monday)
+        store.delete("tammi")
+        assertTrue(store.allChanges().isEmpty())
+    }
 }
