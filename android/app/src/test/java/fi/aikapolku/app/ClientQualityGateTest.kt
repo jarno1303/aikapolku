@@ -273,7 +273,8 @@ class ClientQualityGateTest {
         compose.setContent { AsClient { ChangeScreen(change.id) {} } }
         compose.waitForIdle()
         val nodes = allNodes()
-        fun topOf(text: String): Float = nodes.filter { it.label().contains(text) }.minOfOrNull { it.boundsInRoot.top }
+        // positionInRoot = todellinen sijainti; boundsInRoot leikkautuu näkyvään alueeseen (vieritys).
+        fun topOf(text: String): Float = nodes.filter { it.label().contains(text) }.minOfOrNull { it.positionInRoot.y }
             ?: error("Muutosnäkymästä puuttuu '$text'")
         val order = listOf(
             t(R.string.change_label),          // Mikä muuttuu
