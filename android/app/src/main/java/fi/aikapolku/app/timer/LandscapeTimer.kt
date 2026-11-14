@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.TimeDisplayPrefs
+import fi.aikapolku.app.programs.run.BreakButton
+import fi.aikapolku.app.programs.run.SoonChangeCard
 import fi.aikapolku.app.ui.AppColors
 import java.util.Locale
 
@@ -51,7 +53,10 @@ internal fun LandscapeTimer(
     /** P0-21e: ajan saa muuttaa (pysähdyksissä ja ohjaajana). */
     canAdjust: Boolean,
     showReset: Boolean,
-    showSettings: Boolean
+    showSettings: Boolean,
+    /** Ennakkovaroitus näkyvissä (A1/A2). */
+    soon: Boolean = false,
+    onBreak: () -> Unit = {}
 ) {
     val guided = activeTask.isNotBlank()
     val seconds = ((remaining + 999L) / 1000L).coerceAtLeast(0L).toInt()
@@ -68,6 +73,7 @@ internal fun LandscapeTimer(
             if (guided) {
                 LandscapeActivityCard(stringResource(R.string.first_label), activeTask, firstPhoto)
                 LandscapeActivityCard(stringResource(R.string.then_label), nextActivity, nextPhoto)
+                if (soon) SoonChangeCard(nextActivity, image = { m -> CardPhoto(nextActivity, nextPhoto, m) })
             } else {
                 Text(stringResource(R.string.timer_title), fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 if (canAdjust) {
@@ -77,6 +83,7 @@ internal fun LandscapeTimer(
                     )
                 }
             }
+            BreakButton(onBreak)
         }
 
         Column(

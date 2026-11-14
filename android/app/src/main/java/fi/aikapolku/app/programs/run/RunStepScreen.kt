@@ -250,7 +250,18 @@ internal fun RunStepScreen(
                 Text(doneLabel ?: stringResource(R.string.run_done_button), fontSize = 21.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp))
             }
 
-            if (next != null) {
+            // Ennakkovaroitus (A1/A2) samassa paikassa kuin Seuraavaksi-rivi, korostettuna.
+            // Vain seuraavaan tehtävään: ajastus koskee koko tehtävää, ei osavaihetta.
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val revision = fi.aikapolku.app.settings.SettingsRevision.value
+            val warnMinutes = androidx.compose.runtime.remember(revision) {
+                fi.aikapolku.app.data.TimeDisplayPrefs.warnMinutes(context)
+            }
+            val soon = next != null && !next.isSubStep && time is RunTime.Countdown &&
+                fi.aikapolku.app.data.TimeDisplayPrefs.showSoon(time.remainingMs, time.durationMs, time.running, warnMinutes)
+            if (soon && next != null) {
+                SoonChangeCard(next.name, image = { m -> RunImage(next.taskName, next.taskPhoto, null, m) })
+            } else if (next != null) {
                 RunNextRow(next = next, mode = nextMode)
             }
 

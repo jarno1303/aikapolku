@@ -34,6 +34,32 @@ internal object TimeDisplayPrefs {
         if (sound in SOUNDS) ProfileScope.prefs(context, ProfileScope.TIMER_PREFS).edit().putString(END_SOUND_KEY, sound).apply()
     }
 
+    /**
+     * Ennakkovaroitus ennen vaihtoa (tutkielma A1/A2): minuutteina, 0 = pois. Oletus 5 min.
+     * Koskee ajastinta (Ensin–Sitten) ja päiväohjelman ajastettuja vaiheita.
+     */
+    fun warnMinutes(context: Context): Int =
+        ProfileScope.prefs(context, ProfileScope.TIMER_PREFS).getInt(WARN_KEY, WARN_DEFAULT)
+            .takeIf { it in WARN_OPTIONS } ?: WARN_DEFAULT
+
+    fun setWarnMinutes(context: Context, minutes: Int) {
+        if (minutes in WARN_OPTIONS) ProfileScope.prefs(context, ProfileScope.TIMER_PREFS).edit().putInt(WARN_KEY, minutes).apply()
+    }
+
+    /**
+     * Näytetäänkö ennakkovaroitus: aika käy, jäljellä on enintään [warnMinutes] ja vaihe on
+     * varoitusaikaa pidempi (lyhyessä vaiheessa varoitus näkyisi heti alusta, eikä se ole ennakko).
+     */
+    fun showSoon(remainingMs: Long, durationMs: Long, running: Boolean, warnMinutes: Int): Boolean {
+        if (!running || warnMinutes <= 0) return false
+        val warnMs = warnMinutes * 60_000L
+        return durationMs > warnMs && remainingMs in 1..warnMs
+    }
+
+    val WARN_OPTIONS = listOf(0, 2, 5, 10)
+    const val WARN_DEFAULT = 5
+    private const val WARN_KEY = "transition_warn_min"
+
     const val SOUND_OFF = "off"
     const val SOUND_SHORT = "short"
     const val SOUND_CLEAR = "clear"

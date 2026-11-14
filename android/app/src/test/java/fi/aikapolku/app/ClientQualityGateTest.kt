@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -17,7 +19,10 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
 import androidx.test.core.app.ApplicationProvider
 import fi.aikapolku.app.caregiver.CaregiverAccess
@@ -33,7 +38,9 @@ import fi.aikapolku.app.data.SupportKind
 import fi.aikapolku.app.data.WeekEvent
 import fi.aikapolku.app.data.WeekPlan
 import fi.aikapolku.app.data.WeekStore
+import fi.aikapolku.app.programs.run.RunNext
 import fi.aikapolku.app.programs.run.RunStepScreen
+import fi.aikapolku.app.programs.run.RunTime
 import fi.aikapolku.app.programs.run.SupportMessageScreen
 import fi.aikapolku.app.timer.TimerScreen
 import fi.aikapolku.app.week.ChangeScreen
@@ -59,6 +66,7 @@ import org.robolectric.RobolectricTestRunner
  *  R6 tekstikoko 200 %: painikkeet eivät valu ruudun ulkopuolelle sivusuunnassa
  *  R7 muutosnäkymän osat aina samassa järjestyksessä
  *  R8 muutos ei näy asiakkaalle ennen valittua näkymisaikaa
+ *  R9 ennakkovaroitus näkyy vasta lopussa ja kertoo, mitä seuraavaksi tulee; tauko pysäyttää ajan
  *
  * Tunnetut poikkeamat ovat listassa [KNOWN_GAPS] tutkielman tunnisteineen: ne eivät pysäytä
  * käännöstä, mutta jokainen UUSI rike pysäyttää. Kun poikkeama korjataan, se poistetaan listalta
@@ -95,10 +103,8 @@ class ClientQualityGateTest {
          * Tunnetut poikkeamat (laatuportin ensimmäinen ajo 14.11.2026). Korjataan tutkielman
          * tunnisteen mukaan; poista rivi, kun korjattu.
          */
-        private val KNOWN_GAPS = listOf(
-            KnownGap("ajastin", "R5", "A1/A2", "Ajastimessa ei ole Tarvitsen tauon -painiketta; tulee siirtymien yhteydessä"),
-            KnownGap("tapahtumakortti", "R5", "A1/A2", "Kestävän tapahtuman kortissa ei ole Tarvitsen tauon -painiketta")
-        )
+        // 14.11.: ajastimen ja tapahtumakortin R5 korjattu (A1/A2), lista tyhjä.
+        private val KNOWN_GAPS = emptyList<KnownGap>()
     }
 
     // --- Näkymät asiakkaan roolissa ---------------------------------------------------------
@@ -165,6 +171,23 @@ class ClientQualityGateTest {
                     remaining = 5 * 60_000L, duration = 10 * 60_000L, running = true,
                     activeTask = t(R.string.card_dress), firstPhoto = "builtin:dress", nextPhoto = "builtin:rest",
                     nextActivity = rest, onGoNext = {}, onPreset = {}, onStartPause = {}, onReset = {}
+                )
+            },
+            Screen("ajastin-ennakkovaroitus", true) {
+                TimerScreen(
+                    remaining = 3 * 60_000L, duration = 10 * 60_000L, running = true,
+                    activeTask = t(R.string.card_dress), firstPhoto = "builtin:dress", nextPhoto = "builtin:rest",
+                    nextActivity = rest, onGoNext = {}, onPreset = {}, onStartPause = {}, onReset = {}
+                )
+            },
+            Screen("paivaohjelma-ennakkovaroitus", true) {
+                RunStepScreen(
+                    taskName = t(R.string.card_dress), taskPhoto = "builtin:dress", description = "",
+                    subSteps = emptyList(), subStepIndex = 0, taskIndex = 0, taskCount = 3,
+                    time = RunTime.Countdown(2 * 60_000L, 10 * 60_000L, running = true, displayMode = "numbers", pauseLocked = true),
+                    next = RunNext(rest, rest, "builtin:rest", isSubStep = false),
+                    nextMode = RunPreferences.NEXT_CARD,
+                    onToggleTimer = {}, onHelp = {}, onBreak = {}, onDone = {}, onMore = {}, moreIsProgram = true
                 )
             },
             Screen("tapahtumakortti", true) {
@@ -306,5 +329,50 @@ class ClientQualityGateTest {
         compose.waitForIdle()
         val visible = allNodes().any { it.label().contains(t(R.string.change_label)) }
         assertTrue("Tapahtuman aikaan näkyvä muutos näkyi jo etukäteen", !visible)
+    }
+
+    private fun hasText(text: String) = allNodes().any { it.label().contains(text) }
+
+    @Test
+    fun `ennakkovaroitus nakyy vasta lopussa ja kertoo seuraavan`() {
+        var remaining by mutableLongStateOf(8 * 60_000L)
+        compose.setContent {
+            AsClient {
+                TimerScreen(
+                    remaining = remaining, duration = 10 * 60_000L, running = true,
+                    activeTask = t(R.string.card_dress), firstPhoto = "builtin:dress", nextPhoto = "builtin:rest",
+                    nextActivity = rest, onGoNext = {}, onPreset = {}, onStartPause = {}, onReset = {}
+                )
+            }
+        }
+        compose.waitForIdle()
+        assertTrue("Ennakkovaroitus näkyi liian aikaisin", !hasText(t(R.string.transition_soon_title)))
+        compose.runOnIdle { remaining = 4 * 60_000L }
+        compose.waitForIdle()
+        assertTrue("Ennakkovaroitus puuttuu", hasText(t(R.string.transition_soon_title)))
+        assertTrue("Varoitus ei kerro seuraavaa", hasText(t(R.string.run_next_line, rest)))
+    }
+
+    @Test
+    fun `ajastimen tauko pysayttaa ajan ja jatka kaynnistaa sen`() {
+        var running by mutableStateOf(true)
+        var presses = 0
+        compose.setContent {
+            AsClient {
+                TimerScreen(
+                    remaining = 6 * 60_000L, duration = 10 * 60_000L, running = running,
+                    activeTask = t(R.string.card_dress), firstPhoto = "builtin:dress", nextPhoto = "builtin:rest",
+                    nextActivity = rest, onGoNext = {}, onPreset = {},
+                    onStartPause = { presses++; running = !running }, onReset = {}
+                )
+            }
+        }
+        // Lukittuna Tauko vaatisi PIN-koodin, mutta Tarvitsen tauon on aina vapaa.
+        compose.onNodeWithText(t(R.string.support_break)).performScrollTo().performClick()
+        compose.waitForIdle()
+        assertTrue("Aika ei pysähtynyt tauolle", !running && presses == 1)
+        compose.onNodeWithText(t(R.string.support_continue)).performClick()
+        compose.waitForIdle()
+        assertTrue("Jatka ei käynnistänyt aikaa", running && presses == 2)
     }
 }

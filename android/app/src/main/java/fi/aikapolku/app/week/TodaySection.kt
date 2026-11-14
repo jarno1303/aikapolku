@@ -371,6 +371,16 @@ private fun TodayRow(
  */
 @Composable
 internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDone: () -> Unit, ongoing: Boolean = false) {
+    // Tarvitsen tauon (A1/A2): taukoviesti ja Jatka palauttaa samaan korttiin.
+    var showBreak by rememberSaveable { mutableStateOf(false) }
+    if (showBreak) {
+        fi.aikapolku.app.programs.run.BreakMessage(
+            timerPaused = false,
+            onContinue = { showBreak = false },
+            onClose = { showBreak = false }
+        )
+        return
+    }
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -413,6 +423,8 @@ internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDon
                 Text(stringResource(R.string.run_done_button), fontSize = 21.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp))
             }
         }
+        // Tehdyssä tapahtumassa ei enää toimintoa, joten tauko vain kesken olevassa.
+        if (doneAt == null) fi.aikapolku.app.programs.run.BreakButton({ showBreak = true })
     }
 }
 

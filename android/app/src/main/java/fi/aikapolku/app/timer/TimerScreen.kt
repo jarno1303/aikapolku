@@ -37,6 +37,9 @@ import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.caregiver.AppAction
 import fi.aikapolku.app.caregiver.LocalCaregiver
 import fi.aikapolku.app.data.TimeDisplayPrefs
+import fi.aikapolku.app.programs.run.BreakButton
+import fi.aikapolku.app.programs.run.BreakMessage
+import fi.aikapolku.app.programs.run.SoonChangeCard
 import fi.aikapolku.app.firstthen.CompletedCard
 import fi.aikapolku.app.ui.AppColors
 import java.util.Locale
@@ -83,6 +86,35 @@ internal fun TimerScreen(
     val settingsRevision = fi.aikapolku.app.settings.SettingsRevision.value
     val timeMode = remember(settingsRevision) { TimeDisplayPrefs.load(context) }
     val showLastTen = remember(settingsRevision) { TimeDisplayPrefs.lastTen(context) }
+    val warnMinutes = remember(settingsRevision) { TimeDisplayPrefs.warnMinutes(context) }
+    // Ennakkovaroitus vain Ensin–Sitten-kulussa, kun seuraava toiminto on valittu.
+    val hasNext = guided && nextActivity.isNotBlank() && nextActivity != stringResource(R.string.choose_activity)
+    val soon = hasNext && TimeDisplayPrefs.showSoon(remaining, duration, running, warnMinutes)
+
+    // Tarvitsen tauon (A1/A2): aina sallittu ilman PIN-koodia, kuten päiväohjelmassa.
+    // Aika pysähtyy; Jatka käynnistää sen uudelleen, takaisin-ele jättää sen pysäytetyksi.
+    var showBreak by rememberSaveable { mutableStateOf(false) }
+    var resumeAfterBreak by rememberSaveable { mutableStateOf(false) }
+    val openBreak: () -> Unit = {
+        resumeAfterBreak = running
+        if (running) onStartPause()
+        showBreak = true
+    }
+    if (showBreak && !finished) {
+        BreakMessage(
+            timerPaused = resumeAfterBreak,
+            onContinue = {
+                showBreak = false
+                if (resumeAfterBreak && !currentRunning && remaining > 0L) onStartPause()
+                resumeAfterBreak = false
+            },
+            onClose = {
+                showBreak = false
+                resumeAfterBreak = false
+            }
+        )
+        return
+    }
 
     val landscape = LocalConfiguration.current.orientation ==
         android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -105,7 +137,9 @@ internal fun TimerScreen(
             onSettingsClick = { settingsOpen = true },
             canAdjust = canAdjust,
             showReset = showReset,
-            showSettings = showSettings
+            showSettings = showSettings,
+            soon = soon,
+            onBreak = openBreak
         )
     } else if (finished) {
         CompletedCard(
@@ -139,6 +173,9 @@ internal fun TimerScreen(
                 nextPhoto = nextPhoto
             )
         }
+        if (soon) {
+            SoonChangeCard(nextActivity, image = { m -> CardPhoto(nextActivity, nextPhoto, m) })
+        }
         // Otsikko on yläpalkissa. Aika valitaan kellotaulua napauttamalla tai vetämällä.
 
         val secs = ((remaining + 999L) / 1000L)
@@ -156,7 +193,8 @@ internal fun TimerScreen(
             // Kellotaulu käyttää ruudun leveyden (yläpalkki vapautti tilaa).
             // Korkeus rajaa myös: korttipari, kellotaulu ja painikkeet mahtuvat ilman vieritystä
             // (yläpalkki, ohjaajan palkki ja painikerivi vievät noin 330 dp, korttipari noin 150 dp).
-            val byHeight = (screenHeight - if (guided) 510 else 360).coerceAtLeast(220).dp
+            // Tauko-painike vie noin 60 dp ja ennakkovaroitus noin 90 dp.
+            val byHeight = (screenHeight - (if (guided) 570 else 420) - (if (soon) 90 else 0)).coerceAtLeast(200).dp
             val target = minOf(
                 byHeight,
                 when {
@@ -295,6 +333,7 @@ internal fun TimerScreen(
                 }
             }
         }
+        BreakButton(openBreak)
     }
 
     // Jos lukitus menee päälle ikkunan ollessa auki, ikkuna suljetaan.

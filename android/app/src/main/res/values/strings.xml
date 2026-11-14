@@ -782,4 +782,9 @@
     <string name="group_move_today_info">Päivän muutos koko ryhmälle %1$s. Asiakkaat näkevät muutoksen, ja muistutukset siirtyvät.</string>
     <string name="group_move_weekly_info">Muuttaa ryhmän %1$s runkoa joka viikko kaikille ryhmän asiakkaille.</string>
     <string name="runko_selected">Valittu</string>
+    <!-- Siirtymät (A1/A2): ennakkovaroitus ennen vaihtoa -->
+    <string name="transition_soon_title">Pian vaihtuu</string>
+    <string name="transition_warn_label">Ennakkovaroitus ennen vaihtoa</string>
+    <string name="transition_warn_info">Rauhallinen kortti kertoo, mitä seuraavaksi tulee, kun aikaa on jäljellä valittu määrä. Ei ääntä.</string>
+    <string name="transition_warn_minutes">%1$d min</string>
 </resources>

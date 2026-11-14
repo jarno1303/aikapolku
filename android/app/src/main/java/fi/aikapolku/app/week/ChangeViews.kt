@@ -40,7 +40,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -63,18 +62,17 @@ import fi.aikapolku.app.data.DayChanges
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.EventChange
 import fi.aikapolku.app.data.ProgramStore
-import fi.aikapolku.app.data.SupportKind
 import fi.aikapolku.app.data.WeekEvent
 import fi.aikapolku.app.data.WeekPlan
 import fi.aikapolku.app.data.WeekSchedule
 import fi.aikapolku.app.data.WeekStore
 import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.ui.AppIcons
-import fi.aikapolku.app.ui.BackOverride
 import fi.aikapolku.app.ui.ChangeSymbol
 import fi.aikapolku.app.ui.PrimaryButton
 import fi.aikapolku.app.ui.SecondaryButton
-import fi.aikapolku.app.programs.run.SupportMessageScreen
+import fi.aikapolku.app.programs.run.BreakButton
+import fi.aikapolku.app.programs.run.BreakMessage
 import fi.aikapolku.app.voice.Speech
 import fi.aikapolku.app.voice.VoicePlayer
 import java.time.LocalDate
@@ -216,18 +214,8 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
     // Ohjaajan äänite soi itsestään vain kerran (ei uudelleen tauon jälkeen).
     var autoPlayed by rememberSaveable { mutableStateOf(false) }
     if (showBreak) {
-        // Yläpalkin takaisin-nuoli sulkee tauon eikä koko muutosnäkymää.
-        BackOverride { showBreak = false }
-        // Tukiviesti tarvitsee rajatun korkeuden, koska sivu vierii.
-        val height = LocalConfiguration.current.screenHeightDp.dp * 0.82f
-        Box(Modifier.fillMaxWidth().height(height)) {
-            SupportMessageScreen(
-                kind = SupportKind.BREAK,
-                timerPaused = false,
-                onContinue = { showBreak = false },
-                onClose = { showBreak = false }
-            )
-        }
+        // Takaisin-nuoli sulkee tauon eikä koko muutosnäkymää (BreakMessage).
+        BreakMessage(timerPaused = false, onContinue = { showBreak = false }, onClose = { showBreak = false })
         return
     }
     val (change, event, effectiveEvent, unchanged) = data
@@ -386,14 +374,7 @@ private fun ChangeView(
             onClick = onOk,
             modifier = Modifier.fillMaxWidth()
         )
-        if (onBreak != null) {
-            SecondaryButton(
-                text = stringResource(R.string.support_break),
-                icon = AppIcons.Pause,
-                onClick = onBreak,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+        if (onBreak != null) BreakButton(onBreak)
     }
 }
 

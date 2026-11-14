@@ -265,6 +265,7 @@ internal fun TimeSettings() {
     var mode by remember { mutableStateOf(TimeDisplayPrefs.load(context)) }
     var lastTen by remember { mutableStateOf(TimeDisplayPrefs.lastTen(context)) }
     var sound by remember { mutableStateOf(TimeDisplayPrefs.endSound(context)) }
+    var warn by remember { mutableStateOf(TimeDisplayPrefs.warnMinutes(context)) }
 
     TimeModeChoices(mode) {
         mode = it
@@ -276,6 +277,20 @@ internal fun TimeSettings() {
         TimeDisplayPrefs.setLastTen(context, it)
         SettingsRevision.bump()
     }
+
+    SettingLabel(stringResource(R.string.transition_warn_label))
+    Text(stringResource(R.string.transition_warn_info), fontSize = 14.sp, color = AppColors.Muted)
+    SegmentedChoice(
+        options = TimeDisplayPrefs.WARN_OPTIONS.map {
+            if (it == 0) stringResource(R.string.ei) else stringResource(R.string.transition_warn_minutes, it)
+        },
+        selected = TimeDisplayPrefs.WARN_OPTIONS.indexOf(warn).coerceAtLeast(0),
+        onSelect = {
+            warn = TimeDisplayPrefs.WARN_OPTIONS[it]
+            TimeDisplayPrefs.setWarnMinutes(context, warn)
+            SettingsRevision.bump()
+        }
+    )
 
     SettingLabel(stringResource(R.string.aanimerkki_ajan_paattyessa))
     listOf(
