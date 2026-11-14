@@ -73,7 +73,7 @@ internal fun LandscapeTimer(
             if (guided) {
                 LandscapeActivityCard(stringResource(R.string.first_label), activeTask, firstPhoto)
                 LandscapeActivityCard(stringResource(R.string.then_label), nextActivity, nextPhoto)
-                if (soon) SoonChangeCard(nextActivity, image = { m -> CardPhoto(nextActivity, nextPhoto, m) })
+                if (soon) SoonChangeCard(nextActivity, image = null)
             } else {
                 Text(stringResource(R.string.timer_title), fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 if (canAdjust) {

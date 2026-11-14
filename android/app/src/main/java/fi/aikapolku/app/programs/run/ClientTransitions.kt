@@ -36,7 +36,8 @@ import fi.aikapolku.app.ui.SecondaryButton
 
 /*
  * Siirtymät asiakkaan näkymissä (tutkielma A1/A2):
- *  - "Tarvitsen tauon" on samannäköinen ja samassa paikassa kaikissa toimintonäkymissä.
+ *  - "Tarvitsen tauon" on painettavissa kaikissa toimintonäkymissä ilman PIN-koodia
+ *    (päiväohjelmassa omana RunSupportButtonina Tarvitsen apua -painikkeen vieressä).
  *  - Ennakkovaroitus kertoo rauhallisesti, mitä seuraavaksi tulee, ennen kuin aika loppuu.
  */
 
@@ -70,13 +71,15 @@ internal fun BreakMessage(timerPaused: Boolean, onContinue: () -> Unit, onClose:
 }
 
 /**
- * Ennakkovaroitus: "Pian vaihtuu – Seuraavaksi: X" ja kuva. Ei painettava, ei ääntä, ei
- * punaista eikä liikettä. Ruudunlukija lukee sen kerran, kun se ilmestyy.
+ * Ennakkovaroitus: "Pian vaihtuu – Seuraavaksi: X". Ei painettava, ei ääntä, ei punaista
+ * eikä liikettä. Ruudunlukija lukee sen, kun se ilmestyy.
+ * [image] null = tiivis rivi (Sitten-kortti näkyy jo ruudulla, kuvaa ei toisteta).
+ * [nextName] null = ohjaaja on piilottanut seuraavan vaiheen: vain "Pian vaihtuu".
  */
 @Composable
-internal fun SoonChangeCard(nextName: String, image: @Composable (Modifier) -> Unit, modifier: Modifier = Modifier) {
+internal fun SoonChangeCard(nextName: String?, image: (@Composable (Modifier) -> Unit)?, modifier: Modifier = Modifier) {
     val title = stringResource(R.string.transition_soon_title)
-    val line = stringResource(R.string.run_next_line, nextName)
+    val line = nextName?.let { stringResource(R.string.run_next_line, it) }
     Surface(
         color = AppColors.TealSoft,
         shape = RoundedCornerShape(18.dp),
@@ -84,19 +87,20 @@ internal fun SoonChangeCard(nextName: String, image: @Composable (Modifier) -> U
         modifier = modifier
             .fillMaxWidth()
             .semantics(mergeDescendants = true) {
-                contentDescription = "$title. $line"
+                contentDescription = if (line != null) "$title. $line" else title
                 liveRegion = LiveRegionMode.Polite
             }
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp).heightIn(min = 56.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = if (image != null) 10.dp else 6.dp)
+                .heightIn(min = if (image != null) 56.dp else 32.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            image(Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)))
+            image?.invoke(Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)))
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AppColors.Teal)
-                Text(
+                Text(title, fontSize = if (line == null) 18.sp else 15.sp, fontWeight = FontWeight.Bold, color = AppColors.Teal)
+                if (line != null) Text(
                     line,
                     fontSize = 19.sp,
                     fontWeight = FontWeight.SemiBold,

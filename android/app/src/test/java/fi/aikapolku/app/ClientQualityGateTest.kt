@@ -371,7 +371,7 @@ class ClientQualityGateTest {
         compose.onNodeWithText(t(R.string.support_break)).performScrollTo().performClick()
         compose.waitForIdle()
         assertTrue("Aika ei pysähtynyt tauolle", !running && presses == 1)
-        compose.onNodeWithText(t(R.string.support_continue)).performClick()
+        compose.onNodeWithText(t(R.string.support_continue)).performScrollTo().performClick()
         compose.waitForIdle()
         assertTrue("Jatka ei käynnistänyt aikaa", running && presses == 2)
     }

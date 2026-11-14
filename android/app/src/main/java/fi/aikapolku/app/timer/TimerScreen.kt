@@ -90,14 +90,17 @@ internal fun TimerScreen(
     // Ennakkovaroitus vain Ensin–Sitten-kulussa, kun seuraava toiminto on valittu.
     val hasNext = guided && nextActivity.isNotBlank() && nextActivity != stringResource(R.string.choose_activity)
     val soon = hasNext && TimeDisplayPrefs.showSoon(remaining, duration, running, warnMinutes)
+    // Tila varataan koko ajan, kun varoitus voi tulla: kellotaulu ei hyppää varoituksen ilmestyessä.
+    val soonPossible = hasNext && warnMinutes > 0 && duration > warnMinutes * 60_000L
 
     // Tarvitsen tauon (A1/A2): aina sallittu ilman PIN-koodia, kuten päiväohjelmassa.
     // Aika pysähtyy; Jatka käynnistää sen uudelleen, takaisin-ele jättää sen pysäytetyksi.
     var showBreak by rememberSaveable { mutableStateOf(false) }
     var resumeAfterBreak by rememberSaveable { mutableStateOf(false) }
     val openBreak: () -> Unit = {
-        resumeAfterBreak = running
-        if (running) onStartPause()
+        // Ajantasainen tila (aika voi päättyä juuri painalluksen hetkellä).
+        resumeAfterBreak = currentRunning
+        if (currentRunning) onStartPause()
         showBreak = true
     }
     if (showBreak && !finished) {
@@ -173,8 +176,10 @@ internal fun TimerScreen(
                 nextPhoto = nextPhoto
             )
         }
-        if (soon) {
-            SoonChangeCard(nextActivity, image = { m -> CardPhoto(nextActivity, nextPhoto, m) })
+        if (soonPossible) {
+            Box(Modifier.fillMaxWidth().heightIn(min = 44.dp), contentAlignment = Alignment.Center) {
+                if (soon) SoonChangeCard(nextActivity, image = null)
+            }
         }
         // Otsikko on yläpalkissa. Aika valitaan kellotaulua napauttamalla tai vetämällä.
 
@@ -193,8 +198,8 @@ internal fun TimerScreen(
             // Kellotaulu käyttää ruudun leveyden (yläpalkki vapautti tilaa).
             // Korkeus rajaa myös: korttipari, kellotaulu ja painikkeet mahtuvat ilman vieritystä
             // (yläpalkki, ohjaajan palkki ja painikerivi vievät noin 330 dp, korttipari noin 150 dp).
-            // Tauko-painike vie noin 60 dp ja ennakkovaroitus noin 90 dp.
-            val byHeight = (screenHeight - (if (guided) 570 else 420) - (if (soon) 90 else 0)).coerceAtLeast(200).dp
+            // Tauko-painike vie noin 60 dp ja ennakkovaroituksen paikka noin 50 dp.
+            val byHeight = (screenHeight - (if (guided) 570 else 420) - (if (soonPossible) 50 else 0)).coerceAtLeast(200).dp
             val target = minOf(
                 byHeight,
                 when {

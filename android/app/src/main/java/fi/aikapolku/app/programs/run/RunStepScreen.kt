@@ -260,7 +260,8 @@ internal fun RunStepScreen(
             val soon = next != null && !next.isSubStep && time is RunTime.Countdown &&
                 fi.aikapolku.app.data.TimeDisplayPrefs.showSoon(time.remainingMs, time.durationMs, time.running, warnMinutes)
             if (soon && next != null) {
-                SoonChangeCard(next.name, image = { m -> RunImage(next.taskName, next.taskPhoto, null, m) })
+                if (nextMode == RunPreferences.NEXT_HIDDEN) SoonChangeCard(nextName = null, image = null)
+                else SoonChangeCard(next.name, image = { m -> RunImage(next.taskName, next.taskPhoto, null, m) })
             } else if (next != null) {
                 RunNextRow(next = next, mode = nextMode)
             }

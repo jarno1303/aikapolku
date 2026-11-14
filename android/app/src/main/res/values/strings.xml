@@ -784,7 +784,7 @@
     <string name="runko_selected">Valittu</string>
     <!-- Siirtymät (A1/A2): ennakkovaroitus ennen vaihtoa -->
     <string name="transition_soon_title">Pian vaihtuu</string>
-    <string name="transition_warn_label">Ennakkovaroitus ennen vaihtoa</string>
+    <string name="transition_warn_label">Ennakkovaroitus ennen vaihtoa (min)</string>
     <string name="transition_warn_info">Rauhallinen kortti kertoo, mitä seuraavaksi tulee, kun aikaa on jäljellä valittu määrä. Ei ääntä.</string>
-    <string name="transition_warn_minutes">%1$d min</string>
+    <string name="transition_warn_minutes">%1$d</string>
 </resources>
