@@ -1,6 +1,6 @@
 # AikaPolku – tutkielma: nykytila vs. optimaalinen toiminnanohjauksen sovellus
 
-**Versio:** 1.0 · **Päivitetty:** 14.11.2026 · **Koodin tila arvioitaessa:** päähaara 3.11.2026 (5051179)
+**Versio:** 1.1 · **Päivitetty:** 14.11.2026 · **Koodin tila arvioitaessa:** päähaara 3.11.2026 (5051179)
 
 > **Tämä tiedosto on päälähde.** Word-versio (`AikaPolku_tutkielma_optimaalinen_sovellus.docx`) tehdään tästä.
 > Kun suunta tarkentuu, päivitetään ensin tämä tiedosto (tila-sarakkeet, Päätökset-loki, versio ja päivämäärä),
@@ -8,7 +8,7 @@
 
 ## Käyttö kehityksessä
 
-- **Tunnisteet:** jokaisella kehitysehdotuksella on tunniste (A1–A7, B1–B5, C1–C6, X1–X3). Käytä sitä commitissa: `A3: muutoskorttiin "Mikä pysyy samana"`.
+- **Tunnisteet:** jokaisella kehitysehdotuksella on tunniste (A1–A7, B1–B5, C1–C6, G1–G6, X1–X3). Käytä sitä commitissa: `A3: muutoskorttiin "Mikä pysyy samana"`.
 - **Tila:** `Ehdotettu` → `Päätetty` → `Työn alla` → `Valmis` → `Testattu` (tai `Hylätty` + syy Päätökset-lokiin).
 - **Näytön merkinnät:** **[T]** tutkimusnäyttö · **[K]** käytäntö / pienet tutkimukset, tulokset vaihtelevat · **[H]** suunnitteluhypoteesi, testataan pilotissa.
 - **Periaatteet (luku 2)** ovat tarkistuslista jokaiselle uudelle ominaisuudelle. Tehtävänannon seitsemän kysymystä (luku 10) samoin.
@@ -228,6 +228,27 @@ Tehtävänannon seitsemän kysymystä jokaiselle ominaisuudelle: ratkaiseeko tod
 
 **Kokonaisarvio:** AikaPolussa näkyy ammattilaisen ote (tauko aina vapaa, roolit erillään, asiakaskohtainen ajoitus). Heikkous ei ole väärissä ratkaisuissa vaan siinä, että käyttäjän kokemusta ei ole vielä kuultu. Tärkein seuraava askel on pilotti, jossa myös autistiset aikuiset ovat mukana itseään edustamassa.
 
+## 11. Grafiikka ja ohjattu aloitus
+
+Arvioitu 14.11.2026 kaikki 38 valmista kuvaa (`res/drawable-nodpi`).
+
+**Toimii:** tyyli on johdonmukainen ja rauhallinen (selkeä ääriviiva, pehmeät värit, ei visuaalista hälyä). Vaihekuvissa on yksi toiminto per kuva. Esineisiin perustuvat kortit (ruoka, wc, peliohjain, tiimalasi) sopivat kaiken ikäisille.
+
+**Korjattavaa:** kaikki ihmishahmot ovat sama kiharatukkainen poika tai nuori mies · taustavärit vaihtelevat ilman merkitystä · osa kuvista on vilkkaita kohtauksia · uusille toiminnoille puuttuvat kuvat · asiakkaan muualla käyttämät symbolit (esim. kommunikointikansio) eivät ole sovelluksen oletus.
+
+[K] Alan käytäntö: sama asia samalla kuvalla kaikkialla asiakkaan arjessa. Sovelluksen pitää tukea asiakkaan jo käyttämiä kuvia, ei korvata niitä.
+
+| ID | Ehdotus | Miksi | Vaihe | Tila |
+| --- | --- | --- | --- | --- |
+| G1 | Hahmot: aikuisprofiilissa oletuksena esinekortit ja omat valokuvat; myöhemmin 3–4 hahmovaihtoehtoa (ikä, sukupuoli) profiilissa | Samaistuminen ja aikuisen arvokkuus | B | Ehdotettu |
+| G2 | Taustaväri: joko johdonmukainen luokka (ruoka, hygienia, liikunta, lepo) tai yksi neutraali väri | Osa käyttäjistä etsii väreistä merkitystä | B | Ehdotettu |
+| G3 | Vilkkaiden kohtauskuvien yksinkertaistus (esim. ryhmätilanne, puhekuplat) | Vähemmän tulkittavaa | C | Ehdotettu |
+| G4 | Uudet kuvat: lisäaika, "pysyy samana" -merkki, ihminen vaihtuu, valinta, jatka myöhemmin | Tarvitaan A1–A3:lle ja B1–B3:lle | A (toimintojen mukana) | Ehdotettu |
+| G5 | Asiakkaan omat symbolit: käyttöönotto-ohjeeseen "käytä samoja kuvia kuin muualla arjessa"; symbolipankit vain lisenssitarkistuksen jälkeen (monet ei-kaupallisia); nykyisten kuvien käyttöoikeudet dokumentoidaan ennen myyntiä | Johdonmukaisuus ja juridinen varmuus | A (ohje A7:n mukana), B (pankit) | Ehdotettu |
+| G6 | Ohjattu aloitus ohjaajalle: 5 kysymystä asiakkaasta (ikä, lukutaito, aistiherkkyys, muutosten ennakointi, omatoimisuus) → asetukset valmiiksi | Ohjaajan puolella on paljon valintoja | A | Ehdotettu |
+
+**Järjestys:** toimintojen aukot (A) ensin, kuvamuutokset kohdennetusti pilottia varten, laaja UI/UX-viilaus vasta pilotin palautteen jälkeen.
+
 ---
 
 ## Päätökset-loki
@@ -236,6 +257,7 @@ Kirjaa tähän jokainen suunnan tarkennus: päivämäärä, tunniste, päätös,
 
 | Päivä | ID | Päätös | Perustelu |
 | --- | --- | --- | --- |
+| 14.11.2026 | G1–G6 | Grafiikan ja ohjatun aloituksen ehdotukset kirjattu (v1.1), tila Ehdotettu | Kuva-arvio 38 kuvasta ja ohjaajapuolen kuormitus |
 | 14.11.2026 | – | Tutkielma v1.0 laadittu; kaikki ehdotukset tilassa Ehdotettu (A5 päätetty jo aiemmin) | Lähtötaso ennen priorisoinnin vahvistamista |
 
 ## Avoimet kysymykset
@@ -259,4 +281,4 @@ Kirjaa tähän jokainen suunnan tarkennus: päivämäärä, tunniste, päätös,
 - Vasquez, S. ym. (2017). Effects of Advance Notice on Problem Behavior Occasioned by Interruptions. *Behavior Analysis in Practice* 10. https://link.springer.com/article/10.1007/s40617-017-0187-7
 - Waters, M. B. ym. (2009). Visual schedules and extinction plus DRO (tiivistelmä). *JABA* 42. https://behavioristbookclub.com/aba-research/aba-fundamentals/separate-and-combined-effects-of-visual-schedules-and-extinction-plus/
 
-Versiohistoria: v1.0 (14.11.2026) ensimmäinen versio.
+Versiohistoria: v1.1 (14.11.2026) luku 11: grafiikka ja ohjattu aloitus (G1–G6) · v1.0 (14.11.2026) ensimmäinen versio.
