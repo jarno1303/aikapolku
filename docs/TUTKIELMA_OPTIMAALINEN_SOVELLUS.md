@@ -1,0 +1,262 @@
+# AikaPolku – tutkielma: nykytila vs. optimaalinen toiminnanohjauksen sovellus
+
+**Versio:** 1.0 · **Päivitetty:** 14.11.2026 · **Koodin tila arvioitaessa:** päähaara 3.11.2026 (5051179)
+
+> **Tämä tiedosto on päälähde.** Word-versio (`AikaPolku_tutkielma_optimaalinen_sovellus.docx`) tehdään tästä.
+> Kun suunta tarkentuu, päivitetään ensin tämä tiedosto (tila-sarakkeet, Päätökset-loki, versio ja päivämäärä),
+> sitten Word uudelleen. Kehityksessä viitataan tunnisteisiin (esim. `A3`) commit-viesteissä ja KEHITYSLOKI.md:ssä.
+
+## Käyttö kehityksessä
+
+- **Tunnisteet:** jokaisella kehitysehdotuksella on tunniste (A1–A7, B1–B5, C1–C6, X1–X3). Käytä sitä commitissa: `A3: muutoskorttiin "Mikä pysyy samana"`.
+- **Tila:** `Ehdotettu` → `Päätetty` → `Työn alla` → `Valmis` → `Testattu` (tai `Hylätty` + syy Päätökset-lokiin).
+- **Näytön merkinnät:** **[T]** tutkimusnäyttö · **[K]** käytäntö / pienet tutkimukset, tulokset vaihtelevat · **[H]** suunnitteluhypoteesi, testataan pilotissa.
+- **Periaatteet (luku 2)** ovat tarkistuslista jokaiselle uudelle ominaisuudelle. Tehtävänannon seitsemän kysymystä (luku 10) samoin.
+
+---
+
+## Tiivistelmä
+
+AikaPolku kattaa arviolta **noin kaksi kolmasosaa** (≈ 3,4/5) siitä, mitä optimaalinen toiminnanohjauksen sovellus tarvitsee. Puuttuva kolmannes on pääosin lisättävää, ei uudelleen rakennettavaa.
+
+**Vahvinta:** päivän ennakoitavuus (NYT-kortti, aikajana, viikko-ohjelma), ajan näyttäminen usealla tavalla, tehtävien vaiheistus ja ohjaajan työkalut.
+
+**Suurimmat aukot:**
+
+1. **Siirtymät:** käynnissä olevan toiminnan lopusta ei tule ennakkovaroitusta, eikä käyttäjä voi pyytää lisäaikaa.
+2. **Muutosmalli puolivalmis:** puuttuvat "mikä pysyy ennallaan", ilta-ennakko, vaiheittainen ilmoitus ja uuteen tilanteeseen valmistautuminen.
+3. **Käyttäjän oma ääni kapea:** apu ja tauko ovat, mutta ei valintaa, "en vielä" -viestiä eikä osallistumista suunnitteluun.
+
+Ennen pilottia tarvitaan seitsemän korjausta (A1–A7), arviolta 13–20 työpäivää. Tärkeintä on silti pilotti oikeiden käyttäjien kanssa.
+
+## Menetelmä
+
+Arvio perustuu lähdekoodiin (~35 000 riviä Kotlinia), dokumentteihin ja tutkimuskirjallisuuteen. Sovellusta ei ole testattu oikeiden käyttäjien kanssa. Autismin kirjo on yksilöllinen; mikään alla ei päde kaikkiin, siksi säädettävyys on keskeinen mittari.
+
+---
+
+## 1. Keskeiset ongelmat
+
+| Vaikeus | Arjessa | Näyttö |
+| --- | --- | --- |
+| Toiminnanohjaus | Aloittaminen, vaiheiden muistaminen, joustava vaihtaminen | [T] 235 tutkimuksen meta-analyysi: laaja-alainen kohtalainen ero (g = 0,48), pysyy kehityksen yli (Demetriou ym. 2018) |
+| Epävarmuuden sietokyky | Tuntematon tai muuttuva tilanne kuormittaa | [T] Yhteys ahdistukseen vahva, r = 0,62 (Jenkinson ym. 2020) |
+| Ajan hahmottaminen | Kesto ja "kauanko vielä" epäselviä | [T/K] Erot johdonmukaisimmin korkean tason aikakäsitteissä (Casassus ym. 2019) |
+| Siirtymät | Mieluisan keskeyttäminen tai ennakoimaton järjestys kuormittaa | [K] Ennakkovaroitus auttaa osaa, tulokset vaihtelevat (Vasquez ym. 2017; Leon ym. 2023) |
+| Aistisäätely | Äänet, värinä, visuaalinen häly | [T] Aistiyliherkkyys suuri ja erottava piirre, vaihtelee paljon (Ben-Sasson ym. 2019) |
+
+**Johtopäätös:** epävarmuus on keskeinen kuormittaja. Sovelluksen pitää vähentää epävarmuutta joka hetkellä: mitä nyt, mitä seuraavaksi, kauanko ja mitä jos jokin muuttuu.
+
+## 2. Ratkaisun periaatteet (tarkistuslista)
+
+| # | Periaate | AikaPolku nyt |
+| --- | --- | --- |
+| P1 | Yksi asia kerrallaan, seuraava näkyvissä [T] | Toteutuu (NYT-kortti, aikajana 3 tilassa) |
+| P2 | Aika näkyväksi [K] | Toteutuu (kellotaulu, rengas, numerot, rauhallinen) |
+| P3 | Ei yllätyksiä ilman ennakkoa [T] | Osittain (muutoskortti on, siirtymiä ei varoiteta) |
+| P4 | Säädettävyys yksilön mukaan [T] | Hyvin (profiilikohtaiset asetukset) |
+| P5 | Rauhallisuus, aistikuorman välttäminen [T] | Osittain (ei yleistä kuormitusasetusta) |
+| P6 | Käyttäjän ääni ja valta [T] | Heikosti (apu ja tauko, ei valintaa tai lisäaikaa) |
+| P7 | Ohjaaja rakentaa, käyttäjä näkee olennaisen [K] | Toteutuu (roolit, PIN, omat etusivut) |
+| P8 | Ei kontrollia, ei kilpailua [K] | Toteutuu (ei pisteitä, tauko aina vapaa) |
+| P9 | Toimii ilman verkkoa, ei kerää tietoja [H] | Toteutuu (ei verkkolupaa) |
+
+## 3. Ominaisuudet alueittain
+
+| Alue | AikaPolussa nyt | Puuttuu | Arvio /5 |
+| --- | --- | --- | --- |
+| Päivän ennakoitavuus | NYT-kortti, aikajana 3 tilassa, viikko-ohjelma, A/B-viikot, Tänään-lista | Huomisen esikatselu käyttäjälle | 4,5 |
+| Ajan hahmottaminen | Kellotaulu, rengas, numerot, rauhallinen tila, 10 s laskenta | – | 4,5 |
+| Aloitus ja vaiheistus | Päiväohjelmat osavaiheineen, Ensin–Sitten, Aloita, automaattinen ajan käynnistys | "Ensimmäinen pieni askel", videomalli | 4 |
+| Ohjaajan työkalut | Pikamuutos, ryhmät, profiilit, vienti/tuonti, PDF | Siirto asiakkaan laitteeseen | 4 |
+| Kommunikointi | Apu- ja taukopyyntö, omat äänitykset, puhesynteesi | Lisäaika, "en vielä", tunne, valinta | 3 |
+| Muutosten hallinta | Peruttu/korvattu/siirretty, syy tekstinä ja äänenä, 3 ajoitusta, alkuperäinen yliviivattuna, Selvä-kuittaus | Mikä pysyy, ilta-ennakko, vaiheittaisuus, ihminen/paikka, valmistautuminen | 3 |
+| Yksilöllisyys ja aistit | Profiilikohtaiset asetukset, äänet, oma kuva ja ääni | Kuva/teksti-taso, liikkeen vähentäminen, aikuiskuvasto | 3,5 |
+| Siirtymät | Loppuääni, värinä, NYT-kortin vaihtuminen | Ennakkovaroitus lopusta, lisäaikapyyntö, "jatka myöhemmin" | 2 |
+| Käyttäjän osallisuus | Tauko aina vapaa, profiilin itsevalinta | Valinta, oma ehdotus, mielipide | 2 |
+
+## 4. Muutosten hallinta
+
+### Kahdeksan vaatimusta
+
+| Vaatimus | Nyt | Tila |
+| --- | --- | --- |
+| 1. Ilmoittaa ymmärrettävästi | Muutosmerkki, muutosnäkymä, puheviesti voi soida itsestään | Kunnossa |
+| 2. Mikä muuttuu | Alkuperäinen yliviivattuna | Kunnossa |
+| 3. Miksi | Syy tekstinä ja äänityksenä | Kunnossa |
+| 4. Mikä säilyy | Ei korosteta | Puuttuu → A3 |
+| 5. Mitä tilalle | Korvaava kortti tai ohjelma | Kunnossa |
+| 6. Uusi aikataulu | Siirto vain saman päivän sisällä | Osittain → C5 |
+| 7. Aikaa käsitellä | Selvä-kuittaus | Osittain → A3 |
+| 8. Tutustuminen etukäteen | Ei | Puuttuu → C1 |
+
+### Muutosnäkymän viisiosainen malli [H]
+
+Aina sama rakenne samassa järjestyksessä:
+
+1. **Mikä muuttuu** (alkuperäinen yliviivattuna) – on
+2. **Miksi** (jos tiedetään) – on
+3. **Mitä tilalle** (uusi kuva ja aika) – on
+4. **Mikä pysyy samana** (2–3 seuraavaa ennallaan olevaa, vihreä merkki) – **puuttuu, tärkein lisäys**
+5. **Mitä voin tehdä** ("Selvä", "Haluan kuulla uudestaan", "Tarvitsen tauon") – nyt vain Selvä
+
+### Ajoitus
+
+Nyt: heti, aamulla, tapahtuman aikaan (`ChangeReveal`). Lisättävä: **edellisenä iltana**, **vaiheittain** (esim. ilta + 15 min ennen) ja [H] **kun käyttäjä on valmis** (merkki odottaa, käyttäjä avaa itse). Valitaan asiakaskohtaisesti, ei yhteistä oletusta.
+
+### Puuttuvat muutostyypit
+
+Ihminen vaihtuu (kuva + nimi) · paikka vaihtuu (valokuva) · kesto muuttuu (uusi loppuaika) · usean päivän muutos.
+
+### Valmistautuminen uuteen tilanteeseen
+
+[T] Sosiaaliset tarinat ovat NCAEP:n näyttöön perustuva käytäntö (Steinbrenner ym. 2020). Ehdotus: **"Mitä tapahtuu" -kuvatarina** (3–6 omaa valokuvaa + lyhyt ääni), liitettynä viikko-ohjelman tapahtumaan ja avattavissa etukäteen.
+
+### Haitat
+
+Liian aikainen tieto voi pidentää jännitystä · syy voi lisätä huolta (ohje ohjaajalle syyn muotoilusta) · jokainen pieni muutos ei tarvitse korttia.
+
+## 5. Siirtymät
+
+[K] Kahden minuutin ennakkovaroitus ja ajastimen ääni auttoivat yhtä lasta (Vasquez ym. 2017), mutta tulokset vaihtelevat; pelkkä kuva-aikataulu ei aina riitä (Waters ym. 2009). Varoitus on siis säädettävä ja yhdistetty muuhun tukeen.
+
+### Malliesimerkki: pelaaminen loppuu → ruoka [H]
+
+1. **10 min ennen:** kellotaulun sektori vaihtaa väriä, pieni kuva seuraavasta. Ei ääntä.
+2. **2 min ennen:** valittu ääni tai värinä + "2 min, sitten ruoka". Painikkeet **Selvä** ja **Tarvitsen vielä hetken**.
+3. **Lisäaika:** ohjaajan asettama (0/3/5 min, korkeintaan kerran). Ei palkinto eikä rangaistus. Jos ei sallittu: "Pyydä aikuiselta".
+4. **Loppu:** loppuääni + Valmis-näkymä + kortti **"Jatka myöhemmin"** (milloin toiminta palaa).
+5. **Siirtymä:** NYT-kortti vaihtuu, ensimmäinen pieni askel näkyvissä.
+
+Vältetään punaista hälytysväriä ja sanaa "myöhässä"; yliaika näytetään neutraalisti.
+
+## 6. Käyttöliittymä
+
+| Asiakkaan näkymä | Tarkoitus | Nyt |
+| --- | --- | --- |
+| NYT | Mitä nyt, kauanko, mitä seuraavaksi | On |
+| Suoritus | Vaihe kerrallaan | On |
+| Muutos | Viisiosainen malli | Osittain |
+| Viesti | Apu, tauko, lisäaika, "en vielä", tunne | Osittain |
+| Huominen | Mitä huomenna on | Puuttuu (B5) |
+| Valinta | 2–4 kuvavaihtoehtoa | Puuttuu (B1) |
+
+Tarkistettavaa: valmiiden kuvien (`CardArt`) tyyli aikuisille · liikkeen vähentäminen (ainakin puhelimen asetus huomioon) · 51 kuvalta puuttuu ruudunlukijan kuvaus (A6).
+
+Lisättävät tasot profiiliin [H]: **kuva/teksti-taso** (vain kuva / kuva + sana / teksti) ja **aistikuorma-asetus** (hiljainen tila, vähennetty liike, pehmeät värit).
+
+## 7. Ohjaajan työkalut
+
+Vahvin osa. Puuttuu: **lähilaitesiirto** asiakkaan laitteeseen (A5), **valintakortti** (B1), **käyttöönottokortit** (A7).
+
+[T] Visuaaliset aikataulut toimivat parhaiten yhdessä järjestelmällisen opettamisen kanssa (Knight ym. 2015) → sovellukseen 4–5 lyhyttä "Näin otat käyttöön" -korttia ohjaajalle.
+
+[H] Mahdollinen seuranta (apu- ja taukopyynnöt) vain valinnaisena, käyttäjälle näkyvänä ja lyhytaikaisena – ei valvontaa.
+
+## 8. Käyttäjän vaikutusmahdollisuudet
+
+[T] Valinnan tarjoaminen voi vähentää kuormitusta ja lisätä osallistumista osalla käyttäjistä (Howell ym. 2019). Neuroaffirmatiivinen ote korostaa itsemääräämisoikeutta ja yhteistä päätöksentekoa (McVey ym. 2023).
+
+### Viisi osallisuuden tasoa [H] (ohjaaja valitsee profiilissa)
+
+1. **Kertoa tarpeensa:** apu, tauko (on) + "Tarvitsen vielä hetken" (A2), "En halua nyt", tunnekortti (C2)
+2. **Valita kahdesta** (B1)
+3. **Valita järjestys** (Ensin–Sitten-pohjalla) (B1)
+4. **Ehdottaa** (C3)
+5. **Suunnitella itse rajoissa** (C3)
+
+Ei: valintaa joka kohtaan · rangaistusta "en halua" -viestistä · kieltäytymisen pysyvää tallennusta käyttäjän tietämättä.
+
+---
+
+## 9. Kehitysehdotukset ja tila
+
+### A. Ennen pilottia
+
+| ID | Korjaus | Miksi | Työ | Tila |
+| --- | --- | --- | --- | --- |
+| A1 | Ennakkovaroitus käynnissä olevan toiminnan lopusta (säädettävä, kuva seuraavasta) | Siirtymät heikoin alue | 2–3 pv | Ehdotettu |
+| A2 | "Tarvitsen vielä hetken" ohjaajan rajoissa | Käyttäjän keino neuvotella | 2 pv | Ehdotettu |
+| A3 | Muutoskorttiin "Mikä pysyy samana" + valinnat "Haluan kuulla uudestaan", "Tarvitsen tauon" | Kohdistuu epävarmuuteen | 1–2 pv | Ehdotettu |
+| A4 | Ilta-ennakko ja vaiheittainen ilmoitus muutokselle | Toivottu, puuttuu koodista | 1–2 pv | Ehdotettu |
+| A5 | Lähilaitesiirto ohjaajalta asiakkaan laitteeseen | Ryhmät eivät muuten toimi yksiköissä | 5–8 pv | Päätetty aiemmin (toteuttamatta) |
+| A6 | Ruudunlukijan kuvaukset toimintakorteille | Saavutettavuus | 1 pv | Ehdotettu |
+| A7 | Ohjaajan käyttöönottokortit | Visuaalinen tuki toimii opetuksen kanssa | 1–2 pv | Ehdotettu |
+
+### B. Pilotin aikana palautteen mukaan
+
+| ID | Ehdotus | Tila |
+| --- | --- | --- |
+| B1 | Valintakortti (2 vaihtoehtoa, myös järjestyksen valinta) | Ehdotettu |
+| B2 | "Jatka myöhemmin" -kortti | Ehdotettu |
+| B3 | Muutostyypit: ihminen vaihtuu, paikka vaihtuu | Ehdotettu |
+| B4 | Kuva/teksti-taso ja aistikuorma-asetus profiiliin | Ehdotettu |
+| B5 | Huominen-näkymä asiakkaalle | Ehdotettu |
+
+### C. Myöhemmin
+
+| ID | Ehdotus | Tila |
+| --- | --- | --- |
+| C1 | "Mitä tapahtuu" -kuvatarina uuteen tilanteeseen | Ehdotettu |
+| C2 | Tunnekortti ja "En halua nyt" | Ehdotettu |
+| C3 | Käyttäjän ehdotukset ja oma suunnittelu rajoissa | Ehdotettu |
+| C4 | Kesto muuttuu -muutostyyppi | Ehdotettu |
+| C5 | Usean päivän muutokset | Ehdotettu |
+| C6 | Aikuisten kuvasto, valinnainen seurantanäkymä | Ehdotettu |
+
+### X. Ei tehdä
+
+| ID | Mitä | Miksi |
+| --- | --- | --- |
+| X1 | Pisteet, tasot, palkintotalous | Ristiriidassa periaatteen P8 kanssa |
+| X2 | Pakollinen pilvitili tai verkkopalvelu | Vesittäisi tietosuojaedun (P9) |
+| X3 | Tekoälyn tekemät aikataulut asiakkaalle | Ihminen päättää muutoksista |
+
+## 10. Kriittinen arviointi
+
+Tehtävänannon seitsemän kysymystä jokaiselle ominaisuudelle: ratkaiseeko todellisen ongelman · vähentääkö kuormitusta · lisääkö ennakoitavuutta · parantaako itsenäisyyttä · lisääkö turvallisuuden tunnetta · onko helppo · voiko aiheuttaa haittaa.
+
+| Nykyinen ominaisuus | Ongelma | Ehdotus |
+| --- | --- | --- |
+| Ajan säätäminen PIN-lukon takana | Vie käyttäjältä kaiken vallan aikaan | Pidä lukko, lisää rajattu lisäaika (A2) |
+| 10 s laskenta | Voi lisätä kiirettä | Valinnainen, oletuksena pois |
+| Valmis vasta kun aika loppunut | Voi turhauttaa | Vaihtoehtona, ei oletuksena (nykyinen kolmen tilan valinta oikea) |
+| Muutos näkyy heti (oletus) | Osalle aikainen tieto pidentää jännitystä | Kysy ajoitus profiilia luotaessa |
+| Laaja asetusvalikko | Uusi ohjaaja ei tiedä, mistä aloittaa | Ohjattu aloitus: 5 kysymystä asiakkaasta |
+| Kaksi roolia samassa laitteessa | Asiakas voi nähdä ohjaajan näkymän | Ratkeaa A5:llä; testitilan vapaa roolinvaihto pois ennen julkaisua |
+| Valmiiden kuvien tyyli | Voi tuntua lapselliselta aikuiselle | Aikuisprofiilissa oletuksena omat valokuvat |
+
+**Kokonaisarvio:** AikaPolussa näkyy ammattilaisen ote (tauko aina vapaa, roolit erillään, asiakaskohtainen ajoitus). Heikkous ei ole väärissä ratkaisuissa vaan siinä, että käyttäjän kokemusta ei ole vielä kuultu. Tärkein seuraava askel on pilotti, jossa myös autistiset aikuiset ovat mukana itseään edustamassa.
+
+---
+
+## Päätökset-loki
+
+Kirjaa tähän jokainen suunnan tarkennus: päivämäärä, tunniste, päätös, perustelu. Uusin ylimpänä.
+
+| Päivä | ID | Päätös | Perustelu |
+| --- | --- | --- | --- |
+| 14.11.2026 | – | Tutkielma v1.0 laadittu; kaikki ehdotukset tilassa Ehdotettu (A5 päätetty jo aiemmin) | Lähtötaso ennen priorisoinnin vahvistamista |
+
+## Avoimet kysymykset
+
+- Hyväksytäänkö A1–A7 ennen pilottia, ja missä järjestyksessä suhteessa käyttöliittymän yhtenäistämiseen (osa 3) ja kuvakkeeseen?
+- Mikä yksikkö pilottiin, ja ketkä autistiset aikuiset mukaan arvioimaan?
+- Lisäajan oletusrajat (0/3/5 min, kerran) – vahvistetaan ohjaajien kanssa.
+
+## Lähteet
+
+- Ben-Sasson, A. ym. (2019). Update of a Meta-analysis of Sensory Symptoms in ASD. *J Autism Dev Disord* 49(12). https://cris.haifa.ac.il/en/publications/update-of-a-meta-analysis-of-sensory-symptoms-in-asd-a-new-decade/
+- Casassus, M. ym. (2019). Time perception and autistic spectrum condition: A systematic review. *Autism Research* 12(10). https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6852160/
+- Demetriou, E. A. ym. (2018). Autism spectrum disorders: a meta-analysis of executive function. *Molecular Psychiatry* 23(5). https://www.omicsdi.org/dataset/biostudies-literature/S-EPMC5984099
+- Howell, M., Dounavi, K. & Storey, C. (2019). To choose or not to choose? *Review J Autism Dev Disord* 6(1). https://link.springer.com/article/10.1007/s40489-018-00154-7
+- Jenkinson, R. (2019). Uncertainty and Negative Affect in Individuals with ASD. Väitöskirja, University of Sheffield. https://etheses.whiterose.ac.uk/24827
+- Jenkinson, R., Milne, E. & Thompson, A. (2020). Intolerance of uncertainty and anxiety in autism. *Autism* 24(8). https://orca.cardiff.ac.uk/id/eprint/140692/
+- Knight, V., Sartini, E. & Spriggs, A. D. (2015). Evaluating Visual Activity Schedules as Evidence-Based Practice. *J Autism Dev Disord* 45. https://cbmt.franciscan.edu/wp-content/uploads/sites/32/2021/07/Knight-et-al.-2015_Visual-Schedules.pdf
+- Leon, Y. ym. (2023). Problem behavior occasioned by variable-sequence transitions. *Behavioral Interventions*. https://ifp.nyu.edu/2023/journal-article-abstracts/bin-1968/
+- McVey, A. J. ym. (2023). Mindshift in autism. *Frontiers in Psychiatry* 14. https://www.frontiersin.org/articles/10.3389/fpsyt.2023.1251058
+- Steinbrenner, J. R. ym. (2020). Evidence-Based Practices for Children, Youth, and Young Adults with Autism. NCAEP. https://ncaep.fpg.unc.edu/sites/ncaep.fpg.unc.edu/files/imce/documents/EBP%20Executive%20Summary.pdf
+- Vasquez, S. ym. (2017). Effects of Advance Notice on Problem Behavior Occasioned by Interruptions. *Behavior Analysis in Practice* 10. https://link.springer.com/article/10.1007/s40617-017-0187-7
+- Waters, M. B. ym. (2009). Visual schedules and extinction plus DRO (tiivistelmä). *JABA* 42. https://behavioristbookclub.com/aba-research/aba-fundamentals/separate-and-combined-effects-of-visual-schedules-and-extinction-plus/
+
+Versiohistoria: v1.0 (14.11.2026) ensimmäinen versio.
