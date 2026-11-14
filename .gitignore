@@ -23,3 +23,6 @@ captures/
 *.jks
 *.keystore
 keystore.properties
+
+# --- PC:n käännöslokit (tools/pc/aja-aikapolku.ps1) ---
+tarkistukset/
