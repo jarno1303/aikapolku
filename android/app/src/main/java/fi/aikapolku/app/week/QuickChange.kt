@@ -240,10 +240,8 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
     var remind by rememberSaveable { mutableStateOf(false) }
     var showMore by rememberSaveable { mutableStateOf(false) }
 
-    // Tälle päivälle tehty muutos ei voi näkyä "edellisenä iltana": näytetään heti.
-    androidx.compose.runtime.LaunchedEffect(dayOffset) {
-        if (dayOffset == 0 && reveal == ChangeReveal.EVENING) reveal = ChangeReveal.NOW
-    }
+    // Tälle päivälle tehty muutos ei voi näkyä "edellisenä iltana": näytetään ja tallennetaan Heti.
+    val shownReveal = if (dayOffset == 0 && reveal == ChangeReveal.EVENING) ChangeReveal.NOW else reveal
     val date = LocalDate.now().plusDays(dayOffset.toLong())
     val events = plan.eventsFor(date)
     val event = events.firstOrNull { it.id == eventId }
@@ -423,12 +421,13 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
                 reason = reason.trim(),
                 voicePath = voicePath,
                 autoPlayVoice = autoPlay && voicePath.isNotBlank(),
-                reveal = reveal,
+                reveal = shownReveal,
                 showOriginal = showOriginal,
                 stepId = step?.id ?: "",
                 stepName = step?.name ?: "",
                 stepPhoto = step?.photo ?: "",
-                remind = remind
+                // Muistutus koskee koko tapahtumaa; vaihemuutokselle sitä ei tarjota.
+                remind = remind && step == null
             )
             StageTitle(stringResource(R.string.quick_confirm))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -487,21 +486,26 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = 52.dp)
-                            .selectable(selected = reveal == option, role = Role.RadioButton) { reveal = option }
+                            .selectable(selected = shownReveal == option, role = Role.RadioButton) { reveal = option }
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.Top
                     ) {
                         // Valintaympyrä otsikon kohdalla, kuvaus sen alla.
-                        RadioButton(selected = reveal == option, onClick = null, modifier = Modifier.padding(top = 2.dp))
+                        RadioButton(selected = shownReveal == option, onClick = null, modifier = Modifier.padding(top = 2.dp))
                         Column(modifier = Modifier.padding(start = 8.dp)) {
                             Text(stringResource(title), fontSize = 16.sp)
-                            Text(stringResource(info), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                if (option == ChangeReveal.EVENING) stringResource(info, DayChanges.EVENING_HOUR) else stringResource(info),
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }
                 // Vaiheittainen ilmoitus: ensin näkyminen (yllä), sitten muistutus ennen tapahtumaa.
+                // Koskee koko tapahtumaa, ei päiväohjelman yksittäistä vaihetta.
                 val remindLabel = stringResource(R.string.change_remind)
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                if (step == null) Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(remindLabel, fontWeight = FontWeight.SemiBold)
                         Text(

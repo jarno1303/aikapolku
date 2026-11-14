@@ -506,10 +506,15 @@
     <string name="change_open_hint">Avaa AikaPolku nähdäksesi muutoksen.</string>
     <string name="change_pending_evening">Näkyy käyttäjälle edellisenä iltana klo %1$d</string>
     <string name="change_reveal_evening">Edellisenä iltana</string>
-    <string name="change_reveal_evening_info">Tulee näkyviin muutosta edeltävänä iltana klo 18, jolloin asiaa ehtii käsitellä ennen nukkumaanmenoa.</string>
+    <string name="change_reveal_evening_info">Tulee näkyviin edellisenä iltana klo %1$d. Käyttäjä näkee sen, kun avaa sovelluksen.</string>
     <string name="change_remind">Muistuta myös ennen tapahtumaa</string>
-    <string name="change_remind_info">Käyttäjä saa ilmoituksen muutoksesta %1$d min ennen tapahtumaa. Toimii yhdessä yllä olevan valinnan kanssa: ensin tieto, sitten muistutus.</string>
+    <string name="change_remind_info">Käyttäjä saa ilmoituksen muutoksesta ennen tapahtumaa: %1$d min ennen, tai tapahtuman oman muistutuksen aikaan, jos sellainen on. Jos muutos näkyy vasta tapahtuman aikaan, ilmoitus tulee silloin.</string>
     <string name="change_unchanged_title">Pysyy samana</string>
+    <string name="change_speech_cancel">%1$s on peruttu.</string>
+    <string name="change_speech_replace">%1$s vaihtuu. Tilalla on %2$s.</string>
+    <string name="change_speech_replace_short">Tilalla on %1$s.</string>
+    <string name="change_speech_move">%1$s on nyt kello %2$s.</string>
+    <string name="change_speech_unchanged">Pysyy samana: %1$s.</string>
     <string name="change_pending_morning">Näkyy käyttäjälle muutospäivän aamuna</string>
     <string name="change_pending_at">Näkyy käyttäjälle klo %1$s</string>
     <string name="change_seen_at">Nähty klo %1$s</string>

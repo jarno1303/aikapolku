@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +70,7 @@ import fi.aikapolku.app.data.WeekSchedule
 import fi.aikapolku.app.data.WeekStore
 import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.ui.AppIcons
+import fi.aikapolku.app.ui.BackOverride
 import fi.aikapolku.app.ui.ChangeSymbol
 import fi.aikapolku.app.ui.PrimaryButton
 import fi.aikapolku.app.ui.SecondaryButton
@@ -210,8 +212,12 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
         Text(stringResource(R.string.week_no_events), color = AppColors.Muted)
         return
     }
-    var showBreak by remember { mutableStateOf(false) }
+    var showBreak by rememberSaveable { mutableStateOf(false) }
+    // Ohjaajan äänite soi itsestään vain kerran (ei uudelleen tauon jälkeen).
+    var autoPlayed by rememberSaveable { mutableStateOf(false) }
     if (showBreak) {
+        // Yläpalkin takaisin-nuoli sulkee tauon eikä koko muutosnäkymää.
+        BackOverride { showBreak = false }
         // Tukiviesti tarvitsee rajatun korkeuden, koska sivu vierii.
         val height = LocalConfiguration.current.screenHeightDp.dp * 0.82f
         Box(Modifier.fillMaxWidth().height(height)) {
@@ -232,7 +238,7 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
         change.isStep -> original
         else -> effectiveEvent
     }
-    val summary = changeSummary(change, event, effectiveEvent)
+    val spoken = changeSpeech(change, event, effectiveEvent, unchanged)
     ChangeView(
         subtitle = dayLabel(change.date) + if (change.isStep) " · " + event.title else "",
         type = change.type,
@@ -241,9 +247,10 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
         showOriginal = change.showOriginal,
         reason = change.reason,
         voicePath = change.voicePath,
-        autoPlayVoice = change.autoPlayVoice,
+        autoPlayVoice = change.autoPlayVoice && !autoPlayed,
+        onAutoPlayed = { autoPlayed = true },
         unchanged = unchanged,
-        spokenText = listOf(summary, change.reason.trim()).filter { it.isNotBlank() }.joinToString(". "),
+        spokenText = spoken,
         onBreak = { showBreak = true },
         onOk = {
             AckStore(context).ack(change.date, change.ackId)
@@ -278,6 +285,7 @@ private fun ChangeView(
     reason: String,
     voicePath: String,
     autoPlayVoice: Boolean,
+    onAutoPlayed: () -> Unit = {},
     unchanged: List<ResolvedEvent> = emptyList(),
     spokenText: String = "",
     onBreak: (() -> Unit)? = null,
@@ -285,11 +293,17 @@ private fun ChangeView(
 ) {
     val context = LocalContext.current
     LaunchedEffect(voicePath) {
-        if (autoPlayVoice && voicePath.isNotBlank()) VoicePlayer.play(context, voicePath)
+        if (autoPlayVoice && voicePath.isNotBlank()) {
+            VoicePlayer.play(context, voicePath)
+            onAutoPlayed()
+        }
     }
-    val speech = remember(context) { Speech(context.applicationContext) }
+    // Puhesynteesi vain, kun ohjaajan äänitettä ei ole.
+    val speech = remember(context, voicePath, spokenText) {
+        if (voicePath.isBlank() && spokenText.isNotBlank()) Speech(context.applicationContext) else null
+    }
     DisposableEffect(speech) {
-        onDispose { speech.close() }
+        onDispose { speech?.close() }
     }
 
     Column(
@@ -354,23 +368,24 @@ private fun ChangeView(
             Text(reason, fontSize = 20.sp, color = AppColors.Ink, textAlign = TextAlign.Center)
         }
         if (unchanged.isNotEmpty()) UnchangedSection(unchanged)
+        // Kuuntele ennen Selvää: kuuntelija ehtii kuulla ennen kuittausta.
+        // Ohjaajan äänite, muuten puhesynteesi muutoksesta, syystä ja siitä mikä pysyy.
+        if (voicePath.isNotBlank() || spokenText.isNotBlank()) {
+            SecondaryButton(
+                text = stringResource(R.string.change_listen),
+                icon = AppIcons.Speaker,
+                onClick = {
+                    if (voicePath.isNotBlank()) VoicePlayer.play(context, voicePath) else speech?.speak(spokenText)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         PrimaryButton(
             text = stringResource(R.string.change_ok),
             icon = Icons.Rounded.Check,
             onClick = onOk,
             modifier = Modifier.fillMaxWidth()
         )
-        // Kuuntele: ohjaajan äänite, muuten puhesynteesi muutoksesta ja syystä.
-        if (voicePath.isNotBlank() || spokenText.isNotBlank()) {
-            SecondaryButton(
-                text = stringResource(R.string.change_listen),
-                icon = AppIcons.Speaker,
-                onClick = {
-                    if (voicePath.isNotBlank()) VoicePlayer.play(context, voicePath) else speech.speak(spokenText)
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
         if (onBreak != null) {
             SecondaryButton(
                 text = stringResource(R.string.support_break),
@@ -380,6 +395,26 @@ private fun ChangeView(
             )
         }
     }
+}
+
+/**
+ * Puhuttava muutos kokonaisina lauseina (ei nuolia): mitä muuttuu, miksi ja mikä pysyy.
+ * Vaihemuutoksessa puhutaan vaiheesta, ei koko ohjelmasta.
+ */
+@Composable
+private fun changeSpeech(change: EventChange, original: ResolvedEvent, effective: ResolvedEvent, unchanged: List<ResolvedEvent>): String {
+    val from = if (change.isStep) change.stepName else original.title
+    val main = when (change.type) {
+        ChangeType.CANCEL -> stringResource(R.string.change_speech_cancel, from)
+        ChangeType.REPLACE ->
+            if (change.showOriginal) stringResource(R.string.change_speech_replace, from, if (change.isStep) change.cardName else effective.title)
+            else stringResource(R.string.change_speech_replace_short, if (change.isStep) change.cardName else effective.title)
+        ChangeType.MOVE -> stringResource(R.string.change_speech_move, effective.title, effective.event.time.replace(':', '.'))
+    }
+    val same = unchanged.takeIf { it.isNotEmpty() }?.let { list ->
+        stringResource(R.string.change_speech_unchanged, list.joinToString(", ") { it.title + " " + it.event.time.replace(':', '.') })
+    }
+    return listOfNotNull(main, change.reason.trim().takeIf { it.isNotBlank() }?.trimEnd('.')?.plus("."), same).joinToString(" ")
 }
 
 private data class ChangeData(
@@ -414,7 +449,7 @@ private fun UnchangedSection(items: List<ResolvedEvent>) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
-                        .semantics(mergeDescendants = true) { contentDescription = "$title: $time ${item.title}" }
+                        .semantics(mergeDescendants = true) { contentDescription = "$time ${item.title}" }
                 ) {
                     EventImage(item, Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)))
                     Text(time, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Muted)

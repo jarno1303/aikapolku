@@ -251,7 +251,7 @@ class ChangeFlowUiTest {
         compose.onNodeWithText(t(R.string.change_listen)).performScrollTo().assertExists()
         // Tarvitsen tauon avaa taukoviestin, Jatka palaa muutokseen.
         compose.onNodeWithText(t(R.string.support_break)).performScrollTo().performClick()
-        compose.onNodeWithText(t(R.string.support_continue)).performClick()
+        compose.onNodeWithText(t(R.string.support_continue)).performScrollTo().performClick()
         compose.onNodeWithText(t(R.string.change_ok)).performScrollTo().assertExists()
     }
 
