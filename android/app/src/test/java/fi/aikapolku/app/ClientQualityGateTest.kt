@@ -227,10 +227,12 @@ class ClientQualityGateTest {
                 }
             }
         } else {
+            // Todellinen sijainti ja koko (boundsInRoot leikkautuu näkyvään alueeseen eikä paljastaisi valumista).
             clickable.forEach { n ->
-                val b = n.boundsInRoot
-                if (b.left < -1f || b.right > rootWidth + 1f) {
-                    v += Violation(tag, "R6", "'${n.label()}' valuu ruudun ulkopuolelle (${b.left.toInt()}–${b.right.toInt()} / $rootWidth px)")
+                val left = n.positionInRoot.x
+                val right = left + n.size.width
+                if (left < -1f || right > rootWidth + 1f) {
+                    v += Violation(tag, "R6", "'${n.label()}' valuu ruudun ulkopuolelle (${left.toInt()}–${right.toInt()} / $rootWidth px)")
                 }
             }
         }
