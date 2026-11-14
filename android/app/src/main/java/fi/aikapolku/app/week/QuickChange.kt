@@ -352,11 +352,37 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
                     fontSize = 15.sp,
                     color = AppColors.Change
                 )
-                TextButton(onClick = {
-                    store.delete(existing.id)
-                    EventReminders.reschedule(app)
-                    refresh++
-                }) { Text(stringResource(R.string.change_remove), color = MaterialTheme.colorScheme.error) }
+                // Palautus on asiakkaalle uusi muutos: varmistetaan ja kerrotaan, jos hän on jo nähnyt muutoksen.
+                var askRestore by rememberSaveable { mutableStateOf(false) }
+                TextButton(onClick = { askRestore = true }) {
+                    Text(stringResource(R.string.change_remove), color = MaterialTheme.colorScheme.error)
+                }
+                if (askRestore) {
+                    val seen = remember(existing.id) { fi.aikapolku.app.data.AckStore(app).ackTime(date, existing.ackId) != null }
+                    val what = if (step != null) step.name else r.title
+                    AlertDialog(
+                        onDismissRequest = { askRestore = false },
+                        title = { Text(stringResource(R.string.change_restore_title)) },
+                        text = {
+                            Text(
+                                stringResource(R.string.change_restore_text, what, e.time.replace(':', '.')) +
+                                    if (seen) "\n\n" + stringResource(R.string.change_restore_seen) else ""
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                askRestore = false
+                                store.delete(existing.id)
+                                EventReminders.reschedule(app)
+                                Toast.makeText(context, context.getString(R.string.change_restored), Toast.LENGTH_SHORT).show()
+                                onDone()
+                            }) { Text(stringResource(R.string.change_remove)) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { askRestore = false }) { Text(stringResource(R.string.cancel)) }
+                        }
+                    )
+                }
             }
             ReplacementChoices(
                 cancelLabel = stringResource(R.string.change_type_cancel),

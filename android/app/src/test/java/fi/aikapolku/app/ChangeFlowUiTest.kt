@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -253,6 +255,26 @@ class ChangeFlowUiTest {
         compose.onNodeWithText(t(R.string.support_break)).performScrollTo().performClick()
         compose.onNodeWithText(t(R.string.support_continue)).performScrollTo().performClick()
         compose.onNodeWithText(t(R.string.change_ok)).performScrollTo().assertExists()
+    }
+
+    @Test
+    fun `alkuperaisen palautus kysyy varmistuksen ja palaa takaisin`() {
+        val change = savedChange()
+        AckStore(context).ack(today, change.ackId) // asiakas on jo nähnyt muutoksen
+        var done = false
+        compose.setContent {
+            AsCaregiver(open = true) {
+                QuickChangeScreen(0, todayEventId()) { done = true }
+            }
+        }
+        compose.onNodeWithText(t(R.string.change_remove)).performScrollTo().performClick()
+        // Varmistus: ei vielä poistettu, ja kerrotaan että asiakas on nähnyt muutoksen.
+        compose.onNodeWithText(t(R.string.change_restore_title)).assertExists()
+        compose.onNodeWithText(t(R.string.change_restore_seen), substring = true).assertExists()
+        assertEquals(1, ChangeStore(context).load().size)
+        compose.onAllNodesWithText(t(R.string.change_remove)).onLast().performClick()
+        assertTrue(ChangeStore(context).load().isEmpty())
+        assertTrue(done)
     }
 
     private class FakeTimer : TimerPort {

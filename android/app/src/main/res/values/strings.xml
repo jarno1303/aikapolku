@@ -476,7 +476,11 @@
     <string name="change_day_tomorrow">Huomenna</string>
     <string name="change_make">Tee muutos</string>
     <string name="change_edit">Muokkaa muutosta</string>
-    <string name="change_remove">Peru muutos</string>
+    <string name="change_remove">Palauta alkuperäinen</string>
+    <string name="change_restore_title">Palautetaanko alkuperäinen?</string>
+    <string name="change_restore_text">%1$s klo %2$s palaa ennalleen.</string>
+    <string name="change_restore_seen">Asiakas on jo nähnyt muutoksen. Kerro hänelle, että alkuperäinen palaa.</string>
+    <string name="change_restored">Alkuperäinen palautettu</string>
     <string name="change_type_cancel">Peruttu</string>
     <string name="change_type_replace">Tilalle muuta</string>
     <string name="change_type_move">Uusi aika</string>
