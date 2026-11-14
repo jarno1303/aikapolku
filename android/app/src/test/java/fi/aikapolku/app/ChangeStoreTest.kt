@@ -48,6 +48,23 @@ class ChangeStoreTest {
     }
 
     @Test
+    fun `ilta-ennakko ja muistutus sailyvat`() {
+        val evening = change.copy(id = "c2", reveal = ChangeReveal.EVENING, remind = true)
+        ChangeStore(context, "default").upsert(evening)
+        val loaded = ChangeStore(context, "default").load().single { it.id == "c2" }
+        assertEquals(ChangeReveal.EVENING, loaded.reveal)
+        assertTrue(loaded.remind)
+    }
+
+    @Test
+    fun `vanha tallenne ilman muistutusta lukeutuu oletuksella`() {
+        val old = """[{"id":"v1","date":"2026-11-02","eventId":"e1","type":"cancel","reveal":"morning"}]"""
+        val loaded = ChangeStore.decode(old).single()
+        assertFalse(loaded.remind)
+        assertEquals(ChangeReveal.MORNING, loaded.reveal)
+    }
+
+    @Test
     fun `edellisen muutoksen valinnat ovat valmiina`() {
         val store = ChangeStore(context, "default")
         store.upsert(change)

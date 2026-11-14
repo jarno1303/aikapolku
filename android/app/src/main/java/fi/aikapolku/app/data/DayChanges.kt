@@ -23,6 +23,8 @@ internal enum class ChangeType(val key: String) {
  */
 internal enum class ChangeReveal(val key: String) {
     NOW("now"),
+    /** Edellisenä iltana klo [DayChanges.EVENING_HOUR] (tälle päivälle tehty muutos näkyy heti). */
+    EVENING("evening"),
     MORNING("morning"),
     AT_EVENT("event");
 
@@ -58,7 +60,12 @@ internal data class EventChange(
      */
     val stepId: String = "",
     val stepName: String = "",
-    val stepPhoto: String = ""
+    val stepPhoto: String = "",
+    /**
+     * Vaiheittainen ilmoitus: näkymisen ([reveal]) lisäksi muistutus muutoksesta
+     * [DayChanges.REMIND_BEFORE_MIN] min ennen tapahtumaa, vaikka tapahtumalla ei olisi omaa ilmoitusta.
+     */
+    val remind: Boolean = false
 ) {
     val isStep: Boolean get() = stepId.isNotBlank()
 
@@ -80,6 +87,12 @@ internal data class DayEntry(
 /** Muutosten soveltaminen päivään: puhdas logiikka, testattavissa ilman laitetta. */
 internal object DayChanges {
     const val KEEP_DAYS = 7L
+    /** "Edellisenä iltana" näkyvä muutos tulee näkyviin tähän aikaan. */
+    const val EVENING_HOUR = 18
+    /** Vaiheittaisen ilmoituksen muistutus näin monta minuuttia ennen tapahtumaa. */
+    const val REMIND_BEFORE_MIN = 15
+    /** "Pysyy samana" -osiossa näytettävien tapahtumien enimmäismäärä. */
+    const val UNCHANGED_SHOWN = 3
 
     /** Tapahtuma muutoksen jälkeen. Vaihemuutos ei muuta tapahtumaa (vain ohjelman vaihetta). */
     fun effective(original: WeekEvent, change: EventChange): WeekEvent = if (change.isStep) original else when (change.type) {
@@ -102,6 +115,7 @@ internal object DayChanges {
      */
     fun revealAt(change: EventChange, original: WeekEvent): LocalDateTime? = when (change.reveal) {
         ChangeReveal.NOW -> null
+        ChangeReveal.EVENING -> change.date.minusDays(1).atTime(EVENING_HOUR, 0)
         ChangeReveal.MORNING -> change.date.atStartOfDay()
         ChangeReveal.AT_EVENT -> {
             val times = listOfNotNull(
@@ -128,6 +142,21 @@ internal object DayChanges {
             val steps = if (change == null) own.filter { it.isStep } else emptyList()
             DayEntry(if (change != null) effective(e, change) else e, e, change, steps)
         }.sortedWith(compareBy({ WeekSchedule.minutesOf(it.event.time) }, { it.event.id }))
+
+    /**
+     * "Pysyy samana": muutoksen jälkeen tulevat päivän tapahtumat, joihin ei ole tullut
+     * muutosta (enintään [limit]). Vertailuaika on muutetun tapahtuman alkuperäinen tai uusi
+     * aika, kumpi on aiempi. [entries] = päivän rivit käyttäjän näkymästä ([entries] + now).
+     */
+    fun unchangedAfter(entries: List<DayEntry>, change: EventChange, limit: Int = UNCHANGED_SHOWN): List<WeekEvent> {
+        val target = entries.firstOrNull { it.original.id == change.eventId } ?: return emptyList()
+        val from = minOf(WeekSchedule.minutesOf(target.original.time), WeekSchedule.minutesOf(target.event.time))
+        return entries
+            .filter { it.original.id != change.eventId && it.change == null && it.stepChanges.isEmpty() }
+            .filter { WeekSchedule.minutesOf(it.event.time) > from }
+            .map { it.event }
+            .take(limit)
+    }
 
     /** Muutokset, jotka näytetään käyttäjälle aloitusnäkymässä: näkyvät ja kuittaamattomat. */
     fun announced(
@@ -258,6 +287,7 @@ internal class ChangeStore(context: Context, profileId: String = ProfileStore.cu
                         .put("stepId", c.stepId)
                         .put("stepName", c.stepName)
                         .put("stepPhoto", c.stepPhoto)
+                        .put("remind", c.remind)
                 )
             }
             return array.toString()
@@ -292,7 +322,8 @@ internal class ChangeStore(context: Context, profileId: String = ProfileStore.cu
                     showOriginal = o.optBoolean("showOriginal", true),
                     stepId = o.optString("stepId"),
                     stepName = o.optString("stepName"),
-                    stepPhoto = o.optString("stepPhoto")
+                    stepPhoto = o.optString("stepPhoto"),
+                    remind = o.optBoolean("remind", false)
                 )
             }
         }

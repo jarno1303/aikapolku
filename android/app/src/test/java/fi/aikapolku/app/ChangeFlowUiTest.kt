@@ -234,6 +234,27 @@ class ChangeFlowUiTest {
         )
     }
 
+    @Test
+    fun `muutosnakyma kertoo mika pysyy samana ja tauon voi pyytaa`() {
+        // Tänään klo 00.00 ulkoilu (muuttuu) ja klo 23.30 iltapala, joka pysyy ennallaan.
+        val snack = t(R.string.card_rest) + " 2"
+        WeekStore(context).save(WeekPlan(cardEvents() + WeekEvent("ilta", today.dayOfWeek.value, 0, "23:30", EventKind.CARD, cardName = snack)))
+        val change = savedChange()
+        compose.setContent {
+            AsCaregiver(open = false) {
+                ChangeScreen(change.id) {}
+            }
+        }
+        compose.onNodeWithText(t(R.string.change_unchanged_title)).performScrollTo().assertExists()
+        compose.onNodeWithText(snack).assertExists()
+        // Kuuntele toimii myös ilman ohjaajan äänitettä (puhesynteesi).
+        compose.onNodeWithText(t(R.string.change_listen)).performScrollTo().assertExists()
+        // Tarvitsen tauon avaa taukoviestin, Jatka palaa muutokseen.
+        compose.onNodeWithText(t(R.string.support_break)).performScrollTo().performClick()
+        compose.onNodeWithText(t(R.string.support_continue)).performClick()
+        compose.onNodeWithText(t(R.string.change_ok)).performScrollTo().assertExists()
+    }
+
     private class FakeTimer : TimerPort {
         override fun now() = 1_000L
         override fun allowed() = true

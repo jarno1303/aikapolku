@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,8 +26,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -34,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -56,6 +62,7 @@ import fi.aikapolku.app.data.DayChanges
 import fi.aikapolku.app.data.DayProgram
 import fi.aikapolku.app.data.EventChange
 import fi.aikapolku.app.data.ProgramStore
+import fi.aikapolku.app.data.SupportKind
 import fi.aikapolku.app.data.WeekEvent
 import fi.aikapolku.app.data.WeekPlan
 import fi.aikapolku.app.data.WeekSchedule
@@ -65,6 +72,8 @@ import fi.aikapolku.app.ui.AppIcons
 import fi.aikapolku.app.ui.ChangeSymbol
 import fi.aikapolku.app.ui.PrimaryButton
 import fi.aikapolku.app.ui.SecondaryButton
+import fi.aikapolku.app.programs.run.SupportMessageScreen
+import fi.aikapolku.app.voice.Speech
 import fi.aikapolku.app.voice.VoicePlayer
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -176,24 +185,46 @@ private fun ImageWithName(item: ResolvedEvent, size: Int, crossed: Boolean) {
 }
 
 /**
- * Käyttäjän muutosnäkymä: muutosmerkki, mitä muuttui, syy (teksti ja ääni) ja "Selvä".
- * Selvä kuittaa muutoksen nähdyksi (näkyy ohjaajalle).
+ * Käyttäjän muutosnäkymä aina samassa järjestyksessä: mikä muuttuu, miksi, mitä tilalle,
+ * mikä pysyy samana ja mitä voin tehdä (Selvä, Kuuntele, Tarvitsen tauon).
+ * Selvä kuittaa muutoksen nähdyksi (näkyy ohjaajalle). Tauko on aina vapaa.
  */
 @Composable
 internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
     val context = LocalContext.current
     val data = remember(changeId) {
-        val change = ClientWeek.changes(context).firstOrNull { it.id == changeId }
-        val original = change?.let { c -> ClientWeek.load(context).event(c.eventId) }
+        val all = ClientWeek.changes(context)
+        val change = all.firstOrNull { it.id == changeId }
+        val plan = ClientWeek.load(context)
+        val original = change?.let { c -> plan.event(c.eventId) }
         val programs = ProgramStore(context).load()
         if (change == null || original == null) null
-        else Triple(change, resolveEvent(original, programs), resolveEvent(DayChanges.effective(original, change), programs))
+        else {
+            // Pysyy samana: käyttäjän näkymän mukaan (vain jo näkyvät muutokset huomioidaan).
+            val entries = DayChanges.entries(plan.eventsFor(change.date), all, change.date, LocalDateTime.now())
+            val unchanged = DayChanges.unchangedAfter(entries, change).map { resolveEvent(it, programs) }
+            ChangeData(change, resolveEvent(original, programs), resolveEvent(DayChanges.effective(original, change), programs), unchanged)
+        }
     }
     if (data == null) {
         Text(stringResource(R.string.week_no_events), color = AppColors.Muted)
         return
     }
-    val (change, event, effectiveEvent) = data
+    var showBreak by remember { mutableStateOf(false) }
+    if (showBreak) {
+        // Tukiviesti tarvitsee rajatun korkeuden, koska sivu vierii.
+        val height = LocalConfiguration.current.screenHeightDp.dp * 0.82f
+        Box(Modifier.fillMaxWidth().height(height)) {
+            SupportMessageScreen(
+                kind = SupportKind.BREAK,
+                timerPaused = false,
+                onContinue = { showBreak = false },
+                onClose = { showBreak = false }
+            )
+        }
+        return
+    }
+    val (change, event, effectiveEvent, unchanged) = data
     // Vaihemuutoksessa näytetään vaihe ja korvaava kortti, otsikkona ohjelman nimi.
     val original = if (change.isStep) cardResolved(change.stepName, change.stepPhoto) else event
     val effective = when {
@@ -201,6 +232,7 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
         change.isStep -> original
         else -> effectiveEvent
     }
+    val summary = changeSummary(change, event, effectiveEvent)
     ChangeView(
         subtitle = dayLabel(change.date) + if (change.isStep) " · " + event.title else "",
         type = change.type,
@@ -210,6 +242,9 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
         reason = change.reason,
         voicePath = change.voicePath,
         autoPlayVoice = change.autoPlayVoice,
+        unchanged = unchanged,
+        spokenText = listOf(summary, change.reason.trim()).filter { it.isNotBlank() }.joinToString(". "),
+        onBreak = { showBreak = true },
         onOk = {
             AckStore(context).ack(change.date, change.ackId)
             onDone()
@@ -243,11 +278,18 @@ private fun ChangeView(
     reason: String,
     voicePath: String,
     autoPlayVoice: Boolean,
+    unchanged: List<ResolvedEvent> = emptyList(),
+    spokenText: String = "",
+    onBreak: (() -> Unit)? = null,
     onOk: () -> Unit
 ) {
     val context = LocalContext.current
     LaunchedEffect(voicePath) {
         if (autoPlayVoice && voicePath.isNotBlank()) VoicePlayer.play(context, voicePath)
+    }
+    val speech = remember(context) { Speech(context.applicationContext) }
+    DisposableEffect(speech) {
+        onDispose { speech.close() }
     }
 
     Column(
@@ -311,19 +353,84 @@ private fun ChangeView(
         if (reason.isNotBlank()) {
             Text(reason, fontSize = 20.sp, color = AppColors.Ink, textAlign = TextAlign.Center)
         }
-        if (voicePath.isNotBlank()) {
-            SecondaryButton(
-                text = stringResource(R.string.change_listen),
-                icon = AppIcons.Speaker,
-                onClick = { VoicePlayer.play(context, voicePath) }
-            )
-        }
+        if (unchanged.isNotEmpty()) UnchangedSection(unchanged)
         PrimaryButton(
             text = stringResource(R.string.change_ok),
             icon = Icons.Rounded.Check,
             onClick = onOk,
             modifier = Modifier.fillMaxWidth()
         )
+        // Kuuntele: ohjaajan äänite, muuten puhesynteesi muutoksesta ja syystä.
+        if (voicePath.isNotBlank() || spokenText.isNotBlank()) {
+            SecondaryButton(
+                text = stringResource(R.string.change_listen),
+                icon = AppIcons.Speaker,
+                onClick = {
+                    if (voicePath.isNotBlank()) VoicePlayer.play(context, voicePath) else speech.speak(spokenText)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        if (onBreak != null) {
+            SecondaryButton(
+                text = stringResource(R.string.support_break),
+                icon = AppIcons.Pause,
+                onClick = onBreak,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+private data class ChangeData(
+    val change: EventChange,
+    val event: ResolvedEvent,
+    val effective: ResolvedEvent,
+    val unchanged: List<ResolvedEvent>
+)
+
+/** "Pysyy samana": muutoksen jälkeiset ennallaan olevat tapahtumat rauhallisella värillä ja merkillä. */
+@Composable
+private fun UnchangedSection(items: List<ResolvedEvent>) {
+    val title = stringResource(R.string.change_unchanged_title)
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = AppColors.TealSoft,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                title,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = AppColors.Teal,
+                modifier = Modifier.semantics { heading() }
+            )
+            items.forEach { item ->
+                val time = item.event.time.replace(':', '.')
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .semantics(mergeDescendants = true) { contentDescription = "$title: $time ${item.title}" }
+                ) {
+                    EventImage(item, Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)))
+                    Text(time, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Muted)
+                    Text(
+                        item.title,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AppColors.Ink,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(Icons.Rounded.Check, contentDescription = null, tint = AppColors.Teal, modifier = Modifier.size(28.dp))
+                }
+            }
+        }
     }
 }
 
@@ -381,6 +488,7 @@ internal fun changeStatus(info: ChangeInfo): String {
         info.seenAt != null -> stringResource(R.string.change_seen_at, info.seenAt.replace(':', '.'))
         info.revealAt != null && now.isBefore(info.revealAt) ->
             if (info.change.reveal == ChangeReveal.MORNING) stringResource(R.string.change_pending_morning)
+            else if (info.change.reveal == ChangeReveal.EVENING) stringResource(R.string.change_pending_evening, DayChanges.EVENING_HOUR)
             else stringResource(R.string.change_pending_at, WeekSchedule.formatTime(info.revealAt.hour, info.revealAt.minute).replace(':', '.'))
         else -> stringResource(R.string.change_not_seen)
     }

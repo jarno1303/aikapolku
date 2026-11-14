@@ -168,9 +168,16 @@ internal object WeekSchedule {
             val date = from.plusDays(offset.toLong())
             plans.flatMap { (profileId, plan) ->
                 DayChanges.entries(plan.eventsFor(date), changes[profileId].orEmpty(), date, null)
-                    .filter { it.original.notify }
+                    // Oma ilmoitus tai vaiheittaisen muutoksen muistutus (ks. EventChange.remind).
+                    .filter { it.original.notify || it.change?.remind == true }
                     .map { entry ->
-                        val event = entry.event.copy(notify = true, notifyBefore = entry.original.notifyBefore)
+                        val before = when {
+                            entry.original.notify -> entry.original.notifyBefore
+                            // "Tapahtuman aikaan" näkyvää muutosta ei kerrota ennen sen näkymistä.
+                            entry.change?.reveal == ChangeReveal.AT_EVENT -> 0
+                            else -> DayChanges.REMIND_BEFORE_MIN
+                        }
+                        val event = entry.event.copy(notify = true, notifyBefore = before)
                         val start = date.atStartOfDay().plusMinutes(minutesOf(event.time).toLong())
                         Reminder(
                             profileId, event, date,

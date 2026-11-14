@@ -237,8 +237,13 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
     var autoPlay by rememberSaveable { mutableStateOf(false) }
     var reveal by rememberSaveable { mutableStateOf(store.lastReveal) }
     var showOriginal by rememberSaveable { mutableStateOf(store.lastShowOriginal) }
+    var remind by rememberSaveable { mutableStateOf(false) }
     var showMore by rememberSaveable { mutableStateOf(false) }
 
+    // Tälle päivälle tehty muutos ei voi näkyä "edellisenä iltana": näytetään heti.
+    androidx.compose.runtime.LaunchedEffect(dayOffset) {
+        if (dayOffset == 0 && reveal == ChangeReveal.EVENING) reveal = ChangeReveal.NOW
+    }
     val date = LocalDate.now().plusDays(dayOffset.toLong())
     val events = plan.eventsFor(date)
     val event = events.firstOrNull { it.id == eventId }
@@ -260,6 +265,7 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
         autoPlay = target.autoPlayVoice
         reveal = target.reveal
         showOriginal = target.showOriginal
+        remind = target.remind
     }
 
     // Valmiiksi valittu tapahtuma (rivin muutosmerkistä): nykyinen muutos pohjaksi.
@@ -421,7 +427,8 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
                 showOriginal = showOriginal,
                 stepId = step?.id ?: "",
                 stepName = step?.name ?: "",
-                stepPhoto = step?.photo ?: ""
+                stepPhoto = step?.photo ?: "",
+                remind = remind
             )
             StageTitle(stringResource(R.string.quick_confirm))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -469,8 +476,10 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
                     onAutoPlayChange = { autoPlay = it }
                 )
                 Text(stringResource(R.string.change_reveal_title), fontWeight = FontWeight.SemiBold)
-                listOf(
+                listOfNotNull(
                     Triple(ChangeReveal.NOW, R.string.change_reveal_now, R.string.change_reveal_now_info),
+                    // Edellinen ilta on mielekäs vain huomisen muutokselle.
+                    Triple(ChangeReveal.EVENING, R.string.change_reveal_evening, R.string.change_reveal_evening_info).takeIf { dayOffset == 1 },
                     Triple(ChangeReveal.MORNING, R.string.change_reveal_morning, R.string.change_reveal_morning_info),
                     Triple(ChangeReveal.AT_EVENT, R.string.change_reveal_event, R.string.change_reveal_event_info)
                 ).forEach { (option, title, info) ->
@@ -489,6 +498,19 @@ internal fun QuickChangeScreen(initialDayOffset: Int, initialEventId: String?, o
                             Text(stringResource(info), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
+                }
+                // Vaiheittainen ilmoitus: ensin näkyminen (yllä), sitten muistutus ennen tapahtumaa.
+                val remindLabel = stringResource(R.string.change_remind)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(remindLabel, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            stringResource(R.string.change_remind_info, DayChanges.REMIND_BEFORE_MIN),
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(checked = remind, onCheckedChange = { remind = it }, modifier = Modifier.semantics { contentDescription = remindLabel })
                 }
                 if (type == ChangeType.REPLACE) {
                     val switchLabel = stringResource(R.string.change_show_original)

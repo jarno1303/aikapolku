@@ -246,4 +246,76 @@ class DayChangesTest {
         assertNull(due.single().change)
         assertEquals(EventKind.PROGRAM, due.single().event.kind)
     }
+
+    // --- 14.11.2026: ilta-ennakko, vaiheittainen muistutus ja "pysyy samana" (tutkielma A3, A4) ---
+
+    @Test
+    fun `edellisena iltana nakyva muutos tulee nakyviin edeltavana iltana klo 18`() {
+        val c = change(ChangeType.CANCEL, ChangeReveal.EVENING)
+        assertEquals(monday.minusDays(1).atTime(DayChanges.EVENING_HOUR, 0), DayChanges.revealAt(c, swim))
+        assertFalse(DayChanges.isRevealed(c, swim, monday.minusDays(1).atTime(17, 59)))
+        assertTrue(DayChanges.isRevealed(c, swim, monday.minusDays(1).atTime(18, 0)))
+        // Tälle päivälle (ilta jo ohi) tehty muutos näkyy heti.
+        assertTrue(DayChanges.isRevealed(c, swim, monday.atTime(7, 0)))
+    }
+
+    @Test
+    fun `pysyy samana nayttaa muutoksen jalkeiset muuttumattomat`() {
+        val coffee = card("Kahvi", "13:00")
+        val home = card("Kotiin", "15:00")
+        val sauna = card("Sauna", "16:00")
+        val morning = card("Aamupala", "08:00")
+        val events = listOf(morning, swim, lunch, coffee, home, sauna)
+        val c = change(ChangeType.REPLACE)
+        val entries = DayChanges.entries(events, listOf(c), monday, monday.atTime(9, 0))
+        // Aamupala on ennen muutosta, Uinti itse muuttui; enintään kolme.
+        assertEquals(listOf("Lounas", "Kahvi", "Kotiin"), DayChanges.unchangedAfter(entries, c).map { it.cardName })
+    }
+
+    @Test
+    fun `pysyy samana ohittaa muut muutokset ja kayttaa siirrossa aiempaa aikaa`() {
+        val coffee = card("Kahvi", "13:00")
+        val home = card("Kotiin", "15:00")
+        val move = change(ChangeType.MOVE) // Uinti 10.00 -> 13.00
+        val lunchCancel = change(ChangeType.CANCEL, eventId = lunch.id).copy(id = "lounas-peruttu")
+        val entries = DayChanges.entries(listOf(swim, lunch, coffee, home), listOf(move, lunchCancel), monday, monday.atTime(9, 0))
+        // Vertailu alkuperäisestä ajasta 10.00: Lounas on peruttu, Kahvi ja Kotiin pysyvät.
+        assertEquals(listOf("Kahvi", "Kotiin"), DayChanges.unchangedAfter(entries, move).map { it.cardName })
+    }
+
+    @Test
+    fun `nakymaton muutos ei vaikuta pysyy samana -listaan`() {
+        val c = change(ChangeType.REPLACE)
+        val hidden = change(ChangeType.CANCEL, ChangeReveal.AT_EVENT, eventId = lunch.id).copy(id = "piilossa")
+        val entries = DayChanges.entries(listOf(swim, lunch), listOf(c, hidden), monday, monday.atTime(9, 0))
+        // Lounaan peruminen ei vielä näy käyttäjälle, joten lounas näkyy ennallaan.
+        assertEquals(listOf("Lounas"), DayChanges.unchangedAfter(entries, c).map { it.cardName })
+    }
+
+    @Test
+    fun `vaiheittainen muutos muistuttaa vaikka tapahtumalla ei ole omaa ilmoitusta`() {
+        val plan = WeekPlan(listOf(lunch)) // ei omaa ilmoitusta
+        val c = change(ChangeType.MOVE, ChangeReveal.EVENING, eventId = lunch.id).copy(remind = true)
+        val at = monday.atTime(13, 0).minusMinutes(DayChanges.REMIND_BEFORE_MIN.toLong())
+        assertEquals(at, WeekSchedule.nextReminderAt(mapOf("p" to plan), monday.atTime(7, 0), mapOf("p" to listOf(c))))
+        assertEquals(c.id, WeekSchedule.dueReminders(mapOf("p" to plan), at, mapOf("p" to listOf(c))).single().change?.id)
+        // Ilman muistutusvalintaa ei ilmoitusta.
+        assertNull(WeekSchedule.nextReminderAt(mapOf("p" to plan), monday.atTime(7, 0), mapOf("p" to listOf(c.copy(remind = false)))))
+    }
+
+    @Test
+    fun `tapahtuman aikaan nakyvan muutoksen muistutus ei paljasta sita etukateen`() {
+        val plan = WeekPlan(listOf(lunch))
+        val c = change(ChangeType.CANCEL, ChangeReveal.AT_EVENT, eventId = lunch.id).copy(remind = true)
+        assertEquals(monday.atTime(11, 30), WeekSchedule.nextReminderAt(mapOf("p" to plan), monday.atTime(7, 0), mapOf("p" to listOf(c))))
+    }
+
+    @Test
+    fun `oma ilmoitus pysyy omassa ajassaan vaikka muutoksessa on muistutus`() {
+        val plan = WeekPlan(listOf(swim)) // oma ilmoitus 15 min ennen
+        val c = change(ChangeType.REPLACE).copy(remind = true)
+        val due = WeekSchedule.dueReminders(mapOf("p" to plan), monday.atTime(9, 45), mapOf("p" to listOf(c)))
+        assertEquals(1, due.size)
+        assertEquals(c.id, due.single().change?.id)
+    }
 }
