@@ -59,7 +59,7 @@ internal fun CaregiverPinDialog(
             PinResult.Ok -> onSuccess()
             is PinResult.Wrong -> {
                 pin = ""
-                message = context.getString(R.string.vaara_pin_koodi_yrityksia_jaljella, result.attemptsLeft)
+                message = context.getString(R.string.vaara_pin_koodi_yrityksia_jaljella, result.attemptsLeft.toString())
             }
             is PinResult.LockedOut -> {
                 pin = ""

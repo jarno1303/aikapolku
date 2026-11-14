@@ -377,7 +377,7 @@ internal class ProgramPrintAdapter(
 
         if (footer) {
             canvas.drawText(
-                context.getString(R.string.aikapolku_sivu, pageIndex + 1, pageCount),
+                context.getString(R.string.aikapolku_sivu, (pageIndex + 1).toString(), pageCount.toString()),
                 left,
                 rect.bottom - 10f,
                 paint(secondary, 10f)
@@ -429,7 +429,7 @@ internal class ProgramPrintAdapter(
 
         val detail = when (step.mode) {
             StepMode.CLOCK -> context.getString(R.string.clock_value, step.clock)
-            StepMode.DURATION -> context.getString(R.string.minutes_value, step.minutes)
+            StepMode.DURATION -> context.getString(R.string.minutes_value, step.minutes.toString())
             else -> ""
         }
 
