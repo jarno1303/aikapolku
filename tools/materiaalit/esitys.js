@@ -61,7 +61,7 @@ async function icon(Comp, color = '#FFFFFF') {
   // Puhelimen kuvakaappaus tai paikkamerkki.
   function phone(slide, id, x, y, h) {
     const w = h * 0.45;
-    const file = path.join(__dirname, 'kuvat', id + '.png');
+    const file = path.join(__dirname, fs.existsSync(path.join(__dirname, 'kuvat-rajattu', id + '.png')) ? 'kuvat-rajattu' : 'kuvat', id + '.png');
     slide.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: x - 0.08, y: y - 0.08, w: w + 0.16, h: h + 0.16, rectRadius: 0.22, fill: { color: C.text1 }, line: { color: C.text1 }, objectName: 'puhelin ' + id });
     if (fs.existsSync(file)) {
       slide.addImage({ path: file, x, y, w, h, sizing: { type: 'contain', w, h }, altText: KUVAT[id] || id, objectName: 'kuva ' + id });

@@ -67,7 +67,7 @@ function noBorders() {
 // Puhelimen kuvakaappaus (pysty) tai paikkamerkki.
 function shot(id, widthPx = 210) {
   const caption = KUVAT[id] || id;
-  const file = path.join(__dirname, 'kuvat', id + '.png');
+  const file = path.join(__dirname, fs.existsSync(path.join(__dirname, 'kuvat-rajattu', id + '.png')) ? 'kuvat-rajattu' : 'kuvat', id + '.png');
   const out = [];
   if (fs.existsSync(file)) {
     const { w, h } = pngSize(file);
