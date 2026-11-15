@@ -41,10 +41,19 @@ class LinkReceiverService : Service() {
         }
         LinkNotify.channels(this)
         val notification = LinkNotify.ongoing(this)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(LinkNotify.ONGOING_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
-        } else {
-            startForeground(LinkNotify.ONGOING_ID, notification)
+        // Android 12+: järjestelmän uudelleenkäynnistämä (START_STICKY) palvelu ei aina saa siirtyä
+        // etualalle taustalta (ForegroundServiceStartNotAllowedException); ei kaadeta sovellusta,
+        // vastaanotto käynnistyy uudelleen, kun sovellus avataan.
+        val started = runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(LinkNotify.ONGOING_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
+            } else {
+                startForeground(LinkNotify.ONGOING_ID, notification)
+            }
+        }.isSuccess
+        if (!started) {
+            stopSelf()
+            return START_NOT_STICKY
         }
         if (server == null) startServer()
         return START_STICKY

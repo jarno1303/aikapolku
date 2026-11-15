@@ -530,22 +530,23 @@ internal fun AikaPolkuApp() {
                     nextPhoto = sel.nextPhoto,
                     onNext = {
                         timer.markStopped()
-                        if (cards.promoteNext()) {
-                            page = AppPage.LAST
-                            playFirstVoice()
-                        }
+                        // Valinta ensin myös omaan tahtiin -kulussa (afterFirst ohjaa CHOICE-sivulle).
+                        if (cards.hasNext) afterFirst()
                     }
                 )
 
                 AppPage.CHOICE -> {
                     var choiceNone by rememberSaveable { mutableStateOf(false) }
                     if (choiceNone) {
-                        fi.aikapolku.app.programs.run.SupportMessageScreen(
-                            kind = fi.aikapolku.app.data.SupportKind.CHOICE_NONE,
-                            timerPaused = false,
-                            onContinue = { choiceNone = false },
-                            onClose = { choiceNone = false }
-                        )
+                        // Vierivän sivun sisällä viestille rajattu korkeus (muuten weight-kortti litistyy).
+                        Box(Modifier.fillMaxWidth().height(fi.aikapolku.app.programs.run.pageHeight())) {
+                            fi.aikapolku.app.programs.run.SupportMessageScreen(
+                                kind = fi.aikapolku.app.data.SupportKind.CHOICE_NONE,
+                                timerPaused = false,
+                                onContinue = { choiceNone = false },
+                                onClose = { choiceNone = false }
+                            )
+                        }
                     } else {
                         fi.aikapolku.app.programs.run.ChoiceScreen(
                             options = listOf(
