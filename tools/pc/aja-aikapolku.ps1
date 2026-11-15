@@ -10,11 +10,17 @@
 #   ... aja-aikapolku.ps1 -branch <haara> -testit "*DayChanges*"
 # Ilman testejä (pelkkä APK):
 #   ... aja-aikapolku.ps1 -branch <haara> -eiTesteja
+# Lisäksi puhelintestit kaapelilla kytketyssä puhelimessa (asentaa päivityksenä, tiedot säilyvät):
+#   ... aja-aikapolku.ps1 -branch <haara> -laitetesti
+#   ... aja-aikapolku.ps1 -branch <haara> -laitetesti -laitetestit "MuutoskorttiDeviceTest"
+# Tulokset: tarkistukset\<aika>\laitetesti.txt, kuvakaappaus lopusta (laitetesti-loppu.png) ja logcat.
 param(
     [string]$branch = "main",
     [string]$testit = "",
     [switch]$eiTesteja,
-    [switch]$taysi
+    [switch]$taysi,
+    [switch]$laitetesti,
+    [string]$laitetestit = "EnsinSittenLisaaikaDeviceTest,PaivaohjelmaLisaaikaDeviceTest,MuutoskorttiDeviceTest,ProgramDayDeviceTest"
 )
 $repo  = "$env:USERPROFILE\AndroidStudioProjects\AikaPolku"
 $wt    = "$env:USERPROFILE\AndroidStudioProjects\AikaPolku-tarkistus"
@@ -83,6 +89,7 @@ if (-not $eiTesteja) {
     foreach ($t in ($testit -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })) { $tasks += " --tests $t" }
 }
 if ($taysi) { $tasks += " :app:lintDebug" }
+if ($laitetesti) { $tasks += " :app:assembleDebugAndroidTest" }
 $android = "$wt\android"
 $log = "$logs\aikapolku.log"
 Remove-Item -Recurse -Force "$android\app\build\test-results" -ErrorAction SilentlyContinue
@@ -125,5 +132,57 @@ if ($code -eq 0 -and (Test-Path $apk)) {
     Write-Host "VALMIS ($min min $s s). APK: $out\$name (sama myös UUSIN-AikaPolku.apk)" -ForegroundColor Green
 } else {
     Write-Host "Käännös ei mennyt läpi (exit=$code, $min min $s s). Kerro Claudelle, se lukee lokin kansiosta $logs" -ForegroundColor Yellow
+}
+
+# Skriptin uusin versio talteen seuraavaa kertaa varten (ajetaan tarkistukset-kansion kopiosta).
+$uusiSkripti = "$wt\tools\pc\aja-aikapolku.ps1"
+if (Test-Path $uusiSkripti) { Copy-Item $uusiSkripti "$repo\tarkistukset\aja-aikapolku.ps1" -Force -ErrorAction SilentlyContinue }
+
+# Puhelintestit (vain onnistuneesta käännöksestä).
+$testApk = "$android\app\build\outputs\apk\androidTest\debug\app-debug-androidTest.apk"
+if ($laitetesti -and $code -eq 0) {
+    $sdk = $null
+    $lp = Get-Content "$android\local.properties" -ErrorAction SilentlyContinue | Where-Object { $_ -match '^sdk\.dir=' } | Select-Object -First 1
+    if ($lp) { $sdk = ($lp -replace '^sdk\.dir=', '') -replace '\\:', ':' -replace '\\\\', '\' }
+    if (-not $sdk) { $sdk = "$env:LOCALAPPDATA\Android\Sdk" }
+    $adb = Join-Path $sdk "platform-tools\adb.exe"
+    $tulos = "$logs\laitetesti.txt"
+    if (-not (Test-Path $adb)) {
+        Write-Host "VIRHE: adb puuttuu ($adb)" -ForegroundColor Yellow
+        "laitetesti=VIRHE adb puuttuu" | Out-File "$logs\tulos.txt" -Append -Encoding utf8
+        exit 1
+    }
+    $tila = (& $adb get-state 2>$null)
+    if ($tila -ne "device") {
+        Write-Host "VIRHE: puhelin ei ole yhteydessä. Kytke kaapeli, salli USB-virheenkorjaus ja aja uudelleen." -ForegroundColor Yellow
+        "laitetesti=VIRHE ei puhelinta" | Out-File "$logs\tulos.txt" -Append -Encoding utf8
+        exit 1
+    }
+    Write-Host "Asennetaan sovellus ja testit puhelimeen (päivityksenä, tiedot säilyvät)..."
+    & $adb install -r $apk | Out-File $tulos -Encoding utf8
+    & $adb install -r -t $testApk | Out-File $tulos -Append -Encoding utf8
+    # Näyttö päälle ja lukitusnäkymä pois (jos puhelimessa ei ole PIN-lukkoa).
+    & $adb shell input keyevent KEYCODE_WAKEUP | Out-Null
+    & $adb shell wm dismiss-keyguard | Out-Null
+    $luokat = ($laitetestit -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ } | ForEach-Object { "fi.aikapolku.app.$_" }) -join ','
+    Write-Host "Puhelintestit käynnissä (noin 10-12 min). Pidä puhelin auki äläkä koske siihen." -ForegroundColor Cyan
+    Write-Host "Testit: $luokat"
+    & $adb logcat -c | Out-Null
+    $alkuT = Get-Date
+    & $adb shell am instrument -w -r -e class $luokat fi.aikapolku.app.test/androidx.test.runner.AndroidJUnitRunner 2>&1 | ForEach-Object { $_; "$_" | Out-File $tulos -Append -Encoding utf8 }
+    $kestoT = [int]((Get-Date) - $alkuT).TotalSeconds
+    & $adb shell screencap -p /sdcard/aikapolku-loppu.png | Out-Null
+    & $adb pull /sdcard/aikapolku-loppu.png "$logs\laitetesti-loppu.png" 2>$null | Out-Null
+    & $adb shell rm /sdcard/aikapolku-loppu.png | Out-Null
+    & $adb logcat -d -t 3000 2>$null | Out-File "$logs\logcat.txt" -Encoding utf8
+    $teksti = Get-Content $tulos -Raw
+    if ($teksti -match 'OK \((\d+) tests?\)') {
+        "laitetesti=OK testeja=$($Matches[1]) kesto=${kestoT}s" | Out-File "$logs\tulos.txt" -Append -Encoding utf8
+        Write-Host "PUHELINTESTIT OK ($($Matches[1]) testiä, $kestoT s)." -ForegroundColor Green
+    } else {
+        "laitetesti=EPAONNISTUI kesto=${kestoT}s" | Out-File "$logs\tulos.txt" -Append -Encoding utf8
+        Write-Host "Puhelintesteissä virheitä. Kerro Claudelle, se lukee tuloksen kansiosta $logs" -ForegroundColor Yellow
+        $code = 1
+    }
 }
 exit $code

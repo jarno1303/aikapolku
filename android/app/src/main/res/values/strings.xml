@@ -796,4 +796,6 @@
     <string name="more_time_count_label">Lisäaikaa voi pyytää samassa toiminnossa</string>
     <string name="more_time_once">Kerran</string>
     <string name="more_time_twice">Kaksi kertaa</string>
+    <string name="timer_hand_to_client">Anna asiakkaalle</string>
+    <string name="timer_start_now">Aloita nyt</string>
 </resources>

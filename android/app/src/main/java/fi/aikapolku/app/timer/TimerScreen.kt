@@ -64,7 +64,12 @@ internal fun TimerScreen(
      * "Tarvitsen vielä hetken" (A2): lisää aikaa (ms) ja palauttaa true, jos lisättiin.
      * null = ei käytössä (ajastin yksinään, ilman Ensin-toimintoa).
      */
-    onMoreTime: ((Long) -> Boolean)? = null
+    onMoreTime: ((Long) -> Boolean)? = null,
+    /**
+     * Ohjaaja on valmistellut Ensin–Sitten-ajan: "Anna asiakkaalle" vaihtaa asiakkaan rooliin ja
+     * avaa asiakkaan etusivun (NYT-kortti, asiakas aloittaa itse). null = ei käytössä.
+     */
+    onHandToClient: (() -> Unit)? = null
 ) {
     val guided = activeTask.isNotBlank()
     val finished = guided && remaining == 0L
@@ -292,6 +297,21 @@ internal fun TimerScreen(
             }
         }
 
+        // Ohjaajan valmistelu valmis (aika valittu, ei vielä käynnistetty): yksi painallus antaa
+        // toiminnan asiakkaalle tai aloittaa sen heti. Ei pyyhkäisyä eikä erillistä roolinvaihtoa.
+        val handoff = onHandToClient != null && guided && caregiver.isCaregiver && !running && remaining >= duration
+        if (handoff) {
+            fi.aikapolku.app.ui.PrimaryButton(
+                text = stringResource(R.string.timer_hand_to_client),
+                onClick = { onHandToClient?.invoke() }
+            )
+            fi.aikapolku.app.ui.SecondaryButton(
+                text = stringResource(R.string.timer_start_now),
+                icon = Icons.Rounded.PlayArrow,
+                onClick = startPause,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         // Asetettu kesto ohjaajalle. Rauhallisessa tilassa vain, kun ohjaajan toiminnot ovat auki.
         if (timeMode != TimeDisplayPrefs.CALM || showSettings) {
             Text(

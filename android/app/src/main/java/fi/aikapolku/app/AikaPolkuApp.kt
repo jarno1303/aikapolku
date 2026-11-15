@@ -330,8 +330,9 @@ internal fun AikaPolkuApp() {
                 AppPage.HOME -> HomeScreen(
                     open = { destination ->
                         page = destination
-                        // Kesken oleva Ensin-ajastus säilyy; muuten ajastin avataan yksinään.
-                        if (destination == AppPage.TIMER && !timer.inProgress) timer.activeTask = ""
+                        // Ensin-ajastus säilyy, myös valmisteltu mutta aloittamaton (puhelintesti 15.11.2026:
+                        // valmisteltu pari katosi hiljaa, kun ohjaaja avasi Ajastimen). Ajastin yksinään
+                        // avautuu, kun Ensin–Sitten-ajastusta ei ole.
                     },
                     onOpenProgram = { openProgramEvent(it) },
                     onOpenCard = { openCardEvent(it) },
@@ -437,7 +438,12 @@ internal fun AikaPolkuApp() {
                     },
                     onReset = { timer.reset() },
                     moreTimeUsed = timer.moreTimeUsed,
-                    onMoreTime = { extraMs -> timer.addMoreTime(extraMs) }
+                    onMoreTime = { extraMs -> timer.addMoreTime(extraMs) },
+                    // Valmistelun jälkeen suoraan asiakkaalle: rooli vaihtuu ja NYT-kortti odottaa Aloita-painallusta.
+                    onHandToClient = {
+                        caregiver.lockNow()
+                        page = AppPage.HOME
+                    }
                 )
 
                 AppPage.FIRST_THEN -> FirstThenScreen(
