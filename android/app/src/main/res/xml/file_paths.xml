@@ -2,4 +2,6 @@
 <paths>
     <!-- Vain jaettavat kuvat; ei muuta tallennettua tietoa. -->
     <cache-path name="share" path="share/" />
+    <!-- Ota kuva: kamerasovellus kirjoittaa väliaikaisen kuvan tähän; poistetaan heti tallennuksen jälkeen. -->
+    <cache-path name="camera" path="camera/" />
 </paths>

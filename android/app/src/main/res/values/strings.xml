@@ -448,7 +448,9 @@
     <!-- Yhtenäistetty käyttöliittymä -->
     <string name="flow_mode_timer_hint">Valitse aika kellotaululta.</string>
     <string name="edit_current_card">Muokkaa nimeä ja kuvausta</string>
-    <string name="photo_short">Oma kuva</string>
+    <string name="photo_short">Kuvista</string>
+    <string name="take_photo">Ota kuva</string>
+    <string name="camera_failed">Kameraa ei voitu avata tai kuvaa tallentaa.</string>
     <string name="valmis_kuva_short">Valmis kuva</string>
     <string name="back_a11y">Takaisin</string>
     <string name="program_empty">Tyhjä ohjelma</string>

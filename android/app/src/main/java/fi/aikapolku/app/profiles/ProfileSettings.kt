@@ -237,6 +237,11 @@ private fun ProfileEditDialog(
         }
     }
 
+    val takePhoto = fi.aikapolku.app.cards.rememberTakePhoto(
+        onSaved = { photo = it; error = "" },
+        onError = { error = context.getString(R.string.camera_failed) }
+    )
+
     val nameMissing = stringResource(R.string.profile_name_needed)
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -251,6 +256,7 @@ private fun ProfileEditDialog(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     ProfileAvatar(Profile(initial?.id ?: "new", name, photo), 72.dp)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        OutlinedButton(onClick = takePhoto) { Text(stringResource(R.string.take_photo)) }
                         OutlinedButton(onClick = {
                             CaregiverSession.keepOpenForOwnPicker()
                             picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))

@@ -5,6 +5,7 @@ package fi.aikapolku.app.cards
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Face
 import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.ui.AppIcons
 import fi.aikapolku.app.ui.ChoiceRow
@@ -91,6 +92,11 @@ internal fun CardLibraryDialog(
             }
         }
     }
+
+    val takePhoto = rememberTakePhoto(
+        onSaved = { photoPath = it; errorMessage = "" },
+        onError = { errorMessage = context.getString(R.string.camera_failed) }
+    )
 
     if (!editing && deleteCandidate == null) {
         AlertDialog(
@@ -207,19 +213,17 @@ internal fun CardLibraryDialog(
                         )
                     }
 
+                    // Oma kuva: ota heti kameralla tai valitse puhelimen kuvista. Valmis kuva erikseen.
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         SecondaryButton(
-                            text = stringResource(R.string.valmis_kuva_short),
-                            icon = AppIcons.Image,
+                            text = stringResource(R.string.take_photo),
+                            icon = AppIcons.Camera,
                             modifier = Modifier.weight(1f),
-                            onClick = {
-                                fromTemplate = false
-                                showBuiltinPicker = true
-                            }
+                            onClick = takePhoto
                         )
                         SecondaryButton(
                             text = stringResource(R.string.photo_short),
-                            icon = AppIcons.Camera,
+                            icon = AppIcons.Image,
                             modifier = Modifier.weight(1f),
                             onClick = {
                                 CaregiverSession.keepOpenForOwnPicker()
@@ -227,6 +231,15 @@ internal fun CardLibraryDialog(
                             }
                         )
                     }
+                    SecondaryButton(
+                        text = stringResource(R.string.valmis_kuva_short),
+                        icon = Icons.Rounded.Face,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            fromTemplate = false
+                            showBuiltinPicker = true
+                        }
+                    )
 
                     if (photoPath.isNotBlank()) {
                         TextButton(onClick = { photoPath = "" }) {

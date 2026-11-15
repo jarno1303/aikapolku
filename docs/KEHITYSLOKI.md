@@ -427,3 +427,6 @@
 - Loma ja poissaolo, poikkeuspäivät etukäteen, eri ajat eri päivinä, ruokailujen muistutus, laitteen rajaus alayksikköön.
 - R11: asiakkaan näkymissä kaikki painikkeet näkyvät ruudulla. Aikajanan oletus Koko päivä (vieritys sallittu), ohjaaja valitsee asiakaskohtaisesti.
 - Pian vaihtuu -ennakkovaroitukseen valinnainen ääni (Asetukset → Viestit): ei ääntä (oletus) / puheääni / oma ääni. Yleinen äänite kaikille ja tarvittaessa asiakkaan oma, joka korvaa yleisen. Seuraavan tehtävän oma ääni soi perään. Soi kerran tehtävää kohden, ei soi äänettömällä eikä paljasta piilotettua seuraavaa.
+- Ota kuva: korttiin, Ensin–Sitteniin ja profiiliin suoraan kameralla. Kuva tallentuu vain sovellukseen (ei galleriaan), kameran käyttölupaa ei tarvita. Kuvat käännetään oikein päin (EXIF) ja pienennetään (pisin sivu 2048 px) – korjaa myös galleriasta valitut kyljellään näkyneet kuvat.
+- Kellotaulu: viimeisten sekuntien laskenta ja mm:ss-lukema mitoitetaan taulun keskustan mukaan, eivät kasva fonttikoon mukana (puhelintesti: eivät mahtuneet). Pienessä taulussa pelkkä numero.
+- Puhelintestit: EnnakkoaaniDeviceTest (puheääni, yleinen ja asiakkaan oma äänite, kerran tehtävää kohden, äänetön) ja KuvaJaKelloDeviceTest (EXIF-kääntö, pienennys, kellotaulun mitat).

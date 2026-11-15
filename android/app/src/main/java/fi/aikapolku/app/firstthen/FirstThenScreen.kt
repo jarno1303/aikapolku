@@ -75,7 +75,7 @@ internal fun FirstThenScreen(
 ) {
     val context = LocalContext.current
     var choosing by remember { mutableStateOf<String?>(null) }
-    var photoTarget by remember { mutableStateOf("first") }
+    var photoTarget by rememberSaveable { mutableStateOf("first") }
     var editing by remember { mutableStateOf<String?>(null) }
     var editName by remember { mutableStateOf("") }
     var editDescription by remember { mutableStateOf("") }
@@ -96,6 +96,14 @@ internal fun FirstThenScreen(
             showLibrary = false
         }
     }
+
+    val takePhoto = fi.aikapolku.app.cards.rememberTakePhoto(
+        onSaved = { path ->
+            if (photoTarget == "first") onFirstPhoto(path) else onNextPhoto(path)
+            photoError = ""
+        },
+        onError = { photoError = context.getString(R.string.camera_failed) }
+    )
 
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -232,8 +240,18 @@ internal fun FirstThenScreen(
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         SecondaryButton(
-                            text = stringResource(R.string.photo_short),
+                            text = stringResource(R.string.take_photo),
                             icon = AppIcons.Camera,
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                photoTarget = chooseTarget
+                                choosing = null
+                                takePhoto()
+                            }
+                        )
+                        SecondaryButton(
+                            text = stringResource(R.string.photo_short),
+                            icon = AppIcons.Image,
                             modifier = Modifier.weight(1f),
                             onClick = {
                                 photoTarget = chooseTarget
@@ -242,17 +260,17 @@ internal fun FirstThenScreen(
                                 photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                             }
                         )
-                        SecondaryButton(
-                            text = stringResource(R.string.omat_kortit),
-                            icon = Icons.AutoMirrored.Rounded.List,
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                libraryTarget = chooseTarget
-                                choosing = null
-                                showLibrary = true
-                            }
-                        )
                     }
+                    SecondaryButton(
+                        text = stringResource(R.string.omat_kortit),
+                        icon = Icons.AutoMirrored.Rounded.List,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            libraryTarget = chooseTarget
+                            choosing = null
+                            showLibrary = true
+                        }
+                    )
                     // Kortit vuorokauden kulun mukaan; omat kortit ryhmänsä alussa.
                     cardGroups.forEach { (time, group) ->
                         Text(

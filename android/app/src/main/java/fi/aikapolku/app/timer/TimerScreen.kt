@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.border
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -281,7 +282,9 @@ internal fun TimerScreen(
                 if (showDial && !lastTen) {
                     // Numerot suoraan renkaan valkoisen keskustan päällä: ei taustalaatikkoa,
                     // joka leikkaisi renkaaseen koloja. Koko suhteessa keskustan kokoon.
-                    val innerDiameter = ((diameter / 2) - 44.dp) * 0.62f * 2
+                    // Ei kasva puhelimen fonttikoon mukana: koko tulee taulusta, jotta lukema mahtuu.
+                    val innerDiameter = DialText.innerDiameter(diameter)
+                    val density = androidx.compose.ui.platform.LocalDensity.current
                     Text(
                         String.format(
                             Locale.getDefault(),
@@ -289,11 +292,12 @@ internal fun TimerScreen(
                             secs / 60,
                             secs % 60
                         ),
-                        fontSize = (innerDiameter.value * 0.24f).sp,
+                        fontSize = with(density) { (innerDiameter * DialText.TIME).toSp() },
                         fontWeight = FontWeight.Bold,
                         color = AppColors.Ink,
                         textAlign = TextAlign.Center,
-                        maxLines = 1
+                        maxLines = 1,
+                        modifier = Modifier.testTag(DialText.TIME_TAG)
                     )
                 }
             }

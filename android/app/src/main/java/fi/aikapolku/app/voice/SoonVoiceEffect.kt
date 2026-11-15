@@ -21,6 +21,12 @@ internal object SoonVoiceRuntime {
      */
     var lastPlayedKey: String? = null
 
+    /** Puhelintestiä varten: viimeisin päätös ja montako kertaa varoitus on käsitelty. */
+    var lastPlan: SoonVoicePlan? = null
+        internal set
+    var handled = 0
+        internal set
+
     /** Äänetön, värinä tai Älä häiritse: ääntä ei soiteta. */
     fun muted(context: Context): Boolean {
         val audio = context.getSystemService(AudioManager::class.java)
@@ -59,6 +65,8 @@ internal fun SoonVoiceEffect(soon: Boolean, key: String, nextName: String?, next
             soonText = context.getString(R.string.transition_soon_title),
             nextText = { context.getString(R.string.run_next_line, it) }
         )
+        SoonVoiceRuntime.lastPlan = plan
+        SoonVoiceRuntime.handled++
         when (plan) {
             is SoonVoicePlan.Speak -> {
                 val s = speech.value ?: Speech(context.applicationContext).also { speech.value = it }

@@ -13,6 +13,9 @@ import java.io.File
 internal object VoicePlayer {
     private var player: MediaPlayer? = null
 
+    /** Soiko äänite juuri nyt (puhelintesti). */
+    val isPlaying: Boolean get() = runCatching { player?.isPlaying == true }.getOrDefault(false)
+
     fun stop() {
         val old = player
         player = null

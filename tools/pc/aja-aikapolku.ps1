@@ -20,7 +20,7 @@ param(
     [switch]$eiTesteja,
     [switch]$taysi,
     [switch]$laitetesti,
-    [string]$laitetestit = "EnsinSittenLisaaikaDeviceTest,PaivaohjelmaLisaaikaDeviceTest,MuutoskorttiDeviceTest,ProgramDayDeviceTest"
+    [string]$laitetestit = "EnsinSittenLisaaikaDeviceTest,PaivaohjelmaLisaaikaDeviceTest,MuutoskorttiDeviceTest,ProgramDayDeviceTest,EnnakkoaaniDeviceTest,KuvaJaKelloDeviceTest"
 )
 $repo  = "$env:USERPROFILE\AndroidStudioProjects\AikaPolku"
 $wt    = "$env:USERPROFILE\AndroidStudioProjects\AikaPolku-tarkistus"

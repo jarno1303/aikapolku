@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -200,24 +201,55 @@ internal fun ClockDial(
         }
 
         if (lastTen) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    seconds.toString(),
-                    fontSize = 67.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DialRed
-                )
-                Text(
-                    stringResource(R.string.sekuntia),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.Ink
-                )
+            // Mitoitus valkoisen keskustan mukaan (ei kiinteä koko eikä puhelimen fonttikoko):
+            // numero ja teksti mahtuvat myös pienimpään tauluun (puhelintesti 15.11.2026).
+            BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                val inner = DialText.innerDiameter(minOf(maxWidth, maxHeight))
+                val density = androidx.compose.ui.platform.LocalDensity.current
+                // Pienessä taulussa "sekuntia" jäisi lukukelvottoman pieneksi: silloin pelkkä numero isompana.
+                val showLabel = DialText.showLastTenLabel(inner)
+                val numberFactor = if (showLabel) DialText.LAST_TEN_NUMBER else DialText.LAST_TEN_NUMBER_ALONE
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.testTag(DialText.LAST_TEN_TAG)
+                ) {
+                    Text(
+                        seconds.toString(),
+                        fontSize = with(density) { (inner * numberFactor).toSp() },
+                        lineHeight = with(density) { (inner * numberFactor * 1.1f).toSp() },
+                        fontWeight = FontWeight.Bold,
+                        color = DialRed,
+                        maxLines = 1
+                    )
+                    if (showLabel) Text(
+                        stringResource(R.string.sekuntia),
+                        fontSize = with(density) { (inner * DialText.LAST_TEN_LABEL).toSp() },
+                        fontWeight = FontWeight.Bold,
+                        color = AppColors.Ink,
+                        maxLines = 1
+                    )
+                }
             }
         }
     }
+}
+
+/** Kellotaulun keskustan tekstien mitoitus (keskusta = valkoinen ympyrä, säde face × 0,62). */
+internal object DialText {
+    const val LAST_TEN_TAG = "dial_last_ten"
+    const val TIME_TAG = "dial_time"
+    /** Viimeisten sekuntien numero ja "sekuntia" suhteessa keskustan halkaisijaan. */
+    const val LAST_TEN_NUMBER = 0.46f
+    const val LAST_TEN_LABEL = 0.11f
+    /** Numero yksin (ei tekstiä), kun taulu on pieni. */
+    const val LAST_TEN_NUMBER_ALONE = 0.52f
+    /** "sekuntia" näytetään, kun se olisi vähintään 9 dp korkea. */
+    fun showLastTenLabel(inner: androidx.compose.ui.unit.Dp): Boolean = inner * LAST_TEN_LABEL >= 9.dp
+    /** Tavallinen mm:ss-lukema suhteessa keskustan halkaisijaan. */
+    const val TIME = 0.24f
+
+    fun innerDiameter(diameter: androidx.compose.ui.unit.Dp): androidx.compose.ui.unit.Dp =
+        (((diameter / 2) - 44.dp) * 0.62f * 2).coerceAtLeast(24.dp)
 }
 
 /** Kosketuskohdan asema kellotaululla minuutteina 0.0–60.0 (ylhäältä vastapäivään). */

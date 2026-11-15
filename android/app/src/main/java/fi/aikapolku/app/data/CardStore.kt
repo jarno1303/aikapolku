@@ -202,9 +202,56 @@ internal fun importCardPhoto(
             }
         }
 
+        normalizePhoto(destination)
         return destination.absolutePath
     } catch (error: Exception) {
         destination.delete()
         throw error
+    }
+}
+
+/**
+ * Kääntää kuvan oikein päin (kameran EXIF-suunta) ja pienentää liian suuren kuvan
+ * (pisin sivu enintään [maxEdge] px). Ilman tätä puhelimen kameralla otettu pystykuva näkyy
+ * kortissa kyljellään. Jos kuvaa ei voi käsitellä, alkuperäinen jää ennalleen.
+ */
+internal fun normalizePhoto(file: File, maxEdge: Int = 2048) {
+    runCatching {
+        val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeFile(file.absolutePath, bounds)
+        val w = bounds.outWidth
+        val h = bounds.outHeight
+        if (w <= 0 || h <= 0) return
+        val png = bounds.outMimeType == "image/png"
+        val orientation = if (png) android.media.ExifInterface.ORIENTATION_NORMAL else
+            android.media.ExifInterface(file.absolutePath)
+                .getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, android.media.ExifInterface.ORIENTATION_NORMAL)
+        val rotate = when (orientation) {
+            android.media.ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+            android.media.ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+            android.media.ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+            else -> 0f
+        }
+        val longest = maxOf(w, h)
+        if (rotate == 0f && longest <= maxEdge) return
+        var sample = 1
+        while (longest / (sample * 2) >= maxEdge) sample *= 2
+        val decoded = android.graphics.BitmapFactory.decodeFile(
+            file.absolutePath,
+            android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }
+        ) ?: return
+        val scale = minOf(1f, maxEdge.toFloat() / maxOf(decoded.width, decoded.height))
+        val matrix = android.graphics.Matrix().apply {
+            if (scale < 1f) postScale(scale, scale)
+            if (rotate != 0f) postRotate(rotate)
+        }
+        val out = android.graphics.Bitmap.createBitmap(decoded, 0, 0, decoded.width, decoded.height, matrix, true)
+        val tmp = File(file.parentFile, file.name + ".tmp")
+        tmp.outputStream().use {
+            out.compress(if (png) android.graphics.Bitmap.CompressFormat.PNG else android.graphics.Bitmap.CompressFormat.JPEG, 90, it)
+        }
+        if (out !== decoded) out.recycle()
+        decoded.recycle()
+        if (tmp.length() > 0L && (tmp.renameTo(file) || (file.delete() && tmp.renameTo(file)))) Unit else tmp.delete()
     }
 }
