@@ -29,7 +29,8 @@ internal data class Peer(
 }
 
 /** Asiakkaan viesti ohjaajalle. [kind] help / break / more_time / choice_none / state / choice. */
-internal data class LinkMessage(val kind: String, val text: String, val who: String, val at: Long, val fromName: String)
+/** [at] = lähetysaika (vastaanotossa saapumisaika), [sentAt] = alkuperäinen lähetysaika (0 = sama). */
+internal data class LinkMessage(val kind: String, val text: String, val who: String, val at: Long, val fromName: String, val sentAt: Long = 0L)
 
 /**
  * Yksinkertainen protokolla samassa verkossa (V5a): yksi TCP-yhteys = yksi pyyntö, JSON-rivit.
@@ -56,6 +57,8 @@ internal object LinkProtocol {
         /** Kysyy ohjaajalta (estävä, enintään [PAIR_TIMEOUT_MS]): liitetäänkö [name], koodi [code]. */
         fun confirmPair(name: String, code: String): Boolean
         fun onMessage(message: LinkMessage)
+        /** Liitetty lähettäjä oli yhteydessä (ohjaaja näkee, milloin laite viimeksi tavoitettiin). */
+        fun seen(id: String, at: Long) {}
     }
 
     private fun Socket.reader() = BufferedReader(InputStreamReader(getInputStream(), Charsets.UTF_8))
@@ -122,6 +125,7 @@ internal object LinkProtocol {
                     if (peer == null || json == null || !fresh) {
                         writer.println(JSONObject().put("t", "err").put("e", if (peer == null) "unknown" else "invalid").toString())
                     } else {
+                        host.seen(from, time)
                         host.onMessage(
                             LinkMessage(
                                 kind = json.optString("k").take(20),

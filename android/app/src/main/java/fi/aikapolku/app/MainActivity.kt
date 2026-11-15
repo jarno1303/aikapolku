@@ -52,6 +52,12 @@ class MainActivity : ComponentActivity() {
         ImportLaunch.from(intent)
     }
 
+    override fun onStart() {
+        super.onStart()
+        // Asiakkaan laite: jonossa odottavat viestit ohjaajalle, kun sovellus avataan.
+        fi.aikapolku.app.link.ClientMessages.resume(this)
+    }
+
     override fun onStop() {
         super.onStop()
         // Viikko-ohjelman muutokset ajan tasalle myös taustalla oleville ilmoituksille.

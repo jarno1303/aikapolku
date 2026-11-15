@@ -51,5 +51,6 @@ internal object SubstepArt {
         SupportKind.HELP -> R.drawable.ap_msg_help
         SupportKind.MORE_TIME -> R.drawable.ap_msg_more_time
         SupportKind.CHOICE_NONE -> R.drawable.ap_msg_help
+        SupportKind.NOT_UNDERSTAND -> R.drawable.ap_msg_help
     }
 }

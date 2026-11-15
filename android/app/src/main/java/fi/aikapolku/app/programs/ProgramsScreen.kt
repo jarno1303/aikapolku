@@ -149,6 +149,7 @@ internal fun ProgramsScreen(
         val ready = readyDraft?.let { parseDraft(it) } ?: return
         run.autoStartTimer = RunPreferences.timerStart(context) == RunPreferences.TIMER_AUTO
         run.start(ready)
+        fi.aikapolku.app.data.UsageLog.record(context, fi.aikapolku.app.data.UsageKind.PROGRAM_START)
         readyDraft = null
         view = ProgramsView.RUN
     }
@@ -199,11 +200,15 @@ internal fun ProgramsScreen(
         val count = fi.aikapolku.app.data.MoreTime.count(context)
         val granted = fi.aikapolku.app.data.MoreTime.canGrant(run.moreTimeUsed, minutes, count) &&
             run.grantMoreTime(minutes * 60_000L, context.getString(R.string.timer_title))
-        if (granted) moreGranted.value = minutes else askAdultMoreTime = true
+        if (granted) {
+            moreGranted.value = minutes
+            fi.aikapolku.app.data.UsageLog.record(context, fi.aikapolku.app.data.UsageKind.MORE_TIME)
+        } else askAdultMoreTime = true
     }
 
     fun finishRun() {
         view = ProgramsView.DONE
+        fi.aikapolku.app.data.UsageLog.record(context, fi.aikapolku.app.data.UsageKind.PROGRAM_DONE)
         // Tänään-listasta käynnistetty ohjelma merkitään tehdyksi.
         runEventId?.let { id ->
             val date = runEventDate?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() } ?: java.time.LocalDate.now()
@@ -225,6 +230,11 @@ internal fun ProgramsScreen(
     }
     fun completeStep() {
         val step = run.currentStep
+        // Käytön seuranta: tehty tehtävä (ei osavaihe) ja Valmis ennen ajan loppua.
+        if (step == null || step.subSteps.isEmpty() || run.subStepIndex >= step.subSteps.size - 1) {
+            fi.aikapolku.app.data.UsageLog.record(context, fi.aikapolku.app.data.UsageKind.STEP_DONE)
+            if (step?.mode == fi.aikapolku.app.data.StepMode.DURATION && run.timeLeft() > 0L) fi.aikapolku.app.data.UsageLog.record(context, fi.aikapolku.app.data.UsageKind.DONE_EARLY)
+        }
         val lastSub = step == null || step.subSteps.isEmpty() || run.subStepIndex >= step.subSteps.size - 1
         val lastTask = run.activeIndex >= run.activeCount - 1
         if (lastSub && !lastTask && !caregiver.isCaregiver && fi.aikapolku.app.data.OwnState.askAfterTasks(context)) {

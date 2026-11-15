@@ -57,8 +57,17 @@ internal class LinkStore(context: Context) {
         prefs.edit().putString(KEY_PEERS, encode(list)).apply()
     }
 
+    /** Milloin liitetty asiakkaan laite viimeksi lähetti viestin (ohjaajan puhelimessa). */
+    fun lastSeen(id: String): Long = prefs.getLong(KEY_SEEN + id, 0L)
+
+    fun markSeen(id: String, at: Long) {
+        prefs.edit().putLong(KEY_SEEN + id, at).apply()
+        revision++
+    }
+
     companion object {
         const val PREFS = "aikapolku_link_v1"
+        private const val KEY_SEEN = "seen_"
         private const val KEY_ID = "device_id"
         private const val KEY_NAME = "device_name"
         private const val KEY_RECEIVER = "receiver"

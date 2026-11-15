@@ -141,7 +141,12 @@ internal fun ChoiceScreen(
             textAlign = TextAlign.Center
         )
         Button(
-            onClick = { if (selected >= 0) onStart(selected) },
+            onClick = {
+                if (selected >= 0) {
+                    fi.aikapolku.app.data.UsageLog.record(context, fi.aikapolku.app.data.UsageKind.CHOICE)
+                    onStart(selected)
+                }
+            },
             enabled = selected >= 0,
             modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
             shape = RoundedCornerShape(18.dp),

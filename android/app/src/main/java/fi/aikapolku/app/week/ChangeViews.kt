@@ -243,6 +243,7 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
         onBreak = { showBreak = true },
         onOk = {
             AckStore(context).ack(change.date, change.ackId)
+            fi.aikapolku.app.data.UsageLog.record(context, fi.aikapolku.app.data.UsageKind.CHANGE_SEEN)
             onDone()
         }
     )

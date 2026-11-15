@@ -10,7 +10,9 @@ internal enum class SupportKind(val key: String) {
     /** "Tarvitsen vielä hetken" (A2), kun lisäaikaa ei voi antaa: viesti aikuiselle, aika jatkuu. */
     MORE_TIME("more_time"),
     /** Valinta: "En halua kumpaakaan" – viesti aikuiselle (ohjaajan sallimana). */
-    CHOICE_NONE("choice_none")
+    CHOICE_NONE("choice_none"),
+    /** "En ymmärrä" (palaute 15.11.2026): avun tarkennus, näytä tai kerro ohjaajalle. */
+    NOT_UNDERSTAND("not_understand")
 }
 
 internal object RunPreferences {

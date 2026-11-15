@@ -90,7 +90,7 @@ internal fun OwnStateFlow(
     val scale = remember { OwnState.scale(context) }
     var level by rememberSaveable { mutableStateOf<String?>(null) }
     var showAdult by rememberSaveable { mutableStateOf(false) }
-    var sent by rememberSaveable { mutableStateOf<Boolean?>(null) }
+    var sent by rememberSaveable { mutableStateOf<fi.aikapolku.app.link.SendResult?>(null) }
     val scope = rememberCoroutineScope()
     val chosen = StateLevel.fromKey(level)
     Column(
@@ -147,10 +147,17 @@ internal fun OwnStateFlow(
                 )
                 Text(stringResource(R.string.own_state_private), fontSize = 15.sp, color = RunColors.secondary, textAlign = TextAlign.Center)
                 sent?.let {
+                    val ok = it == fi.aikapolku.app.link.SendResult.DELIVERED
                     Text(
-                        stringResource(if (it) R.string.link_sent_ok else R.string.link_sent_failed),
+                        stringResource(
+                            when (it) {
+                                fi.aikapolku.app.link.SendResult.DELIVERED -> R.string.link_sent_ok
+                                fi.aikapolku.app.link.SendResult.QUEUED -> R.string.link_queued
+                                fi.aikapolku.app.link.SendResult.FAILED -> R.string.link_sent_failed
+                            }
+                        ),
                         fontSize = 16.sp, fontWeight = FontWeight.Bold,
-                        color = if (it) RunColors.teal else AppColors.Coral, textAlign = TextAlign.Center
+                        color = if (ok) RunColors.teal else AppColors.Coral, textAlign = TextAlign.Center
                     )
                 }
                 Spacer(Modifier.weight(1f))

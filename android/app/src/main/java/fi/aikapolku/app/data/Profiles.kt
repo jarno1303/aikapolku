@@ -32,7 +32,9 @@ internal object ProfileScope {
     /** Kaikki profiilikohtaiset tiedostot. Uusi profiilikohtainen tieto lisätään tähän. */
     const val WAIT = "aikapolku_wait_v1"
     const val OWN_STATE = "aikapolku_own_state_v1"
-    val SCOPED = listOf(PROGRAMS, CARDS, RUN_PREFS, PROGRESS, TIMER_PREFS, WEEK, ACKS, CHANGES, WAIT, OWN_STATE)
+    /** Käytön seuranta (pilotti): nimettömät päiväkohtaiset laskurit; ei viedä varmuuskopioon. */
+    const val USAGE = "aikapolku_usage_counts_v1"
+    val SCOPED = listOf(PROGRAMS, CARDS, RUN_PREFS, PROGRESS, TIMER_PREFS, WEEK, ACKS, CHANGES, WAIT, OWN_STATE, USAGE)
 
     fun prefsName(base: String, profileId: String): String =
         if (profileId == DEFAULT_ID) base else "${base}__$profileId"

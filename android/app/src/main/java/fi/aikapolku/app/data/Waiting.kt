@@ -45,6 +45,7 @@ internal object Waiting {
 
     fun start(context: Context, name: String, photo: String, minutes: Int, now: Long = System.currentTimeMillis()) {
         prefs(context).edit().putString(KEY_STATE, encode(WaitState(name, photo, now, minutes.coerceAtLeast(0)))).apply()
+        UsageLog.record(context, UsageKind.WAIT)
         revision++
     }
 

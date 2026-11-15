@@ -102,20 +102,34 @@ internal fun LinkSettings() {
     val receivers = peers.filter { it.receiver }
     if (senders.isNotEmpty()) {
         Text(stringResource(R.string.link_senders), fontWeight = FontWeight.Bold)
-        senders.forEach { p -> PeerRow(p.name) { store.removePeer(p.id, receiver = false) } }
+        senders.forEach { p ->
+            val seen = store.lastSeen(p.id)
+            val info = if (seen <= 0L) stringResource(R.string.link_never_seen) else stringResource(R.string.link_last_seen, seenText(context, seen))
+            PeerRow(p.name, info) { store.removePeer(p.id, receiver = false) }
+        }
     }
 
     // Asiakkaan laite: liitä ohjaajan puhelimeen.
     Text(stringResource(R.string.link_receivers), fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
     if (receivers.isEmpty()) Text(stringResource(R.string.link_no_receivers), fontSize = 14.sp, color = AppColors.Muted)
     receivers.forEach { p -> PeerRow(p.name) { store.removePeer(p.id, receiver = true) } }
+    // Jonossa odottavat viestit (asiakkaan laite): lähtevät, kun yhteys palaa.
+    val queueRevision = LinkOutbox.revision
+    val queued = remember(queueRevision) { LinkOutbox.pending(context).size }
+    if (queued > 0) {
+        Text(stringResource(R.string.link_queue_count, queued), fontSize = 14.sp, color = AppColors.Coral)
+        TextButton(onClick = { ClientMessages.resume(context) }) { Text(stringResource(R.string.link_queue_retry)) }
+    }
     PairWithReceiver(identity)
 }
 
 @Composable
-private fun PeerRow(name: String, onRemove: () -> Unit) {
+private fun PeerRow(name: String, info: String? = null, onRemove: () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(name, modifier = Modifier.weight(1f))
+        Column(Modifier.weight(1f)) {
+            Text(name)
+            if (info != null) Text(info, fontSize = 13.sp, color = AppColors.Muted)
+        }
         TextButton(onClick = onRemove) { Text(stringResource(R.string.link_remove)) }
     }
 }
@@ -241,5 +255,18 @@ internal fun LinkInboxCard() {
                 Text(stringResource(R.string.link_inbox_clear))
             }
         }
+    }
+}
+
+/** "tänään 10.42" / "eilen 18.05" / "12.11. 9.30" */
+internal fun seenText(context: android.content.Context, ms: Long, now: Long = System.currentTimeMillis()): String {
+    val zone = java.time.ZoneId.systemDefault()
+    val t = java.time.Instant.ofEpochMilli(ms).atZone(zone)
+    val today = java.time.Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+    val clock = "${t.hour}.${t.minute.toString().padStart(2, '0')}"
+    return when (t.toLocalDate()) {
+        today -> context.getString(R.string.link_seen_today, clock)
+        today.minusDays(1) -> context.getString(R.string.link_seen_yesterday, clock)
+        else -> "${t.dayOfMonth}.${t.monthValue}. $clock"
     }
 }

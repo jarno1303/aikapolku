@@ -136,7 +136,10 @@ internal fun TimerScreen(
     val requestMoreTime: () -> Unit = {
         val granted = fi.aikapolku.app.data.MoreTime.canGrant(moreTimeUsed, moreMinutes, moreCount) &&
             onMoreTime?.invoke(moreMinutes * 60_000L) == true
-        if (granted) moreGranted.value = moreMinutes else showAskAdult = true
+        if (granted) {
+            moreGranted.value = moreMinutes
+            fi.aikapolku.app.data.UsageLog.record(context, fi.aikapolku.app.data.UsageKind.MORE_TIME)
+        } else showAskAdult = true
     }
 
     // Valmis ennen ajan loppua: sama asiakaskohtainen asetus kuin päiväohjelmassa; ohjaaja aina, kysyen.

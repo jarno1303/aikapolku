@@ -442,3 +442,11 @@
 - Syy: oletusasetuksilla Android saattoi varmuuskopioida asiakkaiden tiedot (myös oman tilan) Googlen pilveen. Tämä oli ristiriidassa periaatteen "ei pilveä" kanssa.
 - Laitteen vaihto tehdään sovelluksen omalla viennillä ja tuonnilla.
 - Testi BackupPolicyTest.
+
+## 15.11.2026 – Palautteen muutokset (auditointi ja kehityksen yhteenveto)
+- **Käytön seuranta (pilotti):** laitekohtainen, oletuksena pois. Päiväkohtaiset lukumäärät asiakkaittain: ohjelma aloitettu ja tehty, tehtävä tehty, apu, en ymmärrä, tauko, lisäaika, valinta, ei kumpaakaan, muutos kuitattu, odotus, Valmis ennen ajan loppua. Ei kellonaikoja, sisältöä eikä omaa tilaa. Säilyy 180 päivää, ei varmuuskopioon. Ohjaajan kooste Asetuksissa ja CSV-vienti tunnuksin (A1, A2 …).
+- **En ymmärrä:** Tarvitsen apua -näkymässä vaihtoehto "En ymmärrä. Näytä minulle.", jonka voi näyttää tai kertoa ohjaajalle. Tehtävänäkymään ei tullut uutta painiketta (R2).
+- **Yhteyden luotettavuus:** viesti, joka ei mennyt perille, jää jonoon ja lähtee uudelleen sovelluksen avautuessa ja 30 s välein (enintään 20 min). Asiakas näkee "Lähtee, kun yhteys palaa". Ohjaajan puhelin ei näytä samaa viestiä kahdesti, ja ohjaaja näkee, milloin asiakkaan laite viimeksi lähetti viestin.
+- **Tuen taso:** neljä tasoa (paljon, kohtalainen, kevyt, itsenäinen), jotka vähentävät kehotuksia: ennakkovaroitus, Pian vaihtuu -ääni ja seuraavan näyttö. Palaa edelliseen palauttaa aiemmat asetukset. Seurannasta huomio ohjaajalle, ei koskaan automaattista muutosta.
+- **Tietosuojan puutelista:** docs/TIETOSUOJA_PUUTELISTA.md.
+- Testit: PalauteMuutoksetTest.

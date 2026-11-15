@@ -80,20 +80,36 @@ internal fun SupportMessageScreen(
     }
     val canTell = remember { fi.aikapolku.app.link.ClientMessages.canSend(context) }
     val showOwnState = kind == SupportKind.BREAK && remember { fi.aikapolku.app.data.OwnState.enabled(context) }
-    var sent by rememberSaveable { mutableStateOf<Boolean?>(null) }
+    // Avun tarkennus: "En ymmärrä" vaihtaa viestin samassa näkymässä (ei uutta painiketta tehtävään).
+    var shown by rememberSaveable { mutableStateOf(kind) }
+    val canClarify = kind == SupportKind.HELP
+    var sent by rememberSaveable(shown) { mutableStateOf<fi.aikapolku.app.link.SendResult?>(null) }
     var sending by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    // Käytön seuranta (pilotti): kukin viesti kerran, myös näytön kääntyessä.
+    var logged by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(shown) {
+        if (shown.key !in logged.split(',')) {
+            logged = logged + "," + shown.key
+            fi.aikapolku.app.data.UsageLog.record(context, fi.aikapolku.app.data.UsageKind.of(shown))
+        }
+    }
     // Teksti tulee käännettävistä resursseista.
     val message = stringResource(
-        when (kind) {
+        when (shown) {
             SupportKind.BREAK -> R.string.support_break
             SupportKind.HELP -> R.string.support_help
             SupportKind.MORE_TIME -> R.string.support_more_time
             SupportKind.CHOICE_NONE -> R.string.support_choice_none
+            SupportKind.NOT_UNDERSTAND -> R.string.support_not_understand
         }
     )
-    val voiceMode = remember(kind) { RunPreferences.voiceMode(context, kind.key) }
-    val recording = remember(kind) { RunPreferences.recording(context, kind.key) }
+    // En ymmärrä käyttää avun ääniasetusta puhesynteesillä (avun äänite on eri lause).
+    val voiceMode = remember(shown) {
+        val base = RunPreferences.voiceMode(context, if (shown == SupportKind.NOT_UNDERSTAND) SupportKind.HELP.key else shown.key)
+        if (shown == SupportKind.NOT_UNDERSTAND && base != RunPreferences.AUDIO_SILENT) RunPreferences.AUDIO_TTS else base
+    }
+    val recording = remember(shown) { RunPreferences.recording(context, shown.key) }
     val speech = remember(context) { Speech(context.applicationContext) }
     DisposableEffect(speech) {
         onDispose {
@@ -114,7 +130,7 @@ internal fun SupportMessageScreen(
     // Takaisin-ele sulkee viestin eikä poistu päiväohjelmasta.
     BackHandler(onBack = onClose)
 
-    val image = SubstepArt.messageImageRes(kind)
+    val image = SubstepArt.messageImageRes(shown)
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize().background(RunColors.background)) {
         val compact = maxWidth > maxHeight || maxHeight < 440.dp
@@ -189,8 +205,8 @@ internal fun SupportMessageScreen(
                 }
             }
 
-            // Kerro ohjaajalle (asiakas päättää joka kerta) ja oma tila tauolla.
-            if (canTell || showOwnState) {
+            // Kerro ohjaajalle (asiakas päättää joka kerta), oma tila tauolla ja avun tarkennus.
+            if (canTell || showOwnState || canClarify) {
                 androidx.compose.foundation.layout.Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -201,7 +217,7 @@ internal fun SupportMessageScreen(
                                 if (!sending) {
                                     sending = true
                                     scope.launch {
-                                        sent = fi.aikapolku.app.link.ClientMessages.send(context, kind.key, message)
+                                        sent = fi.aikapolku.app.link.ClientMessages.send(context, shown.key, message)
                                         sending = false
                                     }
                                 }
@@ -214,9 +230,24 @@ internal fun SupportMessageScreen(
                             Text(
                                 when {
                                     sending -> stringResource(R.string.link_sending)
-                                    sent == true -> stringResource(R.string.link_sent_ok)
+                                    sent == fi.aikapolku.app.link.SendResult.DELIVERED -> stringResource(R.string.link_sent_ok)
+                                    sent == fi.aikapolku.app.link.SendResult.QUEUED -> stringResource(R.string.link_queued_short)
                                     else -> stringResource(R.string.link_tell_caregiver)
                                 },
+                                fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                    if (canClarify) {
+                        OutlinedButton(
+                            onClick = { shown = if (shown == SupportKind.HELP) SupportKind.NOT_UNDERSTAND else SupportKind.HELP },
+                            modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(2.dp, RunColors.teal),
+                            colors = ButtonDefaults.outlinedButtonColors(containerColor = RunColors.card, contentColor = RunColors.teal)
+                        ) {
+                            Text(
+                                stringResource(if (shown == SupportKind.HELP) R.string.support_not_understand_button else R.string.support_help),
                                 fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
                             )
                         }
@@ -231,9 +262,9 @@ internal fun SupportMessageScreen(
                         ) { Text(stringResource(R.string.own_state_open), fontSize = 16.sp, fontWeight = FontWeight.Bold) }
                     }
                 }
-                if (sent == false) {
+                if (sent == fi.aikapolku.app.link.SendResult.QUEUED || sent == fi.aikapolku.app.link.SendResult.FAILED) {
                     Text(
-                        stringResource(R.string.link_sent_failed),
+                        stringResource(if (sent == fi.aikapolku.app.link.SendResult.QUEUED) R.string.link_queued else R.string.link_sent_failed),
                         modifier = Modifier.fillMaxWidth(),
                         fontSize = 15.sp, color = fi.aikapolku.app.ui.AppColors.Coral, textAlign = TextAlign.Center
                     )

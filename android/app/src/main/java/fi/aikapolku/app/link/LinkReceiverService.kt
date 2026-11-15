@@ -71,9 +71,9 @@ class LinkReceiverService : Service() {
                 return LinkPairing.request(name, code, LinkProtocol.PAIR_TIMEOUT_MS - 25_000L).also { LinkNotify.cancelPair(app) }
             }
             override fun onMessage(message: LinkMessage) {
-                LinkInbox.add(app, message)
-                LinkNotify.message(app, message)
+                if (LinkInbox.add(app, message)) LinkNotify.message(app, message)
             }
+            override fun seen(id: String, at: Long) = store.markSeen(id, at)
         }
         val socket = runCatching { ServerSocket(0) }.getOrNull() ?: return
         server = socket

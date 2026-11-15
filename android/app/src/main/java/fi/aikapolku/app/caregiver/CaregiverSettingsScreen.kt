@@ -49,6 +49,9 @@ internal fun CaregiverSettingsScreen() {
     SettingsHeading(stringResource(R.string.settings_client_title))
     ClientPickerCard()
     ClientSettingsSections()
+    SettingsSection(stringResource(R.string.support_level_title), stringResource(R.string.support_level_section_info), Icons.Rounded.Build) {
+        fi.aikapolku.app.settings.SupportLevelSettings()
+    }
 
     SettingsHeading(stringResource(R.string.settings_device_title), stringResource(R.string.settings_device_info))
     SettingsSection(stringResource(R.string.ohjaajan_lukitus), stringResource(R.string.settings_lock_info), Icons.Rounded.Lock) {
@@ -70,6 +73,9 @@ internal fun CaregiverSettingsScreen() {
     }
     SettingsSection(stringResource(R.string.link_settings_title), stringResource(R.string.link_settings_info), Icons.Rounded.Share) {
         fi.aikapolku.app.link.LinkSettings()
+    }
+    SettingsSection(stringResource(R.string.usage_title), stringResource(R.string.usage_section_info), Icons.Rounded.Notifications) {
+        fi.aikapolku.app.settings.UsageSettings()
     }
 }
 
