@@ -14,12 +14,16 @@
 #   ... aja-aikapolku.ps1 -branch <haara> -laitetesti
 #   ... aja-aikapolku.ps1 -branch <haara> -laitetesti -laitetestit "MuutoskorttiDeviceTest"
 # Tulokset: tarkistukset\<aika>\laitetesti.txt, kuvakaappaus lopusta (laitetesti-loppu.png) ja logcat.
+# Kuvakaappaukset käyttöoppaaseen ja esitykseen (puhelin kaapelilla; puhelimen omat tiedot palautetaan lopuksi):
+#   ... aja-aikapolku.ps1 -branch <haara> -kuvat
+# Kuvat: AikaPolku\materiaalit\kuvat (myös tarkistukset\<aika>\kuvat).
 param(
     [string]$branch = "main",
     [string]$testit = "",
     [switch]$eiTesteja,
     [switch]$taysi,
     [switch]$laitetesti,
+    [switch]$kuvat,
     [string]$laitetestit = "EnsinSittenLisaaikaDeviceTest,PaivaohjelmaLisaaikaDeviceTest,MuutoskorttiDeviceTest,ProgramDayDeviceTest,EnnakkoaaniDeviceTest,KuvaJaKelloDeviceTest,YhteysDeviceTest"
 )
 $repo  = "$env:USERPROFILE\AndroidStudioProjects\AikaPolku"
@@ -29,6 +33,12 @@ $logs  = "$repo\tarkistukset\$stamp"
 $out   = "$env:USERPROFILE\Desktop\AikaPolku-APK"
 New-Item -ItemType Directory -Force $logs, $out | Out-Null
 $alku = Get-Date
+# Kuvakaappaukset: vain sovellus ja puhelintestien paketti, ajetaan pelkkä kuvatesti.
+if ($kuvat) {
+    $laitetesti = $true
+    $eiTesteja = $true
+    $laitetestit = "KuvakaappauksetDeviceTest"
+}
 
 # Java 17-23 (Android Studion oma jbr käy).
 function Get-JavaMajor($dir) {
@@ -171,6 +181,24 @@ if ($laitetesti -and $code -eq 0) {
     $alkuT = Get-Date
     & $adb shell am instrument -w -r -e class $luokat fi.aikapolku.app.test/androidx.test.runner.AndroidJUnitRunner 2>&1 | ForEach-Object { $_; "$_" | Out-File $tulos -Append -Encoding utf8 }
     $kestoT = [int]((Get-Date) - $alkuT).TotalSeconds
+    if ($kuvat) {
+        # Kuvat puhelimesta PC:lle (vanhat kuvat korvataan) ja puhelimesta pois.
+        $kuvaKansio = "$repo\materiaalit\kuvat"
+        New-Item -ItemType Directory -Force $kuvaKansio, "$logs\kuvat" | Out-Null
+        & $adb pull /sdcard/Pictures/AikaPolku-kuvat "$logs" 2>&1 | Out-File "$logs\kuvat-haku.txt" -Encoding utf8
+        $haetut = Get-ChildItem "$logs\AikaPolku-kuvat\*.png" -ErrorAction SilentlyContinue
+        if ($haetut) {
+            Move-Item "$logs\AikaPolku-kuvat\*.png" "$logs\kuvat" -Force
+            Remove-Item "$logs\AikaPolku-kuvat" -Recurse -Force -ErrorAction SilentlyContinue
+            Get-ChildItem "$kuvaKansio\*.png" -ErrorAction SilentlyContinue | Remove-Item -ErrorAction SilentlyContinue
+            Get-ChildItem "$logs\kuvat\*.png" | Where-Object { $_.Name -notlike '*-VIRHE.png' } | Copy-Item -Destination $kuvaKansio -Force
+        }
+        & $adb shell rm -r /sdcard/Pictures/AikaPolku-kuvat | Out-Null
+        $okKuvat = @(Get-ChildItem "$logs\kuvat\*.png" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike '*-VIRHE.png' }).Count
+        $virheKuvat = @(Get-ChildItem "$logs\kuvat\*-VIRHE.png" -ErrorAction SilentlyContinue).Count
+        "kuvat=$okKuvat virheet=$virheKuvat" | Out-File "$logs\tulos.txt" -Append -Encoding utf8
+        Write-Host "Kuvat: $okKuvat kpl kansiossa $kuvaKansio (epäonnistuneita $virheKuvat)." -ForegroundColor Cyan
+    }
     & $adb shell screencap -p /sdcard/aikapolku-loppu.png | Out-Null
     & $adb pull /sdcard/aikapolku-loppu.png "$logs\laitetesti-loppu.png" 2>$null | Out-Null
     & $adb shell rm /sdcard/aikapolku-loppu.png | Out-Null

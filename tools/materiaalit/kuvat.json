@@ -33,5 +33,8 @@
  "a07-odotetaan": "Odotetaan-näkymä asiakkaalla",
  "a08-muutoskortti": "Muutoskortti asiakkaalla",
  "a09-ajastin": "Ensin–Sitten-ajastin asiakkaalla",
- "a10-valmis": "Kaikki valmista"
+ "a10-valmis": "Kaikki valmista",
+ "o26-tuen-taso": "Asetukset: Tuen taso, palaa edelliseen ja seurannan huomio",
+ "o27-kayton-seuranta": "Asetukset: Käytön seuranta (pilotti) ja kooste",
+ "a11-en-ymmarra": "Tarvitsen apua -näkymä: En ymmärrä. Näytä minulle."
 }

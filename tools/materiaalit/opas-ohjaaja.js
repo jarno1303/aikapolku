@@ -189,6 +189,7 @@ const sisalto = [
   ...shot('a04-tauko'),
   h2('En ymmärrä'),
   para('Tarvitsen apua -näkymässä on painike **En ymmärrä**. Se vaihtaa viestiksi "En ymmärrä. Näytä minulle." Asiakas voi näyttää viestin aikuiselle tai lähettää sen ohjaajan puhelimeen. Painike ei lisää tehtävänäkymään uutta painiketta, joten näkymä pysyy rauhallisena.'),
+  ...shot('a11-en-ymmarra'),
   box('vinkki', 'Jos asiakas valitsee usein En ymmärrä samassa tehtävässä, tehtävä kannattaa jakaa pienempiin osavaiheisiin tai lisätä siihen oma kuva tai äänite.'),
   h2('Tarvitsen vielä hetken'),
   para('Kun aika on loppumassa, asiakas voi pyytää lisäaikaa ohjaajan asettamissa rajoissa (esimerkiksi 3 minuuttia kerran). Kun lisäaika on käytetty, pyyntö näyttää viestin aikuiselle eikä aika pysähdy.'),
@@ -254,12 +255,14 @@ const sisalto = [
     ['Itsenäinen', 'Ei', 'Ei', 'Tekstinä'],
   ], [2600, 2100, 2200, 2126]),
   ...steps(['Avaa **Asetukset** ja valitse asiakas.', 'Avaa **Tuen taso** ja valitse taso.', 'Seuraa muutamaa viikkoa. Jos asukas pyytää apua, taukoa tai lisäaikaa aiempaa enemmän, valitse **Palaa edelliseen**.']),
+  ...shot('o26-tuen-taso'),
   box('miksi', 'Tukea on hyvä suunnitella vähennettäväksi heti alusta, jotta se ei muutu riippuvuudeksi. Vaihda tasoa yhdessä asukkaan kanssa. Sovellus ei koskaan vaihda tasoa itse: se vain näyttää, miten pyynnöt ovat muuttuneet, jos käytön seuranta on päällä.'),
 
   // 18
   h1('18. Käytön seuranta (pilotti)'),
   para('Seuranta tuottaa pilotin arviointiin lukuja: kuinka usein sovellusta käytetään ja kuinka usein asukas pyytää apua, taukoa tai lisäaikaa. Seuranta on oletuksena pois.'),
   ...steps(['Avaa **Asetukset** → **Käytön seuranta (pilotti)**.', 'Kytke **Seuranta käytössä**. Aloituspäivä tallentuu lähtötilanteen vertailuun.', 'Seuraa viikon koostetta asukkaittain.', 'Vie kooste pilotin arviointiin: **Vie kooste (CSV, ilman nimiä)**.']),
+  ...shot('o27-kayton-seuranta'),
   table(['Kirjataan', 'Ei kirjata'], [
     ['Lukumäärät päivittäin: ohjelma aloitettu ja tehty, tehtävä tehty, apu, en ymmärrä, tauko, lisäaika, valinta, muutos kuitattu, odotus', 'Kellonajat, tehtävien sisältö, viestien teksti, oma tila'],
   ], [4513, 4513]),

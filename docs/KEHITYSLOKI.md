@@ -451,3 +451,8 @@
 - **Tietosuojan puutelista:** docs/TIETOSUOJA_PUUTELISTA.md.
 - Testit: PalauteMuutoksetTest.
 - Tarkastajan korjaukset: jonon uusinta suspend-funktioina (käännösvirhe), testi Robolectricilla (org.json), En ymmärrä ei kaksinkertaista pyyntöjä, tauko ei kirjaudu uudelleen oman tilan jälkeen, viestin saapuminen ei nollaa yhteysasetusten muokkausta, vanhentunut jono poistuu laitteelta avattaessa, uusinta ei pysähdy virheeseen eikä jätä viestiä odottamaan, Kerro ohjaajalle ei jonouta samaa viestiä moneen kertaan, ohjaajan Valmis-painalluksia ei lasketa asukkaan tehtäviksi, Aika- ja Viestit-asetukset päivittyvät tuen tason vaihtuessa.
+
+## 15.11.2026 – Kuvakaappausskripti
+- `aja-aikapolku.ps1 -kuvat`: kääntää sovelluksen ja ajaa puhelimessa testin KuvakaappauksetDeviceTest, joka luo kuvitteellisen esimerkkiyksikön (Villa Metsämaja), kuvaa 38 näkymää (tools/materiaalit/kuvat.json) ja palauttaa puhelimen omat tiedot. Kuvat haetaan kansioon AikaPolku\materiaalit\kuvat.
+- Tilapalkki esittelytilassa (täysi akku, ei ilmoituksia, kellonaika kuvaushetkeltä).
+- Epäonnistunut kuva tallentuu nimellä <id>-VIRHE.png, eikä yksi virhe keskeytä muita kuvia. Keskeytynyt ajo palauttaa tiedot seuraavan ajon alussa.
