@@ -100,38 +100,48 @@ internal fun ParentUnitChoice(parentId: String, units: List<Group>, onChange: (S
 }
 
 /**
- * Toiminnan kokoontumiset: viikonpäivät ja yksi aikaväli. Asukaskohtaiset ajat tehdään
- * jäsenen kohdalta (oma aika).
+ * Toiminnan kokoontumiset: viikonpäivät ja kunkin päivän aika (esim. ma–to 9–14, pe 9–12).
+ * Uusi päivä saa edellisen päivän ajan. Asukaskohtaiset ajat tehdään jäsenen kohdalta (oma aika).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ActivitySessionsEditor(sessions: List<ActivitySession>, onChange: (List<ActivitySession>) -> Unit) {
     val context = LocalContext.current
-    val days = sessions.map { it.day }.toSet()
-    val start = sessions.firstOrNull()?.start ?: DEFAULT_START
-    val end = sessions.firstOrNull()?.end ?: DEFAULT_END
-    fun build(newDays: Set<Int>, s: String, e: String) =
-        newDays.sorted().map { ActivitySession(it, s, e) }
+    val byDay = sessions.associateBy { it.day }
+    val last = sessions.lastOrNull()
+    fun withDay(d: Int): List<ActivitySession> =
+        (sessions + ActivitySession(d, last?.start ?: DEFAULT_START, last?.end ?: DEFAULT_END)).sortedBy { it.day }
+    fun update(d: Int, change: (ActivitySession) -> ActivitySession) =
+        onChange(sessions.map { if (it.day == d) change(it) else it })
 
     Text(stringResource(R.string.unit_sessions_title), fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         (1..7).forEach { d ->
             FilterChip(
-                selected = d in days,
-                onClick = { onChange(build(if (d in days) days - d else days + d, start, end)) },
+                selected = d in byDay,
+                onClick = { onChange(if (d in byDay) sessions.filterNot { it.day == d } else withDay(d)) },
                 label = { Text(dayShort(d)) }
             )
         }
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        OutlinedButton(onClick = { pickTime(context, start) { onChange(build(days, it, end)) } }, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.unit_start, formatClock(start)))
-        }
-        OutlinedButton(onClick = { pickTime(context, end) { onChange(build(days, start, it)) } }, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.unit_end, formatClock(end)))
+    sessions.sortedBy { it.day }.forEach { s ->
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(dayShort(s.day), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(end = 4.dp))
+            OutlinedButton(onClick = { pickTime(context, s.start) { t -> update(s.day) { it.copy(start = t) } } }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.unit_start, formatClock(s.start)))
+            }
+            OutlinedButton(onClick = { pickTime(context, s.end) { t -> update(s.day) { it.copy(end = t) } } }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.unit_end, formatClock(s.end)))
+            }
         }
     }
-    if (days.isNotEmpty() && WeekSchedule.minutesOf(end) <= WeekSchedule.minutesOf(start)) {
+    if (sessions.size > 1 && sessions.map { it.start to it.end }.distinct().size > 1) {
+        TextButton(onClick = {
+            val first = sessions.minBy { it.day }
+            onChange(sessions.map { it.copy(start = first.start, end = first.end) })
+        }) { Text(stringResource(R.string.unit_same_time_all)) }
+    }
+    if (sessions.any { WeekSchedule.minutesOf(it.end) <= WeekSchedule.minutesOf(it.start) }) {
         Text(stringResource(R.string.unit_end_before_start), color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
     }
 }

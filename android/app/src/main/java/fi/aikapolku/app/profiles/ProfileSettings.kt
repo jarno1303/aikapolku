@@ -65,7 +65,9 @@ import fi.aikapolku.app.ui.AppColors
 internal fun ClientPickerCard() {
     val context = LocalContext.current
     val revision = ProfileSession.revision
-    val profiles = remember(revision) { ProfileStore.list(context) }
+    val profiles = remember(revision, fi.aikapolku.app.week.GroupSession.revision) {
+        fi.aikapolku.app.data.UnitScope.filter(context, ProfileStore.list(context))
+    }
     val currentId = remember(revision) { ProfileStore.currentId(context) }
     val current = profiles.firstOrNull { it.id == currentId } ?: profiles.firstOrNull()
     var selfSelect by remember(revision) { mutableStateOf(ProfileStore.selfSelect(context)) }

@@ -91,7 +91,10 @@ private fun rememberProfileMenu(isCaregiver: Boolean): @Composable () -> Unit {
     val context = LocalContext.current
     val caregiver = LocalCaregiver.current
     val revision = ProfileSession.revision
-    val profiles = remember(revision) { ProfileStore.list(context) }
+    // Laitteen rajaus alayksikköön: valikossa vain sen asukkaat (nykyinen aina mukana).
+    val profiles = remember(revision, fi.aikapolku.app.week.GroupSession.revision) {
+        fi.aikapolku.app.data.UnitScope.filter(context, ProfileStore.list(context))
+    }
     val currentId = remember(revision) { ProfileStore.currentId(context) }
     var choosing by remember { mutableStateOf(false) }
     if (choosing) {

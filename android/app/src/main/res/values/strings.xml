@@ -879,4 +879,35 @@
     <string name="wizard_back">Takaisin</string>
     <string name="wizard_next">Seuraava</string>
     <string name="wizard_save">Tallenna yksikkö</string>
+    <!-- Loma, poikkeuspäivät, eri ajat, rajaus -->
+    <string name="leave_title_holiday">Lomalla – takaisin %1$s klo %2$s</string>
+    <string name="leave_title_home">Kotilomalla – takaisin %1$s klo %2$s</string>
+    <string name="leave_title_hospital">Sairaalassa – takaisin %1$s klo %2$s</string>
+    <string name="leave_title_other">Poissa – takaisin %1$s klo %2$s</string>
+    <string name="leave_add">Merkitse loma tai poissaolo</string>
+    <string name="leave_info">Lomalla asukas näkee vain omat kohtansa ja kortin, joka kertoo paluun. Yksikön ja toimintojen kohdat ja muutokset eivät koske häntä.</string>
+    <string name="leave_reason_home">Kotiloma</string>
+    <string name="leave_reason_holiday">Loma</string>
+    <string name="leave_reason_hospital">Sairaala</string>
+    <string name="leave_reason_other">Muu</string>
+    <string name="leave_from">Alkaa: %1$s</string>
+    <string name="leave_until">Paluu: %1$s</string>
+    <string name="leave_until_before">Paluun pitää olla alun jälkeen.</string>
+    <string name="leave_row">%1$s: %2$s</string>
+    <string name="leave_remove">Poista</string>
+    <string name="unit_today_leave">%1$s: poissa, takaisin %2$s</string>
+    <string name="group_day_today">Tänään</string>
+    <string name="group_day_tomorrow">Huomenna</string>
+    <string name="group_day_other">Muu päivä…</string>
+    <string name="group_day_other_chosen">%1$s %2$s</string>
+    <string name="group_cancel_all_activities">Peru kaikki toiminnat tältä päivältä (esim. arkipyhä)</string>
+    <string name="unit_same_time_all">Sama aika kaikille päiville</string>
+    <string name="unit_scope_title">Tämä laite</string>
+    <string name="unit_scope_info">Valitse, minkä yksikön asukkaat näkyvät tässä laitteessa ohjaajalle. Asukas näkee aina vain omat tietonsa.</string>
+    <string name="unit_scope_all">Kaikki</string>
+    <string name="wizard_meal_reminder">Muistutus ruokailuista</string>
+    <string name="wizard_meal_reminder_info">Ilmoitus asukkaan laitteeseen ennen ruokailua. Ei tule toiminnassa tai lomalla olevalle.</string>
+    <string name="wizard_at_start">Alkaessa</string>
+    <string name="wizard_min_before">%1$d min ennen</string>
+    <string name="wizard_activity_name_needed">Anna toiminnalle nimi.</string>
 </resources>

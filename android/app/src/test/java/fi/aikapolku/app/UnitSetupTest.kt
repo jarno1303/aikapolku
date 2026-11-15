@@ -1,5 +1,6 @@
 package fi.aikapolku.app
 
+import fi.aikapolku.app.data.ActivitySession
 import fi.aikapolku.app.data.ActivitySpec
 import fi.aikapolku.app.data.ClientDay
 import fi.aikapolku.app.data.GroupKind
@@ -25,7 +26,11 @@ class UnitSetupTest {
         subUnits = listOf(SubUnitSpec("Omena", listOf("o1", "o2")), SubUnitSpec("Päärynä", listOf("p1"))),
         members = emptyList(),
         meals = UnitSetup.defaultMeals { it },
-        activities = listOf(ActivitySpec("Päivätoiminta", "builtin:schoolwork", (1..5).toSet(), "09:00", "14:00", setOf("o1", "p1")))
+        activities = listOf(ActivitySpec(
+            "Päivätoiminta", "builtin:schoolwork",
+            (1..4).map { ActivitySession(it, "09:00", "14:00") } + ActivitySession(5, "09:00", "12:00"),
+            setOf("o1", "p1")
+        ))
     )
 
     @Test
@@ -57,5 +62,17 @@ class UnitSetupTest {
     fun `ilman alayksikoita asukkaat suoraan yksikossa`() {
         val groups = UnitSetup.build(spec.copy(subUnits = emptyList(), members = listOf("a", "b")), ::id)
         assertEquals(listOf("a", "b"), groups.first().members)
+    }
+
+    @Test
+    fun `eri ajat eri paivina ja ruokailujen muistutus`() {
+        val meals = UnitSetup.defaultMeals { it }.map { if (it.cardId == "lunch_meal") it.copy(notifyBefore = 10) else it }
+        val groups = UnitSetup.build(spec.copy(meals = meals), ::id)
+        val friday = ClientDay(WeekPlan(), Units.groupsFor(groups, "o1"), "o1").eventsFor(monday.plusDays(4))
+        assertEquals("12:00", friday.first { it.cardName == "Päivätoiminta" }.until)
+        val lunch = groups.first().plan.events.first { it.cardName == "lunch_meal" }
+        assertTrue(lunch.notify)
+        assertEquals(10, lunch.notifyBefore)
+        assertFalse(groups.first().plan.events.first { it.cardName == "breakfast" }.notify)
     }
 }

@@ -65,7 +65,7 @@ internal fun BreakButton(onClick: () -> Unit, modifier: Modifier = Modifier.fill
 @Composable
 internal fun BreakMessage(timerPaused: Boolean, onContinue: () -> Unit, onClose: () -> Unit) {
     BackOverride(onClose)
-    val height = LocalConfiguration.current.screenHeightDp.dp * 0.82f
+    val height = pageHeight()
     Box(Modifier.fillMaxWidth().height(height)) {
         SupportMessageScreen(
             kind = SupportKind.BREAK,
@@ -208,7 +208,7 @@ internal const val MORE_TIME_CONFIRM_MS = 5_000L
 @Composable
 internal fun MoreTimeMessage(onClose: () -> Unit) {
     BackOverride(onClose)
-    val height = LocalConfiguration.current.screenHeightDp.dp * 0.82f
+    val height = pageHeight()
     Box(Modifier.fillMaxWidth().height(height)) {
         SupportMessageScreen(
             kind = SupportKind.MORE_TIME,
@@ -218,3 +218,14 @@ internal fun MoreTimeMessage(onClose: () -> Unit) {
         )
     }
 }
+
+/**
+ * Vierivän sivun sisällä koko näytön viestin korkeus: näytön korkeus miinus tilarivi, yläpalkki,
+ * roolipalkki, järjestelmän alapalkki ja sivun reunat. Jatka-painike näkyy aina ilman vieritystä
+ * (laatuportti R11).
+ */
+@Composable
+internal fun pageHeight(): androidx.compose.ui.unit.Dp =
+    (LocalConfiguration.current.screenHeightDp - PAGE_CHROME_DP).coerceAtLeast(360).dp
+
+internal const val PAGE_CHROME_DP = 180

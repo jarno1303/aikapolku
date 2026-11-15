@@ -151,13 +151,18 @@ internal fun GroupTodayCard() {
     val me = remember { ProfileStore.currentId(app) }
     val profiles = remember(revision) { ProfileStore.list(app) }
     val all = remember(revision) { store.load() }
+    // Laitteen rajaus alayksikköön: vain ne ryhmät, joissa on rajauksen asukkaita.
+    val scope = remember(revision) { fi.aikapolku.app.data.UnitScope.residents(fi.aikapolku.app.data.UnitScope.get(app), all) }
     val groups = remember(revision) {
-        GroupToday.shown(all).sortedWith(compareBy({ if (me in GroupToday.membersOf(it, all)) 0 else 1 }, { it.name.lowercase() }))
+        GroupToday.shown(all).filter { g -> scope == null || GroupToday.membersOf(g, all).any { it in scope } }
+            .sortedWith(compareBy({ if (me in GroupToday.membersOf(it, all)) 0 else 1 }, { it.name.lowercase() }))
     }
     if (groups.isEmpty()) return
     var selectedId by rememberSaveable { mutableStateOf(groups.first().id) }
     val group = groups.firstOrNull { it.id == selectedId } ?: groups.first()
-    val today = remember { LocalDate.now() }
+    // Päivä: tänään, huominen tai valittu päivä (poikkeuspäivät etukäteen, esim. arkipyhä).
+    var dayOffset by rememberSaveable { mutableStateOf(0L) }
+    val today = remember(dayOffset) { LocalDate.now().plusDays(dayOffset) }
     // Yksikössä poissaolo merkitään asukkaan omaan (ala)yksikköön.
     val absent = remember(revision, group.id) {
         val a = store.absences()
@@ -191,13 +196,30 @@ internal fun GroupTodayCard() {
             groups.forEach { g -> ChoiceButton(g.name, selected = g.id == group.id) { selectedId = g.id } }
         }
     }
+    if (canEdit) {
+        Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChoiceButton(stringResource(R.string.group_day_today), selected = dayOffset == 0L) { dayOffset = 0L }
+            ChoiceButton(stringResource(R.string.group_day_tomorrow), selected = dayOffset == 1L) { dayOffset = 1L }
+            val other = dayOffset > 1L
+            ChoiceButton(
+                if (other) stringResource(R.string.group_day_other_chosen, dayShort(today.dayOfWeek.value), "${today.dayOfMonth}.${today.monthValue}.")
+                else stringResource(R.string.group_day_other),
+                selected = other
+            ) {
+                val now = LocalDate.now()
+                android.app.DatePickerDialog(context, { _, y, m, d ->
+                    dayOffset = java.time.temporal.ChronoUnit.DAYS.between(now, LocalDate.of(y, m + 1, d)).coerceAtLeast(0L)
+                }, today.year, today.monthValue - 1, today.dayOfMonth).apply { datePicker.minDate = System.currentTimeMillis() - 1000 }.show()
+            }
+        }
+    }
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val memberIds = GroupToday.membersOf(group, all)
+            val memberIds = GroupToday.membersOf(group, all).filter { scope == null || it in scope }
             val members = profiles.filter { it.id in memberIds }
             val present = members.count { it.id !in absent }
             Text(
@@ -273,6 +295,20 @@ internal fun GroupTodayCard() {
                 }
             }
             if (canEdit) Text(stringResource(R.string.group_today_hint), fontSize = 13.sp, color = AppColors.Muted)
+            // Arkipyhä tai suljettu päivä: kaikkien toimintojen kokoontumiset perutaan kerralla.
+            val activitiesToday = all.filter { g -> g.kind == GroupKind.ACTIVITY && GroupToday.sessionEvents(g, today).isNotEmpty() }
+            if (canEdit && activitiesToday.isNotEmpty()) {
+                fi.aikapolku.app.ui.SecondaryButton(
+                    stringResource(R.string.group_cancel_all_activities),
+                    {
+                        activitiesToday.forEach { g ->
+                            GroupToday.sessionEvents(g, today).forEach { e -> store.upsertChange(g.id, GroupToday.cancel(e.id, today, newId)) }
+                        }
+                        saved()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 

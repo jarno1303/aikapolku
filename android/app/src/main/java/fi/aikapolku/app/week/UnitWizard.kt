@@ -74,9 +74,7 @@ private data class WizardSupport(val timeline: TimelineMode = TimelineMode.NEXT,
 private data class WizardActivity(
     val name: String,
     val photo: String,
-    val days: Set<Int> = (1..5).toSet(),
-    val start: String = "09:00",
-    val end: String = "14:00",
+    val sessions: List<fi.aikapolku.app.data.ActivitySession> = (1..5).map { fi.aikapolku.app.data.ActivitySession(it, "09:00", "14:00") },
     val members: Set<String> = emptySet()
 )
 
@@ -114,7 +112,7 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
         subUnits = subUnits.mapIndexed { i, n -> SubUnitSpec(n, residents.filter { it.unitIndex == i }.map { it.key }) },
         members = residents.filterNot(::inSubUnit).map { it.key },
         meals = meals,
-        activities = activities.map { ActivitySpec(it.name, it.photo, it.days, it.start, it.end, it.members) }
+        activities = activities.map { ActivitySpec(it.name, it.photo, it.sessions, it.members) }
     )
 
     Text(stringResource(R.string.wizard_step, step + 1, steps), fontSize = 14.sp, color = AppColors.Muted)
@@ -201,6 +199,22 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
         // 3. Yhteiset ruokailut (arki / viikonloppu).
         2 -> {
             Text(stringResource(R.string.wizard_meals_info), fontSize = 15.sp, color = AppColors.Muted)
+            // Muistutus yhteisistä ruokailuista: sama kaikille ruokailuille, valinnainen.
+            val remind = meals.firstOrNull { it.notifyBefore != null }?.notifyBefore
+            Row(modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.wizard_meal_reminder), fontSize = 16.sp)
+                    Text(stringResource(R.string.wizard_meal_reminder_info), fontSize = 13.sp, color = AppColors.Muted)
+                }
+                Switch(checked = remind != null, onCheckedChange = { on -> meals = meals.map { it.copy(notifyBefore = if (on) 10 else null) } })
+            }
+            if (remind != null) {
+                SegmentedChoice(
+                    options = listOf(0, 5, 10, 15).map { if (it == 0) stringResource(R.string.wizard_at_start) else stringResource(R.string.wizard_min_before, it) },
+                    selected = listOf(0, 5, 10, 15).indexOf(remind).coerceAtLeast(0),
+                    onSelect = { i -> meals = meals.map { it.copy(notifyBefore = listOf(0, 5, 10, 15)[i]) } }
+                )
+            }
             meals.forEachIndexed { i, meal ->
                 fun update(m: MealSpec) { meals = meals.toMutableList().also { it[i] = m } }
                 Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
@@ -239,9 +253,8 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
                                 modifier = Modifier.weight(1f), label = { Text(stringResource(R.string.wizard_activity_name)) })
                             TextButton(onClick = { activities = activities.filterIndexed { j, _ -> j != i } }) { Text(stringResource(R.string.wizard_remove)) }
                         }
-                        ActivitySessionsEditor(a.days.sorted().map { fi.aikapolku.app.data.ActivitySession(it, a.start, a.end) }) { s ->
-                            update(a.copy(days = s.map { it.day }.toSet(), start = s.firstOrNull()?.start ?: a.start, end = s.firstOrNull()?.end ?: a.end))
-                        }
+                        ActivitySessionsEditor(a.sessions) { update(a.copy(sessions = it)) }
+                        if (a.name.isBlank()) Text(stringResource(R.string.wizard_activity_name_needed), color = AppColors.Change, fontSize = 13.sp)
                         Text(stringResource(R.string.wizard_who), fontWeight = FontWeight.SemiBold)
                         residents.forEach { r ->
                             val checked = r.key in a.members
@@ -329,7 +342,9 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
         }
     }
 
-    val nameMissing = step == 0 && unitName.isBlank()
+    val nameMissing = (step == 0 && unitName.isBlank()) || (step == 3 && activities.any { a ->
+        a.name.isBlank() || a.sessions.isEmpty() || a.sessions.any { WeekSchedule.minutesOf(it.end) <= WeekSchedule.minutesOf(it.start) }
+    })
     // Uusille asukkaille tarvitaan nimi; jo lisätty asiakas kelpaa sellaisenaan.
     val residentsMissing = step == 1 && (residents.isEmpty() || residents.any { it.key.startsWith("new:") && it.name.isBlank() })
     if (residentsMissing && residents.isNotEmpty()) Text(stringResource(R.string.wizard_names_needed), color = AppColors.Change, fontSize = 13.sp)

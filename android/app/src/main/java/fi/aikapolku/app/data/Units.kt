@@ -89,6 +89,18 @@ internal object Units {
         return out
     }
 
+    /** Yksikön ja sen alayksiköiden asukkaat (silmukat katkaistaan). */
+    fun residents(unit: Group, all: List<Group>): List<String> {
+        val out = linkedSetOf<String>()
+        fun walk(g: Group, seen: Set<String>) {
+            if (g.id in seen) return
+            out += g.members
+            children(g, all).forEach { walk(it, seen + g.id) }
+        }
+        walk(unit, emptySet())
+        return out.toList()
+    }
+
     /** Yksikön alayksiköt (suorat). */
     fun children(unit: Group, all: List<Group>): List<Group> =
         all.filter { it.kind == GroupKind.UNIT && it.parentId == unit.id && it.id != unit.id }

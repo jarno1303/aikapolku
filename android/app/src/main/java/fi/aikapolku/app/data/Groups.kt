@@ -110,7 +110,11 @@ internal class ClientDay(
     val groupChanges: List<EventChange> = emptyList(),
     private val absent: (groupId: String, date: LocalDate) -> Boolean = { _, _ -> false },
     /** Mitä asukas näkee toiminnan aikana (Y5). */
-    val activityView: ActivityView = ActivityView.CARD
+    val activityView: ActivityView = ActivityView.CARD,
+    /** Asukkaan lomat ja pidemmät poissaolot (Leaves.kt). */
+    val leaves: List<Leave> = emptyList(),
+    /** Lomakortin teksti ("Lomalla – takaisin su klo 18"). */
+    private val leaveTitle: (Leave) -> String = { "" }
 ) : DaySource {
 
     /**
@@ -143,8 +147,13 @@ internal class ClientDay(
                 GroupKind.ACTIVITY -> activityEvents(g, spans.filter { it.group.id == g.id }, date)
             }
         }
-        if (fromGroups.isEmpty()) return own.eventsFor(date)
-        return (own.eventsFor(date) + fromGroups).sortedWith(compareBy({ WeekSchedule.minutesOf(it.time) }, { it.id }))
+        // Lomalla: yksiköiden, toimintojen ja ryhmien kohdat eivät koske asukasta; lomakortti tilalle.
+        val dayLeaves = leaves.filter { it.touches(date) }
+        val shown = if (dayLeaves.isEmpty()) fromGroups
+            else fromGroups.filterNot { Leaves.onLeave(dayLeaves, date, effectiveTime(it, date)) }
+        val leaveCards = dayLeaves.mapNotNull { Leaves.cardFor(it, date, leaveTitle(it)) }
+        if (shown.isEmpty() && leaveCards.isEmpty()) return own.eventsFor(date)
+        return (own.eventsFor(date) + shown + leaveCards).sortedWith(compareBy({ WeekSchedule.minutesOf(it.time) }, { it.id }))
     }
 
     /**
@@ -192,6 +201,10 @@ internal class ClientDay(
 
     override fun event(id: String): WeekEvent? {
         own.event(id)?.let { return it }
+        if (id.startsWith(Leave.PREFIX)) {
+            val leave = leaves.firstOrNull { it.eventId == id } ?: return null
+            return Leaves.cardFor(leave, leave.from.toLocalDate(), leaveTitle(leave))
+        }
         val (groupId, eventId) = GroupSchedule.parse(id) ?: return null
         val group = groups.firstOrNull { it.id == groupId && memberId in it.members } ?: return null
         if (group.kind == GroupKind.ACTIVITY && (eventId.startsWith("leave-") || eventId.startsWith("return-"))) {
@@ -216,7 +229,7 @@ internal class ClientDay(
         return GroupSchedule.forMember(group, memberId, event)
     }
 
-    override fun eventIds(): Set<String> = own.eventIds() + groups.flatMap { g ->
+    override fun eventIds(): Set<String> = own.eventIds() + leaves.map { it.eventId } + groups.flatMap { g ->
         GroupSchedule.eventIds(g, memberId) +
             (if (g.kind == GroupKind.ACTIVITY && memberId in g.members)
                 g.sessions.flatMap { s ->
@@ -241,7 +254,9 @@ internal object ClientWeek {
         val all = store.load()
         // Omat ryhmät ja yksiköiden yläyksiköt (yläyksikön runko kuuluu kaikille sen asukkaille).
         val groups = Units.groupsFor(all, profileId)
-        if (groups.isEmpty()) return ClientDay(own, emptyList(), profileId)
+        val leaves = store.leaves().filter { it.memberId == profileId }
+        val title: (Leave) -> String = { leaveTitle(context, it) }
+        if (groups.isEmpty()) return ClientDay(own, emptyList(), profileId, leaves = leaves, leaveTitle = title)
         val absences = store.absences()
         val changes = store.allChanges()
         fun absentFrom(groupId: String, date: LocalDate): Boolean {
@@ -254,8 +269,25 @@ internal object ClientWeek {
             own, groups, profileId,
             absent = ::absentFrom,
             groupChanges = groups.flatMap { g -> changes[g.id].orEmpty().map { GroupSchedule.toMember(g.id, it) } },
-            activityView = ClientViewPrefs.activityView(context, profileId)
+            activityView = ClientViewPrefs.activityView(context, profileId),
+            leaves = leaves,
+            leaveTitle = title
         )
+    }
+
+    /** "Lomalla – takaisin su 22.11. klo 18.00". */
+    fun leaveTitle(context: Context, leave: Leave): String {
+        val back = leave.until
+        val day = back.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT_STANDALONE, java.util.Locale.getDefault()).trimEnd('.').lowercase()
+        val date = "$day ${back.dayOfMonth}.${back.monthValue}."
+        val time = WeekSchedule.formatTime(back.hour, back.minute).replace(':', '.')
+        val res = when (leave.reason) {
+            LeaveReason.HOLIDAY -> fi.aikapolku.app.R.string.leave_title_holiday
+            LeaveReason.HOME -> fi.aikapolku.app.R.string.leave_title_home
+            LeaveReason.HOSPITAL -> fi.aikapolku.app.R.string.leave_title_hospital
+            LeaveReason.OTHER -> fi.aikapolku.app.R.string.leave_title_other
+        }
+        return context.getString(res, date, time)
     }
 
     /** Asiakkaan päivän muutokset: omat ja ryhmien (oma edellä). */
@@ -309,6 +341,18 @@ internal class GroupStore(context: Context) {
         prefs.edit().putString(KEY_CHANGES, root.toString()).commit()
     }
 
+    /** Asukkaiden lomat ja pidemmät poissaolot (yli viikon sitten päättyneet siivotaan). */
+    fun leaves(): List<Leave> = Leaves.decode(prefs.getString(KEY_LEAVES, null))
+
+    fun upsertLeave(leave: Leave, now: java.time.LocalDateTime = java.time.LocalDateTime.now()) {
+        val kept = leaves().filterNot { it.id == leave.id || it.until.isBefore(now.minusDays(KEEP_DAYS)) }
+        prefs.edit().putString(KEY_LEAVES, Leaves.encode(kept + leave)).commit()
+    }
+
+    fun deleteLeave(id: String) {
+        prefs.edit().putString(KEY_LEAVES, Leaves.encode(leaves().filterNot { it.id == id })).commit()
+    }
+
     /** Ryhmä → päivä → poissa olevat asiakkaat. */
     fun absences(): Map<String, Map<LocalDate, Set<String>>> = decodeAbsences(prefs.getString(KEY_ABSENCES, null))
 
@@ -327,6 +371,9 @@ internal class GroupStore(context: Context) {
 
     /** Asiakas poistettiin: pois ryhmistä, poikkeuksista ja poissaoloista. */
     fun removeMember(memberId: String) {
+        if (leaves().any { it.memberId == memberId }) {
+            prefs.edit().putString(KEY_LEAVES, Leaves.encode(leaves().filterNot { it.memberId == memberId })).commit()
+        }
         val groups = load()
         if (groups.none { memberId in it.members || it.exceptions.any { e -> e.memberId == memberId } }) return
         save(groups.map { g ->
@@ -348,6 +395,7 @@ internal class GroupStore(context: Context) {
         private const val KEY_GROUPS = "groups"
         private const val KEY_ABSENCES = "absences"
         private const val KEY_CHANGES = "changes"
+        private const val KEY_LEAVES = "leaves"
         private const val KEEP_DAYS = 7L
 
         fun encode(groups: List<Group>): String {

@@ -5,16 +5,23 @@ package fi.aikapolku.app.data
  * yhdellä kertaa. Puhdas rakentaja: tuottaa ryhmät, jotka tallennetaan GroupStoreen.
  */
 
-/** Yhteinen kohta (yleensä ruokailu). [weekday] / [weekend] = kellonaika, null = ei niinä päivinä. */
-internal data class MealSpec(val cardId: String, val name: String, val weekday: String?, val weekend: String?)
+/**
+ * Yhteinen kohta (yleensä ruokailu). [weekday] / [weekend] = kellonaika, null = ei niinä päivinä.
+ * [notifyBefore] = muistutus minuuttia ennen, null = ei muistutusta.
+ */
+internal data class MealSpec(
+    val cardId: String,
+    val name: String,
+    val weekday: String?,
+    val weekend: String?,
+    val notifyBefore: Int? = null
+)
 
-/** Päivän toiminta: nimi, kuva, päivät, aika ja asukkaat. */
+/** Päivän toiminta: nimi, kuva, kokoontumiset (päivä ja aika) ja asukkaat. */
 internal data class ActivitySpec(
     val name: String,
     val photo: String,
-    val days: Set<Int>,
-    val start: String,
-    val end: String,
+    val sessions: List<ActivitySession>,
     val members: Set<String>
 )
 
@@ -47,9 +54,13 @@ internal object UnitSetup {
     fun build(spec: UnitSpec, newId: () -> String): List<Group> {
         val topId = newId()
         var n = 0
-        val events = spec.meals.flatMap { meal ->
-            WEEKDAYS.mapNotNull { d -> meal.weekday?.let { t -> WeekEvent("m${n++}", d, WeekSchedule.WEEK_A, t, EventKind.CARD, cardName = meal.name, cardPhoto = "builtin:${meal.cardId}") } } +
-                WEEKEND.mapNotNull { d -> meal.weekend?.let { t -> WeekEvent("m${n++}", d, WeekSchedule.WEEK_A, t, EventKind.CARD, cardName = meal.name, cardPhoto = "builtin:${meal.cardId}") } }
+        fun meal(m: MealSpec, d: Int, t: String) = WeekEvent(
+            "m${n++}", d, WeekSchedule.WEEK_A, t, EventKind.CARD, cardName = m.name, cardPhoto = "builtin:${m.cardId}",
+            notify = m.notifyBefore != null, notifyBefore = m.notifyBefore ?: 0
+        )
+        val events = spec.meals.flatMap { m ->
+            WEEKDAYS.mapNotNull { d -> m.weekday?.let { t -> meal(m, d, t) } } +
+                WEEKEND.mapNotNull { d -> m.weekend?.let { t -> meal(m, d, t) } }
         }
         val subUnits = spec.subUnits.filter { it.name.isNotBlank() }
         val top = Group(
@@ -60,13 +71,16 @@ internal object UnitSetup {
             kind = GroupKind.UNIT
         )
         val subs = subUnits.map { Group(newId(), it.name.trim(), it.members.distinct(), kind = GroupKind.UNIT, parentId = topId) }
-        val activities = spec.activities.filter { it.name.isNotBlank() && it.days.isNotEmpty() }.map { a ->
+        val activities = spec.activities.filter { a ->
+            a.name.isNotBlank() && a.sessions.isNotEmpty() &&
+                a.sessions.all { WeekSchedule.minutesOf(it.end) > WeekSchedule.minutesOf(it.start) }
+        }.map { a ->
             Group(
                 id = newId(),
                 name = a.name.trim(),
                 members = a.members.toList(),
                 kind = GroupKind.ACTIVITY,
-                sessions = a.days.sorted().map { ActivitySession(it, a.start, a.end) },
+                sessions = a.sessions.sortedBy { it.day },
                 cardPhoto = a.photo
             )
         }

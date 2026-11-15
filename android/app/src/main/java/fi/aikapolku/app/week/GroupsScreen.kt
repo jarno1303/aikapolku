@@ -2,6 +2,7 @@ package fi.aikapolku.app.week
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -119,6 +120,25 @@ internal fun GroupsScreen(canEdit: Boolean) {
 
     Text(stringResource(R.string.groups_info), fontSize = 15.sp, color = AppColors.Muted)
     if (canEdit) PrimaryButton(stringResource(R.string.wizard_open), { wizard = true })
+    // Laitteen rajaus alayksikköön: ohjaaja näkee vain valitun yksikön asukkaat (ei tietosuojaraja).
+    val units = groups.filter { it.kind == GroupKind.UNIT }
+    if (canEdit && units.size > 1) {
+        var scope by remember { mutableStateOf(fi.aikapolku.app.data.UnitScope.get(app)) }
+        Text(stringResource(R.string.unit_scope_title), fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
+        Text(stringResource(R.string.unit_scope_info), fontSize = 13.sp, color = AppColors.Muted)
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            (listOf("" to stringResource(R.string.unit_scope_all)) + orderedGroups(units).map { it.first.id to it.first.name }).forEach { (id, name) ->
+                ChoiceButton(name, selected = scope == id) {
+                    scope = id
+                    fi.aikapolku.app.data.UnitScope.set(app, id)
+                    GroupSession.changed()
+                }
+            }
+        }
+    }
     if (groups.isEmpty()) {
         Text(stringResource(R.string.groups_empty), fontSize = 15.sp, color = AppColors.Ink)
     } else {
