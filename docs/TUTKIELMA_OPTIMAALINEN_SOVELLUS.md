@@ -1,6 +1,6 @@
 # AikaPolku – tutkielma: nykytila vs. optimaalinen toiminnanohjauksen sovellus
 
-**Versio:** 1.6 · **Päivitetty:** 15.11.2026 · **Koodin tila arvioitaessa:** päähaara 3.11.2026 (5051179)
+**Versio:** 1.7 · **Päivitetty:** 15.11.2026 · **Koodin tila arvioitaessa:** päähaara 3.11.2026 (5051179)
 
 > **Tämä tiedosto on päälähde.** Word-versio (`AikaPolku_tutkielma_optimaalinen_sovellus.docx`) tehdään tästä.
 > Kun suunta tarkentuu, päivitetään ensin tämä tiedosto (tila-sarakkeet, Päätökset-loki, versio ja päivämäärä),
@@ -59,8 +59,9 @@ Arvio perustuu lähdekoodiin (~35 000 riviä Kotlinia), dokumentteihin ja tutkim
 | P5 | Rauhallisuus, aistikuorman välttäminen [T] | Osittain (ei yleistä kuormitusasetusta) |
 | P6 | Käyttäjän ääni ja valta [T] | Heikosti (apu ja tauko, ei valintaa tai lisäaikaa) |
 | P7 | Ohjaaja rakentaa, käyttäjä näkee olennaisen [K] | Toteutuu (roolit, PIN, omat etusivut) |
+| P10 | Asukas näkee vain sen, mitä tapahtuu siellä, missä hän on; ei koskaan toisten tietoja [K] | Sovittu 15.11.2026, toteutus yksikkömallissa (V2) |
 | P8 | Ei kontrollia, ei kilpailua [K] | Toteutuu (ei pisteitä, tauko aina vapaa) |
-| P9 | Toimii ilman verkkoa, ei kerää tietoja [H] | Toteutuu (ei verkkolupaa) |
+| P9 | Toimii ilman verkkoa, ei kerää tietoja [H] | Toteutuu (ei verkkolupaa). Yksikkömallissa tarkennettu: verkko vain lähiverkkoon, tiedot eivät lähde talosta (Y7) |
 
 ## 3. Ominaisuudet alueittain
 
@@ -180,7 +181,7 @@ Ei: valintaa joka kohtaan · rangaistusta "en halua" -viestistä · kieltäytymi
 | A2 | "Tarvitsen vielä hetken" ohjaajan rajoissa | Käyttäjän keino neuvotella | 2 pv | Valmis (odottaa puhelintestiä) |
 | A3 | Muutoskorttiin "Mikä pysyy samana" + valinnat "Haluan kuulla uudestaan", "Tarvitsen tauon" | Kohdistuu epävarmuuteen | 1–2 pv | Valmis (odottaa puhelintestiä) |
 | A4 | Ilta-ennakko ja vaiheittainen ilmoitus muutokselle | Toivottu, puuttuu koodista | 1–2 pv | Valmis (odottaa puhelintestiä) |
-| A5 | Lähilaitesiirto ohjaajalta asiakkaan laitteeseen | Ryhmät eivät muuten toimi yksiköissä | 5–8 pv | Päätetty aiemmin (toteuttamatta) |
+| A5 | Lähilaitesiirto ohjaajalta asiakkaan laitteeseen | Ryhmät eivät muuten toimi yksiköissä | 5–8 pv | Korvattu 15.11.2026: yksikön laite palvelimena (Y7, YKSIKKOMALLI_SUUNNITELMA.md V5) |
 | A6 | Ruudunlukijan kuvaukset toimintakorteille | Saavutettavuus | 1 pv | Ehdotettu |
 | A7 | Ohjaajan käyttöönottokortit | Visuaalinen tuki toimii opetuksen kanssa | 1–2 pv | Ehdotettu |
 
@@ -308,6 +309,7 @@ Kirjaa tähän jokainen suunnan tarkennus: päivämäärä, tunniste, päätös,
 
 | Päivä | ID | Päätös | Perustelu |
 | --- | --- | --- | --- |
+| 15.11.2026 | P10, Y1–Y8 | **Yksikkömalli** (suunnitelma `docs/YKSIKKOMALLI_SUUNNITELMA.md`). Y1 yksikkö ja alayksiköt (esim. Villa Metsäketo → Omena, Appelsiini, Päärynä), yhteinen runko (ruokailut). Y2 päivän toiminnat omina ryhminään (päivätoiminta, työpaja); asukas yhteen tai ei mihinkään; samaan aikaan eri toimintoja eri asukkailla. Y3 asukkaan oma aika saman toiminnan sisällä poikkeuksena (erillinen ryhmä vain oikeille vuoroille). P10 asukas näkee vain sen, mitä tapahtuu siellä, missä hän on (sijainti viikko-ohjelmasta, ei paikannusta) eikä koskaan toisten tietoja. Y4 peruttu toiminta = kotona, ellei muuta määritellä. Y5 ohjaaja valitsee asukaskohtaisesti, kuinka paljon ja pitkälle asukas näkee (toiminnan aikana yksi kortti / runko). Y6 siirtymäkortit ehdotuksina, ohjaaja aktivoi. Y7 yksikön oma laite palvelimena lähiverkossa (ei ohjaajan puhelin, ei pilvi nyt); TV-näkymässä vain yhteiset asiat. Y8 kaikki ohjatussa aloituksessa kerran, esikatselun kanssa | Asukasta kuormittaa tieto, joka ei koske häntä; arki on yksikössä yhteistä ruokailujen osalta mutta päivät eroavat. Ohjaajan puhelin palvelimena on hauras (vuorot, lepotila); oma laite pitää tiedot talossa ja sopii P9:ään. Pilvi myöhemmin, jos tarve. Asiakastietolain soveltuminen selvitettävä ennen myyntiä (V7) |
 | 15.11.2026 | A2, G4 | A2 toteutettu: "Tarvitsen vielä hetken" ajastimessa ja päiväohjelmassa, kun aika on loppumassa tai loppunut. Ohjaajan rajat Ei/2/3/5 min (oletus 3) ja kerran/kahdesti toimintoa kohden (oletus kerran); lisäaika ilman PIN-koodia. Kun lisäaikaa ei voi antaa, painike näyttää viestin aikuiselle eikä pysäytä aikaa. Uusi viestikuva (G4 osittain: lisäaika) | Käyttäjän keino neuvotella ajasta ilman, että ajan säätö avautuu kokonaan; ei porsaanreikää loputtomaan aikaan. Oletukset vahvistetaan ohjaajilta pilotissa |
 | 14.11.2026 | A1, P | A1 toteutettu: ennakkovaroitus "Pian vaihtuu – Seuraavaksi" ajastimessa ja päiväohjelmassa, asetus Ei/2/5/10 min (oletus 5), ei ääntä. Lisäksi "Tarvitsen tauon" ajastimeen ja tapahtumakorttiin (aina ilman PIN-koodia, pysäyttää ajan). A2 (lisäaika) yhä tekemättä | Siirtymät heikoin alue; tauko aina vapaa (laatuportti R5) |
 | 14.11.2026 | – | Automaattinen laatuportti (ClientQualityGateTest, R1–R9) | Sovitut periaatteet pysyvät voimassa jokaisessa käännöksessä; ei korvaa käyttäjäpalautetta |
@@ -341,4 +343,4 @@ Kirjaa tähän jokainen suunnan tarkennus: päivämäärä, tunniste, päätös,
 - Vasquez, S. ym. (2017). Effects of Advance Notice on Problem Behavior Occasioned by Interruptions. *Behavior Analysis in Practice* 10. https://link.springer.com/article/10.1007/s40617-017-0187-7
 - Waters, M. B. ym. (2009). Visual schedules and extinction plus DRO (tiivistelmä). *JABA* 42. https://behavioristbookclub.com/aba-research/aba-fundamentals/separate-and-combined-effects-of-visual-schedules-and-extinction-plus/
 
-Versiohistoria: v1.6 (15.11.2026) A2 toteutettu (odottaa puhelintestiä), lisäajan viestikuva · v1.5 (14.11.2026) A1, A3, A4 toteutettu (odottaa puhelintestiä), laatuportti · v1.4 (14.11.2026) B6 Oikeudet ja päätökset -kortti, pysyvä jakopäätös · v1.3 (14.11.2026) luku 12: Päiväni-tarkennus ja kotiverkkovaihtoehto · v1.2 (14.11.2026) C7 Päiväni, X4 yksiköiden välinen viestintä · v1.1 (14.11.2026) luku 11: grafiikka ja ohjattu aloitus (G1–G6) · v1.0 (14.11.2026) ensimmäinen versio.
+Versiohistoria: v1.7 (15.11.2026) yksikkömalli (P10, Y1–Y8), A5 korvattu · v1.6 (15.11.2026) A2 toteutettu (odottaa puhelintestiä), lisäajan viestikuva · v1.5 (14.11.2026) A1, A3, A4 toteutettu (odottaa puhelintestiä), laatuportti · v1.4 (14.11.2026) B6 Oikeudet ja päätökset -kortti, pysyvä jakopäätös · v1.3 (14.11.2026) luku 12: Päiväni-tarkennus ja kotiverkkovaihtoehto · v1.2 (14.11.2026) C7 Päiväni, X4 yksiköiden välinen viestintä · v1.1 (14.11.2026) luku 11: grafiikka ja ohjattu aloitus (G1–G6) · v1.0 (14.11.2026) ensimmäinen versio.

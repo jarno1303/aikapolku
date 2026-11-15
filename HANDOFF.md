@@ -1,6 +1,6 @@
 # HANDOFF – AikaPolku (päivitetty 15.11.2026)
 
-Lue tämä ensin. Sitten `docs/TUTKIELMA_OPTIMAALINEN_SOVELLUS.md` (päälähde: periaatteet, tunnisteet A1–C7, G1–G6, X1–X4, Päätökset-loki).
+Lue tämä ensin. Sitten `docs/TUTKIELMA_OPTIMAALINEN_SOVELLUS.md` ja `docs/YKSIKKOMALLI_SUUNNITELMA.md` (päälähde: periaatteet, tunnisteet A1–C7, G1–G6, X1–X4, Päätökset-loki).
 
 ## Rooli ja työtapa
 
@@ -53,8 +53,8 @@ powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\AndroidStudioProjects
 
 1. Lisäaikahaaran käännös ja testit PC:llä, puhelintestien kuittaus ja VIKA-korjaukset → yhdistäminen mainiin.
 2. A2 tehty 15.11. (oletus 3 min kerran, vahvistettava ohjaajilta pilotissa).
-3. A6 ruudunlukijan kuvaukset, A7 ohjaajan käyttöönottokortit, G4, G6 ohjattu aloitus, B6 Oikeudet ja päätökset -kortti.
-4. A5 lähilaitesiirto (iso; suunnittelu ehkä Fablella).
+3. **Yksikkömalli** (sovittu 15.11.): `docs/YKSIKKOMALLI_SUUNNITELMA.md`, vaiheet V1–V7. Korvaa A5:n (yksikön oma laite palvelimena lähiverkossa) ja sisältää G6:n ohjatun aloituksen (V4). Aloitetaan V1:stä lisäaikahaaran yhdistämisen jälkeen.
+4. A6 ruudunlukijan kuvaukset, A7 ohjaajan käyttöönottokortit, G4, B6 Oikeudet ja päätökset -kortti (voidaan tehdä yksikkömallin vaiheiden väliin).
 5. Pilotti. Rinnalla yhteydenotto Autismisäätiöön (avoimet kysymykset tutkielmassa).
 
 Laatuportin laajennukset (sovittu): kotinäkymä-sääntö, Ensin–Sitten-kulku, käsin tehtävien tarkistusten linkitys `docs/UX_TARKISTUSLISTA.md`:hen. Jokainen uusi asiakasnäkymä lisätään porttiin.
