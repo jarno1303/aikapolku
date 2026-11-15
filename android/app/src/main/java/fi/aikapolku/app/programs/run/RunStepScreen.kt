@@ -112,7 +112,9 @@ internal fun RunStepScreen(
     doneEnabled: Boolean = true,
     /** Päivän muutos: null = ei muutosta, tyhjä = muutos ilman alkuperäistä, muuten korvattu vaihe. */
     changedFrom: String? = null,
-    /** Tarvitsen vielä hetken (A2): näkyykö painike (aika loppumassa tai loppunut). */
+    /** Tarvitsen vielä hetken (A2) käytössä tässä vaiheessa: paikka varataan valmiiksi. */
+    moreTimeEnabled: Boolean = false,
+    /** Näkyykö painike (aika loppumassa tai loppunut). */
     moreTimeVisible: Boolean = false,
     /** Juuri annettu lisäaika minuutteina (vahvistus näkyy hetken), muuten null. */
     moreTimeGranted: Int? = null,
@@ -272,12 +274,16 @@ internal fun RunStepScreen(
             }
             // Tarvitsen vielä hetken (A2) heti ennakkovaroituksen alla: ensin tieto, sitten keino.
             // Kuva joustaa, joten painike mahtuu ruudulle vierittämättä.
-            if (moreTimeGranted != null) MoreTimeGrantedCard(moreTimeGranted)
-            else if (moreTimeVisible) MoreTimeButton(onMoreTime)
+            if (moreTimeEnabled || moreTimeVisible || moreTimeGranted != null) {
+                MoreTimeSlot(moreTimeVisible, moreTimeGranted, onMoreTime)
+            }
 
             // Ohjaajalla Ohita ja muut harvinaiset toiminnot yhden painikkeen takana;
-            // asiakkaalla vain koko ohjelman katselu.
-            TextButton(
+            // asiakkaalla vain koko ohjelman katselu. Kun asiakkaalla on lisäaika esillä, koko
+            // ohjelman katselu väistyy hetkeksi (enintään viisi painiketta kerrallaan, laatuportti R2);
+            // tila säilyy, joten mikään ei hyppää.
+            val clientMoreTime = moreIsProgram && (moreTimeVisible || moreTimeGranted != null)
+            if (clientMoreTime) Box(Modifier.heightIn(min = 48.dp)) else TextButton(
                 onClick = onMore,
                 modifier = Modifier.align(Alignment.CenterHorizontally).heightIn(min = 48.dp)
             ) {

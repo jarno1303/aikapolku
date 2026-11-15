@@ -429,4 +429,15 @@ class ProgramRunControllerTest {
         run.next()
         assertEquals(0, run.moreTimeUsed)
     }
+
+    @Test
+    fun `lisaajan jalkeen valmis on aina sallittu`() {
+        run.start(program); run.next(); run.next()
+        run.startTimer()
+        timer.clock += 10 * 60_000L
+        run.tick()
+        run.grantMoreTime(3 * 60_000L, "Ajastin")
+        assertEquals(DoneGate.ALLOW, run.doneGate(RunPreferences.DONE_AFTER_TIME, caregiverOpen = false))
+        assertEquals(DoneGate.ALLOW, run.doneGate(RunPreferences.DONE_CONFIRM, caregiverOpen = false))
+    }
 }

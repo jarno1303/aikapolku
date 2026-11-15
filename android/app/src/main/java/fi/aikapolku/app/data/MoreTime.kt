@@ -46,15 +46,18 @@ internal object MoreTime {
 
     /**
      * Näkyykö "Tarvitsen vielä hetken". [ended] = toiminnon aika on loppunut (aina näkyvissä).
-     * Muuten aika käy ja jäljellä on enintään ennakkovaroituksen verran (tai [FALLBACK_WINDOW_MIN],
-     * jos varoitus on pois), kuitenkin enintään puolet toiminnon kestosta: lyhyessä toiminnossa
-     * painike ei näy heti alusta.
+     * Muuten aika käy ja painike tulee samaan aikaan kuin ennakkovaroitus (sama sääntö kuin
+     * TimeDisplayPrefs.showSoon). Kun varoitus ei näy (pois päältä tai toiminto varoitusaikaa
+     * lyhyempi), painike tulee [FALLBACK_WINDOW_MIN] minuuttia ennen loppua, kuitenkin vasta
+     * toiminnon jälkimmäisellä puoliskolla: lyhyessä toiminnossa ei heti alusta.
      */
     fun visible(remainingMs: Long, durationMs: Long, running: Boolean, ended: Boolean, warnMinutes: Int): Boolean {
         if (ended) return true
         if (!running || remainingMs <= 0L) return false
-        val windowMs = (if (warnMinutes > 0) warnMinutes else FALLBACK_WINDOW_MIN) * 60_000L
-        return remainingMs <= minOf(windowMs, durationMs / 2)
+        val warnMs = warnMinutes * 60_000L
+        val windowMs = if (warnMinutes > 0 && durationMs > warnMs) warnMs
+            else minOf(FALLBACK_WINDOW_MIN * 60_000L, durationMs / 2)
+        return remainingMs <= windowMs
     }
 
     /** Annetaanko lisäaika nyt? false = näytetään viesti aikuiselle. */

@@ -170,6 +170,7 @@ internal fun TimerScreen(
             showSettings = showSettings,
             soon = soon,
             onBreak = openBreak,
+            moreTimeEnabled = moreEnabled,
             moreTimeVisible = moreVisible,
             moreTimeGranted = moreGranted.value,
             onMoreTime = requestMoreTime
@@ -231,7 +232,9 @@ internal fun TimerScreen(
             // Korkeus rajaa myös: korttipari, kellotaulu ja painikkeet mahtuvat ilman vieritystä
             // (yläpalkki, ohjaajan palkki ja painikerivi vievät noin 330 dp, korttipari noin 150 dp).
             // Tauko-painike vie noin 60 dp ja ennakkovaroituksen paikka noin 50 dp.
-            val byHeight = (screenHeight - (if (guided) 570 else 420) - (if (soonPossible) 50 else 0)).coerceAtLeast(200).dp
+            // Lisäajan varattu paikka vie noin 66 dp.
+            val byHeight = (screenHeight - (if (guided) 570 else 420) - (if (soonPossible) 50 else 0) -
+                (if (moreEnabled) 66 else 0)).coerceAtLeast(200).dp
             val target = minOf(
                 byHeight,
                 when {
@@ -370,27 +373,10 @@ internal fun TimerScreen(
                 }
             }
         }
-        // Tauko ja lisäaika vierekkäin samalla korkeudella: kellotaulu ei hyppää, kun lisäaika
-        // tulee näkyviin (paikka on varattu 64 dp:n korkuisena koko ajan).
-        val granted = moreGranted.value
-        if (moreVisible || granted != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                fi.aikapolku.app.programs.run.RunSupportButton(
-                    label = stringResource(R.string.support_break),
-                    icon = { fi.aikapolku.app.programs.run.RunPauseIcon(color = AppColors.Ink) },
-                    onClick = openBreak,
-                    modifier = Modifier.weight(1f)
-                )
-                if (granted != null) fi.aikapolku.app.programs.run.MoreTimeGrantedCard(granted, Modifier.weight(1f))
-                else fi.aikapolku.app.programs.run.MoreTimeButton(requestMoreTime, Modifier.weight(1f), stacked = true)
-            }
-        } else {
-            BreakButton(openBreak, Modifier.fillMaxWidth().heightIn(min = if (moreEnabled) 64.dp else 52.dp))
-        }
+        // Lisäajan paikka on varattu koko ajan Tarvitsen tauon yläpuolella: kellotaulu ja tauko
+        // pysyvät paikallaan, kun painike tai vahvistus tulee näkyviin.
+        if (moreEnabled) fi.aikapolku.app.programs.run.MoreTimeSlot(moreVisible, moreGranted.value, requestMoreTime)
+        BreakButton(openBreak)
     }
 
     // Jos lukitus menee päälle ikkunan ollessa auki, ikkuna suljetaan.

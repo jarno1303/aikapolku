@@ -177,6 +177,13 @@ internal fun ProgramsScreen(
         fi.aikapolku.app.data.TimeDisplayPrefs.warnMinutes(context)
     }
     // Uusi tehtävä tai ohjelma: edellisen tehtävän vahvistus ja viesti eivät jää näkyviin.
+    // Suorituksesta poistuttaessa viesti ja vahvistus eivät jää odottamaan seuraavaa kertaa.
+    LaunchedEffect(view) {
+        if (view != ProgramsView.RUN) {
+            moreGranted.value = null
+            askAdultMoreTime = false
+        }
+    }
     // Avain säilyy näytön kääntämisen yli, jotta kääntäminen ei sulje viestiä.
     var moreStepKey by rememberSaveable { mutableStateOf("") }
     val currentStepKey = "${run.program.id}#${run.stepIndex}"
@@ -225,6 +232,8 @@ internal fun ProgramsScreen(
     // Aloita ja Jatka ovat aina vapaita; Tauko lukittuna vain PIN-koodilla.
     fun toggleStepTimer() {
         when {
+            // Loppunut aika ei ala asiakkaalla alusta aikamerkistä: sama polku kuin lisäajassa (A2).
+            run.timeEnded && !caregiver.isCaregiver -> requestMoreTime()
             run.running && caregiver.isLocked -> caregiver.run(AppAction.PAUSE_TIMER) { run.pause() }
             run.running -> run.pause()
             else -> run.startTimer(askPermissions = caregiver.isCaregiver)
@@ -330,6 +339,7 @@ internal fun ProgramsScreen(
                         else -> null
                     },
                     doneEnabled = run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver, RunPreferences.timerStart(context)) != DoneGate.WAIT,
+                    moreTimeEnabled = runStep.mode == StepMode.DURATION,
                     moreTimeVisible = runStep.mode == StepMode.DURATION && fi.aikapolku.app.data.MoreTime.visible(
                         remainingMs = run.remaining,
                         durationMs = maxOf(runStep.minutes * 60_000L, run.remaining),

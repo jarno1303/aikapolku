@@ -161,7 +161,7 @@ internal fun MoreTimeGrantedCard(minutes: Int, modifier: Modifier = Modifier) {
             }
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp).heightIn(min = 48.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp).heightIn(min = 44.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -170,6 +170,22 @@ internal fun MoreTimeGrantedCard(minutes: Int, modifier: Modifier = Modifier) {
         }
     }
 }
+
+/**
+ * Lisäajan varattu paikka (56 dp): tyhjä, painike tai vahvistus. Paikka ei muutu kokoaan,
+ * joten muu näkymä ei hypi painikkeen ilmestyessä tai vaihtuessa vahvistukseksi.
+ */
+@Composable
+internal fun MoreTimeSlot(visible: Boolean, granted: Int?, onMoreTime: () -> Unit) {
+    Box(Modifier.fillMaxWidth().heightIn(min = MORE_TIME_SLOT_DP.dp), contentAlignment = Alignment.Center) {
+        when {
+            granted != null -> MoreTimeGrantedCard(granted)
+            visible -> MoreTimeButton(onMoreTime, Modifier.fillMaxWidth().heightIn(min = MORE_TIME_SLOT_DP.dp))
+        }
+    }
+}
+
+internal const val MORE_TIME_SLOT_DP = 56
 
 /** Vahvistus näkyy hetken ja häviää itsestään ([state] = annetut minuutit tai null). */
 @Composable

@@ -111,6 +111,8 @@ internal object BackgroundTimer {
             .putLong(key(owner, "remaining"), delayMs)
             .putString(key(owner, "title"), title)
             .commit()
+        // Aika käy taas (esim. lisäaika loppuneeseen aikaan): vanha "Aika on päättynyt" pois.
+        (c.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager)?.cancel(requestCode(owner))
         scheduleAlarm(c, owner, endElapsed)
         return endElapsed
     }

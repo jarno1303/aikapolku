@@ -39,6 +39,17 @@ class MoreTimeTest {
     }
 
     @Test
+    fun `tulee samaan aikaan kuin ennakkovaroitus`() {
+        // 10 min toiminto ja 10 min varoitus: varoitus ei näy, joten painike vasta 2 min ennen loppua.
+        assertFalse(MoreTime.visible(5 * min, 10 * min, running = true, ended = false, warnMinutes = 10))
+        assertTrue(MoreTime.visible(2 * min, 10 * min, running = true, ended = false, warnMinutes = 10))
+        for (left in listOf(1_000L, 2 * min, 5 * min, 6 * min)) {
+            val soon = TimeDisplayPrefs.showSoon(left, 20 * min, running = true, warnMinutes = 5)
+            assertTrue("eri sääntö kohdassa $left", soon == MoreTime.visible(left, 20 * min, running = true, ended = false, warnMinutes = 5))
+        }
+    }
+
+    @Test
     fun `lisaaika annetaan ohjaajan rajoissa`() {
         assertTrue(MoreTime.canGrant(used = 0, minutes = 3, count = 1))
         assertFalse(MoreTime.canGrant(used = 1, minutes = 3, count = 1))

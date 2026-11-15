@@ -108,6 +108,8 @@ internal class ProgramRunController(
         if (step.mode != StepMode.DURATION) return DoneGate.ALLOW
         val left = timeLeft()
         if (left <= 0L) return DoneGate.ALLOW
+        // Asiakas pyysi itse lisäaikaa (A2): hän saa lopettaa heti, kun on valmis.
+        if (moreTimeUsed > 0) return DoneGate.ALLOW
         return when (policy) {
             RunPreferences.DONE_ALWAYS -> DoneGate.ALLOW
             RunPreferences.DONE_AFTER_TIME -> when {
