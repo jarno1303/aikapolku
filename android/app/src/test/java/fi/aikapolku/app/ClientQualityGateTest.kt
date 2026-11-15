@@ -167,6 +167,10 @@ class ClientQualityGateTest {
             Screen("taukoviesti", false) {
                 SupportMessageScreen(kind = SupportKind.BREAK, timerPaused = false, onContinue = {}, onClose = {})
             },
+            // Apu ja sen tarkennus En ymmärrä (palaute 15.11.2026).
+            Screen("apuviesti", false) {
+                SupportMessageScreen(kind = SupportKind.HELP, timerPaused = false, onContinue = {}, onClose = {})
+            },
             Screen("ajastin", true) {
                 TimerScreen(
                     remaining = 5 * 60_000L, duration = 10 * 60_000L, running = true,
