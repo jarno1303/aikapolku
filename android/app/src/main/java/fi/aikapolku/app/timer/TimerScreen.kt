@@ -239,7 +239,7 @@ internal fun TimerScreen(
             // Tauko-painike vie noin 60 dp ja ennakkovaroituksen paikka noin 50 dp.
             // Lisäajan varattu paikka vie noin 66 dp.
             val byHeight = (screenHeight - (if (guided) 570 else 420) - (if (soonPossible) 50 else 0) -
-                (if (moreEnabled) 66 else 0)).coerceAtLeast(200).dp
+                (if (moreEnabled) 66 else 0)).coerceAtLeast(150).dp
             val target = minOf(
                 byHeight,
                 when {

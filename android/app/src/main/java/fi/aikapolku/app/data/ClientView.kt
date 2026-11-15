@@ -125,7 +125,8 @@ internal object DayParts {
     fun visible(count: Int, current: Int, skipped: (Int) -> Boolean, mode: TimelineMode): List<Int> = when (mode) {
         TimelineMode.FULL -> (0 until count).toList()
         TimelineMode.NONE -> emptyList()
+        // Nykyinen näkyy jo NYT-kortissa: aikajanalla kaksi seuraavaa (koko etusivu mahtuu ruudulle, R11).
         TimelineMode.NEXT -> if (current < 0) emptyList() else
-            listOf(current) + (current + 1 until count).filterNot(skipped).take(2)
+            (current + 1 until count).filterNot(skipped).take(2)
     }
 }

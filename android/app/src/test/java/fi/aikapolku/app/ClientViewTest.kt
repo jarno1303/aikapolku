@@ -34,7 +34,7 @@ class ClientViewTest {
     fun `aikajanan rivit asetuksen mukaan`() {
         val skipped = setOf(3)
         assertEquals((0 until 6).toList(), DayParts.visible(6, 2, { it in skipped }, TimelineMode.FULL))
-        assertEquals(listOf(2, 4, 5), DayParts.visible(6, 2, { it in skipped }, TimelineMode.NEXT))
+        assertEquals(listOf(4, 5), DayParts.visible(6, 2, { it in skipped }, TimelineMode.NEXT))
         assertEquals(emptyList<Int>(), DayParts.visible(6, 2, { false }, TimelineMode.NONE))
         assertEquals(emptyList<Int>(), DayParts.visible(6, -1, { false }, TimelineMode.NEXT))
     }

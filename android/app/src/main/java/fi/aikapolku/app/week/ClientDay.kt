@@ -137,6 +137,10 @@ internal fun ClientDayView(
     }
 
     val dayItem = state?.takeIf { it.current >= 0 }?.let { it.items[it.current] }
+    // Kun aikajana näkyy, NYT-kortin kuva on pienempi: koko etusivu mahtuu ruudulle (R11).
+    val withTimeline = prefs.timeline != TimelineMode.NONE
+    val nowImage = if (withTimeline) 150.dp else 220.dp
+    val gapImage = if (withTimeline) 110.dp else 160.dp
     // Etusijasääntö: ohjaajan valmistelema toiminta ensin; päivän kohta näkyy sen alla,
     // jotta päivän rakenne ei katoa.
     @Composable
@@ -188,7 +192,7 @@ internal fun ClientDayView(
                     val gapName = gap?.let { stringResource(it.nameRes) } ?: ""
                     fi.aikapolku.app.cards.CardPhoto(
                         gapName, "builtin:${prefs.gapCard}",
-                        Modifier.fillMaxWidth().sizeIn(maxWidth = 160.dp, maxHeight = 160.dp).aspectRatio(1f).clip(RoundedCornerShape(22.dp))
+                        Modifier.fillMaxWidth().sizeIn(maxWidth = gapImage, maxHeight = gapImage).aspectRatio(1f).clip(RoundedCornerShape(22.dp))
                     )
                     Text(gapName, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, textAlign = TextAlign.Center)
                     Text(
@@ -215,7 +219,7 @@ internal fun ClientDayView(
                 NowKind.ONGOING -> NowFrame {
                     // Kestävä tapahtuma: ei kuitata, päättyy seuraavaan.
                     NowLabel(stringResource(R.string.now_label))
-                    EventImage(item.resolved, Modifier.fillMaxWidth().sizeIn(maxWidth = 220.dp, maxHeight = 220.dp).aspectRatio(1f).clip(RoundedCornerShape(22.dp)))
+                    EventImage(item.resolved, Modifier.fillMaxWidth().sizeIn(maxWidth = nowImage, maxHeight = nowImage).aspectRatio(1f).clip(RoundedCornerShape(22.dp)))
                     Text(item.resolved.title, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, textAlign = TextAlign.Center)
                     if (prefs.showTimes) {
                         // Toiminnalla on oma loppunsa (until); muuten kestää seuraavaan tapahtumaan.
@@ -232,7 +236,7 @@ internal fun ClientDayView(
                 NowKind.EVENT -> NowFrame {
                     NowLabel(stringResource(R.string.now_label))
                     Box {
-                        EventImage(item.resolved, Modifier.fillMaxWidth().sizeIn(maxWidth = 220.dp, maxHeight = 220.dp).aspectRatio(1f).clip(RoundedCornerShape(22.dp)))
+                        EventImage(item.resolved, Modifier.fillMaxWidth().sizeIn(maxWidth = nowImage, maxHeight = nowImage).aspectRatio(1f).clip(RoundedCornerShape(22.dp)))
                         if (item.change != null || item.entry.stepChanges.isNotEmpty()) {
                             ChangeSymbol(Modifier.size(40.dp).align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp))
                         }
@@ -310,7 +314,7 @@ private fun TimelineRow(item: DayItem, isCurrent: Boolean, isDone: Boolean, isPa
             .semantics(mergeDescendants = true) { contentDescription = a11y }
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -324,7 +328,7 @@ private fun TimelineRow(item: DayItem, isCurrent: Boolean, isDone: Boolean, isPa
                 )
             }
             Box {
-                EventImage(item.resolved, Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)))
+                EventImage(item.resolved, Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)))
                 if (change != null) ChangeSymbol(Modifier.size(20.dp).align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp))
             }
             Column(modifier = Modifier.weight(1f)) {

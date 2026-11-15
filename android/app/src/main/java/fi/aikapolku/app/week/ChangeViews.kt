@@ -202,7 +202,8 @@ internal fun ChangeScreen(changeId: String, onDone: () -> Unit) {
         else {
             // Pysyy samana: käyttäjän näkymän mukaan (vain jo näkyvät muutokset huomioidaan).
             val entries = DayChanges.entries(plan.eventsFor(change.date), all, change.date, LocalDateTime.now())
-            val unchanged = DayChanges.unchangedAfter(entries, change).map { resolveEvent(it, programs) }
+            // Kaksi seuraavaa ennallaan olevaa: koko muutosnäkymä mahtuu ruudulle (R11).
+            val unchanged = DayChanges.unchangedAfter(entries, change, limit = 2).map { resolveEvent(it, programs) }
             ChangeData(change, resolveEvent(original, programs), resolveEvent(DayChanges.effective(original, change), programs), unchanged)
         }
     }
@@ -294,44 +295,45 @@ private fun ChangeView(
         onDispose { speech?.close() }
     }
 
+    // Tiivis: koko muutos ja kaikki painikkeet näkyvät ruudulla ilman vieritystä (R11).
     Column(
-        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.semantics(mergeDescendants = true) { heading() }
         ) {
-            ChangeSymbol(Modifier.size(56.dp))
+            ChangeSymbol(Modifier.size(44.dp))
             Column {
-                Text(stringResource(R.string.change_label), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = AppColors.Change)
+                Text(stringResource(R.string.change_label), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = AppColors.Change)
                 Text(subtitle, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Muted)
             }
         }
 
         when (type) {
             ChangeType.CANCEL -> {
-                ImageWithName(original, 200, crossed = true)
+                ImageWithName(original, 150, crossed = true)
                 Text(stringResource(R.string.change_cancelled_text), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink)
             }
             ChangeType.REPLACE -> if (showOriginal) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { ImageWithName(original, 130, crossed = true) }
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { ImageWithName(original, 100, crossed = true) }
                     Box(
                         modifier = Modifier.size(40.dp).clip(RoundedCornerShape(50)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null, tint = AppColors.Change, modifier = Modifier.size(32.dp))
                     }
-                    Box(Modifier.weight(1.2f), contentAlignment = Alignment.Center) { ImageWithName(effective, 170, crossed = false) }
+                    Box(Modifier.weight(1.2f), contentAlignment = Alignment.Center) { ImageWithName(effective, 130, crossed = false) }
                 }
             } else {
-                ImageWithName(effective, 240, crossed = false)
+                ImageWithName(effective, 170, crossed = false)
             }
             ChangeType.MOVE -> {
-                ImageWithName(effective, 200, crossed = false)
+                ImageWithName(effective, 150, crossed = false)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (showOriginal) {
                         Text(
@@ -414,10 +416,10 @@ private fun UnchangedSection(items: List<ResolvedEvent>) {
         color = AppColors.TealSoft,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 title,
-                fontSize = 18.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
                 color = AppColors.Teal,
                 modifier = Modifier.semantics { heading() }
@@ -432,7 +434,7 @@ private fun UnchangedSection(items: List<ResolvedEvent>) {
                         .heightIn(min = 48.dp)
                         .semantics(mergeDescendants = true) { contentDescription = "$time ${item.title}" }
                 ) {
-                    EventImage(item, Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)))
+                    EventImage(item, Modifier.size(38.dp).clip(RoundedCornerShape(10.dp)))
                     Text(time, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Muted)
                     Text(
                         item.title,
