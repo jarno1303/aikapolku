@@ -180,7 +180,7 @@ async function icon(Comp, color = '#FFFFFF') {
   marker(s, b4, 3, 1.12, 0.735);
   marker(s, b4, 4, 1.12, 0.835);
   point(s, 1, 5.6, 1.5, 'Iso kuva ja yksi sana', 'Mitä tehdään nyt. Omat kuvat ja tutun ihmisen ääni käyvät.', 6.4);
-  point(s, 2, 5.6, 2.85, 'Apu ja tauko aina saatavilla', 'Ilman PIN-koodia – myös En ymmärrä.', 6.4);
+  point(s, 2, 5.6, 2.85, 'Apu ja tauko aina saatavilla', 'Apu, tauko ja En ymmärrä toimivat aina ilman PIN-koodia.', 6.4);
   point(s, 3, 5.6, 4.2, 'Yksi selvä painallus', 'Valmis vie seuraavaan. Enintään viisi painiketta ruudulla.', 6.4);
   point(s, 4, 5.6, 5.55, 'Seuraava näkyy etukäteen', 'Kuvana, tekstinä tai piilossa – ohjaaja valitsee asukkaan mukaan.', 6.4);
 
@@ -192,8 +192,8 @@ async function icon(Comp, color = '#FFFFFF') {
   marker(s, b5a, 2, 1.08, 0.9);
   const b5b = bigPhone(s, 'a07-odotetaan', 4.3, 1.35, 5.85);
   marker(s, b5b, 3, 1.08, 0.3);
-  point(s, 1, 7.85, 1.6, 'Pian vaihtuu', 'Rauhallinen ennakkovaroitus kuvalla – halutessa vanhemman tai ohjaajan omalla äänellä.', 4.4);
-  point(s, 2, 7.85, 3.2, 'Tarvitsen vielä hetken', 'Lisäaikaa ohjaajan rajoissa, sitten viesti aikuiselle.', 4.4);
+  point(s, 1, 7.85, 1.6, 'Pian vaihtuu', 'Rauhallinen ennakkovaroitus kuvalla – halutessa läheisen tai ohjaajan omalla äänellä.', 4.4);
+  point(s, 2, 7.85, 3.2, 'Tarvitsen vielä hetken', 'Lisäaikaa ohjaajan asettamissa rajoissa, sen jälkeen viesti ohjaajalle.', 4.4);
   point(s, 3, 7.85, 4.8, 'Odotetaan', 'Kun kestoa ei tiedä: ei sekunteja, vaan rauhallinen kuvio ja tekemistä odottaessa.', 4.4);
 
   // 6 Asukkaan oma ääni
