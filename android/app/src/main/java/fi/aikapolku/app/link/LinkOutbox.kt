@@ -51,6 +51,21 @@ internal object LinkOutbox {
         save(context, prune(pending(context, now), now) + message)
     }
 
+    /**
+     * Poistaa vanhentuneet viestit laitteelta (myös, jos sovellus suljettiin ennen uusintaa).
+     * Ei muuta näkymien tilaa: kutsutaan myös sovelluksen avautuessa.
+     */
+    @Synchronized
+    fun purgeExpired(context: Context, now: Long = System.currentTimeMillis()) {
+        val raw = decode(prefs(context).getString(KEY, null))
+        if (raw.isEmpty()) return
+        val kept = prune(raw, now)
+        if (kept.size != raw.size) {
+            if (kept.isEmpty()) prefs(context).edit().remove(KEY).apply()
+            else prefs(context).edit().putString(KEY, encode(kept)).apply()
+        }
+    }
+
     @Synchronized
     fun save(context: Context, list: List<QueuedMessage>) {
         prefs(context).edit().putString(KEY, encode(list.filter { it.peers.isNotEmpty() }.takeLast(20))).commit()

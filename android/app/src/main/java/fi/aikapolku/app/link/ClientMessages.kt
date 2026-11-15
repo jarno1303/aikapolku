@@ -11,6 +11,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 
 /**
@@ -57,7 +58,7 @@ internal object ClientMessages {
     }
 
     /** Toimittaa viestin; palauttaa ohjaajan puhelimet, joita ei tavoitettu. */
-    private fun deliver(app: Context, message: LinkMessage, receivers: List<Peer>): List<Peer> {
+    private suspend fun deliver(app: Context, message: LinkMessage, receivers: List<Peer>): List<Peer> {
         val store = LinkStore(app)
         val me = store.identity
         val unreached = mutableListOf<Peer>()
@@ -76,25 +77,35 @@ internal object ClientMessages {
         }
     }
 
+    private val flushing = Mutex()
+
     /** Yrittää jonossa olevia viestejä uudelleen; palauttaa jonoon jääneiden määrän. */
-    fun flush(context: Context): Int {
+    suspend fun flush(context: Context): Int {
         val app = context.applicationContext
-        val queue = LinkOutbox.pending(app)
-        if (queue.isEmpty()) {
-            LinkOutbox.save(app, emptyList())
-            return 0
+        // Yksi uusinta kerrallaan (avaus ja silmukka voivat osua samaan aikaan).
+        if (!flushing.tryLock()) return LinkOutbox.pending(app).size
+        try {
+            val queue = LinkOutbox.pending(app)
+            if (queue.isEmpty()) {
+                LinkOutbox.purgeExpired(app)
+                return 0
+            }
+            val store = LinkStore(app)
+            val receivers = store.peers().filter { it.receiver }
+            val left = queue.map { q ->
+                val targets = receivers.filter { it.id in q.peers }
+                val message = LinkMessage(q.kind, q.text, q.who, q.at, store.identity.name)
+                q.copy(peers = if (targets.isEmpty()) emptyList() else deliver(app, message, targets).map { it.id })
+            }
+            // Lähetyksen aikana lisätyt viestit säilyvät (luku ja tallennus samassa lukossa).
+            synchronized(LinkOutbox) {
+                val added = LinkOutbox.pending(app).filter { n -> queue.none { it.id == n.id } }
+                LinkOutbox.save(app, left + added)
+            }
+            return LinkOutbox.pending(app).size
+        } finally {
+            flushing.unlock()
         }
-        val store = LinkStore(app)
-        val receivers = store.peers().filter { it.receiver }
-        val left = queue.map { q ->
-            val targets = receivers.filter { it.id in q.peers }
-            val message = LinkMessage(q.kind, q.text, q.who, q.at, store.identity.name)
-            q.copy(peers = if (targets.isEmpty()) emptyList() else deliver(app, message, targets).map { it.id })
-        }
-        // Lähetyksen aikana lisätyt viestit säilyvät.
-        val added = LinkOutbox.pending(app).filter { n -> queue.none { it.id == n.id } }
-        LinkOutbox.save(app, left + added)
-        return LinkOutbox.pending(app).size
     }
 
     @Volatile private var retryJob: Job? = null
@@ -107,18 +118,24 @@ internal object ClientMessages {
         retryJob = scope.launch {
             while (true) {
                 delay(RETRY_MS)
-                val left = runCatching { flush(app) }.getOrDefault(0)
+                val left = runCatching { flush(app) }.getOrElse { LinkOutbox.pending(app).size }
                 if (left == 0) break
             }
+        }.also { job ->
+            // Silmukan päättyessä juuri lisätty viesti ei jää odottamaan seuraavaa avausta.
+            job.invokeOnCompletion { if (LinkOutbox.pending(app).isNotEmpty()) ensureRetry(app) }
         }
     }
 
-    /** Sovellus avattiin: jonossa olevat heti matkaan. */
+    /** Sovellus avattiin: jonossa olevat heti matkaan; vanhentuneet pois laitteelta. */
     fun resume(context: Context) {
         val app = context.applicationContext
-        if (LinkOutbox.pending(app).isEmpty()) return
+        if (LinkOutbox.pending(app).isEmpty()) {
+            LinkOutbox.purgeExpired(app)
+            return
+        }
         scope.launch {
-            val left = runCatching { flush(app) }.getOrDefault(0)
+            val left = runCatching { flush(app) }.getOrElse { LinkOutbox.pending(app).size }
             if (left > 0) ensureRetry(app)
         }
     }

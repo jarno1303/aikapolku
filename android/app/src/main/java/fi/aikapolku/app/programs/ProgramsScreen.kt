@@ -231,7 +231,7 @@ internal fun ProgramsScreen(
     fun completeStep() {
         val step = run.currentStep
         // Käytön seuranta: tehty tehtävä (ei osavaihe) ja Valmis ennen ajan loppua.
-        if (step == null || step.subSteps.isEmpty() || run.subStepIndex >= step.subSteps.size - 1) {
+        if (!caregiver.isCaregiver && (step == null || step.subSteps.isEmpty() || run.subStepIndex >= step.subSteps.size - 1)) {
             fi.aikapolku.app.data.UsageLog.record(context, fi.aikapolku.app.data.UsageKind.STEP_DONE)
             if (step?.mode == fi.aikapolku.app.data.StepMode.DURATION && run.timeLeft() > 0L) fi.aikapolku.app.data.UsageLog.record(context, fi.aikapolku.app.data.UsageKind.DONE_EARLY)
         }

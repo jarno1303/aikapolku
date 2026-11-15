@@ -19,8 +19,14 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
-/** Palaute 15.11.2026: käytön seuranta, tuen taso, viestijono ja En ymmärrä. Tavallisia JVM-testejä. */
+/**
+ * Palaute 15.11.2026: käytön seuranta, tuen taso, viestijono ja En ymmärrä. Robolectric vain
+ * org.json-toteutusta varten; testit eivät kirjoita Composen tilaa.
+ */
+@RunWith(RobolectricTestRunner::class)
 class PalauteMuutoksetTest {
     private val today = LocalDate.of(2026, 11, 15)
 
@@ -53,7 +59,8 @@ class PalauteMuutoksetTest {
     fun `jokainen asiakkaan viesti kirjataan omana lajinaan`() {
         assertEquals(UsageKind.NOT_UNDERSTAND, UsageKind.of(SupportKind.NOT_UNDERSTAND))
         assertEquals(UsageKind.CHOICE_NONE, UsageKind.of(SupportKind.CHOICE_NONE))
-        assertTrue(UsageKind.NOT_UNDERSTAND in UsageKind.REQUESTS)
+        assertFalse(UsageKind.NOT_UNDERSTAND in UsageKind.REQUESTS)
+        assertTrue(UsageKind.HELP in UsageKind.REQUESTS)
         assertFalse(UsageKind.PROGRAM_START in UsageKind.REQUESTS)
     }
 

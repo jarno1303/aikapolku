@@ -62,7 +62,8 @@ internal class LinkStore(context: Context) {
 
     fun markSeen(id: String, at: Long) {
         prefs.edit().putLong(KEY_SEEN + id, at).apply()
-        revision++
+        // Oma laskuri: viestin saapuminen ei nollaa Yksikön yhteys -näkymän muokkausta.
+        seenRevision++
     }
 
     companion object {
@@ -75,6 +76,10 @@ internal class LinkStore(context: Context) {
 
         /** Näkymät päivittyvät, kun liitokset muuttuvat. */
         var revision by mutableIntStateOf(0)
+            private set
+
+        /** Viimeksi nähty -tiedot muuttuivat (vain lähettäjärivit lukevat tämän). */
+        var seenRevision by mutableIntStateOf(0)
             private set
 
         fun encode(list: List<Peer>): String = JSONArray().also { arr ->

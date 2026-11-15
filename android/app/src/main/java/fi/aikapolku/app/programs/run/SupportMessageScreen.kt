@@ -72,14 +72,6 @@ internal fun SupportMessageScreen(
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
-    // Oma tila tauon aikana (asiakkaan oma tieto, ks. OwnStateFlow).
-    var ownStateOpen by rememberSaveable { mutableStateOf(false) }
-    if (ownStateOpen) {
-        OwnStateFlow(onClose = { ownStateOpen = false })
-        return
-    }
-    val canTell = remember { fi.aikapolku.app.link.ClientMessages.canSend(context) }
-    val showOwnState = kind == SupportKind.BREAK && remember { fi.aikapolku.app.data.OwnState.enabled(context) }
     // Avun tarkennus: "En ymmärrä" vaihtaa viestin samassa näkymässä (ei uutta painiketta tehtävään).
     var shown by rememberSaveable { mutableStateOf(kind) }
     val canClarify = kind == SupportKind.HELP
@@ -94,6 +86,14 @@ internal fun SupportMessageScreen(
             fi.aikapolku.app.data.UsageLog.record(context, fi.aikapolku.app.data.UsageKind.of(shown))
         }
     }
+    // Oma tila tauon aikana (asiakkaan oma tieto, ks. OwnStateFlow).
+    var ownStateOpen by rememberSaveable { mutableStateOf(false) }
+    if (ownStateOpen) {
+        OwnStateFlow(onClose = { ownStateOpen = false })
+        return
+    }
+    val canTell = remember { fi.aikapolku.app.link.ClientMessages.canSend(context) }
+    val showOwnState = kind == SupportKind.BREAK && remember { fi.aikapolku.app.data.OwnState.enabled(context) }
     // Teksti tulee käännettävistä resursseista.
     val message = stringResource(
         when (shown) {
@@ -214,10 +214,11 @@ internal fun SupportMessageScreen(
                     if (canTell) {
                         OutlinedButton(
                             onClick = {
-                                if (!sending) {
+                                if (!sending && sent != fi.aikapolku.app.link.SendResult.QUEUED) {
                                     sending = true
                                     scope.launch {
-                                        sent = fi.aikapolku.app.link.ClientMessages.send(context, shown.key, message)
+                                        val result = fi.aikapolku.app.link.ClientMessages.send(context, shown.key, message)
+                                        sent = result
                                         sending = false
                                     }
                                 }
@@ -240,7 +241,7 @@ internal fun SupportMessageScreen(
                     }
                     if (canClarify) {
                         OutlinedButton(
-                            onClick = { shown = if (shown == SupportKind.HELP) SupportKind.NOT_UNDERSTAND else SupportKind.HELP },
+                            onClick = { if (!sending) shown = if (shown == SupportKind.HELP) SupportKind.NOT_UNDERSTAND else SupportKind.HELP },
                             modifier = Modifier.weight(1f).heightIn(min = 56.dp),
                             shape = RoundedCornerShape(16.dp),
                             border = BorderStroke(2.dp, RunColors.teal),

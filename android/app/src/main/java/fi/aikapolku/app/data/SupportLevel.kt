@@ -77,7 +77,11 @@ internal object SupportLevels {
         if (level != null) {
             e.putString(KEY_LEVEL, level.key)
             e.putString(KEY_HISTORY, encodeHistory((history(context) + LevelChange(today, level)).takeLast(20)))
-        } else e.remove(KEY_LEVEL)
+        } else {
+            // Ennen tasoja: viimeisin tasomerkintä pois historiasta (vertailu alkaa alusta).
+            e.remove(KEY_LEVEL)
+            e.putString(KEY_HISTORY, encodeHistory(history(context).dropLast(1)))
+        }
         e.apply()
     }
 

@@ -1063,7 +1063,7 @@
     <string name="support_level_revert">Palaa edelliseen</string>
     <string name="support_level_changed">%1$s: %2$s</string>
     <string name="support_level_no_usage">Kun käytön seuranta on päällä (Puhelimen asetukset), tässä näkyy, miten asukkaan pyynnöt ovat muuttuneet.</string>
-    <string name="support_level_requests">Asukkaan pyynnöt (apu, en ymmärrä, tauko, lisäaika): viimeiset 14 päivää %1$d, sitä edeltävät 14 päivää %2$d.</string>
+    <string name="support_level_requests">Asukkaan pyynnöt (apu, tauko, lisäaika): viimeiset 14 päivää %1$d, sitä edeltävät 14 päivää %2$d.</string>
     <string name="support_level_hint_next">Pyyntöjä on ollut selvästi vähemmän. Jos asukas on samaa mieltä, voitte kokeilla seuraavaa tasoa.</string>
     <string name="support_level_hint_back">Pyyntöjä on ollut enemmän tason vaihdon jälkeen. Harkitkaa paluuta edelliseen.</string>
 </resources>

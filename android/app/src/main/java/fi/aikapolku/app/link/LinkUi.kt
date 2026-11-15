@@ -102,8 +102,9 @@ internal fun LinkSettings() {
     val receivers = peers.filter { it.receiver }
     if (senders.isNotEmpty()) {
         Text(stringResource(R.string.link_senders), fontWeight = FontWeight.Bold)
+        val seenRevision = LinkStore.seenRevision
         senders.forEach { p ->
-            val seen = store.lastSeen(p.id)
+            val seen = remember(seenRevision, p.id) { store.lastSeen(p.id) }
             val info = if (seen <= 0L) stringResource(R.string.link_never_seen) else stringResource(R.string.link_last_seen, seenText(context, seen))
             PeerRow(p.name, info) { store.removePeer(p.id, receiver = false) }
         }

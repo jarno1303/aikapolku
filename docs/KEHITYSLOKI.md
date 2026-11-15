@@ -450,3 +450,4 @@
 - **Tuen taso:** neljä tasoa (paljon, kohtalainen, kevyt, itsenäinen), jotka vähentävät kehotuksia: ennakkovaroitus, Pian vaihtuu -ääni ja seuraavan näyttö. Palaa edelliseen palauttaa aiemmat asetukset. Seurannasta huomio ohjaajalle, ei koskaan automaattista muutosta.
 - **Tietosuojan puutelista:** docs/TIETOSUOJA_PUUTELISTA.md.
 - Testit: PalauteMuutoksetTest.
+- Tarkastajan korjaukset: jonon uusinta suspend-funktioina (käännösvirhe), testi Robolectricilla (org.json), En ymmärrä ei kaksinkertaista pyyntöjä, tauko ei kirjaudu uudelleen oman tilan jälkeen, viestin saapuminen ei nollaa yhteysasetusten muokkausta, vanhentunut jono poistuu laitteelta avattaessa, uusinta ei pysähdy virheeseen eikä jätä viestiä odottamaan, Kerro ohjaajalle ei jonouta samaa viestiä moneen kertaan, ohjaajan Valmis-painalluksia ei lasketa asukkaan tehtäviksi, Aika- ja Viestit-asetukset päivittyvät tuen tason vaihtuessa.

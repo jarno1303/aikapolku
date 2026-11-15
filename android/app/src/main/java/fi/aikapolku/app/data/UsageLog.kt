@@ -26,8 +26,11 @@ internal enum class UsageKind(val key: String, val label: Int) {
     companion object {
         fun from(key: String?): UsageKind? = entries.firstOrNull { it.key == key }
 
-        /** Asiakkaan omat pyynnöt: tuen tarpeen seuranta (tuen taso). */
-        val REQUESTS = listOf(HELP, NOT_UNDERSTAND, BREAK, MORE_TIME)
+        /**
+         * Asiakkaan omat pyynnöt: tuen tarpeen seuranta (tuen taso). En ymmärrä on avun
+         * tarkennus samassa näkymässä, joten sitä ei lasketa erikseen (ei kahta kertaa).
+         */
+        val REQUESTS = listOf(HELP, BREAK, MORE_TIME)
 
         fun of(kind: SupportKind): UsageKind = when (kind) {
             SupportKind.HELP -> HELP

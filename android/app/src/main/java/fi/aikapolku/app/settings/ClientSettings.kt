@@ -262,7 +262,7 @@ internal fun TaskSettings() {
     )
 
     val nextModes = listOf(RunPreferences.NEXT_HIDDEN, RunPreferences.NEXT_TEXT, RunPreferences.NEXT_CARD)
-    var nextMode by remember { mutableStateOf(RunPreferences.nextMode(context)) }
+    var nextMode by remember(SettingsRevision.value) { mutableStateOf(RunPreferences.nextMode(context)) }
     SettingLabel(stringResource(R.string.seuraavan_vaiheen_esikatselu), stringResource(R.string.next_mode_info))
     SegmentedChoice(
         options = listOf(stringResource(R.string.ei), stringResource(R.string.teksti), stringResource(R.string.kuva)),
@@ -283,7 +283,7 @@ internal fun TimeSettings() {
     var mode by remember { mutableStateOf(TimeDisplayPrefs.load(context)) }
     var lastTen by remember { mutableStateOf(TimeDisplayPrefs.lastTen(context)) }
     var sound by remember { mutableStateOf(TimeDisplayPrefs.endSound(context)) }
-    var warn by remember { mutableStateOf(TimeDisplayPrefs.warnMinutes(context)) }
+    var warn by remember(SettingsRevision.value) { mutableStateOf(TimeDisplayPrefs.warnMinutes(context)) }
 
     TimeModeChoices(mode) {
         mode = it
@@ -373,10 +373,10 @@ internal fun MessageSettings() {
     var helpFile by remember { mutableStateOf(RunPreferences.recording(context, RunPreferences.HELP)) }
     var breakFile by remember { mutableStateOf(RunPreferences.recording(context, RunPreferences.BREAK)) }
     // "Pian vaihtuu" -ennakkovaroitus: tapa ja asiakkaan oma äänite asiakaskohtaisia, yleinen äänite laitteen.
-    var soonMode by remember { mutableStateOf(SoonVoice.mode(context)) }
+    var soonMode by remember(SettingsRevision.value) { mutableStateOf(SoonVoice.mode(context)) }
     var soonClientFile by remember { mutableStateOf(SoonVoice.clientRecording(context)) }
     var soonGeneralFile by remember { mutableStateOf(SoonVoice.generalRecording(context)) }
-    val warnMinutes = remember { TimeDisplayPrefs.warnMinutes(context) }
+    val warnMinutes = remember(SettingsRevision.value) { TimeDisplayPrefs.warnMinutes(context) }
     var showVoicePicker by remember { mutableStateOf(false) }
 
     fun start(kind: String) {
