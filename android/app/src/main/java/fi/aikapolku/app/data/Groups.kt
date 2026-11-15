@@ -39,7 +39,20 @@ internal data class Group(
     val name: String,
     val members: List<String> = emptyList(),
     val plan: WeekPlan = WeekPlan(),
-    val exceptions: List<MemberException> = emptyList()
+    val exceptions: List<MemberException> = emptyList(),
+    /** Yksikkömalli (Units.kt): ryhmä, yksikkö tai päivän toiminta. */
+    val kind: GroupKind = GroupKind.GROUP,
+    /** Yksikön yläyksikkö (tyhjä = ylin). Vain yksiköille. */
+    val parentId: String = "",
+    /** Toiminnan kokoontumiset. Vain toiminnoille. */
+    val sessions: List<ActivitySession> = emptyList(),
+    /** Asukkaiden omat ajat toiminnassa. */
+    val memberTimes: List<MemberTime> = emptyList(),
+    /** Toiminnan kortin kuva asukkaan päivässä (esim. "builtin:schoolwork"). */
+    val cardPhoto: String = "",
+    /** Siirtymäkortit (Y6): ohjaajan käyttöön ottamina; tyhjä = ei korttia. */
+    val leaveCard: String = "",
+    val returnCard: String = ""
 )
 
 /** Ryhmän rungon päättely asiakkaalle: puhdas logiikka, testattavissa ilman laitetta. */
@@ -95,7 +108,9 @@ internal class ClientDay(
     val memberId: String,
     /** Ryhmien päivämuutokset asiakkaan päivän tunnuksin (koskevat kaikkia paikalla olevia). */
     val groupChanges: List<EventChange> = emptyList(),
-    private val absent: (groupId: String, date: LocalDate) -> Boolean = { _, _ -> false }
+    private val absent: (groupId: String, date: LocalDate) -> Boolean = { _, _ -> false },
+    /** Mitä asukas näkee toiminnan aikana (Y5). */
+    val activityView: ActivityView = ActivityView.CARD
 ) : DaySource {
 
     /**
@@ -107,21 +122,91 @@ internal class ClientDay(
             ownChanges.none { it.date == g.date && it.eventId == g.eventId && it.stepId == g.stepId }
         }
 
+    /** Asukkaan toiminta-ajat päivänä (perutut mukana, ne näkyvät perutuiksi). */
+    fun spans(date: LocalDate): List<ActivitySpan> = Units.spans(
+        groups, memberId, date,
+        absent = { absent(it, date) },
+        cancelled = { id -> groupChanges.any { it.date == date && it.eventId == id && !it.isStep && it.type == ChangeType.CANCEL } }
+    )
+
+    /**
+     * Asukkaan päivä (P10): omat kohdat, ryhmät, yksiköt (paitsi toiminnan aikana) ja toiminnat
+     * (yksi kortti tai toiminnan runko, ks. [activityView]).
+     */
     override fun eventsFor(date: LocalDate): List<WeekEvent> {
-        val fromGroups = groups.flatMap { GroupSchedule.eventsFor(it, memberId, date, absent(it.id, date)) }
+        val spans = spans(date)
+        val fromGroups = groups.flatMap { g ->
+            when (g.kind) {
+                GroupKind.GROUP -> GroupSchedule.eventsFor(g, memberId, date, absent(g.id, date))
+                GroupKind.UNIT -> GroupSchedule.eventsFor(g, memberId, date, absent(g.id, date))
+                    .filter { e -> Units.at(spans, e.time) == null }
+                GroupKind.ACTIVITY -> activityEvents(g, spans.filter { it.group.id == g.id }, date)
+            }
+        }
         if (fromGroups.isEmpty()) return own.eventsFor(date)
         return (own.eventsFor(date) + fromGroups).sortedWith(compareBy({ WeekSchedule.minutesOf(it.time) }, { it.id }))
     }
+
+    /**
+     * Yksikön kohdat, jotka eivät näy asukkaalle, koska hän on silloin toiminnassa: ohjaajalle
+     * himmeinä "Ei näy asukkaalle". Kohta → toiminta.
+     */
+    fun hiddenFor(date: LocalDate): List<Pair<WeekEvent, Group>> {
+        val spans = spans(date)
+        return groups.filter { it.kind == GroupKind.UNIT }.flatMap { g ->
+            GroupSchedule.eventsFor(g, memberId, date, absent(g.id, date)).mapNotNull { e ->
+                Units.at(spans, e.time)?.let { e to it.group }
+            }
+        }.sortedBy { WeekSchedule.minutesOf(it.first.time) }
+    }
+
+    private fun activityEvents(group: Group, spans: List<ActivitySpan>, date: LocalDate): List<WeekEvent> =
+        spans.flatMap { span ->
+            val day = date.dayOfWeek.value
+            val transitions = if (span.cancelled) emptyList() else listOfNotNull(
+                group.leaveCard.takeIf { it.isNotBlank() }?.let { name ->
+                    val m = (WeekSchedule.minutesOf(span.start) - TRANSITION_LEAD_MIN).coerceAtLeast(0)
+                    WeekEvent(GroupSchedule.eventId(group.id, "leave-$day"), day, WeekSchedule.WEEK_A,
+                        WeekSchedule.formatTime(m / 60, m % 60), EventKind.CARD, cardName = name, cardPhoto = "builtin:leaving")
+                },
+                group.returnCard.takeIf { it.isNotBlank() }?.let { name ->
+                    WeekEvent(GroupSchedule.eventId(group.id, "return-$day"), day, WeekSchedule.WEEK_A,
+                        span.end, EventKind.CARD, cardName = name, cardPhoto = "builtin:free_time")
+                }
+            )
+            // Toiminnan runko vain, jos asukkaalle on valittu se ja runko on tehty; peruttu näkyy aina korttina.
+            val plan = if (activityView == ActivityView.PLAN && !span.cancelled) {
+                WeekSchedule.eventsFor(group.plan, date).filter { span.covers(it.time) }
+                    .mapNotNull { GroupSchedule.forMember(group, memberId, it) }
+            } else emptyList()
+            (if (plan.isNotEmpty()) plan else listOf(Units.sessionEvent(span, date))) + transitions
+        }
 
     override fun event(id: String): WeekEvent? {
         own.event(id)?.let { return it }
         val (groupId, eventId) = GroupSchedule.parse(id) ?: return null
         val group = groups.firstOrNull { it.id == groupId && memberId in it.members } ?: return null
+        if (group.kind == GroupKind.ACTIVITY && Units.isSessionEvent(eventId)) {
+            // Kokoontumiskortti: päivä tunnuksesta, ajat asukkaan omina.
+            val day = eventId.removePrefix(Units.SESSION_PREFIX).toIntOrNull() ?: return null
+            val (start, end) = Units.sessionsFor(group, memberId, day).firstOrNull() ?: return null
+            return WeekEvent(id, day, WeekSchedule.WEEK_A, start, EventKind.CARD, cardName = group.name,
+                cardPhoto = group.cardPhoto, ongoing = true, until = end)
+        }
         val event = group.plan.event(eventId) ?: return null
         return GroupSchedule.forMember(group, memberId, event)
     }
 
-    override fun eventIds(): Set<String> = own.eventIds() + groups.flatMap { GroupSchedule.eventIds(it, memberId) }
+    override fun eventIds(): Set<String> = own.eventIds() + groups.flatMap { g ->
+        GroupSchedule.eventIds(g, memberId) +
+            (if (g.kind == GroupKind.ACTIVITY && memberId in g.members)
+                g.sessions.map { GroupSchedule.eventId(g.id, Units.sessionEventId(it.day)) } else emptyList())
+    }
+
+    companion object {
+        /** Lähtökortti näin monta minuuttia ennen toiminnan alkua. */
+        const val TRANSITION_LEAD_MIN = 10
+    }
 }
 
 /** Asiakkaan päivä tallennetuista tiedoista. */
@@ -132,14 +217,23 @@ internal object ClientWeek {
         own: WeekPlan = WeekStore(context, profileId).load()
     ): ClientDay {
         val store = GroupStore(context)
-        val groups = store.load().filter { profileId in it.members }
+        val all = store.load()
+        // Omat ryhmät ja yksiköiden yläyksiköt (yläyksikön runko kuuluu kaikille sen asukkaille).
+        val groups = Units.groupsFor(all, profileId)
         if (groups.isEmpty()) return ClientDay(own, emptyList(), profileId)
         val absences = store.absences()
         val changes = store.allChanges()
+        fun absentFrom(groupId: String, date: LocalDate): Boolean {
+            if (profileId in absences[groupId]?.get(date).orEmpty()) return true
+            // Yläyksikkö: poissaolo merkitään asukkaan omaan yksikköön.
+            val home = if (all.any { it.id == groupId && profileId !in it.members }) Units.homeUnitOf(all, profileId, groupId) else null
+            return home != null && profileId in absences[home.id]?.get(date).orEmpty()
+        }
         return ClientDay(
             own, groups, profileId,
-            absent = { groupId, date -> profileId in absences[groupId]?.get(date).orEmpty() },
-            groupChanges = groups.flatMap { g -> changes[g.id].orEmpty().map { GroupSchedule.toMember(g.id, it) } }
+            absent = ::absentFrom,
+            groupChanges = groups.flatMap { g -> changes[g.id].orEmpty().map { GroupSchedule.toMember(g.id, it) } },
+            activityView = ClientViewPrefs.activityView(context, profileId)
         )
     }
 
@@ -215,7 +309,11 @@ internal class GroupStore(context: Context) {
         val groups = load()
         if (groups.none { memberId in it.members || it.exceptions.any { e -> e.memberId == memberId } }) return
         save(groups.map { g ->
-            g.copy(members = g.members - memberId, exceptions = g.exceptions.filterNot { it.memberId == memberId })
+            g.copy(
+                members = g.members - memberId,
+                exceptions = g.exceptions.filterNot { it.memberId == memberId },
+                memberTimes = g.memberTimes.filterNot { it.memberId == memberId }
+            )
         })
         saveAbsences(absences().mapValues { (_, days) -> days.mapValues { it.value - memberId }.filterValues { it.isNotEmpty() } })
     }
@@ -252,6 +350,20 @@ internal class GroupStore(context: Context) {
                         .put("members", JSONArray(g.members))
                         .put("plan", JSONObject(WeekStore.encode(g.plan)))
                         .put("exceptions", exceptions)
+                        .put("kind", g.kind.key)
+                        .put("parentId", g.parentId)
+                        .put("sessions", JSONArray().apply {
+                            g.sessions.forEach { put(JSONObject().put("day", it.day).put("start", it.start).put("end", it.end)) }
+                        })
+                        .put("memberTimes", JSONArray().apply {
+                            g.memberTimes.forEach {
+                                put(JSONObject().put("memberId", it.memberId).put("days", JSONArray(it.days.sorted()))
+                                    .put("start", it.start).put("end", it.end))
+                            }
+                        })
+                        .put("cardPhoto", g.cardPhoto)
+                        .put("leaveCard", g.leaveCard)
+                        .put("returnCard", g.returnCard)
                 )
             }
             return JSONObject().put("version", 1).put("groups", array).toString()
@@ -275,12 +387,36 @@ internal class GroupStore(context: Context) {
                         else MemberException(eventId, memberId, ExceptionKind.from(e.optString("kind")), e.optString("cardName"), e.optString("cardPhoto"))
                     }
                 }.orEmpty()
+                fun time(t: String) = WeekSchedule.minutesOf(t).let { WeekSchedule.formatTime(it / 60, it % 60) }
+                val sessions = o.optJSONArray("sessions")?.let { a ->
+                    (0 until a.length()).mapNotNull { j ->
+                        val s = a.optJSONObject(j) ?: return@mapNotNull null
+                        val day = s.optInt("day", 0)
+                        if (day !in 1..7) null else ActivitySession(day, time(s.optString("start")), time(s.optString("end")))
+                    }
+                }.orEmpty()
+                val memberTimes = o.optJSONArray("memberTimes")?.let { a ->
+                    (0 until a.length()).mapNotNull { j ->
+                        val t = a.optJSONObject(j) ?: return@mapNotNull null
+                        val memberId = t.optString("memberId")
+                        if (memberId.isBlank()) return@mapNotNull null
+                        val days = t.optJSONArray("days")?.let { d -> (0 until d.length()).map { d.optInt(it) }.filter { it in 1..7 }.toSet() }.orEmpty()
+                        MemberTime(memberId, days, time(t.optString("start")), time(t.optString("end")))
+                    }
+                }.orEmpty()
                 Group(
                     id = id,
                     name = o.optString("name"),
                     members = members.distinct(),
                     plan = WeekStore.decode(o.optJSONObject("plan")?.toString()),
-                    exceptions = exceptions
+                    exceptions = exceptions,
+                    kind = GroupKind.from(o.optString("kind")),
+                    parentId = o.optString("parentId"),
+                    sessions = sessions,
+                    memberTimes = memberTimes,
+                    cardPhoto = o.optString("cardPhoto"),
+                    leaveCard = o.optString("leaveCard"),
+                    returnCard = o.optString("returnCard")
                 )
             }
         }

@@ -192,6 +192,8 @@ private fun CaregiverHome(
         onChange = { onMakeChange(it.id) },
         onOpenDay = onOpenDay
     )
+    // Yksikön kohdat, joita asiakas ei näe toiminnan aikana (P10).
+    fi.aikapolku.app.week.HiddenForClient()
     // Ohjaajan kaksi tärkeintä toimintoa vierekkäin: asiakkaan viikko ja päivän muutos.
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedButton(
@@ -236,6 +238,8 @@ private fun CaregiverHome(
 
     // Ryhmä tänään: paikalla/poissa ja ryhmän päivän muutokset (näkyy, jos ryhmiä on).
     fi.aikapolku.app.week.GroupTodayCard()
+    // Yksikön tilanne: kuka on missä (V3).
+    fi.aikapolku.app.week.UnitTodayCard()
 
     ToolsCard(stringResource(R.string.caregiver_prepare)) {
         ChoiceRow(stringResource(R.string.ensin_sitten), { open(AppPage.FIRST_THEN) }, subtitle = stringResource(R.string.caregiver_first_then_info), leading = { RowIcon(Icons.AutoMirrored.Rounded.ArrowForward) })

@@ -54,6 +54,16 @@ internal data class ClientViewPrefs(
             )
         }
 
+        private const val ACTIVITY_KEY = PREFIX + "activity_view"
+
+        /** Mitä asukas näkee toiminnan aikana (Y5): yksi kortti (oletus) tai toiminnan runko. */
+        fun activityView(context: Context, profileId: String = ProfileStore.currentId(context)): ActivityView =
+            ActivityView.from(ProfileScope.prefs(context, ProfileScope.RUN_PREFS, profileId).getString(ACTIVITY_KEY, null))
+
+        fun setActivityView(context: Context, view: ActivityView, profileId: String = ProfileStore.currentId(context)) {
+            ProfileScope.prefs(context, ProfileScope.RUN_PREFS, profileId).edit().putString(ACTIVITY_KEY, view.key).apply()
+        }
+
         fun save(context: Context, prefs: ClientViewPrefs) {
             ProfileScope.prefs(context, ProfileScope.RUN_PREFS).edit()
                 .putString(PREFIX + "timeline", prefs.timeline.key)

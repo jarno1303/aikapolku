@@ -218,7 +218,9 @@ internal fun ClientDayView(
                     EventImage(item.resolved, Modifier.fillMaxWidth().sizeIn(maxWidth = 220.dp, maxHeight = 220.dp).aspectRatio(1f).clip(RoundedCornerShape(22.dp)))
                     Text(item.resolved.title, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, textAlign = TextAlign.Center)
                     if (prefs.showTimes) {
-                        val end = DayParts.endTime(state.items.map { it.event.time }, state.items.map { it.cancelled }, state.current)
+                        // Toiminnalla on oma loppunsa (until); muuten kestää seuraavaan tapahtumaan.
+                        val end = item.event.until.ifBlank { null }
+                            ?: DayParts.endTime(state.items.map { it.event.time }, state.items.map { it.cancelled }, state.current)
                         Text(
                             if (end != null) stringResource(R.string.client_time_range, item.event.time.replace(':', '.'), end.replace(':', '.'))
                             else stringResource(R.string.change_time_now, item.event.time.replace(':', '.')),

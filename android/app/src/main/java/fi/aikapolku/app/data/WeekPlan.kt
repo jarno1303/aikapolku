@@ -41,7 +41,12 @@ internal data class WeekEvent(
      * Kestävä tapahtuma (esim. koulu, päivätoiminta): ei kuitata, vaan se on "nyt", kunnes
      * seuraava tapahtuma alkaa. Vain korttitapahtumille.
      */
-    val ongoing: Boolean = false
+    val ongoing: Boolean = false,
+    /**
+     * Kestävän tapahtuman loppu (esim. päivätoiminta klo 14.00): sen jälkeen tapahtuma ei ole
+     * enää "nyt". Tyhjä = kestää seuraavaan tapahtumaan asti.
+     */
+    val until: String = ""
 )
 
 /** Yksi tuleva ilmoitus: kenen profiilin tapahtuma, minä päivänä ja milloin ilmoitetaan. */
@@ -125,10 +130,12 @@ internal object WeekSchedule {
     fun currentIndex(events: List<WeekEvent>, now: LocalTime, done: Set<String> = emptySet()): Int {
         if (events.isEmpty()) return -1
         val nowMinutes = now.hour * 60 + now.minute
+        // Päättynyt kestävä tapahtuma (until ohi) on kuin tehty: korostus siirtyy eteenpäin.
+        fun over(e: WeekEvent) = e.ongoing && e.until.isNotBlank() && minutesOf(e.until) <= nowMinutes
         val started = events.indexOfLast { minutesOf(it.time) <= nowMinutes }
-        if (started >= 0 && events[started].id !in done) return started
+        if (started >= 0 && events[started].id !in done && !over(events[started])) return started
         val from = maxOf(started + 1, 0)
-        return (from until events.size).firstOrNull { events[it].id !in done } ?: -1
+        return (from until events.size).firstOrNull { events[it].id !in done && !over(events[it]) } ?: -1
     }
 
     /**
@@ -242,6 +249,7 @@ internal class WeekStore(context: Context, profileId: String = ProfileStore.curr
                         .put("notify", e.notify)
                         .put("notifyBefore", e.notifyBefore)
                         .put("ongoing", e.ongoing)
+                        .put("until", e.until)
                 )
             }
             return JSONObject()
@@ -272,7 +280,9 @@ internal class WeekStore(context: Context, profileId: String = ProfileStore.curr
                     cardPhoto = o.optString("cardPhoto"),
                     notify = o.optBoolean("notify", false),
                     notifyBefore = o.optInt("notifyBefore", 0).coerceIn(0, 60),
-                    ongoing = o.optBoolean("ongoing", false)
+                    ongoing = o.optBoolean("ongoing", false),
+                    until = o.optString("until").takeIf { it.isNotBlank() }
+                        ?.let { u -> WeekSchedule.minutesOf(u).let { WeekSchedule.formatTime(it / 60, it % 60) } }.orEmpty()
                 )
             }
             return WeekPlan(

@@ -181,6 +181,21 @@ internal fun HomeSettings() {
     }
     SwitchLine(stringResource(R.string.client_view_times), prefs.showTimes) { update(prefs.copy(showTimes = it)) }
 
+    // Toiminnan aikana (Y5): yksi kortti vai toiminnan runko.
+    var activityView by remember { mutableStateOf(ClientViewPrefs.activityView(context)) }
+    SettingLabel(stringResource(R.string.client_view_activity))
+    listOf(
+        Triple(fi.aikapolku.app.data.ActivityView.CARD, R.string.client_view_activity_card, R.string.client_view_activity_card_info),
+        Triple(fi.aikapolku.app.data.ActivityView.PLAN, R.string.client_view_activity_plan, R.string.client_view_activity_plan_info)
+    ).forEach { (view, title, info) ->
+        RadioLine(stringResource(title), stringResource(info), activityView == view) {
+            activityView = view
+            ClientViewPrefs.setActivityView(context, view)
+            SettingsRevision.bump()
+            fi.aikapolku.app.week.GroupSession.changed()
+        }
+    }
+
     // Väliajan kortti: mitä NYT-kortti näyttää, kun seuraava ei ole vielä alkanut.
     SettingLabel(stringResource(R.string.client_view_gap), stringResource(R.string.client_view_gap_info))
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
