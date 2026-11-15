@@ -1,6 +1,6 @@
 # AikaPolku – tutkielma: nykytila vs. optimaalinen toiminnanohjauksen sovellus
 
-**Versio:** 1.5 · **Päivitetty:** 14.11.2026 · **Koodin tila arvioitaessa:** päähaara 3.11.2026 (5051179)
+**Versio:** 1.6 · **Päivitetty:** 15.11.2026 · **Koodin tila arvioitaessa:** päähaara 3.11.2026 (5051179)
 
 > **Tämä tiedosto on päälähde.** Word-versio (`AikaPolku_tutkielma_optimaalinen_sovellus.docx`) tehdään tästä.
 > Kun suunta tarkentuu, päivitetään ensin tämä tiedosto (tila-sarakkeet, Päätökset-loki, versio ja päivämäärä),
@@ -177,7 +177,7 @@ Ei: valintaa joka kohtaan · rangaistusta "en halua" -viestistä · kieltäytymi
 | ID | Korjaus | Miksi | Työ | Tila |
 | --- | --- | --- | --- | --- |
 | A1 | Ennakkovaroitus käynnissä olevan toiminnan lopusta (säädettävä, kuva seuraavasta) | Siirtymät heikoin alue | 2–3 pv | Valmis (odottaa puhelintestiä) |
-| A2 | "Tarvitsen vielä hetken" ohjaajan rajoissa | Käyttäjän keino neuvotella | 2 pv | Ehdotettu |
+| A2 | "Tarvitsen vielä hetken" ohjaajan rajoissa | Käyttäjän keino neuvotella | 2 pv | Valmis (odottaa puhelintestiä) |
 | A3 | Muutoskorttiin "Mikä pysyy samana" + valinnat "Haluan kuulla uudestaan", "Tarvitsen tauon" | Kohdistuu epävarmuuteen | 1–2 pv | Valmis (odottaa puhelintestiä) |
 | A4 | Ilta-ennakko ja vaiheittainen ilmoitus muutokselle | Toivottu, puuttuu koodista | 1–2 pv | Valmis (odottaa puhelintestiä) |
 | A5 | Lähilaitesiirto ohjaajalta asiakkaan laitteeseen | Ryhmät eivät muuten toimi yksiköissä | 5–8 pv | Päätetty aiemmin (toteuttamatta) |
@@ -247,7 +247,7 @@ Arvioitu 14.11.2026 kaikki 38 valmista kuvaa (`res/drawable-nodpi`).
 | G1 | Hahmot: aikuisprofiilissa oletuksena esinekortit ja omat valokuvat; myöhemmin 3–4 hahmovaihtoehtoa (ikä, sukupuoli) profiilissa | Samaistuminen ja aikuisen arvokkuus | B | Ehdotettu |
 | G2 | Taustaväri: joko johdonmukainen luokka (ruoka, hygienia, liikunta, lepo) tai yksi neutraali väri | Osa käyttäjistä etsii väreistä merkitystä | B | Ehdotettu |
 | G3 | Vilkkaiden kohtauskuvien yksinkertaistus (esim. ryhmätilanne, puhekuplat) | Vähemmän tulkittavaa | C | Ehdotettu |
-| G4 | Uudet kuvat: lisäaika, "pysyy samana" -merkki, ihminen vaihtuu, valinta, jatka myöhemmin | Tarvitaan A1–A3:lle ja B1–B3:lle | A (toimintojen mukana) | Ehdotettu |
+| G4 | Uudet kuvat: lisäaika, "pysyy samana" -merkki, ihminen vaihtuu, valinta, jatka myöhemmin | Tarvitaan A1–A3:lle ja B1–B3:lle | A (toimintojen mukana) | Osittain: lisäajan viestikuva tehty (A2) |
 | G5 | Asiakkaan omat symbolit: käyttöönotto-ohjeeseen "käytä samoja kuvia kuin muualla arjessa"; symbolipankit vain lisenssitarkistuksen jälkeen (monet ei-kaupallisia); nykyisten kuvien käyttöoikeudet dokumentoidaan ennen myyntiä | Johdonmukaisuus ja juridinen varmuus | A (ohje A7:n mukana), B (pankit) | Ehdotettu |
 | G6 | Ohjattu aloitus ohjaajalle: 5 kysymystä asiakkaasta (ikä, lukutaito, aistiherkkyys, muutosten ennakointi, omatoimisuus) → asetukset valmiiksi; lisäksi Oikeudet ja päätökset -kortin kysymykset (B6) | Ohjaajan puolella on paljon valintoja | A | Ehdotettu |
 
@@ -308,6 +308,7 @@ Kirjaa tähän jokainen suunnan tarkennus: päivämäärä, tunniste, päätös,
 
 | Päivä | ID | Päätös | Perustelu |
 | --- | --- | --- | --- |
+| 15.11.2026 | A2, G4 | A2 toteutettu: "Tarvitsen vielä hetken" ajastimessa ja päiväohjelmassa, kun aika on loppumassa tai loppunut. Ohjaajan rajat Ei/2/3/5 min (oletus 3) ja kerran/kahdesti toimintoa kohden (oletus kerran); lisäaika ilman PIN-koodia. Kun lisäaikaa ei voi antaa, painike näyttää viestin aikuiselle eikä pysäytä aikaa. Uusi viestikuva (G4 osittain: lisäaika) | Käyttäjän keino neuvotella ajasta ilman, että ajan säätö avautuu kokonaan; ei porsaanreikää loputtomaan aikaan. Oletukset vahvistetaan ohjaajilta pilotissa |
 | 14.11.2026 | A1, P | A1 toteutettu: ennakkovaroitus "Pian vaihtuu – Seuraavaksi" ajastimessa ja päiväohjelmassa, asetus Ei/2/5/10 min (oletus 5), ei ääntä. Lisäksi "Tarvitsen tauon" ajastimeen ja tapahtumakorttiin (aina ilman PIN-koodia, pysäyttää ajan). A2 (lisäaika) yhä tekemättä | Siirtymät heikoin alue; tauko aina vapaa (laatuportti R5) |
 | 14.11.2026 | – | Automaattinen laatuportti (ClientQualityGateTest, R1–R9) | Sovitut periaatteet pysyvät voimassa jokaisessa käännöksessä; ei korvaa käyttäjäpalautetta |
 | 14.11.2026 | A3, A4 | Toteutettu: Pysyy samana -osio, Kuuntele, Tarvitsen tauon, ilta-ennakko (klo 18), muistutus muutokselle, Palauta alkuperäinen -vahvistus | Muutoksen epävarmuus; ohjaajan virheen korjaus turvallisesti |
@@ -340,4 +341,4 @@ Kirjaa tähän jokainen suunnan tarkennus: päivämäärä, tunniste, päätös,
 - Vasquez, S. ym. (2017). Effects of Advance Notice on Problem Behavior Occasioned by Interruptions. *Behavior Analysis in Practice* 10. https://link.springer.com/article/10.1007/s40617-017-0187-7
 - Waters, M. B. ym. (2009). Visual schedules and extinction plus DRO (tiivistelmä). *JABA* 42. https://behavioristbookclub.com/aba-research/aba-fundamentals/separate-and-combined-effects-of-visual-schedules-and-extinction-plus/
 
-Versiohistoria: v1.5 (14.11.2026) A1, A3, A4 toteutettu (odottaa puhelintestiä), laatuportti · v1.4 (14.11.2026) B6 Oikeudet ja päätökset -kortti, pysyvä jakopäätös · v1.3 (14.11.2026) luku 12: Päiväni-tarkennus ja kotiverkkovaihtoehto · v1.2 (14.11.2026) C7 Päiväni, X4 yksiköiden välinen viestintä · v1.1 (14.11.2026) luku 11: grafiikka ja ohjattu aloitus (G1–G6) · v1.0 (14.11.2026) ensimmäinen versio.
+Versiohistoria: v1.6 (15.11.2026) A2 toteutettu (odottaa puhelintestiä), lisäajan viestikuva · v1.5 (14.11.2026) A1, A3, A4 toteutettu (odottaa puhelintestiä), laatuportti · v1.4 (14.11.2026) B6 Oikeudet ja päätökset -kortti, pysyvä jakopäätös · v1.3 (14.11.2026) luku 12: Päiväni-tarkennus ja kotiverkkovaihtoehto · v1.2 (14.11.2026) C7 Päiväni, X4 yksiköiden välinen viestintä · v1.1 (14.11.2026) luku 11: grafiikka ja ohjattu aloitus (G1–G6) · v1.0 (14.11.2026) ensimmäinen versio.
