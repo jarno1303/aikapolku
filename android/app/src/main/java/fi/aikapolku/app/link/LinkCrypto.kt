@@ -62,7 +62,7 @@ internal object LinkCrypto {
     }
 
     fun hkdf(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
-        val extract = Mac.getInstance("HmacSHA256").apply { init(SecretKeySpec(salt.ifEmpty { ByteArray(32) }, "HmacSHA256")) }
+        val extract = Mac.getInstance("HmacSHA256").apply { init(SecretKeySpec(if (salt.isEmpty()) ByteArray(32) else salt, "HmacSHA256")) }
         val prk = extract.doFinal(ikm)
         val expand = Mac.getInstance("HmacSHA256").apply { init(SecretKeySpec(prk, "HmacSHA256")) }
         val out = ByteArray(length)
