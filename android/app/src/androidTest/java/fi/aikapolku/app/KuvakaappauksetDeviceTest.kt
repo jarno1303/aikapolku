@@ -101,6 +101,7 @@ class KuvakaappauksetDeviceTest {
     private fun t(id: Int, vararg args: Any) = ctx.getString(id, *args)
 
     private val ok = mutableListOf<String>()
+    private var rotation: Pair<String, String>? = null
     private val failed = mutableListOf<String>()
 
     // --- Kuvaus ja komennot ---
@@ -133,9 +134,13 @@ class KuvakaappauksetDeviceTest {
         if (caregiver) RoleSession.toCaregiver() else RoleSession.toClient()
         try {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                scenario.onActivity { it.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+                scenario.onActivity {
+                    it.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    it.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                }
                 compose.waitForIdle()
-                Thread.sleep(500)
+                Thread.sleep(1_000)
+                compose.waitForIdle()
                 block()
             }
         } catch (e: Throwable) {
@@ -209,6 +214,8 @@ class KuvakaappauksetDeviceTest {
         while (!condition()) {
             if (SystemClock.elapsedRealtime() > end) throw AssertionError("Odotus ylittyi (${timeoutMs / 1000} s)")
             Thread.sleep(500)
+            // Ohjelman ajastin laskee laitteen kellolla; Composen testikello siirretään perässä.
+            compose.mainClock.advanceTimeBy(500L)
             compose.waitForIdle()
         }
     }
@@ -222,12 +229,23 @@ class KuvakaappauksetDeviceTest {
         try {
             shell("rm -rf $DIR")
             shell("mkdir -p $DIR")
+            rotation = shell("settings get system accelerometer_rotation").trim() to shell("settings get system user_rotation").trim()
+            shell("settings put system accelerometer_rotation 0")
+            shell("settings put system user_rotation 0")
+            // Tilapalkin korkeus kuvan rajausta varten (materiaalien generaattori rajaa sen pois).
+            val res = ctx.resources
+            val id = res.getIdentifier("status_bar_height", "dimen", "android")
+            if (id > 0) shell("touch $DIR/tilapalkki-${res.getDimensionPixelSize(id)}.txt")
             demoStatusBar(true)
             Demo.create(ctx)
             caregiverShots()
             clientShots()
         } finally {
             runCatching { demoStatusBar(false) }
+            rotation?.let { (auto, user) ->
+                if (auto == "0" || auto == "1") shell("settings put system accelerometer_rotation $auto")
+                if (user.toIntOrNull() != null) shell("settings put system user_rotation $user")
+            }
             RoleSession.toClient()
             Thread.sleep(1_500)
             PrefsSnapshot.restore(ctx)
@@ -540,10 +558,9 @@ private object Demo {
             )
         )
 
-        // Ainon asetukset: valinta, oma tila, ennakkovaroitus 2 min (näkyy 3 min tehtävässä).
+        // Ainon asetukset: valinta ja oma tila (ennakkovaroitus tuen tason jälkeen).
         ChoicePrefs.setAllowNone(app, true)
         OwnState.setEnabled(app, true)
-        TimeDisplayPrefs.setWarnMinutes(app, 2)
         CardStore(app, aino).saveSelection(
             FirstThenSelection(
                 firstName = name(app, "homework"), nextName = name(app, "gaming"),
@@ -559,6 +576,8 @@ private object Demo {
         RoleSession.setTestMode(app, false)
         SupportLevels.apply(app, SupportLevel.MUCH, today.minusDays(45))
         SupportLevels.apply(app, SupportLevel.MODERATE, today.minusDays(20))
+        // Taso asettaa ennakkovaroitukseksi 5 min; kuvan 3 min tehtävässä varoitus näkyy, kun se on 2 min.
+        TimeDisplayPrefs.setWarnMinutes(app, 2)
         UsageLog.setEnabled(app, true, today.minusDays(28))
         (27 downTo 0).forEach { back ->
             val d = today.minusDays(back.toLong())

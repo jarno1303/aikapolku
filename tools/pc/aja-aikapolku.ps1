@@ -209,9 +209,12 @@ if ($laitetesti -and $code -eq 0) {
         $haetut = Get-ChildItem "$logs\AikaPolku-kuvat\*.png" -ErrorAction SilentlyContinue
         if ($haetut) {
             Move-Item "$logs\AikaPolku-kuvat\*.png" "$logs\kuvat" -Force
+            # Tilapalkin korkeus (tilapalkki-<px>.txt): materiaalien generaattori rajaa sen pois kuvista.
+            Move-Item "$logs\AikaPolku-kuvat\*.txt" "$logs\kuvat" -Force -ErrorAction SilentlyContinue
             Remove-Item "$logs\AikaPolku-kuvat" -Recurse -Force -ErrorAction SilentlyContinue
-            Get-ChildItem "$kuvaKansio\*.png" -ErrorAction SilentlyContinue | Remove-Item -ErrorAction SilentlyContinue
+            Get-ChildItem "$kuvaKansio\*.png", "$kuvaKansio\*.txt" -ErrorAction SilentlyContinue | Remove-Item -ErrorAction SilentlyContinue
             Get-ChildItem "$logs\kuvat\*.png" | Where-Object { $_.Name -notlike '*-VIRHE.png' } | Copy-Item -Destination $kuvaKansio -Force
+            Copy-Item "$logs\kuvat\*.txt" $kuvaKansio -Force -ErrorAction SilentlyContinue
         }
         & $adb shell rm -r /sdcard/Pictures/AikaPolku-kuvat | Out-Null
         $okKuvat = @(Get-ChildItem "$logs\kuvat\*.png" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike '*-VIRHE.png' }).Count
