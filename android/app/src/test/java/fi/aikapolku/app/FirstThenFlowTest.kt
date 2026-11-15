@@ -264,4 +264,19 @@ class FirstThenFlowTest {
         t.prepareForActivity("Ruokailu", 5)
         assertEquals(0, t.moreTimeUsed)
     }
+
+    @Test
+    fun `asiakkaalle aika alkaa heti ilman lupakyselya`() {
+        // Puhelintesti 15.11.2026: lupakysely tuli asiakkaan eteen eikä aika käynnistynyt.
+        val port = FakeTimer().apply { allowedNow = false }
+        val t = FlowTimer(port)
+        t.prepareForActivity("Askartelu", 3)
+        t.startPause("Ajastin", askPermissions = false) {}
+        assertTrue(t.running)
+        // Ohjaajalta luvat pyydetään edelleen ennen käynnistystä.
+        val t2 = FlowTimer(FakeTimer().apply { allowedNow = false })
+        t2.prepareForActivity("Askartelu", 3)
+        t2.startPause("Ajastin") {}
+        assertFalse(t2.running)
+    }
 }

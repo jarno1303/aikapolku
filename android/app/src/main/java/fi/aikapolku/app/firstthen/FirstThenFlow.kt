@@ -124,15 +124,18 @@ internal class FlowTimer(private val timer: TimerPort) {
     /**
      * Aloita / Tauko. [title] on ilmoituksen otsikko yksinään käytettäessä.
      * [onActivityStart] kutsutaan kerran, kun Ensin-toiminnon ajastus alkaa (puheviesti).
+     * [askPermissions] = saa pyytää puuttuvia lupia ennen käynnistystä (ohjaaja). Asiakkaalle
+     * false: aika alkaa heti ilman lupia, eikä Androidin lupakyselyitä avata asiakkaan eteen
+     * (puhelintesti 15.11.2026: lupakysely tuli ja aika jäi käynnistymättä).
      */
-    fun startPause(title: String, onActivityStart: () -> Unit) {
+    fun startPause(title: String, askPermissions: Boolean = true, onActivityStart: () -> Unit) {
         when {
             running -> {
                 remaining = timer.remaining(remaining)
                 timer.stop(remaining)
                 running = false
             }
-            !timer.allowed() -> timer.requestPermissions()
+            askPermissions && !timer.allowed() -> timer.requestPermissions()
             else -> {
                 if (remaining == 0L) {
                     duration = originalDuration

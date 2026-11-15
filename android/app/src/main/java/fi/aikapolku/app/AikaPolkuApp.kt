@@ -362,7 +362,7 @@ internal fun AikaPolkuApp() {
                     // kellotaulu aukeaa (aika jo käynnissä). Kesken oleva vain avataan.
                     onOpenActivity = {
                         if (timer.activeTask.isNotBlank() && !timer.running && timer.remaining > 0L && !timer.inProgress) {
-                            timer.startPause(context.getString(R.string.timer_title)) { playFirstVoice() }
+                            timer.startPause(context.getString(R.string.timer_title), askPermissions = caregiver.isCaregiver) { playFirstVoice() }
                         }
                         page = AppPage.TIMER
                     }
@@ -432,7 +432,8 @@ internal fun AikaPolkuApp() {
                     },
                     onPreset = { minutes -> timer.setMinutes(minutes) },
                     onStartPause = {
-                        timer.startPause(context.getString(R.string.timer_title)) { playFirstVoice() }
+                        // Lupia pyydetään vain ohjaajalta; asiakkaalle aika alkaa heti.
+                        timer.startPause(context.getString(R.string.timer_title), askPermissions = caregiver.isCaregiver) { playFirstVoice() }
                     },
                     onReset = { timer.reset() },
                     moreTimeUsed = timer.moreTimeUsed,
