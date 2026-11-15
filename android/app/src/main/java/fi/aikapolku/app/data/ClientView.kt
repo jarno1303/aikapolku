@@ -56,6 +56,11 @@ internal data class ClientViewPrefs(
 
         private const val ACTIVITY_KEY = PREFIX + "activity_view"
 
+        /** Aikajanan laajuus tietylle asiakkaalle (ohjattu aloitus asettaa usealle kerralla). */
+        fun setTimeline(context: Context, mode: TimelineMode, profileId: String) {
+            ProfileScope.prefs(context, ProfileScope.RUN_PREFS, profileId).edit().putString(PREFIX + "timeline", mode.key).apply()
+        }
+
         /** Mitä asukas näkee toiminnan aikana (Y5): yksi kortti (oletus) tai toiminnan runko. */
         fun activityView(context: Context, profileId: String = ProfileStore.currentId(context)): ActivityView =
             ActivityView.from(ProfileScope.prefs(context, ProfileScope.RUN_PREFS, profileId).getString(ACTIVITY_KEY, null))

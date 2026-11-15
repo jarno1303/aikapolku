@@ -238,4 +238,45 @@ class UnitsTest {
         val mikko = ClientDay(WeekPlan(), listOf(old), "mikko")
         assertEquals(listOf("Lounas"), names(mikko.eventsFor(monday)))
     }
+
+    @Test
+    fun `oma aika valituille paiville, muina paivina ei toiminnassa`() {
+        val g = paiva.copy(memberTimes = listOf(MemberTime("liisa", setOf(1, 3), "10:00", "13:00")))
+        val groups = all.map { if (it.id == "paiva") g else it }
+        fun liisa(d: LocalDate) = ClientDay(WeekPlan(), Units.groupsFor(groups, "liisa"), "liisa").eventsFor(d).map { it.cardName }
+        assertTrue("Päivätoiminta" in liisa(monday))
+        val tuesday = liisa(monday.plusDays(1))
+        assertFalse("Päivätoiminta" in tuesday)
+        assertTrue("Lounas" in tuesday)
+    }
+
+    @Test
+    fun `siirretty lounas ratkaistaan uudella ajallaan`() {
+        // Lounas siirretään klo 14.15: toiminnasta palannut Matti näkee sen.
+        val moved = GroupSchedule.toMember("villa", EventChange("m2", monday, "lounas1", ChangeType.MOVE, time = "14:15"))
+        assertTrue("Lounas" in names(day("matti", changes = listOf(moved)).eventsFor(monday)))
+        assertTrue(day("matti", changes = listOf(moved)).hiddenFor(monday).isEmpty())
+    }
+
+    @Test
+    fun `siirtymakortti loytyy tunnuksella`() {
+        val withCards = all.map { if (it.id == "paiva") it.copy(leaveCard = "Lähtö", returnCard = "Paluu kotiin") else it }
+        val matti = ClientDay(WeekPlan(), Units.groupsFor(withCards, "matti"), "matti")
+        val id = GroupSchedule.eventId("paiva", "return-1")
+        assertEquals("14:00", matti.event(id)?.time)
+        assertTrue(id in matti.eventIds())
+    }
+
+    @Test
+    fun `ohjaajan etusivu nayttaa yksikon, alayksikon rungolla ja toiminnat`() {
+        val shown = fi.aikapolku.app.week.GroupToday.shown(all).map { it.id }
+        assertTrue("villa" in shown && "omena" in shown && "paiva" in shown && "paja" in shown)
+        assertFalse("Päärynä ilman runkoa ei näy erikseen", "paaryna" in shown)
+        assertEquals(listOf("matti", "liisa", "pekka", "anna", "ville"), fi.aikapolku.app.week.GroupToday.membersOf(villa, all))
+        // Poissaolo yksiköstä merkitään asukkaan alayksikköön.
+        assertEquals("omena", fi.aikapolku.app.week.GroupToday.absenceGroup(villa, "matti", all))
+        // Toiminnan kokoontuminen on peruttavissa.
+        val entries = fi.aikapolku.app.week.GroupToday.dayEntries(paiva, emptyList(), monday)
+        assertEquals(Units.sessionEventId(1), entries.first().original.id)
+    }
 }

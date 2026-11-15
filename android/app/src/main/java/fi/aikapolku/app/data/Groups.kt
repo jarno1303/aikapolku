@@ -139,7 +139,7 @@ internal class ClientDay(
             when (g.kind) {
                 GroupKind.GROUP -> GroupSchedule.eventsFor(g, memberId, date, absent(g.id, date))
                 GroupKind.UNIT -> GroupSchedule.eventsFor(g, memberId, date, absent(g.id, date))
-                    .filter { e -> Units.at(spans, e.time) == null }
+                    .filter { e -> Units.at(spans, effectiveTime(e, date)) == null }
                 GroupKind.ACTIVITY -> activityEvents(g, spans.filter { it.group.id == g.id }, date)
             }
         }
@@ -154,11 +154,19 @@ internal class ClientDay(
     fun hiddenFor(date: LocalDate): List<Pair<WeekEvent, Group>> {
         val spans = spans(date)
         return groups.filter { it.kind == GroupKind.UNIT }.flatMap { g ->
-            GroupSchedule.eventsFor(g, memberId, date, absent(g.id, date)).mapNotNull { e ->
-                Units.at(spans, e.time)?.let { e to it.group }
-            }
+            GroupSchedule.eventsFor(g, memberId, date, absent(g.id, date))
+                .filterNot { e -> groupChange(e, date)?.type == ChangeType.CANCEL }
+                .mapNotNull { e -> Units.at(spans, effectiveTime(e, date))?.let { e to it.group } }
         }.sortedBy { WeekSchedule.minutesOf(it.first.time) }
     }
+
+    /** Yksikön kohdan päivän muutos (koko kohta, ei vaihe). */
+    private fun groupChange(e: WeekEvent, date: LocalDate): EventChange? =
+        groupChanges.firstOrNull { it.date == date && it.eventId == e.id && !it.isStep }
+
+    /** Kohdan aika päivän siirron jälkeen: siirretty lounas ratkaistaan uudella ajallaan. */
+    private fun effectiveTime(e: WeekEvent, date: LocalDate): String =
+        groupChange(e, date)?.takeIf { it.type == ChangeType.MOVE && it.time.isNotBlank() }?.time ?: e.time
 
     private fun activityEvents(group: Group, spans: List<ActivitySpan>, date: LocalDate): List<WeekEvent> =
         spans.flatMap { span ->
@@ -186,6 +194,17 @@ internal class ClientDay(
         own.event(id)?.let { return it }
         val (groupId, eventId) = GroupSchedule.parse(id) ?: return null
         val group = groups.firstOrNull { it.id == groupId && memberId in it.members } ?: return null
+        if (group.kind == GroupKind.ACTIVITY && (eventId.startsWith("leave-") || eventId.startsWith("return-"))) {
+            // Siirtymäkortti: aika kokoontumisesta.
+            val day = eventId.substringAfter('-').toIntOrNull() ?: return null
+            val (start, end) = Units.sessionsFor(group, memberId, day).firstOrNull() ?: return null
+            val leave = eventId.startsWith("leave-")
+            val name = if (leave) group.leaveCard else group.returnCard
+            if (name.isBlank()) return null
+            val m = (WeekSchedule.minutesOf(start) - TRANSITION_LEAD_MIN).coerceAtLeast(0)
+            return WeekEvent(id, day, WeekSchedule.WEEK_A, if (leave) WeekSchedule.formatTime(m / 60, m % 60) else end,
+                EventKind.CARD, cardName = name, cardPhoto = if (leave) "builtin:leaving" else "builtin:free_time")
+        }
         if (group.kind == GroupKind.ACTIVITY && Units.isSessionEvent(eventId)) {
             // Kokoontumiskortti: päivä tunnuksesta, ajat asukkaan omina.
             val day = eventId.removePrefix(Units.SESSION_PREFIX).toIntOrNull() ?: return null
@@ -200,7 +219,9 @@ internal class ClientDay(
     override fun eventIds(): Set<String> = own.eventIds() + groups.flatMap { g ->
         GroupSchedule.eventIds(g, memberId) +
             (if (g.kind == GroupKind.ACTIVITY && memberId in g.members)
-                g.sessions.map { GroupSchedule.eventId(g.id, Units.sessionEventId(it.day)) } else emptyList())
+                g.sessions.flatMap { s ->
+                    listOf(Units.sessionEventId(s.day), "leave-${s.day}", "return-${s.day}").map { GroupSchedule.eventId(g.id, it) }
+                } else emptyList())
     }
 
     companion object {

@@ -115,7 +115,9 @@ internal object Units {
     /** Asukkaan kokoontumisajat toiminnassa [group] viikonpäivänä [day] (oma aika huomioituna). */
     fun sessionsFor(group: Group, memberId: String, day: Int): List<Pair<String, String>> {
         if (group.kind != GroupKind.ACTIVITY || memberId !in group.members) return emptyList()
-        val own = group.memberTimes.firstOrNull { it.memberId == memberId && (it.days.isEmpty() || day in it.days) }
+        val own = group.memberTimes.firstOrNull { it.memberId == memberId }
+        // Oma aika valituille päiville; muina kokoontumispäivinä asukas ei ole toiminnassa.
+        if (own != null && own.days.isNotEmpty() && day !in own.days) return emptyList()
         return group.sessions.filter { it.day == day }.map { s ->
             if (own != null) own.start to own.end else s.start to s.end
         }

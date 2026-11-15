@@ -57,7 +57,10 @@ import fi.aikapolku.app.data.DayEntry
 import fi.aikapolku.app.data.EventChange
 import fi.aikapolku.app.data.EventKind
 import fi.aikapolku.app.data.Group
+import fi.aikapolku.app.data.GroupKind
 import fi.aikapolku.app.data.GroupStore
+import fi.aikapolku.app.data.Units
+import fi.aikapolku.app.data.WeekEvent
 import fi.aikapolku.app.data.Moves
 import fi.aikapolku.app.data.ProfileStore
 import fi.aikapolku.app.data.Runko
@@ -83,6 +86,52 @@ internal object GroupToday {
     fun replace(eventId: String, date: LocalDate, name: String, photo: String, newId: () -> String) =
         EventChange(newId(), date, eventId, ChangeType.REPLACE, cardName = name, cardPhoto = photo, reveal = ChangeReveal.NOW, showOriginal = true)
 
+    /**
+     * Toiminnan tämän päivän kokoontuminen ohjaajalle (yksikkömalli): voi perua, jolloin
+     * asukkaat ovat kotona. Tunnus rungon muodossa ("session-<päivä>").
+     */
+    fun sessionEvents(group: Group, date: LocalDate): List<WeekEvent> {
+        if (group.kind != GroupKind.ACTIVITY) return emptyList()
+        val day = date.dayOfWeek.value
+        return group.sessions.filter { it.day == day }.map {
+            WeekEvent(Units.sessionEventId(day), day, WeekSchedule.WEEK_A, it.start, EventKind.CARD,
+                cardName = group.name, cardPhoto = group.cardPhoto, ongoing = true, until = it.end)
+        }
+    }
+
+    /** Päivän rivit: toiminnalle kokoontuminen ja sen runko, muille rungon kohdat. */
+    fun dayEntries(group: Group, changes: List<EventChange>, date: LocalDate): List<DayEntry> =
+        if (group.kind == GroupKind.ACTIVITY) {
+            DayChanges.entries(
+                (sessionEvents(group, date) + WeekSchedule.eventsFor(group.plan, date).filter { it.kind == EventKind.CARD })
+                    .sortedBy { WeekSchedule.minutesOf(it.time) },
+                changes, date, null
+            )
+        } else entries(group, changes, date)
+
+    /** Ryhmän asukkaat: yksikölle myös alayksiköiden asukkaat. */
+    fun membersOf(group: Group, all: List<Group>): List<String> =
+        if (group.kind == GroupKind.UNIT) UnitToday.residents(group, all) else group.members
+
+    /** Mihin ryhmään asukkaan poissaolo merkitään: yksikössä asukkaan oma (ala)yksikkö. */
+    fun absenceGroup(group: Group, memberId: String, all: List<Group>): String =
+        if (group.kind != GroupKind.UNIT) group.id
+        else all.firstOrNull { g ->
+            g.kind == GroupKind.UNIT && memberId in g.members && (g.id == group.id || Units.ancestors(g, all).any { it.id == group.id })
+        }?.id ?: group.id
+
+    /** Ohjaajan etusivulla näytettävät: ryhmät rungolla, ylimmät yksiköt, alayksiköt rungolla, toiminnat. */
+    fun shown(all: List<Group>): List<Group> = all.filter { g ->
+        when (g.kind) {
+            GroupKind.GROUP -> g.members.isNotEmpty() && g.plan.events.isNotEmpty()
+            GroupKind.UNIT -> {
+                val top = g.parentId.isBlank() || all.none { it.id == g.parentId }
+                membersOf(g, all).isNotEmpty() && (top || g.plan.events.isNotEmpty())
+            }
+            GroupKind.ACTIVITY -> g.members.isNotEmpty() && g.sessions.isNotEmpty()
+        }
+    }
+
     /** Ryhmän rungon kohta uuteen aikaan joka viikko (koko ryhmälle). */
     fun moveWeekly(group: Group, eventId: String, time: String): Group =
         group.copy(plan = group.plan.copy(events = group.plan.events.map { if (it.id == eventId) it.copy(time = time) else it }))
@@ -101,17 +150,21 @@ internal fun GroupTodayCard() {
     val store = remember { GroupStore(app) }
     val me = remember { ProfileStore.currentId(app) }
     val profiles = remember(revision) { ProfileStore.list(app) }
+    val all = remember(revision) { store.load() }
     val groups = remember(revision) {
-        store.load().filter { it.members.isNotEmpty() && it.plan.events.isNotEmpty() }
-            .sortedWith(compareBy({ if (me in it.members) 0 else 1 }, { it.name.lowercase() }))
+        GroupToday.shown(all).sortedWith(compareBy({ if (me in GroupToday.membersOf(it, all)) 0 else 1 }, { it.name.lowercase() }))
     }
     if (groups.isEmpty()) return
     var selectedId by rememberSaveable { mutableStateOf(groups.first().id) }
     val group = groups.firstOrNull { it.id == selectedId } ?: groups.first()
     val today = remember { LocalDate.now() }
-    val absent = remember(revision, group.id) { store.absences()[group.id]?.get(today).orEmpty() }
+    // Yksikössä poissaolo merkitään asukkaan omaan (ala)yksikköön.
+    val absent = remember(revision, group.id) {
+        val a = store.absences()
+        GroupToday.membersOf(group, all).filter { m -> m in a[GroupToday.absenceGroup(group, m, all)]?.get(today).orEmpty() }.toSet()
+    }
     val changes = remember(revision, group.id) { store.changes(group.id) }
-    val entries = GroupToday.entries(group, changes, today)
+    val entries = GroupToday.dayEntries(group, changes, today)
     val caregiver = LocalCaregiver.current
     val canEdit = caregiver.allows(AppAction.EDIT_PROGRAMS)
     val haptic = LocalHapticFeedback.current
@@ -144,7 +197,8 @@ internal fun GroupTodayCard() {
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val members = profiles.filter { it.id in group.members }
+            val memberIds = GroupToday.membersOf(group, all)
+            val members = profiles.filter { it.id in memberIds }
             val present = members.count { it.id !in absent }
             Text(
                 (if (groups.size == 1) group.name + " · " else "") + stringResource(R.string.group_today_present, present, members.size),
@@ -167,7 +221,7 @@ internal fun GroupTodayCard() {
                             .width(72.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .clickable(enabled = canEdit, role = Role.Switch) {
-                                store.setAbsent(group.id, p.id, today, !isAbsent)
+                                store.setAbsent(GroupToday.absenceGroup(group, p.id, all), p.id, today, !isAbsent)
                                 saved()
                             }
                             .semantics {
@@ -202,7 +256,7 @@ internal fun GroupTodayCard() {
                     modifier = Modifier.dragRow(
                         drag = drag,
                         id = key,
-                        enabled = canEdit && !entry.cancelled && entries.size > 1,
+                        enabled = canEdit && !entry.cancelled && entries.size > 1 && !Units.isSessionEvent(key),
                         haptic = haptic,
                         onDrop = {
                             val rest = entries.filter { it.original.id != key }
@@ -226,6 +280,8 @@ internal fun GroupTodayCard() {
         GroupEntryDialog(
             entry = entry,
             groupName = group.name,
+            // Kokoontumisen voi vain perua (asukkaat ovat silloin kotona) tai palauttaa.
+            sessionOnly = Units.isSessionEvent(entry.original.id),
             onCancel = {
                 store.upsertChange(group.id, GroupToday.cancel(entry.original.id, today, newId))
                 acting = null
@@ -323,7 +379,8 @@ private fun GroupEntryDialog(
     onReplace: (String, String) -> Unit,
     onMove: () -> Unit,
     onRestore: (() -> Unit)?,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    sessionOnly: Boolean = false
 ) {
     var picking by remember { mutableStateOf(false) }
     if (picking) {
@@ -346,8 +403,8 @@ private fun GroupEntryDialog(
                 if (!entry.cancelled) {
                     ChoiceRow(stringResource(R.string.group_change_cancel), onCancel, leading = { RowIcon(Icons.Rounded.Close) })
                 }
-                ChoiceRow(stringResource(R.string.group_change_replace), { picking = true }, leading = { ChangeSymbol(Modifier.size(36.dp)) })
-                if (!entry.cancelled) {
+                if (!sessionOnly) ChoiceRow(stringResource(R.string.group_change_replace), { picking = true }, leading = { ChangeSymbol(Modifier.size(36.dp)) })
+                if (!entry.cancelled && !sessionOnly) {
                     ChoiceRow(stringResource(R.string.group_change_move), onMove, leading = { RowIcon(Icons.Rounded.Refresh) })
                 }
                 if (onRestore != null) {

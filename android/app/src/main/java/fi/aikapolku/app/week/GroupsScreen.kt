@@ -69,7 +69,7 @@ internal fun GroupsScreen(canEdit: Boolean) {
     val app = context.applicationContext
     val store = remember(context) { GroupStore(app) }
     var groups by remember { mutableStateOf(store.load().sortedBy { it.name.lowercase() }) }
-    val profiles = remember { ProfileStore.list(app) }
+    val profiles = remember(GroupSession.revision, fi.aikapolku.app.profiles.ProfileSession.revision) { ProfileStore.list(app) }
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
     var creating by remember { mutableStateOf(false) }
     var wizard by rememberSaveable { mutableStateOf(false) }

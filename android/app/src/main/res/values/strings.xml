@@ -829,12 +829,12 @@
     <string name="unit_row_activity">Toiminta %1$s %2$s</string>
     <string name="unit_children">Alayksiköt: %1$s</string>
     <string name="unit_activity_runko">Toiminnan runko (valinnainen)</string>
-    <string name="unit_activity_runko_info">Jos asukkaalle on valittu "toiminnan runko", hän näkee nämä kohdat toiminnan aikana. Muuten hän näkee yhden kortin.</string>
+    <string name="unit_activity_runko_info">Jos asukkaalle on valittu \"toiminnan runko\", hän näkee nämä kohdat toiminnan aikana. Muuten hän näkee yhden kortin.</string>
     <string name="unit_hidden_title">Ei näy asukkaalle</string>
     <string name="unit_hidden_line">%1$s %2$s · %3$s</string>
     <string name="client_view_activity">Päivätoiminnan ja työtoiminnan aikana</string>
     <string name="client_view_activity_card">Yksi kortti</string>
-    <string name="client_view_activity_card_info">Esim. "Päivätoiminta klo 9–14". Rauhallisin.</string>
+    <string name="client_view_activity_card_info">Esim. \"Päivätoiminta klo 9–14\". Rauhallisin.</string>
     <string name="client_view_activity_plan">Toiminnan runko</string>
     <string name="client_view_activity_plan_info">Toiminnan kohdat (aamukokous, ulkoilu …), jos runko on tehty.</string>
     <string name="unit_today_title">Tänään yksikössä</string>
@@ -870,7 +870,7 @@
     <string name="wizard_workshop">Työpaja</string>
     <string name="wizard_other_activity">Muu toiminta</string>
     <string name="wizard_support_title">Kuinka paljon asukas näkee</string>
-    <string name="wizard_support_info">Valitse jokaiselle, kuinka pitkälle hän näkee päivästään. Rauhallisin on "Vain nyt". Toiminnan aikana: yksi kortti tai toiminnan runko.</string>
+    <string name="wizard_support_info">Valitse jokaiselle, kuinka pitkälle hän näkee päivästään. Rauhallisin on \"Vain nyt\". Toiminnan aikana: yksi kortti tai toiminnan runko.</string>
     <string name="wizard_sees_full">Koko päivä</string>
     <string name="wizard_sees_next">Lähimmät</string>
     <string name="wizard_sees_now">Vain nyt</string>

@@ -62,7 +62,7 @@ class GroupScheduleTest {
 
     @Test
     fun `poissa olevalle ei tule ryhman ohjelmaa, omat jaavat`() {
-        val day = ClientDay(ownMikko, listOf(group), "mikko") { g, d -> g == "tammi" && d == monday }
+        val day = ClientDay(ownMikko, listOf(group), "mikko", absent = { g, d -> g == "tammi" && d == monday })
         assertEquals(listOf("laake"), ids(day))
         // Seuraavalla viikolla taas paikalla.
         assertEquals(4, ids(day, monday.plusWeeks(1)).size)
@@ -129,7 +129,7 @@ class GroupScheduleTest {
         val notifying = group.copy(plan = WeekPlan(listOf(card("lounas", "11:00", "Lounas", notify = true))))
         val plans = mapOf(
             "mikko" to ClientDay(WeekPlan(), listOf(notifying), "mikko"),
-            "anna" to ClientDay(WeekPlan(), listOf(notifying), "anna") { _, d -> d == monday }
+            "anna" to ClientDay(WeekPlan(), listOf(notifying), "anna", absent = { _, d -> d == monday })
         )
         val due = WeekSchedule.dueReminders(plans, LocalDateTime.of(monday, java.time.LocalTime.of(11, 0)))
         assertEquals(listOf("mikko"), due.map { it.profileId })

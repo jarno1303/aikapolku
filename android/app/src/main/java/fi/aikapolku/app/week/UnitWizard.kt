@@ -173,7 +173,11 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
                                 } else {
                                     Text(r.name, fontSize = 16.sp, modifier = Modifier.weight(1f))
                                 }
-                                TextButton(onClick = { residents = residents.filterNot { it.key == r.key } }) { Text(stringResource(R.string.wizard_remove)) }
+                                TextButton(onClick = {
+                                    residents = residents.filterNot { it.key == r.key }
+                                    activities = activities.map { a -> a.copy(members = a.members - r.key) }
+                                    support = support - r.key
+                                }) { Text(stringResource(R.string.wizard_remove)) }
                             }
                         }
                         SecondaryButton(stringResource(R.string.wizard_add_resident), {
@@ -326,7 +330,8 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
     }
 
     val nameMissing = step == 0 && unitName.isBlank()
-    val residentsMissing = step == 1 && (residents.isEmpty() || residents.any { it.name.isBlank() })
+    // Uusille asukkaille tarvitaan nimi; jo lisätty asiakas kelpaa sellaisenaan.
+    val residentsMissing = step == 1 && (residents.isEmpty() || residents.any { it.key.startsWith("new:") && it.name.isBlank() })
     if (residentsMissing && residents.isNotEmpty()) Text(stringResource(R.string.wizard_names_needed), color = AppColors.Change, fontSize = 13.sp)
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
         SecondaryButton(stringResource(if (step == 0) R.string.cancel else R.string.wizard_back), ::back, modifier = Modifier.weight(1f))
@@ -338,9 +343,9 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
                 val ids = residents.associate { r -> r.key to (if (r.key.startsWith("new:")) ProfileStore.add(app, r.name.trim()).id else r.key) }
                 val real = spec().let { s ->
                     s.copy(
-                        subUnits = s.subUnits.map { u -> u.copy(members = u.members.map { ids.getValue(it) }) },
-                        members = s.members.map { ids.getValue(it) },
-                        activities = s.activities.map { a -> a.copy(members = a.members.map { ids.getValue(it) }.toSet()) }
+                        subUnits = s.subUnits.map { u -> u.copy(members = u.members.mapNotNull { ids[it] }) },
+                        members = s.members.mapNotNull { ids[it] },
+                        activities = s.activities.map { a -> a.copy(members = a.members.mapNotNull { ids[it] }.toSet()) }
                     )
                 }
                 val store = GroupStore(app)
@@ -348,11 +353,12 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
                 residents.forEach { r ->
                     val s = support[r.key] ?: WizardSupport()
                     val id = ids.getValue(r.key)
-                    ProfileScope.prefs(app, ProfileScope.RUN_PREFS, id).edit().putString("client_timeline", s.timeline.key).apply()
+                    ClientViewPrefs.setTimeline(app, s.timeline, id)
                     ClientViewPrefs.setActivityView(app, s.activity, id)
                 }
                 EventReminders.reschedule(app)
                 GroupSession.changed()
+                fi.aikapolku.app.profiles.ProfileSession.changed()
                 onDone()
             }, modifier = Modifier.weight(1f))
         }
