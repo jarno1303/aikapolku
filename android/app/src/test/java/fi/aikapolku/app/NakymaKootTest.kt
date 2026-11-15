@@ -17,13 +17,11 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
-import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
@@ -71,7 +69,7 @@ import org.robolectric.annotation.GraphicsMode
  */
 abstract class NakymaKootBase(private val tag: String, private val width: Int, private val contentH: Int) {
     @get:Rule
-    val compose = createComposeRule()
+    val compose = createAndroidComposeRule<androidx.activity.ComponentActivity>()
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private fun t(id: Int, vararg args: Any) = context.getString(id, *args)
@@ -209,7 +207,10 @@ abstract class NakymaKootBase(private val tag: String, private val width: Int, p
         val lines = mutableListOf("Koko $tag: ${width} × ${contentH} dp sisältöalue")
         list.indices.forEach { i ->
             compose.runOnIdle { index = i }
+            // Uusi näkymä piirtyy vasta kehyksillä (kello on käsin ohjattu).
+            repeat(6) { compose.mainClock.advanceTimeByFrame() }
             compose.mainClock.advanceTimeBy(1_000L)
+            compose.waitForIdle()
             val screen = list[i]
             val nodes = clickables()
             val hidden = nodes.filter { n -> n.positionInRoot.y + n.size.height > bottom + 1f }
@@ -221,8 +222,15 @@ abstract class NakymaKootBase(private val tag: String, private val width: Int, p
             }
             lines += "[${screen.name}] " + (if (findings.isEmpty()) "OK" else findings.joinToString("; "))
             runCatching {
-                val bmp = compose.onRoot().captureToImage().asAndroidBitmap()
-                File(dir, "${screen.name}.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                // Piirto suoraan näkymästä (captureToImage odottaa kehystä, jota käsin ohjattu kello ei anna).
+                var bmp: Bitmap? = null
+                compose.runOnUiThread {
+                    val view = compose.activity.window.decorView
+                    val w = (width * density).toInt()
+                    val h = (contentH * density).toInt()
+                    bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { view.draw(android.graphics.Canvas(it)) }
+                }
+                File(dir, "${screen.name}.png").outputStream().use { bmp!!.compress(Bitmap.CompressFormat.PNG, 100, it) }
             }.onFailure { lines += "  (kuva ei onnistunut: ${it.javaClass.simpleName}: ${it.message?.take(120)})" }
         }
         File(dir, "raportti.txt").writeText(lines.joinToString("\n"))
