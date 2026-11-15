@@ -785,7 +785,15 @@
     <!-- Siirtymät (A1/A2): ennakkovaroitus ennen vaihtoa -->
     <string name="transition_soon_title">Pian vaihtuu</string>
     <string name="transition_warn_label">Ennakkovaroitus ennen vaihtoa (min)</string>
-    <string name="transition_warn_info">Rauhallinen kortti kertoo, mitä seuraavaksi tulee, kun aikaa on jäljellä valittu määrä. Ei ääntä.</string>
+    <string name="transition_warn_info">Rauhallinen kortti kertoo, mitä seuraavaksi tulee, kun aikaa on jäljellä valittu määrä. Äänen voi valita kohdasta Viestit (oletus ei ääntä).</string>
+    <string name="soon_voice_label">Pian vaihtuu -ennakkovaroitus</string>
+    <string name="soon_voice_info">Ääni soi kerran, kun ennakkovaroitus tulee näkyviin. Ei soi, kun puhelin on äänettömällä. Valinta koskee tätä asiakasta.</string>
+    <string name="soon_voice_warn_off">Ennakkovaroitus on nyt pois päältä. Sen saa päälle kohdasta Aika.</string>
+    <string name="soon_voice_general">Yleinen äänite – kaikille asiakkaille</string>
+    <string name="soon_voice_client">Tämän asiakkaan oma äänite – korvaa yleisen</string>
+    <string name="soon_voice_general_saved">Yleinen äänite tallennettu. Valitse asiakkaalle Oma ääni, jotta se soi hänelle.</string>
+    <string name="soon_voice_record_first">Äänitä ensin yleinen tai asiakkaan oma äänite.</string>
+    <string name="soon_voice_remove">Poista äänite</string>
     <string name="transition_warn_minutes">%1$d</string>
     <!-- Tarvitsen vielä hetken (tutkielma A2) -->
     <string name="support_more_time">Tarvitsen vielä hetken</string>

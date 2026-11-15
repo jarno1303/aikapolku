@@ -421,3 +421,9 @@
 - Tunnettu: jos sovellus suljetaan "Aloita aika" -tilassa ennen kuin vaiheen aika käynnistetään, jatkettaessa vaihe näyttää loppuneelta (vanha resume-sääntö, ei tallenna käynnistystietoa).
 - Grafiikka: uusi viestikuva samaan tyyliin kuin Tarvitsen tauon (henkilö + puhekupla: kello, jossa jäljellä oleva aika ja lisäaika sekä plus-merkki; värit samat kuin kellotaulussa), uusi kuvake AppIcons.MoreTime.
 - Uudet testit: MoreTimeTest (9), FlowTimer (4), ProgramRunController (5), laatuportti: neljä uutta näkymää ja R10-kulku (lisäaika → vahvistus häviää → viesti aikuiselle).
+
+## 15.11.2026 – Yksikkömalli, loma ja ennakkovaroituksen ääni
+- Yksiköt ja alayksiköt, päivän toiminnat omina ryhminä, sijaintisääntö, Tänään yksikössä, ohjattu aloitus.
+- Loma ja poissaolo, poikkeuspäivät etukäteen, eri ajat eri päivinä, ruokailujen muistutus, laitteen rajaus alayksikköön.
+- R11: asiakkaan näkymissä kaikki painikkeet näkyvät ruudulla. Aikajanan oletus Koko päivä (vieritys sallittu), ohjaaja valitsee asiakaskohtaisesti.
+- Pian vaihtuu -ennakkovaroitukseen valinnainen ääni (Asetukset → Viestit): ei ääntä (oletus) / puheääni / oma ääni. Yleinen äänite kaikille ja tarvittaessa asiakkaan oma, joka korvaa yleisen. Seuraavan tehtävän oma ääni soi perään. Soi kerran tehtävää kohden, ei soi äänettömällä eikä paljasta piilotettua seuraavaa.

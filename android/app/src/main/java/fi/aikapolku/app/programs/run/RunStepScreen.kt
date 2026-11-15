@@ -72,7 +72,9 @@ internal data class RunNext(
     val name: String,
     val taskName: String,
     val taskPhoto: String,
-    val isSubStep: Boolean
+    val isSubStep: Boolean,
+    /** Seuraavan tehtävän oma ääni (ennakkovaroituksen äänessä), tyhjä = ei ole. */
+    val voicePath: String = ""
 )
 
 /** Ajan tila yläkulman aikamerkkiin. null = vaiheella ei ole aikaa. */
@@ -266,6 +268,13 @@ internal fun RunStepScreen(
             }
             val soon = next != null && !next.isSubStep && time is RunTime.Countdown &&
                 fi.aikapolku.app.data.TimeDisplayPrefs.showSoon(time.remainingMs, time.durationMs, time.running, warnMinutes)
+            // Ääni (valinnainen, asiakaskohtainen) soi kerran tehtävää kohden.
+            fi.aikapolku.app.voice.SoonVoiceEffect(
+                soon = soon,
+                key = "run|$taskIndex|$taskName",
+                nextName = if (nextMode == RunPreferences.NEXT_HIDDEN) null else next?.name,
+                nextVoicePath = next?.voicePath.orEmpty()
+            )
             if (soon && next != null) {
                 if (nextMode == RunPreferences.NEXT_HIDDEN) SoonChangeCard(nextName = null, image = null)
                 else SoonChangeCard(next.name, image = { m -> RunImage(next.taskName, next.taskPhoto, null, m) })

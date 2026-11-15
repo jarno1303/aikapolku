@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -56,6 +57,7 @@ import fi.aikapolku.app.data.ClientViewPrefs
 import fi.aikapolku.app.data.RunPreferences
 import fi.aikapolku.app.data.TimeDisplayPrefs
 import fi.aikapolku.app.data.MoreTime
+import fi.aikapolku.app.data.SoonVoice
 import fi.aikapolku.app.data.TimelineMode
 import fi.aikapolku.app.timer.TimeModeChoices
 import fi.aikapolku.app.timer.playCompletionSound
@@ -370,6 +372,11 @@ internal fun MessageSettings() {
     var breakMode by remember { mutableStateOf(RunPreferences.voiceMode(context, RunPreferences.BREAK)) }
     var helpFile by remember { mutableStateOf(RunPreferences.recording(context, RunPreferences.HELP)) }
     var breakFile by remember { mutableStateOf(RunPreferences.recording(context, RunPreferences.BREAK)) }
+    // "Pian vaihtuu" -ennakkovaroitus: tapa ja asiakkaan oma äänite asiakaskohtaisia, yleinen äänite laitteen.
+    var soonMode by remember { mutableStateOf(SoonVoice.mode(context)) }
+    var soonClientFile by remember { mutableStateOf(SoonVoice.clientRecording(context)) }
+    var soonGeneralFile by remember { mutableStateOf(SoonVoice.generalRecording(context)) }
+    val warnMinutes = remember { TimeDisplayPrefs.warnMinutes(context) }
     var showVoicePicker by remember { mutableStateOf(false) }
 
     fun start(kind: String) {
@@ -408,11 +415,27 @@ internal fun MessageSettings() {
         if (recordingKind != kind) return
         try {
             val saved = recorder.finish()
-            RunPreferences.setRecording(context, kind, saved)
-            if (kind == RunPreferences.HELP) helpFile = saved else breakFile = saved
-            RunPreferences.setVoiceMode(context, kind, RunPreferences.AUDIO_RECORDED)
-            if (kind == RunPreferences.HELP) helpMode = RunPreferences.AUDIO_RECORDED else breakMode = RunPreferences.AUDIO_RECORDED
-            message = context.getString(R.string.oma_aani_tallennettu)
+            when (kind) {
+                SOON_GENERAL -> {
+                    SoonVoice.setGeneralRecording(context, saved)
+                    soonGeneralFile = saved
+                    message = context.getString(R.string.soon_voice_general_saved)
+                }
+                SOON_CLIENT -> {
+                    SoonVoice.setClientRecording(context, saved)
+                    soonClientFile = saved
+                    RunPreferences.setVoiceMode(context, RunPreferences.SOON, RunPreferences.AUDIO_RECORDED)
+                    soonMode = RunPreferences.AUDIO_RECORDED
+                    message = context.getString(R.string.oma_aani_tallennettu)
+                }
+                else -> {
+                    RunPreferences.setRecording(context, kind, saved)
+                    if (kind == RunPreferences.HELP) helpFile = saved else breakFile = saved
+                    RunPreferences.setVoiceMode(context, kind, RunPreferences.AUDIO_RECORDED)
+                    if (kind == RunPreferences.HELP) helpMode = RunPreferences.AUDIO_RECORDED else breakMode = RunPreferences.AUDIO_RECORDED
+                    message = context.getString(R.string.oma_aani_tallennettu)
+                }
+            }
         } catch (_: Exception) {
             message = context.getString(R.string.tallennus_epaonnistui)
         }
@@ -447,6 +470,61 @@ internal fun MessageSettings() {
         onFinish = { stopRecord(RunPreferences.BREAK) },
         onPlay = { VoicePlayer.play(context, breakFile) }
     )
+
+    // Pian vaihtuu: ääni ennakkovaroitukseen (oletus ei ääntä).
+    SettingLabel(stringResource(R.string.soon_voice_label))
+    Text(stringResource(R.string.soon_voice_info), fontSize = 14.sp, color = AppColors.Muted)
+    if (warnMinutes == 0) Text(stringResource(R.string.soon_voice_warn_off), fontSize = 14.sp, color = AppColors.Muted)
+    val soonModes = listOf(RunPreferences.AUDIO_SILENT, RunPreferences.AUDIO_TTS, RunPreferences.AUDIO_RECORDED)
+    val soonRecorded = SoonVoice.effectiveRecording(soonClientFile, soonGeneralFile)
+    SegmentedChoice(
+        options = listOf(stringResource(R.string.ei_aanta), stringResource(R.string.puheaani), stringResource(R.string.oma_aani)),
+        selected = soonModes.indexOf(soonMode).coerceAtLeast(0),
+        onSelect = { index ->
+            val chosen = soonModes[index]
+            if (chosen != RunPreferences.AUDIO_RECORDED || soonRecorded.isNotBlank()) {
+                soonMode = chosen
+                RunPreferences.setVoiceMode(context, RunPreferences.SOON, chosen)
+            } else {
+                message = context.getString(R.string.soon_voice_record_first)
+            }
+        }
+    )
+    RecordLine(
+        label = stringResource(R.string.soon_voice_general),
+        path = soonGeneralFile,
+        recording = recordingKind == SOON_GENERAL,
+        canStart = recordingKind == null,
+        onStart = { beginRecord(SOON_GENERAL) },
+        onFinish = { stopRecord(SOON_GENERAL) },
+        onPlay = { VoicePlayer.play(context, soonGeneralFile) },
+        onRemove = {
+            SoonVoice.setGeneralRecording(context, "")
+            soonGeneralFile = ""
+            if (soonMode == RunPreferences.AUDIO_RECORDED && soonClientFile.isBlank()) {
+                soonMode = RunPreferences.AUDIO_SILENT
+                RunPreferences.setVoiceMode(context, RunPreferences.SOON, RunPreferences.AUDIO_SILENT)
+            }
+        }
+    )
+    RecordLine(
+        label = stringResource(R.string.soon_voice_client),
+        path = soonClientFile,
+        recording = recordingKind == SOON_CLIENT,
+        canStart = recordingKind == null,
+        onStart = { beginRecord(SOON_CLIENT) },
+        onFinish = { stopRecord(SOON_CLIENT) },
+        onPlay = { VoicePlayer.play(context, soonClientFile) },
+        onRemove = {
+            SoonVoice.setClientRecording(context, "")
+            soonClientFile = ""
+            if (soonMode == RunPreferences.AUDIO_RECORDED && soonGeneralFile.isBlank()) {
+                soonMode = RunPreferences.AUDIO_SILENT
+                RunPreferences.setVoiceMode(context, RunPreferences.SOON, RunPreferences.AUDIO_SILENT)
+            }
+        }
+    )
+
     SecondaryButton(
         text = stringResource(R.string.valitse_ja_kuuntele_puheaani),
         icon = AppIcons.Speaker,
@@ -457,6 +535,47 @@ internal fun MessageSettings() {
     if (message.isNotBlank()) Text(message, fontSize = 13.sp, color = AppColors.Muted)
 
     if (showVoicePicker) VoicePickerDialog(onDismiss = { showVoicePicker = false })
+}
+
+private const val SOON_GENERAL = "soon_general"
+private const val SOON_CLIENT = "soon_client"
+
+/** Äänitysrivi ilman tapavalintaa: otsikko, äänitä/lopeta, kuuntele ja poista. */
+@Composable
+private fun RecordLine(
+    label: String,
+    path: String,
+    recording: Boolean,
+    canStart: Boolean,
+    onStart: () -> Unit,
+    onFinish: () -> Unit,
+    onPlay: () -> Unit,
+    onRemove: () -> Unit
+) {
+    Text(label, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+    if (recording) {
+        Button(onClick = onFinish, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+            Text(stringResource(R.string.lopeta_tallennus))
+        }
+    } else {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            SecondaryButton(
+                text = if (path.isEmpty()) stringResource(R.string.aanita_oma_viesti) else stringResource(R.string.aanita_uudelleen),
+                icon = AppIcons.Mic,
+                onClick = onStart,
+                enabled = canStart,
+                modifier = Modifier.weight(1f)
+            )
+            if (path.isNotBlank()) {
+                SecondaryButton(text = stringResource(R.string.kuuntele), icon = AppIcons.Speaker, onClick = onPlay)
+            }
+        }
+        if (path.isNotBlank()) {
+            TextButton(onClick = onRemove, enabled = canStart, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.soon_voice_remove))
+            }
+        }
+    }
 }
 
 @Composable

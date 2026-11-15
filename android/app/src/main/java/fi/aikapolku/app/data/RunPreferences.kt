@@ -25,6 +25,9 @@ internal object RunPreferences {
     const val DONE_AFTER_TIME = "after_time"
     private val doneModes = setOf(DONE_ALWAYS, DONE_CONFIRM, DONE_AFTER_TIME)
     const val BREAK = "break"
+    /** "Pian vaihtuu" -ennakkovaroitus (ks. SoonVoice). */
+    const val SOON = "soon"
+    private val voiceKinds = setOf(HELP, BREAK, SOON)
     /** Kestotehtävän aika: alkaa itsestään (oletus) tai kun asiakas painaa Aloita aika. */
     const val TIMER_AUTO = "auto"
     const val TIMER_BUTTON = "button"
@@ -60,16 +63,16 @@ internal object RunPreferences {
             .takeIf { it in setOf(AUDIO_SILENT, AUDIO_TTS, AUDIO_RECORDED) } ?: AUDIO_SILENT
 
     fun setVoiceMode(context: Context, kind: String, mode: String) {
-        if (kind in setOf(HELP, BREAK) && mode in setOf(AUDIO_SILENT, AUDIO_TTS, AUDIO_RECORDED)) {
+        if (kind in voiceKinds && mode in setOf(AUDIO_SILENT, AUDIO_TTS, AUDIO_RECORDED)) {
             prefs(context).edit().putString("audio_$kind", mode).apply()
         }
     }
 
     fun recording(context: Context, kind: String): String =
-        if (kind in setOf(HELP, BREAK)) prefs(context).getString("recording_$kind", "") ?: "" else ""
+        if (kind in voiceKinds) prefs(context).getString("recording_$kind", "") ?: "" else ""
 
     fun setRecording(context: Context, kind: String, path: String) {
-        if (kind in setOf(HELP, BREAK))
+        if (kind in voiceKinds)
             prefs(context).edit().putString("recording_$kind", path).apply()
     }
 }

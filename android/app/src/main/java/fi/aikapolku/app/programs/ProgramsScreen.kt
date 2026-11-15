@@ -322,7 +322,7 @@ internal fun ProgramsScreen(
                     // Esikatselu: ensin seuraava osavaihe, viimeisessä osavaiheessa seuraava tehtävä.
                     next = when {
                         nextSubStep != null -> RunNext(nextSubStep, runStep.name, runStep.photo, isSubStep = true)
-                        nextTask != null -> RunNext(nextTask.name, nextTask.name, nextTask.photo, isSubStep = false)
+                        nextTask != null -> RunNext(nextTask.name, nextTask.name, nextTask.photo, isSubStep = false, voicePath = nextTask.voicePath)
                         else -> null
                     },
                     nextMode = nextPreviewMode,

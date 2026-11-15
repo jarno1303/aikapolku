@@ -41,7 +41,17 @@ internal object VoicePlayer {
         return message
     }
 
-    fun play(context: Context, path: String): String? {
+    /**
+     * Soittaa tiedostot peräkkäin hiljaa ohittaen puuttuvat (ei ilmoitusta asiakkaalle).
+     * Käytössä ennakkovaroituksen äänessä: oma lause ja perään seuraavan tehtävän ääni.
+     */
+    fun playSequence(context: Context, paths: List<String>) {
+        val list = paths.filter { it.isNotBlank() && File(it).isFile }
+        if (list.isEmpty()) return
+        play(context, list.first(), onDone = { playSequence(context, list.drop(1)) })
+    }
+
+    fun play(context: Context, path: String, onDone: (() -> Unit)? = null): String? {
         if (path.isBlank()) {
             return report(
                 context,
@@ -86,6 +96,7 @@ internal object VoicePlayer {
             next.setOnCompletionListener { mp ->
                 if (player === mp) {
                     stop()
+                    onDone?.invoke()
                 } else {
                     runCatching { mp.release() }
                 }

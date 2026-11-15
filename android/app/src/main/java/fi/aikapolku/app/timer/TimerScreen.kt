@@ -104,6 +104,8 @@ internal fun TimerScreen(
     val soon = hasNext && TimeDisplayPrefs.showSoon(remaining, duration, running, warnMinutes)
     // Tila varataan koko ajan, kun varoitus voi tulla: kellotaulu ei hyppää varoituksen ilmestyessä.
     val soonPossible = hasNext && warnMinutes > 0 && duration > warnMinutes * 60_000L
+    // Ennakkovaroituksen ääni (valinnainen, asiakaskohtainen): kerran toimintoa kohden.
+    fi.aikapolku.app.voice.SoonVoiceEffect(soon = soon, key = "timer|$activeTask|$nextActivity", nextName = nextActivity)
 
     // Tarvitsen tauon (A1/A2): aina sallittu ilman PIN-koodia, kuten päiväohjelmassa.
     // Aika pysähtyy; Jatka käynnistää sen uudelleen, takaisin-ele jättää sen pysäytetyksi.
