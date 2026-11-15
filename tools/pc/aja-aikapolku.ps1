@@ -103,6 +103,7 @@ if ($laitetesti) { $tasks += " :app:assembleDebugAndroidTest" }
 $android = "$wt\android"
 $log = "$logs\aikapolku.log"
 Remove-Item -Recurse -Force "$android\app\build\test-results" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force "$android\app\build\nakymakuvat" -ErrorAction SilentlyContinue
 
 function Invoke-Build {
     # Gradle omana prosessinaan: "cmd /c" voi jäädä odottamaan Gradlen taustaprosessia (Aallon kokemus 12.11.).
@@ -128,6 +129,8 @@ $kesto = [int]((Get-Date) - $alku).TotalSeconds
 "exit=$code kesto=${kesto}s haara=$branch sha=$sha tehtavat=$tasks" | Out-File "$logs\tulos.txt" -Encoding utf8
 New-Item -ItemType Directory -Force "$logs\testit" | Out-Null
 Copy-Item "$android\app\build\test-results\testDebugUnitTest\*.xml" "$logs\testit" -ErrorAction SilentlyContinue
+# Näkymäkuvat eri ruutukoissa (NakymaKoot*-testit): Claude tarkistaa asettelun niistä.
+if (Test-Path "$android\app\build\nakymakuvat") { Copy-Item "$android\app\build\nakymakuvat" "$logs\nakymakuvat" -Recurse -Force -ErrorAction SilentlyContinue }
 if ($taysi) { Copy-Item "$android\app\build\reports\lint-results-debug.*" $logs -ErrorAction SilentlyContinue }
 
 $apk = "$android\app\build\outputs\apk\debug\app-debug.apk"
