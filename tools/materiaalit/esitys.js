@@ -193,6 +193,7 @@ async function icon(Comp, color = '#FFFFFF') {
   card(s, 0.6, 4.15, cw, ch, 'Aika-apuvälineet', 'Satunnaistettu tutkimus: suuri vaikutus ajan hahmottamiseen (d = 0,81).', 'Janeslätt ym., Scand. J. Occup. Ther.');
   card(s, 0.6 + cw + 0.25, 4.15, cw, ch, 'Asumisyksikössä', 'Kognitiivinen apuväline toi ennakoitavuutta, kommunikoinnin tukea ja itsemääräämistä.', 'Søderstrøm ym., J. Intellect. Disabil.');
   card(s, 0.6 + 2 * (cw + 0.25), 4.15, cw, ch, 'Päivitys 15.11.2026', 'Arvion pohjalta lisätty: valinta, oma tila, odotetaan ja ennakkovaroituksen ääni.', 'Seuraavaksi: tuen asteittainen vähentäminen');
+  s.addText('Tutkimus perustelee ratkaisut. AikaPolun oma vaikuttavuus osoitetaan pilotissa.', { x: 0.6, y: 6.68, w: 11.5, h: 0.35, fontSize: 13, italic: true, color: C.accent4, margin: 0, isTextBox: true });
 
   // 10 Tietosuoja
   s = pres.addSlide({ masterName: 'Sisältö', sectionTitle: 'Näyttö ja turvallisuus' });
@@ -203,7 +204,20 @@ async function icon(Comp, color = '#FFFFFF') {
   await iconRow(s, md.MdEnhancedEncryption, 6.9, 1.7, 'Salattu yhteys (kokeiluvaihe)', 'Laitteet liitetään kerran koodia vertaamalla; viestit salataan.', 5.4);
   await iconRow(s, md.MdPin, 6.9, 3.0, 'PIN ja roolit', 'Ohjaajan toiminnot PIN-koodin takana, asiakkaan oikeudet vapaina.', 5.4);
   await iconRow(s, md.MdIosShare, 6.9, 4.3, 'Hallittu siirto', 'Vienti voidaan tehdä ilman henkilötietoja ja suojata salasanalla.', 5.4);
-  card(s, 0.7, 5.6, 11.9, 0.95, 'Huomio', 'AikaPolku on toiminnanohjauksen tuki. Tietosuojan vaikutustenarviointi tehdään yhdessä ennen pilottia.');
+  card(s, 0.7, 5.6, 11.9, 0.95, 'Huomio', 'Paikallinen tallennus ei yksin ratkaise tietosuojaa. Laitteiden suojaus, säilytysajat ja vastuut sovitaan, ja vaikutustenarviointi tehdään yhdessä ennen pilottia.');
+
+  // Rajaukset
+  s = pres.addSlide({ masterName: 'Sisältö', sectionTitle: 'Näyttö ja turvallisuus' });
+  s.addText('Selkeä rajaus: mitä AikaPolku on ja mitä ei', { placeholder: 'title' });
+  s.addText('AikaPolku on', { x: 0.7, y: 1.35, w: 5.6, h: 0.5, fontSize: 20, bold: true, color: C.text2, margin: 0, isTextBox: true });
+  s.addText('AikaPolku ei ole', { x: 6.9, y: 1.35, w: 5.6, h: 0.5, fontSize: 20, bold: true, color: C.text2, margin: 0, isTextBox: true });
+  await iconRow(s, md.MdSchedule, 0.7, 2.1, 'Ennakoinnin tuki', 'Mitä nyt, mitä seuraavaksi, kauanko ja mitä jos jokin muuttuu.', 5.4);
+  await iconRow(s, md.MdGroups, 0.7, 3.4, 'Yksikön ja asukkaan arki yhdessä', 'Yhteiset kohdat ja yksilölliset ohjelmat samassa näkymässä.', 5.4);
+  await iconRow(s, md.MdTouchApp, 0.7, 4.7, 'Asukkaan oma toimijuus', 'Tauko, apu, lisäaika, valinta ja oma tila asukkaan käytössä.', 5.4);
+  await iconRow(s, md.MdDescription, 6.9, 2.1, 'Asiakastietojärjestelmä', 'Kirjaukset tehdään yksikön omaan järjestelmään.', 5.4);
+  await iconRow(s, md.MdMedication, 6.9, 3.4, 'Lääkityksen hallinta', 'Muistutus käy, mutta lääkkeenantoa ei kuitata eikä kirjata.', 5.4);
+  await iconRow(s, md.MdVisibilityOff, 6.9, 4.7, 'Valvontaväline', 'Asukkaasta ei raportoida ohjaajalle automaattisesti.', 5.4);
+  card(s, 0.7, 5.95, 11.9, 0.8, 'Ohjenuora', 'Uusi ominaisuus tehdään vain, jos se lisää asukkaan itsenäisyyttä, vähentää ohjaajan työtä tai parantaa ennakointia.');
 
   // 11 Laatu
   s = pres.addSlide({ masterName: 'Sisältö', sectionTitle: 'Näyttö ja turvallisuus' });
@@ -213,7 +227,7 @@ async function icon(Comp, color = '#FFFFFF') {
     s.addText(label, { x, y: 3.1, w: 3.8, h: 0.9, fontSize: 16, color: C.accent4, margin: 0, isTextBox: true });
   };
   stat(0.7, 'yli 400', 'automaattista testiä jokaisessa käännöksessä');
-  stat(4.75, '8', 'puhelintestiä oikealla laitteella');
+  stat(4.75, '9', 'puhelintestiä oikealla laitteella');
   stat(8.8, '≤ 5', 'painiketta asiakkaan ruudulla kerrallaan');
   card(s, 0.7, 4.5, 11.9, 1.7, 'Laatuportit asiakkaan näkymille', 'Kaikki näkyy ruudulla ilman vieritystä, kuva ja teksti yhdessä, tauko aina saatavilla, ei punaisia hälytyksiä. Erillinen tarkastaja käy läpi isot muutokset.');
 
@@ -243,7 +257,24 @@ async function icon(Comp, color = '#FFFFFF') {
       { x, y: 1.9, w: 2.9, h: 1.0, color: i === 2 ? C.text1 : C.background1, align: 'center', valign: 'middle', isTextBox: true });
     s.addText(t, { x, y: 3.1, w: 2.9, h: 1.3, fontSize: 16, color: C.text1, valign: 'top', margin: 0, isTextBox: true });
   });
-  card(s, 0.6, 4.6, 12.1, 1.6, 'Mitä seurataan', 'Käyttö arjessa, siirtymien sujuminen ohjaajien arvioimana, asukkaiden oma kokemus (myös oman tilan kautta, jos asukas haluaa jakaa) ja ohjaajien työmäärä.');
+  card(s, 0.6, 4.6, 12.1, 1.6, 'Lähtötilanne ensin', 'Ennen käyttöönottoa kirjataan lähtötilanne, jotta muutos voidaan arvioida. Vaikuttavuudesta puhutaan vasta, kun pilotin tulokset ovat käytössä.');
+
+  // Mittarit
+  s = pres.addSlide({ masterName: 'Sisältö', sectionTitle: 'Ehdotus' });
+  s.addText('Onnistumista mitataan arjessa', { placeholder: 'title' });
+  const mittarit = [
+    ['Käyttö arjessa', 'Käytetäänkö sovellusta päivittäin?'],
+    ['Siirtymät', 'Sujuvatko siirtymät paremmin ohjaajien arvioimana?'],
+    ['Ohjaajan aika', 'Väheneekö manuaalinen ohjaustyö?'],
+    ['Omatoimisuus', 'Lisääntyykö asukkaan itsenäinen toiminta?'],
+    ['Tauko ja apu', 'Pystyykö asukas vaikuttamaan omaan tilanteeseensa?'],
+    ['Muutokset', 'Auttaako muutoskortti ymmärtämään muutoksia?'],
+    ['Jatkuminen', 'Halutaanko käyttöä jatkaa pilotin jälkeen?'],
+    ['Asukkaan kokemus', 'Asukkaan oma arvio, jos hän haluaa kertoa.'],
+  ];
+  const mw = 2.9, mh = 2.15;
+  mittarit.forEach(([tt, tx], i) => card(s, 0.6 + (i % 4) * (mw + 0.17), 1.55 + Math.floor(i / 4) * (mh + 0.2), mw, mh, tt, tx));
+  s.addText('Oma tila ei ole mittari: se on asukkaan omaa tietoa, eikä sitä kerätä ilman hänen lupaansa.', { x: 0.6, y: 6.2, w: 12.1, h: 0.5, fontSize: 15, italic: true, color: C.accent4, margin: 0, isTextBox: true });
 
   // 14 Seuraavat askeleet
   s = pres.addSlide({ masterName: 'Otsikkodia (tumma)', sectionTitle: 'Ehdotus' });

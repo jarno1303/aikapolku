@@ -25,6 +25,13 @@ const sisalto = [
   bullet('**Ei pilveä.** Tiedot ovat laitteella. Yksikön laitteet voivat kokeiluvaiheessa välittää viestejä toisilleen samassa verkossa salattuna.'),
   box('miksi', 'Ennakointi ja toiminnan jäsentäminen auttavat toiminnanohjauksen vaikeuksiin. Kun ihminen tietää, mitä tehdään, milloin ja missä, siirtymät helpottuvat.'),
 
+  h2('Mitä AikaPolku ei ole'),
+  para('AikaPolku on avustava työväline arjen ennakointiin ja toiminnanohjaukseen. Rajaukset kannattaa käydä läpi koko työyhteisön kanssa ennen käyttöönottoa.'),
+  bullet('**Ei asiakastietojärjestelmä eikä kirjaamisen väline.** Asiakastiedot, hoitosuunnitelmat ja viralliset kirjaukset tehdään yksikön omaan asiakastietojärjestelmään. AikaPolun kuittaukset ja viestit eivät ole kirjauksia.'),
+  bullet('**Ei lääkityksen hallintaa.** Kortti "Lääkkeet klo 8" voi muistuttaa asiakasta, mutta lääkkeenantoa ei kuitata eikä kirjata AikaPolussa. Lääkehoito toteutetaan yksikön lääkehoitosuunnitelman mukaan.'),
+  bullet('**Ei korvaa ihmistä.** Sovellus tukee ennakointia, mutta ohjaaja on aina läsnä siirtymissä, muutoksissa ja silloin, kun asiakas pyytää apua.'),
+  bullet('**Ei valvontaväline.** Asiakkaan oma tila ja valinnat ovat hänen omiaan. Sovellus ei raportoi asiakkaasta ohjaajalle automaattisesti.'),
+
   h2('Sanasto'),
   table(['Sana', 'Mitä se tarkoittaa'], [
     ['Yksikkö', 'Asumisyksikkö, esimerkiksi Villa Metsämaja. Yksikön runko (esim. ruokailut) koskee kaikkia sen asukkaita.'],
@@ -250,6 +257,13 @@ const sisalto = [
   bullet('Sovellus ei käytä pilvipalvelua eikä lähetä tietoja internetiin.'),
   bullet('Kuvaa esineitä ja paikkoja, ei muita asukkaita. Ohjaajan kuvan voi käyttää vain hänen suostumuksellaan.'),
   bullet('Kun asiakas poistetaan, hänen tietonsa ja vain hänen käyttämänsä kuvat ja äänitteet poistetaan laitteesta.'),
+  h2('Yksikön vastuut'),
+  para('Se, että tiedot ovat laitteella, ei yksin ratkaise tietosuojaa. Yksikkö on rekisterinpitäjä, ja seuraavat asiat sovitaan ennen käyttöönottoa:'),
+  bullet('**Laitteen suojaus:** näytön lukitus ja laitteen salaus päällä, ohjaajan PIN-koodi käytössä.'),
+  bullet('**Kadonnut laite:** kenelle ilmoitetaan ja miten laite lukitaan tai tyhjennetään etänä.'),
+  bullet('**Säilytys ja poisto:** oma tila ja asiakkaan viestit säilyvät vain eilisen ja tämän päivän ajan. Kun asiakkuus päättyy, asiakas poistetaan sovelluksesta.'),
+  bullet('**Vientitiedostot:** mihin niitä saa tallentaa, ja että ne suojataan salasanalla.'),
+  bullet('**Kuvat ja äänitteet:** asiakkaan suostumus, ja muita asukkaita ei kuvata.'),
 
   // 19
   h1('19. Vianetsintä'),
