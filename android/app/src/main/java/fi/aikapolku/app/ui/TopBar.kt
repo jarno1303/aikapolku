@@ -46,12 +46,14 @@ internal fun AppTopBar(
 ) {
     val backLabel = stringResource(R.string.back_a11y)
     val lockLabel = stringResource(R.string.ohjaajan_toiminnot_lukittu_avaa_pin)
+    // Matalalla ruudulla (puhelin vaakatasossa) ohuempi palkki: sisällölle jää tilaa.
+    val low = windowSize() == WindowSize.LOW
     Surface(color = AppColors.Background) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .heightIn(min = 56.dp)
+                .heightIn(min = if (low) 44.dp else 56.dp)
                 .padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -64,7 +66,7 @@ internal fun AppTopBar(
             Text(
                 title,
                 modifier = Modifier.weight(1f).padding(start = 4.dp).semantics { heading() },
-                fontSize = 21.sp,
+                fontSize = if (low) 18.sp else 21.sp,
                 fontWeight = FontWeight.Bold,
                 color = AppColors.Ink,
                 maxLines = 1,

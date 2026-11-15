@@ -71,6 +71,8 @@ internal fun ChoiceScreen(
 ) {
     val context = LocalContext.current
     var selected by rememberSaveable { mutableStateOf(-1) }
+    // Matala ruutu (puhelin vaakatasossa): kuvat pienempinä, jotta Aloita näkyy vierittämättä.
+    val low = fi.aikapolku.app.ui.windowSize() == fi.aikapolku.app.ui.WindowSize.LOW
     Column(
         modifier = modifier.fillMaxSize().background(RunColors.background).padding(bottom = 4.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -111,7 +113,10 @@ internal fun ChoiceScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Box {
-                            CardPhoto(option.name, option.photo, Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(18.dp)))
+                            CardPhoto(
+                                option.name, option.photo,
+                                (if (low) Modifier.size(96.dp) else Modifier.fillMaxWidth().aspectRatio(1f)).clip(RoundedCornerShape(18.dp))
+                            )
                             if (isSelected) {
                                 Box(
                                     Modifier.align(Alignment.TopEnd).padding(6.dp).size(36.dp).clip(CircleShape).background(RunColors.teal),

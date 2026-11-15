@@ -111,6 +111,27 @@ private fun NowFrame(content: @Composable () -> Unit) {
 }
 
 /**
+ * NYT-kortin kuva ja tiedot: matalalla ruudulla rinnakkain (kuva vasemmalla), muuten
+ * allekkain kortin sarakkeessa.
+ */
+@Composable
+private fun NowBody(low: Boolean, image: @Composable (Modifier) -> Unit, details: @Composable () -> Unit) {
+    if (low) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            image(Modifier)
+            Column(
+                Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) { details() }
+        }
+    } else {
+        image(Modifier)
+        details()
+    }
+}
+
+/**
  * Asiakkaan etusivun päivä: iso NYT-kortti (ohjaajan valmistelema toiminta tai päivän
  * nykyinen tapahtuma) ja sen alla päivän aikajana asetusten mukaan.
  */
@@ -139,8 +160,21 @@ internal fun ClientDayView(
     val dayItem = state?.takeIf { it.current >= 0 }?.let { it.items[it.current] }
     // Kun aikajana näkyy, NYT-kortin kuva on pienempi: koko etusivu mahtuu ruudulle (R11).
     val withTimeline = prefs.timeline != TimelineMode.NONE
-    val nowImage = if (withTimeline) 150.dp else 220.dp
-    val gapImage = if (withTimeline) 110.dp else 160.dp
+    // Ruudun koko (havainto 15.11.2026): tabletilla isompi kuva, matalalla ruudulla kuva
+    // NYT-kortin vasemmalla ja aikajana kortin vieressä.
+    val size = fi.aikapolku.app.ui.windowSize()
+    val low = size == fi.aikapolku.app.ui.WindowSize.LOW
+    val wide = size == fi.aikapolku.app.ui.WindowSize.WIDE
+    val nowImage = when {
+        low -> 120.dp
+        wide -> if (withTimeline) 220.dp else 300.dp
+        else -> if (withTimeline) 150.dp else 220.dp
+    }
+    val gapImage = when {
+        low -> 100.dp
+        wide -> if (withTimeline) 160.dp else 220.dp
+        else -> if (withTimeline) 110.dp else 160.dp
+    }
     // Etusijasääntö: ohjaajan valmistelema toiminta ensin; päivän kohta näkyy sen alla,
     // jotta päivän rakenne ei katoa.
     @Composable
@@ -154,6 +188,8 @@ internal fun ClientDayView(
             )
         }
     }
+    @Composable
+    fun NowPart() {
     when {
         activity is ClientActivity.FirstThen -> NowFrame {
             NowLabel(stringResource(R.string.now_label))
@@ -192,7 +228,7 @@ internal fun ClientDayView(
                     val gapName = gap?.let { stringResource(it.nameRes) } ?: ""
                     fi.aikapolku.app.cards.CardPhoto(
                         gapName, "builtin:${prefs.gapCard}",
-                        Modifier.fillMaxWidth().sizeIn(maxWidth = gapImage, maxHeight = gapImage).aspectRatio(1f).clip(RoundedCornerShape(22.dp))
+                        Modifier.size(gapImage).clip(RoundedCornerShape(22.dp))
                     )
                     Text(gapName, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, textAlign = TextAlign.Center)
                     Text(
@@ -219,7 +255,7 @@ internal fun ClientDayView(
                 NowKind.ONGOING -> NowFrame {
                     // Kestävä tapahtuma: ei kuitata, päättyy seuraavaan.
                     NowLabel(stringResource(R.string.now_label))
-                    EventImage(item.resolved, Modifier.fillMaxWidth().sizeIn(maxWidth = nowImage, maxHeight = nowImage).aspectRatio(1f).clip(RoundedCornerShape(22.dp)))
+                    NowBody(low, { m -> EventImage(item.resolved, m.size(nowImage).clip(RoundedCornerShape(22.dp))) }) {
                     Text(item.resolved.title, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, textAlign = TextAlign.Center)
                     if (prefs.showTimes) {
                         // Toiminnalla on oma loppunsa (until); muuten kestää seuraavaan tapahtumaan.
@@ -232,21 +268,25 @@ internal fun ClientDayView(
                             color = AppColors.Muted
                         )
                     }
+                    }
                 }
                 NowKind.EVENT -> NowFrame {
                     NowLabel(stringResource(R.string.now_label))
-                    Box {
-                        EventImage(item.resolved, Modifier.fillMaxWidth().sizeIn(maxWidth = nowImage, maxHeight = nowImage).aspectRatio(1f).clip(RoundedCornerShape(22.dp)))
-                        if (item.change != null || item.entry.stepChanges.isNotEmpty()) {
-                            ChangeSymbol(Modifier.size(40.dp).align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp))
+                    NowBody(low, { m ->
+                        Box(m) {
+                            EventImage(item.resolved, Modifier.size(nowImage).clip(RoundedCornerShape(22.dp)))
+                            if (item.change != null || item.entry.stepChanges.isNotEmpty()) {
+                                ChangeSymbol(Modifier.size(40.dp).align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp))
+                            }
                         }
-                    }
+                    }) {
                     Text(item.resolved.title, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, textAlign = TextAlign.Center)
                     if (prefs.showTimes) {
                         Text(stringResource(R.string.change_time_now, item.event.time.replace(':', '.')), fontSize = 18.sp, color = AppColors.Muted)
                     }
                     val resume = item.resolved.isProgram && item.event.programId.isNotBlank() && item.event.programId == runningProgramId
                     BigButton(stringResource(if (resume) R.string.client_continue else R.string.today_start)) { open(item) }
+                    }
                 }
             }
         }
@@ -256,7 +296,10 @@ internal fun ClientDayView(
         }
         else -> Text(stringResource(R.string.client_no_events), fontSize = 17.sp, color = AppColors.Muted)
     }
+    }
 
+    @Composable
+    fun TimelinePart() {
     if (state == null || prefs.timeline == TimelineMode.NONE) return
     val skipped = state.items.indices.filter { state.items[it].cancelled || state.ackTimes[state.items[it].event.id] != null }.toSet()
     val rows = DayParts.visible(state.items.size, state.current, { it in skipped }, prefs.timeline)
@@ -286,6 +329,17 @@ internal fun ClientDayView(
             showTime = prefs.showTimes,
             onClick = { open(item) }
         )
+    }
+    }
+
+    if (low) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) { NowPart() }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) { TimelinePart() }
+        }
+    } else {
+        NowPart()
+        TimelinePart()
     }
 }
 

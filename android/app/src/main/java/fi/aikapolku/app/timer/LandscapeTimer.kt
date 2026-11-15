@@ -65,7 +65,9 @@ internal fun LandscapeTimer(
     moreTimeGranted: Int? = null,
     onMoreTime: () -> Unit = {},
     /** Valmis ennen ajan loppua (null = ei painiketta). */
-    onDone: (() -> Unit)? = null
+    onDone: (() -> Unit)? = null,
+    /** Ohjaajan valmistelu: Anna asiakkaalle (null = ei painiketta). */
+    onHandToClient: (() -> Unit)? = null
 ) {
     val guided = activeTask.isNotBlank()
     val seconds = ((remaining + 999L) / 1000L).coerceAtLeast(0L).toInt()
@@ -92,6 +94,9 @@ internal fun LandscapeTimer(
                     )
                 }
             }
+            if (onHandToClient != null) {
+                fi.aikapolku.app.ui.PrimaryButton(text = stringResource(R.string.timer_hand_to_client), onClick = onHandToClient)
+            }
             if (moreTimeEnabled) MoreTimeSlot(moreTimeVisible, moreTimeGranted, onMoreTime)
             BreakButton(onBreak)
         }
@@ -107,7 +112,9 @@ internal fun LandscapeTimer(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.TopCenter
             ) {
-                val dialSize = minOf(maxWidth - 4.dp, 212.dp)
+                // Ohjaajan ajan asetus vie tilaa taulun alta: taulu pienempi, jotta kaikki mahtuu.
+                val adjusting = canAdjust && !running && remaining >= duration
+                val dialSize = minOf(maxWidth - 4.dp, if (adjusting) 130.dp else 200.dp)
                 if (showDial) {
                     ClockDial(
                         remaining = remaining,
@@ -197,7 +204,7 @@ private fun LandscapeActivityCard(label: String, name: String, imagePath: String
                 name = name,
                 imagePath = imagePath,
                 modifier = Modifier
-                    .size(85.dp)
+                    .size(56.dp)
                     .clip(RoundedCornerShape(10.dp))
             )
             Column(modifier = Modifier.weight(1f)) {

@@ -1,5 +1,7 @@
 package fi.aikapolku.app
 
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.ui.layout.boundsInWindow
 
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -301,7 +303,11 @@ internal fun AikaPolkuApp() {
                     pageScroll.viewportBottom = bounds.bottom
                 }
                 // The programmes screen owns its scrolling and keeps action buttons visible.
-                .then(if (page == AppPage.PROGRAMS) Modifier else Modifier.verticalScroll(rootScroll))
+                // Ajastin ei vieri: kellotaulu saa kaiken vapaan tilan (havainto 15.11.2026).
+                .then(if (page == AppPage.PROGRAMS || page == AppPage.TIMER) Modifier else Modifier.verticalScroll(rootScroll))
+                // Tabletilla sisältö keskelle enimmäisleveydellä (ei veny 1280 dp:hen).
+                .wrapContentWidth(androidx.compose.ui.Alignment.CenterHorizontally)
+                .widthIn(max = fi.aikapolku.app.ui.Adaptive.MAX_CONTENT_WIDTH)
                 .padding(horizontal = 12.dp, vertical = 9.dp),
             verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {

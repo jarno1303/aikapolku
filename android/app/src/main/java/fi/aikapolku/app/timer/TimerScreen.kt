@@ -178,10 +178,12 @@ internal fun TimerScreen(
         return
     }
 
-    val landscape = LocalConfiguration.current.orientation ==
-        android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    // Vaakatilan asettelu vain matalalla ruudulla (puhelin vaakatasossa). Tabletilla (myös
+    // vaakatasossa) pystyasettelu keskipalstassa, jolloin kellotaulu saa vapaan tilan.
+    val low = fi.aikapolku.app.ui.windowSize() == fi.aikapolku.app.ui.WindowSize.LOW
+    val handoff = onHandToClient != null && guided && caregiver.isCaregiver && !running && remaining >= duration
 
-    if (!finished && landscape) {
+    if (!finished && low) {
         LandscapeTimer(
             remaining = remaining,
             duration = duration,
@@ -206,8 +208,32 @@ internal fun TimerScreen(
             moreTimeEnabled = moreEnabled,
             moreTimeVisible = moreVisible,
             moreTimeGranted = moreGranted.value,
-            onMoreTime = requestMoreTime
+            onMoreTime = requestMoreTime,
+            onHandToClient = if (handoff) onHandToClient else null
         )
+    } else if (finished && low) {
+        // Matala ruutu: valmis-kortti vasemmalla, Siirry seuraavaan ja lisäaika oikealla.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(Modifier.weight(1f)) { CompletedCard(first = activeTask, next = nextActivity, nextPhoto = nextPhoto) }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                Button(
+                    onClick = onGoNext,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.Teal)
+                ) {
+                    Text(
+                        if (nextActivity == stringResource(R.string.choose_activity)) stringResource(R.string.dialog_done)
+                        else stringResource(R.string.siirry_seuraavaan),
+                        fontSize = 18.sp
+                    )
+                }
+                if (moreVisible) fi.aikapolku.app.programs.run.MoreTimeButton(requestMoreTime)
+            }
+        }
     } else if (finished) {
         CompletedCard(
             first = activeTask,
@@ -234,6 +260,14 @@ internal fun TimerScreen(
         // Aika loppui, mutta toiminto on kesken: lisäaika tai viesti aikuiselle.
         if (moreVisible) fi.aikapolku.app.programs.run.MoreTimeButton(requestMoreTime)
     } else {
+      // Kellotaulu saa kaiken vapaan tilan, kun sivu ei vieri (havainto 15.11.2026: taulu
+      // jäi pieneksi ja alle jäi tyhjää). Vierivässä ympäristössä (testit) arvio ruudun korkeudesta.
+      BoxWithConstraints(Modifier.fillMaxWidth()) {
+       val bounded = constraints.hasBoundedHeight
+       Column(
+           modifier = Modifier.fillMaxWidth().then(if (bounded) Modifier.fillMaxHeight() else Modifier),
+           verticalArrangement = Arrangement.spacedBy(9.dp)
+       ) {
         if (guided) {
             TimerTaskCards(
                 first = activeTask,
@@ -260,7 +294,7 @@ internal fun TimerScreen(
         val compact = screenHeight < 750
 
         BoxWithConstraints(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().then(if (bounded) Modifier.weight(1f) else Modifier),
             contentAlignment = Alignment.Center
         ) {
             // Kellotaulu käyttää ruudun leveyden (yläpalkki vapautti tilaa).
@@ -279,7 +313,7 @@ internal fun TimerScreen(
                 }
             )
 
-            val diameter = minOf(maxWidth - 8.dp, target)
+            val diameter = if (bounded) minOf(maxWidth - 8.dp, maxHeight, 560.dp).coerceAtLeast(100.dp) else minOf(maxWidth - 8.dp, target)
 
             // Ennen käynnistystä ohjaaja valitsee ajan kellotaululta kaikissa näyttötavoissa;
             // valittu näyttötapa (rengas / rauhallinen) näkyy, kun aika on käynnissä.
@@ -339,7 +373,6 @@ internal fun TimerScreen(
         }
         // Ohjaajan valmistelu valmis (aika valittu, ei vielä käynnistetty): yksi painallus antaa
         // toiminnan asiakkaalle tai aloittaa sen heti. Ei pyyhkäisyä eikä erillistä roolinvaihtoa.
-        val handoff = onHandToClient != null && guided && caregiver.isCaregiver && !running && remaining >= duration
         if (handoff) {
             fi.aikapolku.app.ui.PrimaryButton(
                 text = stringResource(R.string.timer_hand_to_client),
@@ -451,8 +484,13 @@ internal fun TimerScreen(
         }
         // Lisäajan paikka on varattu koko ajan Tarvitsen tauon yläpuolella: kellotaulu ja tauko
         // pysyvät paikallaan, kun painike tai vahvistus tulee näkyviin.
-        if (moreEnabled) fi.aikapolku.app.programs.run.MoreTimeSlot(moreVisible, moreGranted.value, requestMoreTime)
-        BreakButton(openBreak)
+        // Ohjaajan valmistelun aikana tauko ja lisäaika eivät vielä koske asiakasta: tila taululle.
+        if (!handoff) {
+            if (moreEnabled) fi.aikapolku.app.programs.run.MoreTimeSlot(moreVisible, moreGranted.value, requestMoreTime)
+            BreakButton(openBreak)
+        }
+       }
+      }
     }
 
     // Jos lukitus menee päälle ikkunan ollessa auki, ikkuna suljetaan.

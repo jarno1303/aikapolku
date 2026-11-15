@@ -23,6 +23,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -381,20 +383,9 @@ internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDon
         )
         return
     }
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(18.dp)
-    ) {
-        CardPhoto(
-            name,
-            photo,
-            Modifier
-                .fillMaxWidth()
-                .sizeIn(maxWidth = 340.dp, maxHeight = 340.dp)
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(28.dp))
-        )
+    // Matalalla ruudulla (puhelin vaakatasossa) kuva vasemmalla, nimi ja painikkeet oikealla.
+    val low = fi.aikapolku.app.ui.windowSize() == fi.aikapolku.app.ui.WindowSize.LOW
+    val details: @Composable ColumnScope.() -> Unit = {
         Text(
             name,
             modifier = Modifier.semantics { heading() },
@@ -425,6 +416,30 @@ internal fun EventCardScreen(name: String, photo: String, doneAt: String?, onDon
         }
         // Tehdyssä tapahtumassa ei enää toimintoa, joten tauko vain kesken olevassa.
         if (doneAt == null) fi.aikapolku.app.programs.run.BreakButton({ showBreak = true })
+    }
+    if (low) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            CardPhoto(name, photo, Modifier.size(200.dp).clip(RoundedCornerShape(28.dp)))
+            Column(
+                Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) { details() }
+        }
+    } else {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            // Enintään 340 dp leveä neliö (widthIn ennen fillMaxWidth: raja pätee myös tabletilla).
+            CardPhoto(name, photo, Modifier.widthIn(max = 340.dp).fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(28.dp)))
+            details()
+        }
     }
 }
 

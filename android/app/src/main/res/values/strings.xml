@@ -1066,4 +1066,11 @@
     <string name="support_level_requests">Asukkaan pyynnöt (apu, tauko, lisäaika): viimeiset 14 päivää %1$d, sitä edeltävät 14 päivää %2$d.</string>
     <string name="support_level_hint_next">Pyyntöjä on ollut selvästi vähemmän. Jos asukas on samaa mieltä, voitte kokeilla seuraavaa tasoa.</string>
     <string name="support_level_hint_back">Pyyntöjä on ollut enemmän tason vaihdon jälkeen. Harkitkaa paluuta edelliseen.</string>
+    <!-- Havainto 15.11.2026: vaakatila ja tabletit -->
+    <string name="orientation_label">Näytön asento asiakkaalla</string>
+    <string name="orientation_info">Automaattinen: puhelimessa pysty, tabletissa vapaa. Ohjaajana asento on aina vapaa.</string>
+    <string name="orientation_auto">Autom.</string>
+    <string name="orientation_portrait">Pysty</string>
+    <string name="orientation_landscape">Vaaka</string>
+    <string name="orientation_free">Vapaa</string>
 </resources>

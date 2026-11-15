@@ -10,6 +10,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -131,14 +133,11 @@ internal fun RunStepScreen(
         // Pystytilassa kaikki mahtuu aina ruudulle: kuva joustaa, jotta apu, tauko ja
         // Valmis näkyvät myös suurella fonttikoolla (puhelintesti 1.11.2026).
         // Vieritys vain vaakatilassa tai hyvin matalalla näytöllä.
-        val compact = maxWidth > maxHeight || maxHeight < 440.dp
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .then(if (compact) Modifier.verticalScroll(rememberScrollState()) else Modifier)
-                .padding(bottom = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+        // Matala ja leveä ruutu (puhelin vaakatasossa): kuva vasemmalla, painikkeet oikealla,
+        // jotta apu, tauko ja Valmis näkyvät vierittämättä (havainto 15.11.2026).
+        val twoPane = fi.aikapolku.app.ui.isTwoPane(maxWidth, maxHeight)
+        val compact = !twoPane && (maxWidth > maxHeight || maxHeight < 440.dp)
+        val top: @Composable ColumnScope.() -> Unit = {
             RunHeader(
                 hasSubSteps = hasSubSteps,
                 taskName = taskName,
@@ -226,6 +225,8 @@ internal fun RunStepScreen(
                 }
             }
 
+        }
+        val actions: @Composable ColumnScope.() -> Unit = {
             // Apu ja tauko koskevat aina nykyistä tehtävää: heti kuvan alla.
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -304,6 +305,29 @@ internal fun RunStepScreen(
                     stringResource(if (moreIsProgram) R.string.nayta_koko_ohjelma else R.string.muut_toiminnot),
                     color = RunColors.teal, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 4.dp)
                 )
+            }
+        }
+        if (twoPane) {
+            Row(
+                modifier = Modifier.fillMaxSize().padding(bottom = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) { top() }
+                Column(
+                    Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) { actions() }
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(if (compact) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+                    .padding(bottom = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                top()
+                actions()
             }
         }
     }

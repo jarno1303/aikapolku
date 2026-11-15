@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -93,6 +94,8 @@ internal fun OwnStateFlow(
     var sent by rememberSaveable { mutableStateOf<fi.aikapolku.app.link.SendResult?>(null) }
     val scope = rememberCoroutineScope()
     val chosen = StateLevel.fromKey(level)
+    // Matala ruutu (puhelin vaakatasossa): vaihtoehdot rinnakkain, tulos ja painikkeet vierekkäin.
+    val low = fi.aikapolku.app.ui.windowSize() == fi.aikapolku.app.ui.WindowSize.LOW
     Column(
         modifier = modifier.fillMaxSize().background(RunColors.background).padding(bottom = 4.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -105,7 +108,33 @@ internal fun OwnStateFlow(
                     modifier = Modifier.fillMaxWidth().semantics { heading() },
                     fontSize = 28.sp, fontWeight = FontWeight.Bold, color = RunColors.ink, textAlign = TextAlign.Center
                 )
-                StateLevel.entries.forEach { l ->
+                if (low) {
+                    Row(Modifier.fillMaxWidth().weight(1f, fill = false), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        StateLevel.entries.forEach { l ->
+                            val label = stringResource(OwnStateTexts.label(scale, l))
+                            Card(
+                                modifier = Modifier.weight(1f).heightIn(min = 72.dp)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .clickable(role = Role.Button, onClickLabel = label) {
+                                        OwnState.record(context, l)
+                                        level = l.key
+                                    },
+                                shape = RoundedCornerShape(20.dp),
+                                border = BorderStroke(2.dp, RunColors.border),
+                                colors = CardDefaults.cardColors(containerColor = RunColors.card)
+                            ) {
+                                Column(
+                                    Modifier.fillMaxWidth().padding(10.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    StateIcon(scale, l, 64.dp)
+                                    Text(label, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = RunColors.ink, textAlign = TextAlign.Center)
+                                }
+                            }
+                        }
+                    }
+                } else StateLevel.entries.forEach { l ->
                     val label = stringResource(OwnStateTexts.label(scale, l))
                     Card(
                         modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(min = 72.dp)
@@ -131,16 +160,17 @@ internal fun OwnStateFlow(
             showAdult -> {
                 // Iso kortti aikuiselle näytettäväksi.
                 Spacer(Modifier.weight(0.2f))
-                StateIcon(scale, chosen, 180.dp)
+                StateIcon(scale, chosen, if (low) 96.dp else 180.dp)
                 Text(
                     stringResource(R.string.own_state_card, stringResource(OwnStateTexts.label(scale, chosen))),
-                    fontSize = 40.sp, lineHeight = 46.sp, fontWeight = FontWeight.Bold, color = RunColors.ink, textAlign = TextAlign.Center
+                    fontSize = if (low) 28.sp else 40.sp, lineHeight = if (low) 34.sp else 46.sp, fontWeight = FontWeight.Bold, color = RunColors.ink, textAlign = TextAlign.Center
                 )
                 Spacer(Modifier.weight(0.3f))
                 BigButton(stringResource(R.string.own_state_back)) { showAdult = false }
             }
             else -> {
-                StateIcon(scale, chosen, 120.dp)
+                val info: @Composable ColumnScope.() -> Unit = {
+                StateIcon(scale, chosen, if (low) 80.dp else 120.dp)
                 Text(
                     stringResource(R.string.own_state_card, stringResource(OwnStateTexts.label(scale, chosen))),
                     fontSize = 28.sp, fontWeight = FontWeight.Bold, color = RunColors.ink, textAlign = TextAlign.Center
@@ -160,7 +190,8 @@ internal fun OwnStateFlow(
                         color = if (ok) RunColors.teal else AppColors.Coral, textAlign = TextAlign.Center
                     )
                 }
-                Spacer(Modifier.weight(1f))
+                }
+                val actions: @Composable ColumnScope.() -> Unit = {
                 if (chosen == StateLevel.LOW) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         onBreak?.let { SmallAction(stringResource(R.string.support_break), Modifier.weight(1f), it) }
@@ -177,6 +208,21 @@ internal fun OwnStateFlow(
                     }
                 }
                 BigButton(stringResource(R.string.own_state_done), onClose)
+                }
+                if (low) {
+                    Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Column(
+                            Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) { info() }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically)) { actions() }
+                    }
+                } else {
+                    info()
+                    Spacer(Modifier.weight(1f))
+                    actions()
+                }
             }
         }
     }

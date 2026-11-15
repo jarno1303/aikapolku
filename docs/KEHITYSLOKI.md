@@ -456,3 +456,12 @@
 - `aja-aikapolku.ps1 -kuvat`: kääntää sovelluksen ja ajaa puhelimessa testin KuvakaappauksetDeviceTest, joka luo kuvitteellisen esimerkkiyksikön (Villa Metsämaja), kuvaa 38 näkymää (tools/materiaalit/kuvat.json) ja palauttaa puhelimen omat tiedot. Kuvat haetaan kansioon AikaPolku\materiaalit\kuvat.
 - Tilapalkki esittelytilassa (täysi akku, ei ilmoituksia, kellonaika kuvaushetkeltä).
 - Epäonnistunut kuva tallentuu nimellä <id>-VIRHE.png, eikä yksi virhe keskeytä muita kuvia. Keskeytynyt ajo palauttaa tiedot seuraavan ajon alussa.
+
+## 15.11.2026 – Vaakatila, tabletit ja kellotaulun koko (vaihe 1)
+- Ruudun kokoluokka (ui/Adaptive.kt): kapea (puhelin pysty), matala (alle 480 dp, puhelin vaaka), leveä (tabletti). Asettelu valitaan tilan, ei laitetyypin mukaan.
+- Matala ruutu: ohuempi yläpalkki ja ohjaajan palkki yhdellä rivillä; kahden palstan näkymät: päiväohjelman vaihe, tauko- ja apuviesti, muutos, tapahtumakortti, NYT-kortti ja aikajana rinnakkain, oma tila (vaihtoehdot rinnakkain), valinta (pienemmät kuvat), ajastin (Anna asiakkaalle myös vaakatilassa, valmis-kortti ja painikkeet rinnakkain).
+- Leveä ruutu: sivun sisältö keskellä enintään 720 dp, NYT-kortin ja tapahtumakortin kuvat isompina; tabletti vaakatasossa käyttää pystyasettelua keskipalstassa.
+- Ajastin: sivu ei vieri, kellotaulu saa kaiken vapaan tilan (enintään 560 dp). Ohjaajan valmistelussa tauko ja lisäaika piilossa.
+- NYT-kortin ja tapahtumakortin kuvan koko: aiempi `fillMaxWidth().sizeIn(max)` ei rajannut leveyttä; nyt kiinteä koko / `widthIn(max).fillMaxWidth()`.
+- Näytön asento asiakaskohtaisesti (Etusivu-asetukset): automaattinen (puhelin pysty, tabletti vapaa), pysty, vaaka, vapaa. Ohjaajana aina vapaa.
+- Mittaus: NakymaKoot*-testit piirtävät asiakkaan näkymät neljässä koossa (build/nakymakuvat); AdaptiveTest.

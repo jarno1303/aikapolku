@@ -173,6 +173,22 @@ internal fun HomeSettings() {
         ClientViewPrefs.save(context, next)
         SettingsRevision.bump()
     }
+    // Näytön asento (asiakkaan roolissa; ohjaajana aina vapaa).
+    val orientations = fi.aikapolku.app.data.ScreenOrientation.MODES
+    var orientation by remember(SettingsRevision.value) { mutableStateOf(fi.aikapolku.app.data.ScreenOrientation.mode(context)) }
+    SettingLabel(stringResource(R.string.orientation_label), stringResource(R.string.orientation_info))
+    SegmentedChoice(
+        options = listOf(
+            stringResource(R.string.orientation_auto), stringResource(R.string.orientation_portrait),
+            stringResource(R.string.orientation_landscape), stringResource(R.string.orientation_free)
+        ),
+        selected = orientations.indexOf(orientation).coerceAtLeast(0),
+        onSelect = {
+            orientation = orientations[it]
+            fi.aikapolku.app.data.ScreenOrientation.setMode(context, orientations[it])
+            SettingsRevision.bump()
+        }
+    )
     SettingLabel(stringResource(R.string.client_view_timeline))
     listOf(
         Triple(TimelineMode.FULL, R.string.client_view_full, R.string.client_view_full_info),

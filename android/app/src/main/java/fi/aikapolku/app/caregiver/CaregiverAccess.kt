@@ -318,25 +318,28 @@ private fun CaregiverRoleBanner(remainingMs: Long?, onClient: () -> Unit) {
     val context = LocalContext.current
     val revision = fi.aikapolku.app.profiles.ProfileSession.revision
     val client = remember(revision) { fi.aikapolku.app.data.ProfileStore.current(context).name }
+    // Matalalla ruudulla yksi rivi (asiakkaan nimi samalla rivillä).
+    val low = fi.aikapolku.app.ui.windowSize() == fi.aikapolku.app.ui.WindowSize.LOW
     Surface(color = RoleColors.caregiverBar, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .heightIn(min = 52.dp)
+                .heightIn(min = if (low) 40.dp else 52.dp)
                 .padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(AppIcons.LockOpen, contentDescription = null, tint = RoleColors.caregiverAccent, modifier = Modifier.size(20.dp))
             Column(modifier = Modifier.padding(start = 10.dp).weight(1f).semantics(mergeDescendants = true) {}) {
                 Text(
-                    stringResource(R.string.role_caregiver_bar) + time,
+                    stringResource(R.string.role_caregiver_bar) + time +
+                        if (low && client.isNotBlank()) " · " + stringResource(R.string.role_client_name, client) else "",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     maxLines = 1
                 )
-                if (client.isNotBlank()) {
+                if (client.isNotBlank() && !low) {
                     Text(stringResource(R.string.role_client_name, client), color = Color(0xFFCBD5E1), fontSize = 13.sp, maxLines = 1)
                 }
             }

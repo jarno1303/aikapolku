@@ -11,6 +11,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -133,14 +136,10 @@ internal fun SupportMessageScreen(
     val image = SubstepArt.messageImageRes(shown)
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize().background(RunColors.background)) {
-        val compact = maxWidth > maxHeight || maxHeight < 440.dp
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .then(if (compact) Modifier.verticalScroll(rememberScrollState()) else Modifier)
-                .padding(bottom = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
+        // Matala ruutu (puhelin vaakatasossa): viesti vasemmalla, painikkeet oikealla.
+        val twoPane = fi.aikapolku.app.ui.isTwoPane(maxWidth, maxHeight)
+        val compact = !twoPane && (maxWidth > maxHeight || maxHeight < 440.dp)
+        val top: @Composable ColumnScope.() -> Unit = {
             Column(modifier = Modifier.heightIn(min = 52.dp), verticalArrangement = Arrangement.Center) {
                 Text(
                     when {
@@ -180,8 +179,8 @@ internal fun SupportMessageScreen(
                     Text(
                         message,
                         modifier = Modifier.semantics { heading() },
-                        fontSize = 42.sp,
-                        lineHeight = 48.sp,
+                        fontSize = if (twoPane) 30.sp else 42.sp,
+                        lineHeight = if (twoPane) 36.sp else 48.sp,
                         fontWeight = FontWeight.Bold,
                         color = RunColors.ink,
                         textAlign = TextAlign.Center
@@ -189,6 +188,8 @@ internal fun SupportMessageScreen(
                 }
             }
 
+        }
+        val actions: @Composable ColumnScope.() -> Unit = {
             if (voiceMode != RunPreferences.AUDIO_SILENT) {
                 OutlinedButton(
                     onClick = { playConfigured() },
@@ -283,6 +284,26 @@ internal fun SupportMessageScreen(
             ) {
                 Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(26.dp))
                 Text(stringResource(R.string.support_continue), fontSize = 21.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp))
+            }
+        }
+        if (twoPane) {
+            Row(Modifier.fillMaxSize().padding(bottom = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) { top() }
+                Column(
+                    Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically)
+                ) { actions() }
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(if (compact) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+                    .padding(bottom = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                top()
+                actions()
             }
         }
     }

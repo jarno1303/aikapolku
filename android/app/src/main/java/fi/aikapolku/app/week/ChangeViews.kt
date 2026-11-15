@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -297,11 +298,9 @@ private fun ChangeView(
     }
 
     // Tiivis: koko muutos ja kaikki painikkeet näkyvät ruudulla ilman vieritystä (R11).
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
+    // Matalalla ruudulla (puhelin vaakatasossa) muutos vasemmalla ja painikkeet oikealla.
+    val low = fi.aikapolku.app.ui.windowSize() == fi.aikapolku.app.ui.WindowSize.LOW
+    val visual: @Composable ColumnScope.() -> Unit = {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -358,6 +357,8 @@ private fun ChangeView(
         if (reason.isNotBlank()) {
             Text(reason, fontSize = 20.sp, color = AppColors.Ink, textAlign = TextAlign.Center)
         }
+    }
+    val actions: @Composable ColumnScope.() -> Unit = {
         if (unchanged.isNotEmpty()) UnchangedSection(unchanged)
         // Kuuntele ennen Selvää: kuuntelija ehtii kuulla ennen kuittausta.
         // Ohjaajan äänite, muuten puhesynteesi muutoksesta, syystä ja siitä mikä pysyy.
@@ -378,6 +379,25 @@ private fun ChangeView(
             modifier = Modifier.fillMaxWidth()
         )
         if (onBreak != null) BreakButton(onBreak)
+    }
+    if (low) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(
+                Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) { visual() }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) { actions() }
+        }
+    } else {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            visual()
+            actions()
+        }
     }
 }
 

@@ -40,6 +40,8 @@ class MainActivity : ComponentActivity() {
                     }
                     // Ohjaajan puhelimessa: asiakkaan laitteen liitospyyntö missä tahansa näkymässä.
                     fi.aikapolku.app.link.PairingRequestDialog()
+                    // Näytön asento asiakkaan asetuksen mukaan (puhelimessa oletuksena pysty).
+                    fi.aikapolku.app.ui.OrientationLock()
                 }
             }
         }

@@ -21,6 +21,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.activity.compose.setContent
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
@@ -65,7 +66,8 @@ import org.robolectric.annotation.GraphicsMode
  * Näkymät eri ruutukoissa (havainto 15.11.2026: vaakatila ja tabletit). Mittaus, ei vielä
  * laatuportti: jokaisesta asiakkaan näkymästä tallentuu kuva (build/nakymakuvat/<koko>/) ja
  * raportti siitä, jääkö painike ruudun ulkopuolelle tai onko painikkeita yli viisi.
- * Sisältöalue = ruutu − tilarivi 24 − järjestelmäpalkki 24 − yläpalkki 64 − roolipalkki 40 dp.
+ * Sisältöalue asiakkaan roolissa = ruutu − tilarivi 24 − järjestelmäpalkki 24 − yläpalkki
+ * (56 dp, matalalla ruudulla 44 dp). Tabletilla sivun sisältö on enintään 720 dp leveä.
  */
 abstract class NakymaKootBase(private val tag: String, private val width: Int, private val contentH: Int) {
     @get:Rule
@@ -168,10 +170,10 @@ abstract class NakymaKootBase(private val tag: String, private val width: Int, p
         Screen("odotetaan", true) { WaitingView(WaitState(t(R.string.card_leaving), "builtin:leaving", System.currentTimeMillis(), 0)) },
         Screen("muutos", true) { ChangeScreen(changeId) {} },
         Screen("tapahtumakortti", true) { EventCardScreen(name = t(R.string.card_outdoors), photo = "builtin:outdoors", doneAt = null, onDone = {}) },
-        Screen("ajastin", true, content = timer(6 * 60_000L)),
-        Screen("ajastin-ennakkovaroitus", true, content = timer(3 * 60_000L)),
-        Screen("ajastin-aika-loppui", true, content = timer(0L, running = false)),
-        Screen("ajastin-ohjaaja-valmistelu", true, caregiver = true, content = timer(10 * 60_000L, running = false, handOff = true))
+        Screen("ajastin", false, content = timer(6 * 60_000L)),
+        Screen("ajastin-ennakkovaroitus", false, content = timer(3 * 60_000L)),
+        Screen("ajastin-aika-loppui", false, content = timer(0L, running = false)),
+        Screen("ajastin-ohjaaja-valmistelu", false, caregiver = true, content = timer(10 * 60_000L, running = false, handOff = true))
     )
 
     private fun SemanticsNode.label(): String {
@@ -196,22 +198,17 @@ abstract class NakymaKootBase(private val tag: String, private val width: Int, p
         val dir = File("build/nakymakuvat/$tag").apply { mkdirs() }
         // Rauhalliset animaatiot (odotus) eivät pysähdy: kello siirretään käsin.
         compose.mainClock.autoAdvance = false
-        var index by mutableIntStateOf(0)
-        compose.setContent {
-            val screen = list[index]
-            androidx.compose.runtime.key(index) { Host(screen) }
-        }
         val density = compose.density.density
         val bottom = contentH * density
         val right = width * density
         val lines = mutableListOf("Koko $tag: ${width} × ${contentH} dp sisältöalue")
-        list.indices.forEach { i ->
-            compose.runOnIdle { index = i }
-            // Uusi näkymä piirtyy vasta kehyksillä (kello on käsin ohjattu).
+        list.forEach { screen ->
+            // Jokainen näkymä omana sisältönään (tilamuuttujan vaihto jäi välillä piirtymättä).
+            compose.runOnUiThread { compose.activity.setContent { Host(screen) } }
+            compose.waitForIdle()
             repeat(6) { compose.mainClock.advanceTimeByFrame() }
             compose.mainClock.advanceTimeBy(1_000L)
             compose.waitForIdle()
-            val screen = list[i]
             val nodes = clickables()
             val hidden = nodes.filter { n -> n.positionInRoot.y + n.size.height > bottom + 1f }
             val wide = nodes.filter { n -> n.positionInRoot.x + n.size.width > right + 1f }
@@ -242,22 +239,22 @@ abstract class NakymaKootBase(private val tag: String, private val width: Int, p
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h851dp-port")
-class NakymaKootPuhelinPystyTest : NakymaKootBase("puhelin-pysty", 411, 851 - 152)
+class NakymaKootPuhelinPystyTest : NakymaKootBase("puhelin-pysty", 411, 851 - 104)
 
 /** Puhelin vaakatasossa. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w851dp-h411dp-land")
-class NakymaKootPuhelinVaakaTest : NakymaKootBase("puhelin-vaaka", 851, 411 - 152)
+class NakymaKootPuhelinVaakaTest : NakymaKootBase("puhelin-vaaka", 851, 411 - 92)
 
 /** Tabletti pystyssä. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w800dp-h1280dp-port")
-class NakymaKootTablettiPystyTest : NakymaKootBase("tabletti-pysty", 800, 1280 - 152)
+class NakymaKootTablettiPystyTest : NakymaKootBase("tabletti-pysty", 720, 1280 - 104)
 
 /** Tabletti vaakatasossa. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w1280dp-h800dp-land")
-class NakymaKootTablettiVaakaTest : NakymaKootBase("tabletti-vaaka", 1280, 800 - 152)
+class NakymaKootTablettiVaakaTest : NakymaKootBase("tabletti-vaaka", 720, 800 - 104)
