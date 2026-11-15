@@ -61,7 +61,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Sovelluksen näkymät. */
-internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD, DAY, CHANGE, QUICK_CHANGE, FLOW_CHANGE, GROUPS, WEEK }
+internal enum class AppPage { HOME, TIMER, FIRST_THEN, PROGRAMS, CAREGIVER, MANUAL, LAST, DONE, EVENT_CARD, DAY, CHANGE, QUICK_CHANGE, FLOW_CHANGE, GROUPS, WEEK, CHOICE }
 
 /** Sovelluksen navigointi ja Ensin–Sitten-kulun yhteinen tila. */
 @Composable
@@ -187,6 +187,11 @@ internal fun AikaPolkuApp() {
 
     /** Ensin valmis: Sitten-kortista tulee viimeinen toiminto, tai kulku päättyy. */
     fun afterFirst() {
+        // Valinta: Sitten-kohdassa kaksi vaihtoehtoa – asiakas valitsee ensin.
+        if (cards.hasChoice) {
+            page = AppPage.CHOICE
+            return
+        }
         if (cards.promoteNext()) {
             page = AppPage.LAST
             playFirstVoice()
@@ -265,7 +270,7 @@ internal fun AikaPolkuApp() {
                 AppTopBar(
                     title = titleOverride.value ?: when (page) {
                         AppPage.TIMER -> stringResource(R.string.timer_title)
-                        AppPage.FIRST_THEN, AppPage.MANUAL, AppPage.LAST, AppPage.DONE -> stringResource(R.string.ensin_sitten)
+                        AppPage.FIRST_THEN, AppPage.MANUAL, AppPage.LAST, AppPage.DONE, AppPage.CHOICE -> stringResource(R.string.ensin_sitten)
                         AppPage.PROGRAMS -> stringResource(R.string.paivaohjelmat)
                         AppPage.CAREGIVER -> stringResource(R.string.caregiver_settings_title)
                         AppPage.DAY -> dayName(LocalDate.now().dayOfWeek.value)
@@ -476,6 +481,10 @@ internal fun AikaPolkuApp() {
                     onNextDescription = { text -> cards.update { it.copy(nextDescription = text) } },
                     onFirstVoice = { path, auto -> cards.update { it.copy(firstVoice = path, firstVoiceAuto = auto) } },
                     onNextVoice = { path, auto -> cards.update { it.copy(nextVoice = path, nextVoiceAuto = auto) } },
+                    nextAlt = sel.nextAltName.takeIf { it.isNotBlank() }?.let { fi.aikapolku.app.data.ChoiceAlt(it, sel.nextAltPhoto, sel.nextAltVoice) },
+                    onNextAlt = { alt ->
+                        cards.update { it.copy(nextAltName = alt?.name ?: "", nextAltPhoto = alt?.photo ?: "", nextAltVoice = alt?.voicePath ?: "") }
+                    },
                     onDone = {
                         guardTimerStop {
                             timer.stopForManual()
@@ -528,6 +537,32 @@ internal fun AikaPolkuApp() {
                     }
                 )
 
+                AppPage.CHOICE -> {
+                    var choiceNone by rememberSaveable { mutableStateOf(false) }
+                    if (choiceNone) {
+                        fi.aikapolku.app.programs.run.SupportMessageScreen(
+                            kind = fi.aikapolku.app.data.SupportKind.CHOICE_NONE,
+                            timerPaused = false,
+                            onContinue = { choiceNone = false },
+                            onClose = { choiceNone = false }
+                        )
+                    } else {
+                        fi.aikapolku.app.programs.run.ChoiceScreen(
+                            options = listOf(
+                                fi.aikapolku.app.data.ChoiceOption(sel.nextName, sel.nextPhoto, sel.nextVoice),
+                                fi.aikapolku.app.data.ChoiceOption(sel.nextAltName, sel.nextAltPhoto, sel.nextAltVoice)
+                            ),
+                            allowNone = remember { fi.aikapolku.app.data.ChoicePrefs.allowNone(context) },
+                            onStart = { index ->
+                                cards.chooseNext(useAlternative = index == 1)
+                                fi.aikapolku.app.link.ClientMessages.choice(context, cards.selection.nextName)
+                                afterFirst()
+                            },
+                            onNone = { choiceNone = true },
+                            modifier = Modifier.height(fi.aikapolku.app.programs.run.pageHeight())
+                        )
+                    }
+                }
                 AppPage.LAST -> LastActivityScreen(
                     name = firstShown,
                     imagePath = sel.firstPhoto,

@@ -38,14 +38,36 @@ internal class FirstThenCards(initial: FirstThenSelection, original: FirstThenSe
         if (original == null) original = s
         selection = s.copy(
             firstName = s.nextName, firstPhoto = s.nextPhoto, firstDescription = s.nextDescription,
-            firstVoice = s.nextVoice, firstVoiceAuto = s.nextVoiceAuto
+            firstVoice = s.nextVoice, firstVoiceAuto = s.nextVoiceAuto,
+            nextAltName = "", nextAltPhoto = "", nextAltVoice = ""
         )
         return true
     }
 
+    /** Sitten-kortilla on toinen vaihtoehto: asiakas valitsee ennen siirtymistä. */
+    val hasChoice: Boolean get() = hasNext && selection.nextAltName.isNotBlank()
+
+    /**
+     * Asiakas valitsi Sitten-kohdan. [useAlternative] = toinen vaihtoehto korvaa Sitten-kortin.
+     * Alkuperäinen pari talletetaan, jotta kulun jälkeen näkyvät taas omat korttinsa.
+     */
+    fun chooseNext(useAlternative: Boolean) {
+        val s = selection
+        if (s.nextAltName.isBlank()) return
+        if (original == null) original = s
+        selection = if (useAlternative) s.copy(
+            nextName = s.nextAltName, nextPhoto = s.nextAltPhoto, nextDescription = "",
+            nextVoice = s.nextAltVoice, nextVoiceAuto = false,
+            nextAltName = "", nextAltPhoto = "", nextAltVoice = ""
+        ) else s.copy(nextAltName = "", nextAltPhoto = "", nextAltVoice = "")
+    }
+
     /** Ohjaaja lisää vielä yhden vaiheen: Sitten-kortti tyhjennetään valittavaksi. */
     fun clearNext() {
-        selection = selection.copy(nextName = "", nextPhoto = "", nextDescription = "", nextVoice = "", nextVoiceAuto = false)
+        selection = selection.copy(
+            nextName = "", nextPhoto = "", nextDescription = "", nextVoice = "", nextVoiceAuto = false,
+            nextAltName = "", nextAltPhoto = "", nextAltVoice = ""
+        )
     }
 
     /** Kulku päättyi (valmis tai poistuttiin aloitukseen): alkuperäinen pari takaisin. */
@@ -63,21 +85,27 @@ internal class FirstThenCards(initial: FirstThenSelection, original: FirstThenSe
             nextName = s.nextName.takeUnless { it == LEGACY_PLACEHOLDER } ?: ""
         )
 
+        private const val FIELDS = 13
+
         private fun fields(s: FirstThenSelection): List<Any> = listOf(
             s.firstName, s.nextName, s.firstPhoto, s.nextPhoto, s.firstDescription, s.nextDescription,
-            s.firstVoice, s.nextVoice, s.firstVoiceAuto, s.nextVoiceAuto
+            s.firstVoice, s.nextVoice, s.firstVoiceAuto, s.nextVoiceAuto, s.nextAltName, s.nextAltPhoto, s.nextAltVoice
         )
 
-        private fun selectionOf(v: List<Any>, at: Int) = FirstThenSelection(
+        private fun selectionOf(v: List<Any>, at: Int, size: Int) = FirstThenSelection(
             v[at] as String, v[at + 1] as String, v[at + 2] as String, v[at + 3] as String, v[at + 4] as String,
-            v[at + 5] as String, v[at + 6] as String, v[at + 7] as String, v[at + 8] as Boolean, v[at + 9] as Boolean
+            v[at + 5] as String, v[at + 6] as String, v[at + 7] as String, v[at + 8] as Boolean, v[at + 9] as Boolean,
+            if (size >= 13) v[at + 10] as String else "",
+            if (size >= 13) v[at + 11] as String else "",
+            if (size >= 13) v[at + 12] as String else ""
         )
 
-        /** Nykyinen pari (10 kenttää) ja kulun alkuperäinen pari, jos kulku on kesken (+10). */
+        /** Nykyinen pari (13 kenttää) ja kulun alkuperäinen pari, jos kulku on kesken (+13). Vanha muoto 10/20. */
         val saver = Saver<FirstThenCards, List<Any>>(
             save = { cards -> fields(cards.selection) + (cards.original?.let { fields(it) } ?: emptyList()) },
             restore = { v ->
-                FirstThenCards(selectionOf(v, 0), if (v.size >= 20) selectionOf(v, 10) else null)
+                val size = if (v.size % FIELDS == 0) FIELDS else 10
+                FirstThenCards(selectionOf(v, 0, size), if (v.size >= 2 * size) selectionOf(v, size, size) else null)
             }
         )
     }

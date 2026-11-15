@@ -47,6 +47,7 @@ import fi.aikapolku.app.ui.ChoiceRow
 import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.rounded.Face
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.ui.platform.LocalContext
 import fi.aikapolku.app.data.ProfileStore
@@ -148,6 +149,12 @@ private fun ClientHome(
         )
         menu()
     }
+    // Odotetaan: odotus korvaa päivän näkymän, kunnes ohjaaja painaa "Nyt mennään".
+    val wait = remember(revision, fi.aikapolku.app.data.Waiting.revision) { fi.aikapolku.app.data.Waiting.current(context) }
+    if (wait != null) {
+        fi.aikapolku.app.week.WaitingView(wait)
+        return
+    }
     ChangeAnnouncements(onOpenChange)
     ClientDayView(prefs, activity, onOpenActivity, onOpenProgram, onOpenCard, onOpenChange)
     if (prefs.anyTool) Spacer(Modifier.height(6.dp))
@@ -195,6 +202,10 @@ private fun CaregiverHome(
         onChange = { onMakeChange(it.id) },
         onOpenDay = onOpenDay
     )
+    // Odotus käynnissä: "Nyt mennään" päättää sen asiakkaalta.
+    fi.aikapolku.app.week.WaitingCaregiverCard()
+    // Asiakkaiden viestit tähän puhelimeen (Kerro ohjaajalle).
+    fi.aikapolku.app.link.LinkInboxCard()
     // Yksikön kohdat, joita asiakas ei näe toiminnan aikana (P10).
     fi.aikapolku.app.week.HiddenForClient()
     // Ohjaajan kaksi tärkeintä toimintoa vierekkäin: asiakkaan viikko ja päivän muutos.
@@ -244,10 +255,13 @@ private fun CaregiverHome(
     // Yksikön tilanne: kuka on missä (V3).
     fi.aikapolku.app.week.UnitTodayCard()
 
+    var showWait by remember { mutableStateOf(false) }
     ToolsCard(stringResource(R.string.caregiver_prepare)) {
         ChoiceRow(stringResource(R.string.ensin_sitten), { open(AppPage.FIRST_THEN) }, subtitle = stringResource(R.string.caregiver_first_then_info), leading = { RowIcon(Icons.AutoMirrored.Rounded.ArrowForward) })
         ChoiceRow(stringResource(R.string.timer_title), { open(AppPage.TIMER) }, subtitle = stringResource(R.string.caregiver_timer_info), leading = { RowIcon(Icons.Rounded.Refresh) })
+        ChoiceRow(stringResource(R.string.wait_start_title), { showWait = true }, subtitle = stringResource(R.string.wait_start_info), leading = { RowIcon(Icons.Rounded.Info) })
     }
+    if (showWait) fi.aikapolku.app.week.WaitStartDialog(onDismiss = { showWait = false })
     ToolsCard(stringResource(R.string.caregiver_tools)) {
         ChoiceRow(stringResource(R.string.groups_title), { open(AppPage.GROUPS) }, subtitle = stringResource(R.string.groups_home_info), leading = { RowIcon(Icons.Rounded.Face) })
         ChoiceRow(stringResource(R.string.home_programs), { open(AppPage.PROGRAMS) }, subtitle = stringResource(R.string.home_programs_info), leading = { RowIcon(Icons.AutoMirrored.Rounded.List) })

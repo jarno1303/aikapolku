@@ -535,6 +535,8 @@ internal fun MessageSettings() {
     if (message.isNotBlank()) Text(message, fontSize = 13.sp, color = AppColors.Muted)
 
     if (showVoicePicker) VoicePickerDialog(onDismiss = { showVoicePicker = false })
+
+    ChoiceOwnStateSettings()
 }
 
 private const val SOON_GENERAL = "soon_general"
@@ -636,5 +638,49 @@ internal fun OptionalCard(framed: Boolean, title: String, content: @Composable C
         }
     } else {
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp), content = content)
+    }
+}
+
+/** Valinta, oma tila ja Kerro ohjaajalle (asiakaskohtaiset). */
+@Composable
+private fun ChoiceOwnStateSettings() {
+    val context = LocalContext.current
+    var allowNone by remember { mutableStateOf(fi.aikapolku.app.data.ChoicePrefs.allowNone(context)) }
+    SettingLabel(stringResource(R.string.choice_title), stringResource(R.string.choice_allow_none_info))
+    SwitchLine(stringResource(R.string.choice_allow_none_label), allowNone) {
+        allowNone = it
+        fi.aikapolku.app.data.ChoicePrefs.setAllowNone(context, it)
+    }
+
+    var ownOn by remember { mutableStateOf(fi.aikapolku.app.data.OwnState.enabled(context)) }
+    var scale by remember { mutableStateOf(fi.aikapolku.app.data.OwnState.scale(context)) }
+    var after by remember { mutableStateOf(fi.aikapolku.app.data.OwnState.askAfterTasks(context)) }
+    SettingLabel(stringResource(R.string.own_state_settings_label), stringResource(R.string.own_state_settings_info))
+    SwitchLine(stringResource(R.string.own_state_enabled), ownOn) {
+        ownOn = it
+        fi.aikapolku.app.data.OwnState.setEnabled(context, it)
+        after = fi.aikapolku.app.data.OwnState.askAfterTasks(context)
+    }
+    if (ownOn) {
+        SegmentedChoice(
+            options = listOf(stringResource(R.string.own_state_scale_faces), stringResource(R.string.own_state_scale_battery)),
+            selected = if (scale == fi.aikapolku.app.data.StateScale.BATTERY) 1 else 0,
+            onSelect = {
+                scale = if (it == 1) fi.aikapolku.app.data.StateScale.BATTERY else fi.aikapolku.app.data.StateScale.FACES
+                fi.aikapolku.app.data.OwnState.setScale(context, scale)
+            }
+        )
+        SwitchLine(stringResource(R.string.own_state_after_tasks), after) {
+            after = it
+            fi.aikapolku.app.data.OwnState.setAskAfterTasks(context, it)
+        }
+    }
+
+    var tell by remember { mutableStateOf(fi.aikapolku.app.link.ClientMessages.enabledForClient(context)) }
+    val paired = remember { fi.aikapolku.app.link.LinkStore(context).peers().isNotEmpty() }
+    SettingLabel(stringResource(R.string.link_tell_caregiver), stringResource(if (paired) R.string.link_client_setting_info else R.string.link_client_setting_unpaired))
+    SwitchLine(stringResource(R.string.link_client_setting_label), tell, enabled = paired) {
+        tell = it
+        fi.aikapolku.app.link.ClientMessages.setEnabledForClient(context, it)
     }
 }

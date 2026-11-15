@@ -60,6 +60,8 @@ internal fun ArrangePage(
     }
 
     var draggingId by remember { mutableStateOf<String?>(null) }
+    // Valinta: minkä vaiheen toista vaihtoehtoa valitaan korttikirjastosta.
+    var altPickFor by remember { mutableStateOf<String?>(null) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
     val heights = remember { mutableStateMapOf<String, Int>() }
     val gapPx = with(LocalDensity.current) { 10.dp.toPx() }
@@ -214,9 +216,32 @@ internal fun ArrangePage(
                                 }
                             )
                         }
+                        Box(modifier = Modifier.padding(start = 48.dp, end = 8.dp)) {
+                            fi.aikapolku.app.programs.run.ChoiceAltRow(
+                                alt = step.alternative,
+                                onPick = { altPickFor = step.id },
+                                onRemove = {
+                                    commit(latest.value.copy(steps = latest.value.steps.map {
+                                        if (it.id == step.id) it.copy(alternative = null) else it
+                                    }))
+                                }
+                            )
+                        }
                     }
                 }
             }
+        }
+
+        altPickFor?.let { id ->
+            fi.aikapolku.app.cards.CardLibraryDialog(
+                onDismiss = { altPickFor = null },
+                onSelect = { card ->
+                    commit(latest.value.copy(steps = latest.value.steps.map {
+                        if (it.id == id) it.copy(alternative = fi.aikapolku.app.data.ChoiceAlt(card.name, card.photoPath, card.voicePath)) else it
+                    }))
+                    altPickFor = null
+                }
+            )
         }
 
         SecondaryButton(
@@ -228,3 +253,4 @@ internal fun ArrangePage(
         Spacer(Modifier.height(4.dp))
     }
 }
+

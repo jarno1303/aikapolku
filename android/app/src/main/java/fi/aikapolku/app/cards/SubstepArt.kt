@@ -50,5 +50,6 @@ internal object SubstepArt {
         SupportKind.BREAK -> R.drawable.ap_msg_break
         SupportKind.HELP -> R.drawable.ap_msg_help
         SupportKind.MORE_TIME -> R.drawable.ap_msg_more_time
+        SupportKind.CHOICE_NONE -> R.drawable.ap_msg_help
     }
 }

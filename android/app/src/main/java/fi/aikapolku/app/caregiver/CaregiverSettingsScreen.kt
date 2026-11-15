@@ -68,6 +68,9 @@ internal fun CaregiverSettingsScreen() {
     SettingsSection(stringResource(R.string.role_settings_title), stringResource(R.string.settings_roles_info), Icons.Rounded.Build) {
         RoleSettings()
     }
+    SettingsSection(stringResource(R.string.link_settings_title), stringResource(R.string.link_settings_info), Icons.Rounded.Share) {
+        fi.aikapolku.app.link.LinkSettings()
+    }
 }
 
 /** Ohjaajan lukitus (PIN) ja vinkki näytön kiinnityksestä. */

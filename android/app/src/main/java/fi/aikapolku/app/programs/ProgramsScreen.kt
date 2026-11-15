@@ -217,11 +217,22 @@ internal fun ProgramsScreen(
         if (run.skip()) finishRun()
     }
 
+    // Oma tila tehtävän jälkeen (asiakaskohtainen, aina ohitettavissa; tieto jää asiakkaalle).
+    var askOwnState by rememberSaveable { mutableStateOf(false) }
+    fun completeStep() {
+        val before = run.stepIndex
+        val finished = run.next()
+        if (finished) finishRun()
+        // Vain tehtävien välissä (ohjelman lopussa Kaikki valmista -näkymä).
+        val taskDone = !finished && run.stepIndex != before
+        if (taskDone && !caregiver.isCaregiver && fi.aikapolku.app.data.OwnState.askAfterTasks(context)) askOwnState = true
+    }
+
     // Valmis: vahinkonaputusten esto ja ohjaajan valitsema toiminta, kun aikaa on jäljellä.
     fun onDonePressed() {
         if (run.tapGuardActive()) return
         when (run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver, RunPreferences.timerStart(context))) {
-            DoneGate.ALLOW -> if (run.next()) finishRun()
+            DoneGate.ALLOW -> completeStep()
             DoneGate.CONFIRM -> confirmDoneLeft = run.timeLeft()
             // Lupia pyydetään vain ohjaajalta; asiakkaalle aika alkaa ilman asetussivua.
             DoneGate.START_TIMER -> run.startTimer(askPermissions = caregiver.isCaregiver)
@@ -279,7 +290,13 @@ internal fun ProgramsScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         val runStep = if (view == ProgramsView.RUN) run.currentStep else null
-        if (runStep != null) {
+        if (askOwnState && runStep != null) {
+            fi.aikapolku.app.programs.run.OwnStateFlow(
+                onClose = { askOwnState = false },
+                onBreak = { askOwnState = false; run.requestSupport(SupportKind.BREAK) },
+                onHelp = { askOwnState = false; run.requestSupport(SupportKind.HELP) }
+            )
+        } else if (runStep != null) {
             val kind = run.support
             if (kind != null) {
                 SupportMessageScreen(
@@ -295,6 +312,22 @@ internal fun ProgramsScreen(
                     timerPaused = false,
                     onContinue = { askAdultMoreTime = false },
                     onClose = { askAdultMoreTime = false }
+                )
+            } else if (run.needsChoice) {
+                // Valinta ennen aloitusta: aika ja ääni alkavat vasta, kun asiakas on valinnut.
+                val alt = runStep.alternative!!
+                fi.aikapolku.app.programs.run.ChoiceScreen(
+                    options = listOf(
+                        fi.aikapolku.app.data.ChoiceOption(runStep.name, runStep.photo, runStep.voicePath),
+                        fi.aikapolku.app.data.ChoiceOption(alt.name, alt.photo, alt.voicePath)
+                    ),
+                    allowNone = remember(run.stepIndex) { fi.aikapolku.app.data.ChoicePrefs.allowNone(context) },
+                    onStart = { index ->
+                        run.choose(useAlternative = index == 1)?.let { chosen ->
+                            fi.aikapolku.app.link.ClientMessages.choice(context, chosen.name)
+                        }
+                    },
+                    onNone = { run.requestSupport(SupportKind.CHOICE_NONE) }
                 )
             } else {
                 val nextSubStep = runStep.subSteps.getOrNull(run.subStepIndex + 1)
@@ -475,7 +508,7 @@ internal fun ProgramsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     confirmDoneLeft = null
-                    if (run.next()) finishRun()
+                    completeStep()
                 }) { Text(stringResource(R.string.done_confirm_yes)) }
             },
             dismissButton = {

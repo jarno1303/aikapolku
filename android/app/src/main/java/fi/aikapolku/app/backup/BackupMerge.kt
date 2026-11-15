@@ -27,7 +27,12 @@ internal object BackupMerge {
     private fun normalized(p: DayProgram) = p.copy(
         id = "",
         name = p.name.trim().lowercase(),
-        steps = p.steps.map { it.copy(id = "", photo = media(it.photo), voicePath = media(it.voicePath)) }
+        steps = p.steps.map {
+            it.copy(
+                id = "", photo = media(it.photo), voicePath = media(it.voicePath),
+                alternative = it.alternative?.let { a -> a.copy(photo = media(a.photo), voicePath = media(a.voicePath)) }
+            )
+        }
     )
 
     private fun normalized(c: CardItem) = c.copy(

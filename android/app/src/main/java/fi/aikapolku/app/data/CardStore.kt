@@ -40,7 +40,11 @@ internal data class FirstThenSelection(
     val firstVoice: String = "",
     val nextVoice: String = "",
     val firstVoiceAuto: Boolean = false,
-    val nextVoiceAuto: Boolean = false
+    val nextVoiceAuto: Boolean = false,
+    /** Valinta: Sitten-kortin toinen vaihtoehto (tyhjä nimi = ei valintaa). */
+    val nextAltName: String = "",
+    val nextAltPhoto: String = "",
+    val nextAltVoice: String = ""
 )
 
 internal class CardStore(context: Context, profileId: String = ProfileStore.currentId(context)) {
@@ -139,7 +143,10 @@ internal class CardStore(context: Context, profileId: String = ProfileStore.curr
             firstVoice = obj.optString("firstVoice"),
             nextVoice = obj.optString("nextVoice"),
             firstVoiceAuto = obj.optBoolean("firstVoiceAuto", false),
-            nextVoiceAuto = obj.optBoolean("nextVoiceAuto", false)
+            nextVoiceAuto = obj.optBoolean("nextVoiceAuto", false),
+            nextAltName = obj.optString("nextAltName"),
+            nextAltPhoto = obj.optString("nextAltPhoto"),
+            nextAltVoice = obj.optString("nextAltVoice")
         )
     }
 
@@ -155,6 +162,9 @@ internal class CardStore(context: Context, profileId: String = ProfileStore.curr
             put("nextVoice", selection.nextVoice)
             put("firstVoiceAuto", selection.firstVoiceAuto)
             put("nextVoiceAuto", selection.nextVoiceAuto)
+            put("nextAltName", selection.nextAltName)
+            put("nextAltPhoto", selection.nextAltPhoto)
+            put("nextAltVoice", selection.nextAltVoice)
         }
 
         prefs.edit()

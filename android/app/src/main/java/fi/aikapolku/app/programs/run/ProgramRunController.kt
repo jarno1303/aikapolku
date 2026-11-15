@@ -1,5 +1,7 @@
 package fi.aikapolku.app.programs.run
 
+import fi.aikapolku.app.data.chosen
+
 import fi.aikapolku.app.data.RunPreferences
 import fi.aikapolku.app.data.ProfileScope
 import android.content.Context
@@ -190,7 +192,27 @@ internal class ProgramRunController(
         enterStep(first)
     }
 
+    /** Nykyinen vaihe odottaa asiakkaan valintaa (aika ja ääni alkavat vasta valinnan jälkeen). */
+    val needsChoice: Boolean get() = currentStep?.alternative != null
+
+    /**
+     * Asiakas valitsi: [useAlternative] = toinen vaihtoehto. Vaihe korvataan valinnalla, ja
+     * aika ja ääni alkavat kuten vaiheen tullessa näkyviin. Palauttaa valitun vaiheen.
+     */
+    fun choose(useAlternative: Boolean): ProgramStep? {
+        val step = currentStep ?: return null
+        if (step.alternative == null) return step
+        val chosen = step.chosen(useAlternative)
+        program = program.copy(steps = program.steps.mapIndexed { i, s -> if (i == stepIndex) chosen else s })
+        subStepIndex = 0
+        stepEnteredAt = timer.now()
+        enterStep(chosen)
+        return chosen
+    }
+
     private fun enterStep(step: ProgramStep) {
+        // Valinta ensin: ei ääntä eikä aikaa ennen kuin asiakas on valinnut.
+        if (step.alternative != null) return
         stepVoicePlayed = step.mode != StepMode.DURATION
         if (stepVoicePlayed && step.autoPlayVoice) playVoice(step.voicePath)
         // Aika alkaa itsestään: ei koskaan avata Androidin lupa-asetuksia asiakkaan eteen.

@@ -32,6 +32,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,12 +72,24 @@ internal fun SupportMessageScreen(
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
+    // Oma tila tauon aikana (asiakkaan oma tieto, ks. OwnStateFlow).
+    var ownStateOpen by rememberSaveable { mutableStateOf(false) }
+    if (ownStateOpen) {
+        OwnStateFlow(onClose = { ownStateOpen = false })
+        return
+    }
+    val canTell = remember { fi.aikapolku.app.link.ClientMessages.canSend(context) }
+    val showOwnState = kind == SupportKind.BREAK && remember { fi.aikapolku.app.data.OwnState.enabled(context) }
+    var sent by rememberSaveable { mutableStateOf<Boolean?>(null) }
+    var sending by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     // Teksti tulee käännettävistä resursseista.
     val message = stringResource(
         when (kind) {
             SupportKind.BREAK -> R.string.support_break
             SupportKind.HELP -> R.string.support_help
             SupportKind.MORE_TIME -> R.string.support_more_time
+            SupportKind.CHOICE_NONE -> R.string.support_choice_none
         }
     )
     val voiceMode = remember(kind) { RunPreferences.voiceMode(context, kind.key) }
@@ -168,6 +186,57 @@ internal fun SupportMessageScreen(
                 ) {
                     Icon(AppIcons.Speaker, contentDescription = null, modifier = Modifier.size(22.dp))
                     Text(stringResource(R.string.toista_viesti), fontSize = 17.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+
+            // Kerro ohjaajalle (asiakas päättää joka kerta) ja oma tila tauolla.
+            if (canTell || showOwnState) {
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    if (canTell) {
+                        OutlinedButton(
+                            onClick = {
+                                if (!sending) {
+                                    sending = true
+                                    scope.launch {
+                                        sent = fi.aikapolku.app.link.ClientMessages.send(context, kind.key, message)
+                                        sending = false
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(2.dp, RunColors.teal),
+                            colors = ButtonDefaults.outlinedButtonColors(containerColor = RunColors.card, contentColor = RunColors.teal)
+                        ) {
+                            Text(
+                                when {
+                                    sending -> stringResource(R.string.link_sending)
+                                    sent == true -> stringResource(R.string.link_sent_ok)
+                                    else -> stringResource(R.string.link_tell_caregiver)
+                                },
+                                fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                    if (showOwnState) {
+                        OutlinedButton(
+                            onClick = { ownStateOpen = true },
+                            modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(2.dp, RunColors.teal),
+                            colors = ButtonDefaults.outlinedButtonColors(containerColor = RunColors.card, contentColor = RunColors.teal)
+                        ) { Text(stringResource(R.string.own_state_open), fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+                    }
+                }
+                if (sent == false) {
+                    Text(
+                        stringResource(R.string.link_sent_failed),
+                        modifier = Modifier.fillMaxWidth(),
+                        fontSize = 15.sp, color = fi.aikapolku.app.ui.AppColors.Coral, textAlign = TextAlign.Center
+                    )
                 }
             }
 

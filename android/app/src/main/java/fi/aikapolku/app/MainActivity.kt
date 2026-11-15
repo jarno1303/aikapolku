@@ -26,6 +26,8 @@ class MainActivity : ComponentActivity() {
             ImportLaunch.from(intent)
         }
         EventReminders.onAppStart(this)
+        // Ohjaajan puhelin: asiakkaiden viestien vastaanotto, jos valittu (Yksikön yhteys).
+        fi.aikapolku.app.link.LinkReceiverService.ensure(this)
         setContent {
             AikapolkuTheme {
                 CaregiverLockHost {
@@ -36,6 +38,8 @@ class MainActivity : ComponentActivity() {
                     key(profileId) {
                         AikaPolkuApp()
                     }
+                    // Ohjaajan puhelimessa: asiakkaan laitteen liitospyyntö missä tahansa näkymässä.
+                    fi.aikapolku.app.link.PairingRequestDialog()
                 }
             }
         }

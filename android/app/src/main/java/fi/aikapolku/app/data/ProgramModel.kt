@@ -46,7 +46,9 @@ internal data class ProgramStep(
     val cancelledToday: Boolean = false,
     val changedFrom: String = "",
     /** P0-23: kellonaikatilassa toiminto on lukittu kellonaikaan [clock]. */
-    val fixedClock: Boolean = false
+    val fixedClock: Boolean = false,
+    /** Valinta: toinen vaihtoehto, josta asiakas valitsee ennen aloitusta (null = ei valintaa). */
+    val alternative: ChoiceAlt? = null
 )
 
 internal data class DayProgram(
@@ -70,6 +72,7 @@ internal fun stepToJson(step: ProgramStep): JSONObject = JSONObject().apply {
     put("autoPlayVoice", step.autoPlayVoice)
     put("subSteps", writeSubSteps(step.subSteps))
     put("fixedClock", step.fixedClock)
+    step.alternative?.let { put("alt", it.toJson()) }
     // Päivän muutos vain suorituksen tilassa (näytön kääntö); tallennetuissa ohjelmissa ei koskaan.
     if (step.changedToday) put("changedToday", true)
     if (step.cancelledToday) put("cancelledToday", true)
@@ -88,6 +91,7 @@ internal fun stepFromJson(s: JSONObject): ProgramStep = ProgramStep(
     autoPlayVoice = s.optBoolean("autoPlayVoice", false),
     subSteps = readSubSteps(s),
     fixedClock = s.optBoolean("fixedClock", false),
+    alternative = ChoiceAlt.fromJson(s.optJSONObject("alt")),
     changedToday = s.optBoolean("changedToday", false),
     cancelledToday = s.optBoolean("cancelledToday", false),
     changedFrom = s.optString("changedFrom")

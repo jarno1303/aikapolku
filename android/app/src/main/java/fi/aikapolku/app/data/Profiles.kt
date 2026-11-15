@@ -30,7 +30,9 @@ internal object ProfileScope {
     const val CHANGES = "aikapolku_changes_v1"
 
     /** Kaikki profiilikohtaiset tiedostot. Uusi profiilikohtainen tieto lisätään tähän. */
-    val SCOPED = listOf(PROGRAMS, CARDS, RUN_PREFS, PROGRESS, TIMER_PREFS, WEEK, ACKS, CHANGES)
+    const val WAIT = "aikapolku_wait_v1"
+    const val OWN_STATE = "aikapolku_own_state_v1"
+    val SCOPED = listOf(PROGRAMS, CARDS, RUN_PREFS, PROGRESS, TIMER_PREFS, WEEK, ACKS, CHANGES, WAIT, OWN_STATE)
 
     fun prefsName(base: String, profileId: String): String =
         if (profileId == DEFAULT_ID) base else "${base}__$profileId"

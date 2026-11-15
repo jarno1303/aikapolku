@@ -71,7 +71,10 @@ internal fun FirstThenScreen(
     onStartTimer: (Int) -> Unit,
     /** Ensin-toiminnon ajastus on kesken: pääpainike palaa ajastimeen. */
     timerInProgress: Boolean = false,
-    onReturnToTimer: () -> Unit = {}
+    onReturnToTimer: () -> Unit = {},
+    /** Valinta: Sitten-kortin toinen vaihtoehto (null = ei valintaa). */
+    nextAlt: fi.aikapolku.app.data.ChoiceAlt? = null,
+    onNextAlt: (fi.aikapolku.app.data.ChoiceAlt?) -> Unit = {}
 ) {
     val context = LocalContext.current
     var choosing by remember { mutableStateOf<String?>(null) }
@@ -156,6 +159,20 @@ internal fun FirstThenScreen(
         onFirstClick = { if (canEditCards) choosing = "first" },
         onNextClick = { if (canEditCards) choosing = "next" }
     )
+    // Valinta: Sitten-kohtaan toinen vaihtoehto, josta asiakas valitsee ennen siirtymistä.
+    var pickAlt by remember { mutableStateOf(false) }
+    if (canEditCards && next.isNotBlank() && next != stringResource(R.string.choose_activity)) {
+        fi.aikapolku.app.programs.run.ChoiceAltRow(alt = nextAlt, onPick = { pickAlt = true }, onRemove = { onNextAlt(null) })
+    }
+    if (pickAlt) {
+        CardLibraryDialog(
+            onDismiss = { pickAlt = false },
+            onSelect = { card ->
+                onNextAlt(fi.aikapolku.app.data.ChoiceAlt(card.name, card.photoPath, card.voicePath))
+                pickAlt = false
+            }
+        )
+    }
 
     var timerMode by rememberSaveable {
         mutableStateOf(true)
