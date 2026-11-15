@@ -562,7 +562,7 @@ internal fun ProgramsScreen(
 }
 
 /** Jäljellä oleva aika muodossa m:ss. */
-private fun formatLeft(ms: Long): String {
+internal fun formatLeft(ms: Long): String {
     val seconds = ((ms + 999L) / 1000L).coerceAtLeast(0L)
     return "%d:%02d".format(seconds / 60, seconds % 60)
 }

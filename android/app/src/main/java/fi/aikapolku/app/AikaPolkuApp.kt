@@ -439,6 +439,8 @@ internal fun AikaPolkuApp() {
                     onReset = { timer.reset() },
                     moreTimeUsed = timer.moreTimeUsed,
                     onMoreTime = { extraMs -> timer.addMoreTime(extraMs) },
+                    doneEarly = timer.doneEarly,
+                    onFinishEarly = { timer.finishEarly() },
                     // Valmistelun jälkeen suoraan asiakkaalle: rooli vaihtuu ja NYT-kortti odottaa Aloita-painallusta.
                     onHandToClient = {
                         caregiver.lockNow()

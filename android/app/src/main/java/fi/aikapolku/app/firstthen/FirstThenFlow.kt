@@ -103,6 +103,9 @@ internal class FlowTimer(private val timer: TimerPort) {
     /** Montako kertaa asiakas on saanut lisäaikaa tähän toimintoon ("Tarvitsen vielä hetken", A2). */
     var moreTimeUsed by mutableIntStateOf(0)
         private set
+    /** Ensin kuitattiin valmiiksi ennen ajan loppua (ei lisäaikaa eikä äänimerkkiä). */
+    var doneEarly by mutableStateOf(false)
+        private set
 
     /**
      * Ensin-toiminnon ajastus on aloitettu eikä vielä kuitattu (käynnissä, tauolla tai aika
@@ -116,6 +119,7 @@ internal class FlowTimer(private val timer: TimerPort) {
         timer.stop(minutes * 60_000L)
         voiceStarted = false
         moreTimeUsed = 0
+        doneEarly = false
         duration = minutes * 60_000L
         originalDuration = duration
         remaining = duration
@@ -141,6 +145,7 @@ internal class FlowTimer(private val timer: TimerPort) {
                     duration = originalDuration
                     remaining = originalDuration
                     moreTimeUsed = 0
+                    doneEarly = false
                 }
                 deadline = timer.start(remaining, activeTask.ifBlank { title })
                 running = true
@@ -157,6 +162,7 @@ internal class FlowTimer(private val timer: TimerPort) {
         timer.stop(originalDuration)
         voiceStarted = false
         moreTimeUsed = 0
+        doneEarly = false
         duration = originalDuration
         remaining = originalDuration
     }
@@ -172,6 +178,7 @@ internal class FlowTimer(private val timer: TimerPort) {
         deadline = 0L
         voiceStarted = false
         moreTimeUsed = 0
+        doneEarly = false
     }
 
     /** Aika valmis, siirrytään eteenpäin. */
@@ -180,6 +187,19 @@ internal class FlowTimer(private val timer: TimerPort) {
         timer.stop(0L)
         activeTask = ""
         moreTimeUsed = 0
+        doneEarly = false
+    }
+
+    /**
+     * Ensin valmis ennen ajan loppua (asiakkaan Valmis asetuksen rajoissa tai ohjaaja):
+     * aika lopetetaan ilman äänimerkkiä ja näkymä näyttää saman valmis-kortin kuin ajan päättyessä.
+     */
+    fun finishEarly() {
+        if (activeTask.isBlank()) return
+        running = false
+        remaining = 0L
+        doneEarly = true
+        timer.stop(0L)
     }
 
     /**
@@ -189,7 +209,7 @@ internal class FlowTimer(private val timer: TimerPort) {
      * Palauttaa true, jos aikaa lisättiin.
      */
     fun addMoreTime(extraMs: Long): Boolean {
-        if (activeTask.isBlank() || extraMs <= 0L) return false
+        if (activeTask.isBlank() || extraMs <= 0L || doneEarly) return false
         val left = if (running) (deadline - timer.now()).coerceAtLeast(0L) else remaining
         if (!running && left > 0L) return false
         val newLeft = left + extraMs
@@ -198,6 +218,7 @@ internal class FlowTimer(private val timer: TimerPort) {
         remaining = newLeft
         deadline = timer.start(newLeft, activeTask)
         running = true
+        doneEarly = false
         moreTimeUsed += 1
         return true
     }
@@ -235,7 +256,7 @@ internal class FlowTimer(private val timer: TimerPort) {
         const val DEFAULT_MS = 300_000L
 
         fun saver(timer: TimerPort) = Saver<FlowTimer, List<Any>>(
-            save = { listOf(it.duration, it.originalDuration, it.remaining, it.running, it.deadline, it.activeTask, it.voiceStarted, it.moreTimeUsed) },
+            save = { listOf(it.duration, it.originalDuration, it.remaining, it.running, it.deadline, it.activeTask, it.voiceStarted, it.moreTimeUsed, it.doneEarly) },
             restore = { v ->
                 FlowTimer(timer).apply {
                     duration = v[0] as Long
@@ -246,8 +267,25 @@ internal class FlowTimer(private val timer: TimerPort) {
                     activeTask = v[5] as String
                     voiceStarted = v[6] as Boolean
                     moreTimeUsed = v.getOrNull(7) as? Int ?: 0
+                    doneEarly = v.getOrNull(8) as? Boolean ?: false
                 }
             }
         )
+    }
+}
+
+/**
+ * Ensin–Sitten-ajastimen Valmis ennen ajan loppua: sama asiakaskohtainen Valmis-asetus kuin
+ * päiväohjelmassa (RunPreferences.DONE_*). null = ei painiketta (asiakas: vasta ajan päätyttyä),
+ * ALLOW = kuittaus heti, CONFIRM = kysy ensin. Ohjaaja (PIN) saa aina, kysyen. Jos asiakas on
+ * pyytänyt lisäaikaa (A2), hän saa lopettaa heti, kun on valmis (kuten päiväohjelmassa).
+ */
+internal object EarlyDone {
+    fun gate(policy: String, caregiverOpen: Boolean, moreTimeUsed: Int): fi.aikapolku.app.programs.run.DoneGate? = when {
+        caregiverOpen -> fi.aikapolku.app.programs.run.DoneGate.CONFIRM
+        moreTimeUsed > 0 -> fi.aikapolku.app.programs.run.DoneGate.ALLOW
+        policy == fi.aikapolku.app.data.RunPreferences.DONE_ALWAYS -> fi.aikapolku.app.programs.run.DoneGate.ALLOW
+        policy == fi.aikapolku.app.data.RunPreferences.DONE_AFTER_TIME -> null
+        else -> fi.aikapolku.app.programs.run.DoneGate.CONFIRM
     }
 }

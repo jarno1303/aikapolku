@@ -5,6 +5,7 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Check
 import fi.aikapolku.app.ui.AppIcons
 import fi.aikapolku.app.ui.RoundIconButton
 import androidx.compose.foundation.background
@@ -62,7 +63,9 @@ internal fun LandscapeTimer(
     moreTimeEnabled: Boolean = false,
     moreTimeVisible: Boolean = false,
     moreTimeGranted: Int? = null,
-    onMoreTime: () -> Unit = {}
+    onMoreTime: () -> Unit = {},
+    /** Valmis ennen ajan loppua (null = ei painiketta). */
+    onDone: (() -> Unit)? = null
 ) {
     val guided = activeTask.isNotBlank()
     val seconds = ((remaining + 999L) / 1000L).coerceAtLeast(0L).toInt()
@@ -165,9 +168,12 @@ internal fun LandscapeTimer(
                     container = LandscapeInk,
                     tint = Color.White
                 )
+                if (onDone != null) {
+                    RoundIconButton(Icons.Rounded.Check, stringResource(R.string.timer_done_early), onDone, container = AppColors.Teal, tint = Color.White)
+                }
                 if (showSettings) {
                     RoundIconButton(Icons.Rounded.Settings, stringResource(R.string.ajastimen_asetukset), onSettingsClick, tint = LandscapeInk)
-                } else {
+                } else if (onDone == null) {
                     Spacer(Modifier.size(48.dp))
                 }
             }

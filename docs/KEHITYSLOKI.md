@@ -431,3 +431,4 @@
 - Kellotaulu: viimeisten sekuntien laskenta ja mm:ss-lukema mitoitetaan taulun keskustan mukaan, eivät kasva fonttikoon mukana (puhelintesti: eivät mahtuneet). Pienessä taulussa pelkkä numero.
 - Puhelintestit: EnnakkoaaniDeviceTest (puheääni, yleinen ja asiakkaan oma äänite, kerran tehtävää kohden, äänetön) ja KuvaJaKelloDeviceTest (EXIF-kääntö, pienennys, kellotaulun mitat).
 - Ajastin: ohjaajalle ennen käynnistystä − / + (minuutti, pitkä painallus 5 min askelin) ja pikavalinnat 5, 10, 15, 30 min kellotaulun alla; aika näkyy isona taulun ulkopuolella. Asiakkaalle ei uusia painikkeita.
+- Ensin–Sitten: Valmis ennen ajan loppua samalla asiakaskohtaisella Valmis-asetuksella kuin päiväohjelmassa (aina / kysy ensin / vasta ajan päätyttyä). Ohjaaja (PIN) saa aina, varmistuksella. Kuittaus lopettaa ajan ilman äänimerkkiä ja näyttää valmis-kortin; lisäaikaa ei enää tarjota. Huom: oletuksella (kysy ensin) nykyiset asiakkaat saavat ajastimeen Valmis-painikkeen.

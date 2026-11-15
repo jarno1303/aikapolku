@@ -5,6 +5,7 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Check
 import fi.aikapolku.app.ui.AppIcons
 import fi.aikapolku.app.ui.RoundIconButton
 import fi.aikapolku.app.data.ProfileScope
@@ -70,7 +71,11 @@ internal fun TimerScreen(
      * Ohjaaja on valmistellut Ensin–Sitten-ajan: "Anna asiakkaalle" vaihtaa asiakkaan rooliin ja
      * avaa asiakkaan etusivun (NYT-kortti, asiakas aloittaa itse). null = ei käytössä.
      */
-    onHandToClient: (() -> Unit)? = null
+    onHandToClient: (() -> Unit)? = null,
+    /** Ensin kuitattiin valmiiksi ennen ajan loppua (ei lisäaikaa valmis-kortissa). */
+    doneEarly: Boolean = false,
+    /** Ensin valmis ennen ajan loppua (asiakkaan Valmis-asetuksen rajoissa tai ohjaaja). null = ei käytössä. */
+    onFinishEarly: (() -> Unit)? = null
 ) {
     val guided = activeTask.isNotBlank()
     val finished = guided && remaining == 0L
@@ -123,7 +128,7 @@ internal fun TimerScreen(
     val moreMinutes = remember(settingsRevision) { fi.aikapolku.app.data.MoreTime.minutes(context) }
     val moreCount = remember(settingsRevision) { fi.aikapolku.app.data.MoreTime.count(context) }
     val moreEnabled = onMoreTime != null && guided
-    val moreVisible = moreEnabled &&
+    val moreVisible = moreEnabled && !doneEarly &&
         fi.aikapolku.app.data.MoreTime.visible(remaining, duration, running, ended = finished, warnMinutes = warnMinutes)
     val moreGranted = rememberSaveable { mutableStateOf<Int?>(null) }
     fi.aikapolku.app.programs.run.AutoHideGranted(moreGranted)
@@ -133,6 +138,22 @@ internal fun TimerScreen(
             onMoreTime?.invoke(moreMinutes * 60_000L) == true
         if (granted) moreGranted.value = moreMinutes else showAskAdult = true
     }
+
+    // Valmis ennen ajan loppua: sama asiakaskohtainen asetus kuin päiväohjelmassa; ohjaaja aina, kysyen.
+    val donePolicy = remember(settingsRevision) { fi.aikapolku.app.data.RunPreferences.doneMode(context) }
+    val earlyGate = if (onFinishEarly != null && guided && !finished && (running || remaining < duration))
+        fi.aikapolku.app.firstthen.EarlyDone.gate(donePolicy, caregiver.allows(AppAction.SKIP_STEP), moreTimeUsed)
+    else null
+    var confirmEarly by rememberSaveable { mutableStateOf(false) }
+    val pressDone: () -> Unit = {
+        when (earlyGate) {
+            fi.aikapolku.app.programs.run.DoneGate.ALLOW -> onFinishEarly?.invoke()
+            fi.aikapolku.app.programs.run.DoneGate.CONFIRM -> { confirmEarly = true }
+            else -> {}
+        }
+        Unit
+    }
+    LaunchedEffect(earlyGate) { if (earlyGate == null) confirmEarly = false }
 
     if (showAskAdult) {
         fi.aikapolku.app.programs.run.MoreTimeMessage(onClose = { showAskAdult = false })
@@ -178,6 +199,7 @@ internal fun TimerScreen(
             showSettings = showSettings,
             soon = soon,
             onBreak = openBreak,
+            onDone = if (earlyGate != null) pressDone else null,
             moreTimeEnabled = moreEnabled,
             moreTimeVisible = moreVisible,
             moreTimeGranted = moreGranted.value,
@@ -390,21 +412,37 @@ internal fun TimerScreen(
                 }
             }
 
-            Column(
+            // Oikealla Valmis (kun sallittu) ja ohjaajalle asetukset; aloita/tauko pysyy keskellä.
+            Row(
                 modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.Top
             ) {
+                if (earlyGate != null) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        RoundIconButton(
+                            icon = Icons.Rounded.Check,
+                            contentDescription = stringResource(R.string.timer_done_early),
+                            onClick = pressDone,
+                            container = AppColors.Teal,
+                            tint = Color.White
+                        )
+                        Text(stringResource(R.string.run_done_button), fontSize = 12.sp, color = DialMuted)
+                    }
+                }
                 if (showSettings) {
-                    RoundIconButton(
-                        icon = Icons.Rounded.Settings,
-                        contentDescription = stringResource(R.string.ajastimen_asetukset),
-                        onClick = { settingsOpen = true }
-                    )
-                    Text(
-                        stringResource(R.string.asetukset),
-                        fontSize = 11.sp,
-                        color = DialMuted
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        RoundIconButton(
+                            icon = Icons.Rounded.Settings,
+                            contentDescription = stringResource(R.string.ajastimen_asetukset),
+                            onClick = { settingsOpen = true }
+                        )
+                        Text(
+                            stringResource(R.string.asetukset),
+                            fontSize = 11.sp,
+                            color = DialMuted
+                        )
+                    }
                 }
             }
         }
@@ -424,6 +462,28 @@ internal fun TimerScreen(
         fi.aikapolku.app.settings.SettingsDialog(
             parts = listOf(fi.aikapolku.app.settings.SettingsPart.TIME),
             onDismiss = { settingsOpen = false }
+        )
+    }
+    if (confirmEarly) {
+        AlertDialog(
+            onDismissRequest = { confirmEarly = false },
+            title = { Text(stringResource(R.string.done_confirm_title, fi.aikapolku.app.programs.formatLeft(remaining))) },
+            text = {
+                Text(
+                    if (nextActivity.isNotBlank() && nextActivity != stringResource(R.string.choose_activity))
+                        stringResource(R.string.timer_done_early_text, nextActivity)
+                    else stringResource(R.string.done_confirm_text)
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmEarly = false
+                    onFinishEarly?.invoke()
+                }) { Text(stringResource(R.string.done_confirm_yes)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmEarly = false }) { Text(stringResource(R.string.done_confirm_no)) }
+            }
         )
     }
     if (confirmReset) {
