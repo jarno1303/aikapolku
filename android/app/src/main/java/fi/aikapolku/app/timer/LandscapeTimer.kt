@@ -26,6 +26,8 @@ import fi.aikapolku.app.R
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.TimeDisplayPrefs
 import fi.aikapolku.app.programs.run.BreakButton
+import fi.aikapolku.app.programs.run.MoreTimeButton
+import fi.aikapolku.app.programs.run.MoreTimeGrantedCard
 import fi.aikapolku.app.programs.run.SoonChangeCard
 import fi.aikapolku.app.ui.AppColors
 import java.util.Locale
@@ -56,7 +58,11 @@ internal fun LandscapeTimer(
     showSettings: Boolean,
     /** Ennakkovaroitus näkyvissä (A1/A2). */
     soon: Boolean = false,
-    onBreak: () -> Unit = {}
+    onBreak: () -> Unit = {},
+    /** Tarvitsen vielä hetken näkyvissä (A2), ja juuri annettu lisäaika minuutteina. */
+    moreTimeVisible: Boolean = false,
+    moreTimeGranted: Int? = null,
+    onMoreTime: () -> Unit = {}
 ) {
     val guided = activeTask.isNotBlank()
     val seconds = ((remaining + 999L) / 1000L).coerceAtLeast(0L).toInt()
@@ -84,6 +90,8 @@ internal fun LandscapeTimer(
                 }
             }
             BreakButton(onBreak)
+            if (moreTimeGranted != null) MoreTimeGrantedCard(moreTimeGranted)
+            else if (moreTimeVisible) MoreTimeButton(onMoreTime)
         }
 
         Column(

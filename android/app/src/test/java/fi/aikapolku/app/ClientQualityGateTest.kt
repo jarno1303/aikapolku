@@ -67,6 +67,7 @@ import org.robolectric.RobolectricTestRunner
  *  R7 muutosnäkymän osat aina samassa järjestyksessä
  *  R8 muutos ei näy asiakkaalle ennen valittua näkymisaikaa
  *  R9 ennakkovaroitus näkyy vasta lopussa ja kertoo, mitä seuraavaksi tulee; tauko pysäyttää ajan
+ *  R10 "Tarvitsen vielä hetken" antaa lisäajan ohjaajan rajoissa ja sen jälkeen viestin aikuiselle (A2)
  *
  * Tunnetut poikkeamat ovat listassa [KNOWN_GAPS] tutkielman tunnisteineen: ne eivät pysäytä
  * käännöstä, mutta jokainen UUSI rike pysäyttää. Kun poikkeama korjataan, se poistetaan listalta
@@ -189,6 +190,36 @@ class ClientQualityGateTest {
                     nextMode = RunPreferences.NEXT_CARD,
                     onToggleTimer = {}, onHelp = {}, onBreak = {}, onDone = {}, onMore = {}, moreIsProgram = true
                 )
+            },
+            Screen("ajastin-lisaaika", true) {
+                TimerScreen(
+                    remaining = 60_000L, duration = 10 * 60_000L, running = true,
+                    activeTask = t(R.string.card_dress), firstPhoto = "builtin:dress", nextPhoto = "builtin:rest",
+                    nextActivity = rest, onGoNext = {}, onPreset = {}, onStartPause = {}, onReset = {},
+                    moreTimeUsed = 0, onMoreTime = { true }
+                )
+            },
+            Screen("ajastin-aika-loppui", false) {
+                TimerScreen(
+                    remaining = 0L, duration = 10 * 60_000L, running = false,
+                    activeTask = t(R.string.card_dress), firstPhoto = "builtin:dress", nextPhoto = "builtin:rest",
+                    nextActivity = rest, onGoNext = {}, onPreset = {}, onStartPause = {}, onReset = {},
+                    moreTimeUsed = 0, onMoreTime = { true }
+                )
+            },
+            Screen("paivaohjelma-lisaaika", true) {
+                RunStepScreen(
+                    taskName = t(R.string.card_dress), taskPhoto = "builtin:dress", description = "",
+                    subSteps = emptyList(), subStepIndex = 0, taskIndex = 0, taskCount = 3,
+                    time = RunTime.Countdown(60_000L, 10 * 60_000L, running = true, displayMode = "numbers", pauseLocked = true),
+                    next = RunNext(rest, rest, "builtin:rest", isSubStep = false),
+                    nextMode = RunPreferences.NEXT_CARD,
+                    onToggleTimer = {}, onHelp = {}, onBreak = {}, onDone = {}, onMore = {}, moreIsProgram = true,
+                    moreTimeVisible = true
+                )
+            },
+            Screen("lisaaikaviesti", false) {
+                SupportMessageScreen(kind = SupportKind.MORE_TIME, timerPaused = false, onContinue = {}, onClose = {})
             },
             Screen("tapahtumakortti", true) {
                 EventCardScreen(name = outdoors, photo = "builtin:outdoors", doneAt = null, onDone = {}, ongoing = true)
@@ -374,5 +405,41 @@ class ClientQualityGateTest {
         compose.onNodeWithText(t(R.string.support_continue)).performScrollTo().performClick()
         compose.waitForIdle()
         assertTrue("Jatka ei käynnistänyt aikaa", running && presses == 2)
+    }
+
+    @Test
+    fun `tarvitsen viela hetken antaa lisaajan ja sitten viestin aikuiselle`() {
+        var used by mutableIntStateOf(0)
+        val grants = mutableListOf<Long>()
+        compose.setContent {
+            AsClient {
+                TimerScreen(
+                    remaining = 60_000L, duration = 10 * 60_000L, running = true,
+                    activeTask = t(R.string.card_dress), firstPhoto = "builtin:dress", nextPhoto = "builtin:rest",
+                    nextActivity = rest, onGoNext = {}, onPreset = {}, onStartPause = {}, onReset = {},
+                    moreTimeUsed = used,
+                    onMoreTime = { ms -> grants += ms; used++; true }
+                )
+            }
+        }
+        // Oletus: 3 min kerran, ilman PIN-koodia. Kello käsin, jotta vahvistuksen ajastus on hallittu.
+        compose.onNodeWithText(t(R.string.support_more_time)).performScrollTo()
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithText(t(R.string.support_more_time)).performClick()
+        compose.mainClock.advanceTimeBy(200L)
+        assertTrue("Lisäaikaa ei annettu: $grants", grants == listOf(3 * 60_000L))
+        assertTrue("Vahvistus puuttuu", hasText(t(R.string.more_time_granted, 3)))
+        // Vahvistus häviää itsestään, ja painike palaa samaan paikkaan.
+        compose.mainClock.advanceTimeBy(fi.aikapolku.app.programs.run.MORE_TIME_CONFIRM_MS + 500L)
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+        assertTrue("Vahvistus ei hävinnyt", !hasText(t(R.string.more_time_granted, 3)))
+        compose.onNodeWithText(t(R.string.support_more_time)).performScrollTo().performClick()
+        compose.waitForIdle()
+        assertTrue("Lisäaikaa annettiin yli rajan: $grants", grants.size == 1)
+        assertTrue("Viesti aikuiselle puuttuu", hasText(t(R.string.more_time_show_adult)))
+        compose.onNodeWithText(t(R.string.support_continue)).performScrollTo().performClick()
+        compose.waitForIdle()
+        assertTrue("Viesti ei sulkeutunut", !hasText(t(R.string.more_time_show_adult)))
     }
 }

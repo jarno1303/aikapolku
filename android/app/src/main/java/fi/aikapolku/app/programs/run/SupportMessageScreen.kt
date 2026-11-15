@@ -55,8 +55,8 @@ import fi.aikapolku.app.voice.Speech
 import fi.aikapolku.app.voice.VoicePlayer
 
 /**
- * Tarvitsen apua / Tarvitsen tauon: koko näytön viesti, jonka voi näyttää toiselle.
- * Ajastin on pysäytetty pyynnön yhteydessä. Jatka palauttaa tilanteen ilman PIN-koodia.
+ * Tarvitsen apua / Tarvitsen tauon / Tarvitsen vielä hetken: koko näytön viesti, jonka voi näyttää toiselle.
+ * Apu ja tauko pysäyttävät ajastimen pyynnön yhteydessä; lisäaikapyyntö ei. Jatka palauttaa tilanteen ilman PIN-koodia.
  */
 @Composable
 internal fun SupportMessageScreen(
@@ -67,7 +67,13 @@ internal fun SupportMessageScreen(
 ) {
     val context = LocalContext.current
     // Teksti tulee käännettävistä resursseista.
-    val message = stringResource(if (kind == SupportKind.BREAK) R.string.support_break else R.string.support_help)
+    val message = stringResource(
+        when (kind) {
+            SupportKind.BREAK -> R.string.support_break
+            SupportKind.HELP -> R.string.support_help
+            SupportKind.MORE_TIME -> R.string.support_more_time
+        }
+    )
     val voiceMode = remember(kind) { RunPreferences.voiceMode(context, kind.key) }
     val recording = remember(kind) { RunPreferences.recording(context, kind.key) }
     val speech = remember(context) { Speech(context.applicationContext) }
@@ -103,7 +109,12 @@ internal fun SupportMessageScreen(
         ) {
             Column(modifier = Modifier.heightIn(min = 52.dp), verticalArrangement = Arrangement.Center) {
                 Text(
-                    if (timerPaused) stringResource(R.string.ajastin_on_pysaytetty) else stringResource(R.string.nayta_viesti_tarvittaessa_toiselle),
+                    when {
+                        timerPaused -> stringResource(R.string.ajastin_on_pysaytetty)
+                        // Lisäaikapyyntö ei pysäytä aikaa: kerrotaan se, ettei asiakas jää odottamaan.
+                        kind == SupportKind.MORE_TIME -> stringResource(R.string.more_time_show_adult)
+                        else -> stringResource(R.string.nayta_viesti_tarvittaessa_toiselle)
+                    },
                     fontSize = 15.sp,
                     color = RunColors.secondary
                 )

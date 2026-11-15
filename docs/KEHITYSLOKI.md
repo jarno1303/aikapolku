@@ -409,3 +409,12 @@
 - Puhelimessa ajettava automaattitesti (androidTest ProgramDayDeviceTest, skripti aikapolku-laitetesti.ps1): asiakas käy esittelypäivän läpi ruudun näkyessä – NYT-kortti, aloitusnäkymä, Valmis, minuutin aika, Kaikki valmista, kuittaus, paluu omaan päivään (Odota + Lukeminen). Sovellus asennetaan päivityksenä (tiedot säilyvät; ei connectedAndroidTestia, joka poistaisi sovelluksen). Testi käyttää väliaikaista profiilia ja poistaa sen.
 - Kulun läpikäynnissä korjattu asiakkaalle: aloitusnäkymästä takaisin vie omaan päivään (ei ohjelmaluetteloon); Kaikki valmista -painike "Takaisin aloitukseen" omaan päivään; kesken jäänyt päiväohjelma näkyy NYT-kortissa "Jatka".
 - Uudet testit: esittelypäivän sisältö ja ajat (4).
+
+## Tarvitsen vielä hetken (A2, 15.11.2026)
+- Asiakas voi pyytää lisäaikaa ajastetussa toiminnossa (Ensin–Sitten-ajastin, päiväohjelman kestotehtävä) ilman PIN-koodia. Painike näkyy, kun aika on loppumassa (ennakkovaroituksen aikana; jos varoitus on pois, kaksi viimeistä minuuttia, enintään puolet kestosta) ja kun aika on jo loppunut. Pysäytettynä ei näy.
+- Ohjaajan rajat (Asetukset → Aika, asiakaskohtaiset): lisäaika Ei/2/3/5 min (oletus 3) ja Kerran/Kaksi kertaa samassa toiminnossa (oletus kerran). Oletukset vahvistettava ohjaajilta pilotissa.
+- Lisäaika lisätään käynnissä olevaan aikaan; loppunut aika käynnistyy uudelleen lisäajalla. Rauhallinen vahvistus "3 min lisää aikaa" näkyy 5 sekuntia samassa paikassa kuin painike.
+- Kun lisäaikaa ei sallita tai se on käytetty, sama painike avaa viestin "Tarvitsen vielä hetken" (uusi kuva ap_msg_more_time), jonka asiakas näyttää aikuiselle. Aika ei pysähdy (ei porsaanreikää loputtomaan aikaan), ja viesti kertoo sen.
+- Ajastimessa Tarvitsen tauon ja Tarvitsen vielä hetken vierekkäin 64 dp:n rivissä: paikka on varattu koko ajan, joten kellotaulu ei hyppää. Päiväohjelmassa painike on ennakkovaroituksen alla (kuva joustaa). Vaakatilassa vasemmassa sarakkeessa tauon alla.
+- Grafiikka: uusi viestikuva samaan tyyliin kuin Tarvitsen tauon (henkilö + puhekupla: kello, jossa jäljellä oleva aika ja lisäaika sekä plus-merkki; värit samat kuin kellotaulussa), uusi kuvake AppIcons.MoreTime.
+- Uudet testit: MoreTimeTest (8), FlowTimer (4), ProgramRunController (4), laatuportti: neljä uutta näkymää ja R10-kulku (lisäaika → vahvistus häviää → viesti aikuiselle).

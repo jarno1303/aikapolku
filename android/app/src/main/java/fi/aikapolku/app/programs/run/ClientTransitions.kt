@@ -11,9 +11,12 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,12 +36,15 @@ import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.ui.AppIcons
 import fi.aikapolku.app.ui.BackOverride
 import fi.aikapolku.app.ui.SecondaryButton
+import kotlinx.coroutines.delay
 
 /*
  * Siirtymät asiakkaan näkymissä (tutkielma A1/A2):
  *  - "Tarvitsen tauon" on painettavissa kaikissa toimintonäkymissä ilman PIN-koodia
  *    (päiväohjelmassa omana RunSupportButtonina Tarvitsen apua -painikkeen vieressä).
  *  - Ennakkovaroitus kertoo rauhallisesti, mitä seuraavaksi tulee, ennen kuin aika loppuu.
+ *  - "Tarvitsen vielä hetken" (A2) antaa lisäaikaa ohjaajan rajoissa (data.MoreTime); kun lisäaikaa
+ *    ei voi antaa, se näyttää viestin aikuiselle. Aika ei pysähdy.
  */
 
 /** Tarvitsen tauon -painike: sama ulkoasu muutosnäkymässä, ajastimessa ja tapahtumakortissa. */
@@ -110,5 +116,89 @@ internal fun SoonChangeCard(nextName: String?, image: (@Composable (Modifier) ->
                 )
             }
         }
+    }
+}
+
+/**
+ * Tarvitsen vielä hetken -painike. [stacked] = kuvake tekstin yläpuolella (Tarvitsen tauon
+ * -painikkeen vieressä, teksti mahtuu kahdelle riville); muuten leveä painike.
+ */
+@Composable
+internal fun MoreTimeButton(onClick: () -> Unit, modifier: Modifier = Modifier.fillMaxWidth(), stacked: Boolean = false) {
+    if (stacked) {
+        RunSupportButton(
+            label = stringResource(R.string.support_more_time),
+            icon = { Icon(AppIcons.MoreTime, contentDescription = null, tint = AppColors.Ink, modifier = Modifier.size(24.dp)) },
+            onClick = onClick,
+            modifier = modifier
+        )
+    } else {
+        SecondaryButton(
+            text = stringResource(R.string.support_more_time),
+            icon = AppIcons.MoreTime,
+            onClick = onClick,
+            modifier = modifier
+        )
+    }
+}
+
+/**
+ * Lisäaika annettu: rauhallinen vahvistus ("3 min lisää aikaa"). Ei kehuja eikä laskuria.
+ * Ruudunlukija lukee sen, kun se ilmestyy.
+ */
+@Composable
+internal fun MoreTimeGrantedCard(minutes: Int, modifier: Modifier = Modifier) {
+    val text = stringResource(R.string.more_time_granted, minutes)
+    Surface(
+        color = AppColors.TealSoft,
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(2.dp, AppColors.Teal),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {
+                contentDescription = text
+                liveRegion = LiveRegionMode.Polite
+            }
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp).heightIn(min = 48.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(AppIcons.MoreTime, contentDescription = null, tint = AppColors.Teal, modifier = Modifier.size(28.dp))
+            Text(text, fontSize = 19.sp, fontWeight = FontWeight.Bold, color = AppColors.Teal, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+/** Vahvistus näkyy hetken ja häviää itsestään ([state] = annetut minuutit tai null). */
+@Composable
+internal fun AutoHideGranted(state: MutableState<Int?>) {
+    val value = state.value
+    LaunchedEffect(value) {
+        if (value != null) {
+            delay(MORE_TIME_CONFIRM_MS)
+            state.value = null
+        }
+    }
+}
+
+internal const val MORE_TIME_CONFIRM_MS = 5_000L
+
+/**
+ * Tarvitsen vielä hetken -viesti aikuiselle vierivän sivun sisällä (kuten [BreakMessage]).
+ * Aika jatkuu taustalla; Jatka ja takaisin-ele sulkevat viestin.
+ */
+@Composable
+internal fun MoreTimeMessage(onClose: () -> Unit) {
+    BackOverride(onClose)
+    val height = LocalConfiguration.current.screenHeightDp.dp * 0.82f
+    Box(Modifier.fillMaxWidth().height(height)) {
+        SupportMessageScreen(
+            kind = SupportKind.MORE_TIME,
+            timerPaused = false,
+            onContinue = onClose,
+            onClose = onClose
+        )
     }
 }

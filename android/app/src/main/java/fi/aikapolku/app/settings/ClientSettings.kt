@@ -55,6 +55,7 @@ import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.ClientViewPrefs
 import fi.aikapolku.app.data.RunPreferences
 import fi.aikapolku.app.data.TimeDisplayPrefs
+import fi.aikapolku.app.data.MoreTime
 import fi.aikapolku.app.data.TimelineMode
 import fi.aikapolku.app.timer.TimeModeChoices
 import fi.aikapolku.app.timer.playCompletionSound
@@ -291,6 +292,35 @@ internal fun TimeSettings() {
             SettingsRevision.bump()
         }
     )
+
+    // Tarvitsen vielä hetken (A2): lisäajan pituus ja montako kertaa samassa toiminnossa.
+    var moreMinutes by remember { mutableStateOf(MoreTime.minutes(context)) }
+    var moreCount by remember { mutableStateOf(MoreTime.count(context)) }
+    SettingLabel(stringResource(R.string.more_time_label))
+    Text(stringResource(R.string.more_time_info), fontSize = 14.sp, color = AppColors.Muted)
+    SegmentedChoice(
+        options = MoreTime.MINUTE_OPTIONS.map {
+            if (it == 0) stringResource(R.string.ei) else stringResource(R.string.transition_warn_minutes, it)
+        },
+        selected = MoreTime.MINUTE_OPTIONS.indexOf(moreMinutes).coerceAtLeast(0),
+        onSelect = {
+            moreMinutes = MoreTime.MINUTE_OPTIONS[it]
+            MoreTime.setMinutes(context, moreMinutes)
+            SettingsRevision.bump()
+        }
+    )
+    if (moreMinutes > 0) {
+        SettingLabel(stringResource(R.string.more_time_count_label))
+        SegmentedChoice(
+            options = listOf(stringResource(R.string.more_time_once), stringResource(R.string.more_time_twice)),
+            selected = MoreTime.COUNT_OPTIONS.indexOf(moreCount).coerceAtLeast(0),
+            onSelect = {
+                moreCount = MoreTime.COUNT_OPTIONS[it]
+                MoreTime.setCount(context, moreCount)
+                SettingsRevision.bump()
+            }
+        )
+    }
 
     SettingLabel(stringResource(R.string.aanimerkki_ajan_paattyessa))
     listOf(

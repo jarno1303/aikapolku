@@ -111,7 +111,12 @@ internal fun RunStepScreen(
     /** false = odotetaan ajan päättymistä (painike himmeä). */
     doneEnabled: Boolean = true,
     /** Päivän muutos: null = ei muutosta, tyhjä = muutos ilman alkuperäistä, muuten korvattu vaihe. */
-    changedFrom: String? = null
+    changedFrom: String? = null,
+    /** Tarvitsen vielä hetken (A2): näkyykö painike (aika loppumassa tai loppunut). */
+    moreTimeVisible: Boolean = false,
+    /** Juuri annettu lisäaika minuutteina (vahvistus näkyy hetken), muuten null. */
+    moreTimeGranted: Int? = null,
+    onMoreTime: () -> Unit = {}
 ) {
     val hasSubSteps = subSteps.isNotEmpty()
     val safeIndex = subStepIndex.coerceIn(0, maxOf(0, subSteps.lastIndex))
@@ -265,6 +270,10 @@ internal fun RunStepScreen(
             } else if (next != null) {
                 RunNextRow(next = next, mode = nextMode)
             }
+            // Tarvitsen vielä hetken (A2) heti ennakkovaroituksen alla: ensin tieto, sitten keino.
+            // Kuva joustaa, joten painike mahtuu ruudulle vierittämättä.
+            if (moreTimeGranted != null) MoreTimeGrantedCard(moreTimeGranted)
+            else if (moreTimeVisible) MoreTimeButton(onMoreTime)
 
             // Ohjaajalla Ohita ja muut harvinaiset toiminnot yhden painikkeen takana;
             // asiakkaalla vain koko ohjelman katselu.

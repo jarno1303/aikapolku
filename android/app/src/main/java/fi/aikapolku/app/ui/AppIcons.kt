@@ -120,6 +120,26 @@ internal object AppIcons {
         }.build()
     }
 
+    /** Lisäaika: kello ja plus ("Tarvitsen vielä hetken", tutkielma A2). */
+    val MoreTime: ImageVector by lazy {
+        stroked("MoreTime") {
+            // Kellotaulu
+            moveTo(3.5f, 14f)
+            arcToRelative(7f, 7f, 0f, true, true, 14f, 0f)
+            arcToRelative(7f, 7f, 0f, true, true, -14f, 0f)
+            // Osoittimet
+            moveTo(10.5f, 14f)
+            lineTo(10.5f, 10.5f)
+            moveTo(10.5f, 14f)
+            lineTo(13f, 15.5f)
+            // Plus
+            moveTo(19f, 2.5f)
+            lineTo(19f, 8f)
+            moveTo(16.25f, 5.25f)
+            lineTo(21.75f, 5.25f)
+        }
+    }
+
     /** Miinus (vähennä, esim. aika aiemmaksi). */
     val Minus: ImageVector by lazy {
         ImageVector.Builder("Minus", 24.dp, 24.dp, 24f, 24f).apply {

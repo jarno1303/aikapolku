@@ -49,5 +49,6 @@ internal object SubstepArt {
     fun messageImageRes(kind: SupportKind): Int = when (kind) {
         SupportKind.BREAK -> R.drawable.ap_msg_break
         SupportKind.HELP -> R.drawable.ap_msg_help
+        SupportKind.MORE_TIME -> R.drawable.ap_msg_more_time
     }
 }

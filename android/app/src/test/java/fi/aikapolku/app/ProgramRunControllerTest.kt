@@ -382,4 +382,51 @@ class ProgramRunControllerTest {
         assertFalse(run.timerStarted)
         assertEquals(DoneGate.START_TIMER, run.doneGate(RunPreferences.DONE_ALWAYS, false, RunPreferences.TIMER_BUTTON))
     }
+
+    // --- Tarvitsen vielä hetken (A2) ---
+
+    @Test
+    fun `lisaaika lisataan kaynnissa olevaan aikaan`() {
+        run.start(program); run.next(); run.next()
+        run.startTimer()
+        timer.clock += 9 * 60_000L
+        assertTrue(run.grantMoreTime(3 * 60_000L, "Ajastin"))
+        assertTrue(run.running)
+        assertEquals(4 * 60_000L, run.timeLeft())
+        assertEquals(1, run.moreTimeUsed)
+    }
+
+    @Test
+    fun `loppunut aika kaynnistyy lisaajalla`() {
+        run.start(program); run.next(); run.next()
+        run.startTimer()
+        timer.clock += 10 * 60_000L
+        assertEquals(Tick.ENDED, run.tick())
+        assertTrue(run.timeEnded)
+        assertTrue(run.grantMoreTime(3 * 60_000L, "Ajastin"))
+        assertTrue(run.running)
+        assertFalse(run.timeEnded)
+        assertEquals(3 * 60_000L, run.timeLeft())
+    }
+
+    @Test
+    fun `pysaytettyyn tai ajattomaan tehtavaan ei lisata aikaa`() {
+        run.start(program)
+        assertFalse("ajaton tehtävä", run.grantMoreTime(60_000L, "Ajastin"))
+        run.next(); run.next()
+        assertFalse("aikaa ei käynnistetty", run.grantMoreTime(60_000L, "Ajastin"))
+        run.startTimer(); run.pause()
+        assertFalse("pysäytetty", run.grantMoreTime(60_000L, "Ajastin"))
+        assertEquals(0, run.moreTimeUsed)
+    }
+
+    @Test
+    fun `lisaajan laskuri nollautuu seuraavassa tehtavassa`() {
+        run.start(program); run.next(); run.next()
+        run.startTimer()
+        run.grantMoreTime(60_000L, "Ajastin")
+        assertEquals(1, run.moreTimeUsed)
+        run.next()
+        assertEquals(0, run.moreTimeUsed)
+    }
 }

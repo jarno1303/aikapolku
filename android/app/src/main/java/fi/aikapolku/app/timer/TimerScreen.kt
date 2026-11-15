@@ -57,7 +57,14 @@ internal fun TimerScreen(
     onGoNext: () -> Unit,
     onPreset: (Int) -> Unit,
     onStartPause: () -> Unit,
-    onReset: () -> Unit
+    onReset: () -> Unit,
+    /** Montako kertaa lisäaikaa on jo annettu tähän toimintoon (A2). */
+    moreTimeUsed: Int = 0,
+    /**
+     * "Tarvitsen vielä hetken" (A2): lisää aikaa (ms) ja palauttaa true, jos lisättiin.
+     * null = ei käytössä (ajastin yksinään, ilman Ensin-toimintoa).
+     */
+    onMoreTime: ((Long) -> Boolean)? = null
 ) {
     val guided = activeTask.isNotBlank()
     val finished = guided && remaining == 0L
@@ -103,6 +110,26 @@ internal fun TimerScreen(
         if (currentRunning) onStartPause()
         showBreak = true
     }
+    // Tarvitsen vielä hetken (A2): lisäaika ohjaajan rajoissa ilman PIN-koodia, muuten viesti
+    // aikuiselle. Aika ei pysähdy kummassakaan.
+    val moreMinutes = remember(settingsRevision) { fi.aikapolku.app.data.MoreTime.minutes(context) }
+    val moreCount = remember(settingsRevision) { fi.aikapolku.app.data.MoreTime.count(context) }
+    val moreEnabled = onMoreTime != null && guided
+    val moreVisible = moreEnabled &&
+        fi.aikapolku.app.data.MoreTime.visible(remaining, duration, running, ended = finished, warnMinutes = warnMinutes)
+    val moreGranted = rememberSaveable { mutableStateOf<Int?>(null) }
+    fi.aikapolku.app.programs.run.AutoHideGranted(moreGranted)
+    var showAskAdult by rememberSaveable { mutableStateOf(false) }
+    val requestMoreTime: () -> Unit = {
+        val granted = fi.aikapolku.app.data.MoreTime.canGrant(moreTimeUsed, moreMinutes, moreCount) &&
+            onMoreTime?.invoke(moreMinutes * 60_000L) == true
+        if (granted) moreGranted.value = moreMinutes else showAskAdult = true
+    }
+
+    if (showAskAdult) {
+        fi.aikapolku.app.programs.run.MoreTimeMessage(onClose = { showAskAdult = false })
+        return
+    }
     if (showBreak && !finished) {
         BreakMessage(
             timerPaused = resumeAfterBreak,
@@ -142,7 +169,10 @@ internal fun TimerScreen(
             showReset = showReset,
             showSettings = showSettings,
             soon = soon,
-            onBreak = openBreak
+            onBreak = openBreak,
+            moreTimeVisible = moreVisible,
+            moreTimeGranted = moreGranted.value,
+            onMoreTime = requestMoreTime
         )
     } else if (finished) {
         CompletedCard(
@@ -167,6 +197,8 @@ internal fun TimerScreen(
                 fontSize = 18.sp
             )
         }
+        // Aika loppui, mutta toiminto on kesken: lisäaika tai viesti aikuiselle.
+        if (moreVisible) fi.aikapolku.app.programs.run.MoreTimeButton(requestMoreTime)
     } else {
         if (guided) {
             TimerTaskCards(
@@ -338,7 +370,27 @@ internal fun TimerScreen(
                 }
             }
         }
-        BreakButton(openBreak)
+        // Tauko ja lisäaika vierekkäin samalla korkeudella: kellotaulu ei hyppää, kun lisäaika
+        // tulee näkyviin (paikka on varattu 64 dp:n korkuisena koko ajan).
+        val granted = moreGranted.value
+        if (moreVisible || granted != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                fi.aikapolku.app.programs.run.RunSupportButton(
+                    label = stringResource(R.string.support_break),
+                    icon = { fi.aikapolku.app.programs.run.RunPauseIcon(color = AppColors.Ink) },
+                    onClick = openBreak,
+                    modifier = Modifier.weight(1f)
+                )
+                if (granted != null) fi.aikapolku.app.programs.run.MoreTimeGrantedCard(granted, Modifier.weight(1f))
+                else fi.aikapolku.app.programs.run.MoreTimeButton(requestMoreTime, Modifier.weight(1f), stacked = true)
+            }
+        } else {
+            BreakButton(openBreak, Modifier.fillMaxWidth().heightIn(min = if (moreEnabled) 64.dp else 52.dp))
+        }
     }
 
     // Jos lukitus menee päälle ikkunan ollessa auki, ikkuna suljetaan.

@@ -787,4 +787,13 @@
     <string name="transition_warn_label">Ennakkovaroitus ennen vaihtoa (min)</string>
     <string name="transition_warn_info">Rauhallinen kortti kertoo, mitä seuraavaksi tulee, kun aikaa on jäljellä valittu määrä. Ei ääntä.</string>
     <string name="transition_warn_minutes">%1$d</string>
+    <!-- Tarvitsen vielä hetken (tutkielma A2) -->
+    <string name="support_more_time">Tarvitsen vielä hetken</string>
+    <string name="more_time_granted">%1$d min lisää aikaa</string>
+    <string name="more_time_show_adult">Näytä viesti aikuiselle. Aika jatkuu.</string>
+    <string name="more_time_label">Tarvitsen vielä hetken: lisäaika (min)</string>
+    <string name="more_time_info">Asiakas voi pyytää lisäaikaa, kun aika on loppumassa tai jo loppunut. Lisäaika tulee heti ilman PIN-koodia. Ei = painike näyttää viestin aikuiselle. Viesti näkyy myös, kun lisäaika on jo käytetty.</string>
+    <string name="more_time_count_label">Lisäaikaa voi pyytää samassa toiminnossa</string>
+    <string name="more_time_once">Kerran</string>
+    <string name="more_time_twice">Kaksi kertaa</string>
 </resources>

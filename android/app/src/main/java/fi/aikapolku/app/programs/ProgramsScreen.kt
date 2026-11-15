@@ -169,6 +169,32 @@ internal fun ProgramsScreen(
 
     var confirmDoneLeft by remember { mutableStateOf<Long?>(null) }
 
+    // Tarvitsen vielä hetken (A2): lisäaika ohjaajan rajoissa, muuten viesti aikuiselle (aika jatkuu).
+    val moreGranted = rememberSaveable { mutableStateOf<Int?>(null) }
+    fi.aikapolku.app.programs.run.AutoHideGranted(moreGranted)
+    var askAdultMoreTime by rememberSaveable { mutableStateOf(false) }
+    val runWarnMinutes = remember(fi.aikapolku.app.settings.SettingsRevision.value) {
+        fi.aikapolku.app.data.TimeDisplayPrefs.warnMinutes(context)
+    }
+    // Uusi tehtävä tai ohjelma: edellisen tehtävän vahvistus ja viesti eivät jää näkyviin.
+    // Avain säilyy näytön kääntämisen yli, jotta kääntäminen ei sulje viestiä.
+    var moreStepKey by rememberSaveable { mutableStateOf("") }
+    val currentStepKey = "${run.program.id}#${run.stepIndex}"
+    LaunchedEffect(currentStepKey) {
+        if (moreStepKey != currentStepKey) {
+            moreGranted.value = null
+            askAdultMoreTime = false
+            moreStepKey = currentStepKey
+        }
+    }
+    fun requestMoreTime() {
+        val minutes = fi.aikapolku.app.data.MoreTime.minutes(context)
+        val count = fi.aikapolku.app.data.MoreTime.count(context)
+        val granted = fi.aikapolku.app.data.MoreTime.canGrant(run.moreTimeUsed, minutes, count) &&
+            run.grantMoreTime(minutes * 60_000L, context.getString(R.string.timer_title))
+        if (granted) moreGranted.value = minutes else askAdultMoreTime = true
+    }
+
     fun finishRun() {
         view = ProgramsView.DONE
         // Tänään-listasta käynnistetty ohjelma merkitään tehdyksi.
@@ -253,6 +279,14 @@ internal fun ProgramsScreen(
                     onContinue = { run.continueAfterSupport() },
                     onClose = { run.closeSupport() }
                 )
+            } else if (askAdultMoreTime) {
+                // Aika jatkuu taustalla; viesti on asiakkaan ääni aikuiselle.
+                SupportMessageScreen(
+                    kind = SupportKind.MORE_TIME,
+                    timerPaused = false,
+                    onContinue = { askAdultMoreTime = false },
+                    onClose = { askAdultMoreTime = false }
+                )
             } else {
                 val nextSubStep = runStep.subSteps.getOrNull(run.subStepIndex + 1)
                 val nextTask = run.nextStep
@@ -295,7 +329,16 @@ internal fun ProgramsScreen(
                         DoneGate.WAIT -> stringResource(R.string.done_wait, formatLeft(run.timeLeft()))
                         else -> null
                     },
-                    doneEnabled = run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver, RunPreferences.timerStart(context)) != DoneGate.WAIT
+                    doneEnabled = run.doneGate(RunPreferences.doneMode(context), caregiverOpen = caregiver.isCaregiver, RunPreferences.timerStart(context)) != DoneGate.WAIT,
+                    moreTimeVisible = runStep.mode == StepMode.DURATION && fi.aikapolku.app.data.MoreTime.visible(
+                        remainingMs = run.remaining,
+                        durationMs = maxOf(runStep.minutes * 60_000L, run.remaining),
+                        running = run.running,
+                        ended = run.timeEnded,
+                        warnMinutes = runWarnMinutes
+                    ),
+                    moreTimeGranted = moreGranted.value,
+                    onMoreTime = { requestMoreTime() }
                 )
             }
         } else if (view == ProgramsView.EDIT) {

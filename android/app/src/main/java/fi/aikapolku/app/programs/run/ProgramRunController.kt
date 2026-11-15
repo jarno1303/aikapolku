@@ -81,6 +81,9 @@ internal class ProgramRunController(
      * RunPreferences.TIMER_AUTO). Näkymä asettaa tämän ennen aloitusta.
      */
     var autoStartTimer = false
+    /** Montako kertaa asiakas on saanut lisäaikaa nykyiseen tehtävään ("Tarvitsen vielä hetken", A2). */
+    var moreTimeUsed by mutableIntStateOf(0)
+        private set
     /** Ohitetut tehtävät (indeksit): näkyvät himmeinä Kaikki valmista -näkymässä. */
     var skipped by mutableStateOf<Set<Int>>(emptySet())
         private set
@@ -160,6 +163,7 @@ internal class ProgramRunController(
         deadline = timer.now() + remaining
         stepVoicePlayed = false
         support = null
+        moreTimeUsed = 0
         stepEnteredAt = timer.now()
     }
 
@@ -175,6 +179,7 @@ internal class ProgramRunController(
         support = null
         running = false
         timerStarted = false
+        moreTimeUsed = 0
         val first = newProgram.steps[start]
         timer.stop(first.minutes * 60_000L)
         deadline = 0L
@@ -220,6 +225,7 @@ internal class ProgramRunController(
         stepIndex = nextIndex
         subStepIndex = 0
         timerStarted = false
+        moreTimeUsed = 0
         stepEnteredAt = timer.now()
         progress.save(program.id, stepIndex, 0)
         val step = program.steps[stepIndex]
@@ -276,6 +282,28 @@ internal class ProgramRunController(
         resumeAfterSupport = false
     }
 
+    /** Onko kestotehtävän aika käynnistetty ja jo loppunut (asiakas voi pyytää lisäaikaa). */
+    val timeEnded: Boolean
+        get() = currentStep?.mode == StepMode.DURATION && timerStarted && !running && remaining <= 0L
+
+    /**
+     * "Tarvitsen vielä hetken" (A2): asiakkaan lisäaika ohjaajan rajoissa (rajat tarkistaa näkymä
+     * MoreTime-säännöillä). Käynnissä olevaan aikaan lisätään; loppunut aika käynnistyy uudelleen.
+     * Pysäytettyyn tai käynnistämättömään aikaan ei lisätä. Palauttaa true, jos aikaa lisättiin.
+     */
+    fun grantMoreTime(extraMs: Long, fallbackTitle: String): Boolean {
+        val step = currentStep ?: return false
+        if (step.mode != StepMode.DURATION || extraMs <= 0L) return false
+        val ended = timeEnded
+        if (!running && !ended) return false
+        val left = if (running) (deadline - timer.now()).coerceAtLeast(0L) else 0L
+        remaining = left + extraMs
+        deadline = timer.start(remaining, step.name.ifBlank { fallbackTitle })
+        running = true
+        moreTimeUsed += 1
+        return true
+    }
+
     /** Ohjaajan lisäaika. */
     fun extend(extraMs: Long, fallbackTitle: String) {
         val left = if (running) timer.remaining(remaining) else remaining
@@ -312,7 +340,7 @@ internal class ProgramRunController(
                     listOf(
                         serializeDraft(it.program), it.stepIndex, it.subStepIndex, it.support?.name,
                         it.resumeAfterSupport, it.running, it.stepVoicePlayed, it.deadline, it.remaining,
-                        ArrayList(it.skipped), it.timerStarted, it.autoStartTimer
+                        ArrayList(it.skipped), it.timerStarted, it.autoStartTimer, it.moreTimeUsed
                     )
                 },
                 restore = { v ->
@@ -330,6 +358,7 @@ internal class ProgramRunController(
                         skipped = (v.getOrNull(9) as? List<Int>)?.toSet() ?: emptySet()
                         timerStarted = v.getOrNull(10) as? Boolean ?: running
                         autoStartTimer = v.getOrNull(11) as? Boolean ?: false
+                        moreTimeUsed = v.getOrNull(12) as? Int ?: 0
                     }
                 }
             )

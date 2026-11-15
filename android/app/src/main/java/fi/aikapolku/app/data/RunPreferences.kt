@@ -6,7 +6,9 @@ import android.content.Context
 /** Apu- ja taukopyyntö. [key] on asetusten tallennusavain (RunPreferences.HELP / BREAK). */
 internal enum class SupportKind(val key: String) {
     HELP(RunPreferences.HELP),
-    BREAK(RunPreferences.BREAK)
+    BREAK(RunPreferences.BREAK),
+    /** "Tarvitsen vielä hetken" (A2), kun lisäaikaa ei voi antaa: viesti aikuiselle, aika jatkuu. */
+    MORE_TIME("more_time")
 }
 
 internal object RunPreferences {

@@ -202,4 +202,66 @@ class FirstThenFlowTest {
         assertEquals(1, fi.aikapolku.app.timer.CalmProgress.segmentsLeft(1L, d))
         assertEquals(0, fi.aikapolku.app.timer.CalmProgress.segmentsLeft(0L, d))
     }
+
+    // --- Tarvitsen vielä hetken (A2) ---
+
+    @Test
+    fun `lisaaika lisataan kaynnissa olevaan aikaan`() {
+        val port = FakeTimer()
+        val t = FlowTimer(port)
+        t.prepareForActivity("Askartelu", 10)
+        t.startPause("Ajastin") {}
+        port.clock += 8 * 60_000L
+        assertTrue(t.addMoreTime(3 * 60_000L))
+        assertTrue(t.running)
+        assertEquals(5 * 60_000L, t.remaining)
+        assertEquals(port.clock + 5 * 60_000L, t.deadline)
+        assertEquals(1, t.moreTimeUsed)
+        assertEquals("kesto ei pienene", 10 * 60_000L, t.duration)
+    }
+
+    @Test
+    fun `loppunut aika kaynnistyy lisaajalla`() {
+        val port = FakeTimer()
+        val t = FlowTimer(port)
+        t.prepareForActivity("Askartelu", 2)
+        t.startPause("Ajastin") {}
+        port.clock += 2 * 60_000L
+        t.tick()
+        assertFalse(t.running)
+        assertTrue(t.addMoreTime(5 * 60_000L))
+        assertTrue(t.running)
+        assertEquals(5 * 60_000L, t.remaining)
+        assertEquals("kesto kasvaa lisäajan mukaan", 5 * 60_000L, t.duration)
+        assertTrue("ensin-toiminto jatkuu", t.inProgress)
+    }
+
+    @Test
+    fun `pysaytettyyn tai pelkkaan ajastimeen ei lisata aikaa`() {
+        val port = FakeTimer()
+        val t = FlowTimer(port)
+        t.setMinutes(5)
+        t.startPause("Ajastin") {}
+        assertFalse("pelkkä ajastin", t.addMoreTime(60_000L))
+        t.prepareForActivity("Askartelu", 5)
+        assertFalse("ei käynnistetty", t.addMoreTime(60_000L))
+        t.startPause("Ajastin") {}
+        t.startPause("Ajastin") {} // tauko
+        assertFalse("pysäytetty", t.addMoreTime(60_000L))
+        assertEquals(0, t.moreTimeUsed)
+    }
+
+    @Test
+    fun `lisaajan laskuri nollautuu uudessa toiminnossa`() {
+        val port = FakeTimer()
+        val t = FlowTimer(port)
+        t.prepareForActivity("Askartelu", 5)
+        t.startPause("Ajastin") {}
+        t.addMoreTime(60_000L)
+        assertEquals(1, t.moreTimeUsed)
+        t.finishActivity()
+        assertEquals(0, t.moreTimeUsed)
+        t.prepareForActivity("Ruokailu", 5)
+        assertEquals(0, t.moreTimeUsed)
+    }
 }

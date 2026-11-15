@@ -1,6 +1,7 @@
 package fi.aikapolku.app.firstthen
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
@@ -99,6 +100,9 @@ internal class FlowTimer(private val timer: TimerPort) {
         private set
     var activeTask by mutableStateOf("")
     private var voiceStarted by mutableStateOf(false)
+    /** Montako kertaa asiakas on saanut lisäaikaa tähän toimintoon ("Tarvitsen vielä hetken", A2). */
+    var moreTimeUsed by mutableIntStateOf(0)
+        private set
 
     /**
      * Ensin-toiminnon ajastus on aloitettu eikä vielä kuitattu (käynnissä, tauolla tai aika
@@ -111,6 +115,7 @@ internal class FlowTimer(private val timer: TimerPort) {
         running = false
         timer.stop(minutes * 60_000L)
         voiceStarted = false
+        moreTimeUsed = 0
         duration = minutes * 60_000L
         originalDuration = duration
         remaining = duration
@@ -132,6 +137,7 @@ internal class FlowTimer(private val timer: TimerPort) {
                 if (remaining == 0L) {
                     duration = originalDuration
                     remaining = originalDuration
+                    moreTimeUsed = 0
                 }
                 deadline = timer.start(remaining, activeTask.ifBlank { title })
                 running = true
@@ -147,6 +153,7 @@ internal class FlowTimer(private val timer: TimerPort) {
         running = false
         timer.stop(originalDuration)
         voiceStarted = false
+        moreTimeUsed = 0
         duration = originalDuration
         remaining = originalDuration
     }
@@ -161,6 +168,7 @@ internal class FlowTimer(private val timer: TimerPort) {
         activeTask = task
         deadline = 0L
         voiceStarted = false
+        moreTimeUsed = 0
     }
 
     /** Aika valmis, siirrytään eteenpäin. */
@@ -168,6 +176,27 @@ internal class FlowTimer(private val timer: TimerPort) {
         running = false
         timer.stop(0L)
         activeTask = ""
+        moreTimeUsed = 0
+    }
+
+    /**
+     * "Tarvitsen vielä hetken" (A2): lisää [extraMs] käynnissä olevaan aikaan tai käynnistää ajan
+     * uudelleen, jos se on jo loppunut. Pysäytettyyn aikaan ei lisätä (ohjaaja säätää sen itse).
+     * Rajat (montako kertaa, kuinka paljon) tarkistaa näkymä MoreTime-säännöillä.
+     * Palauttaa true, jos aikaa lisättiin.
+     */
+    fun addMoreTime(extraMs: Long): Boolean {
+        if (activeTask.isBlank() || extraMs <= 0L) return false
+        val left = if (running) (deadline - timer.now()).coerceAtLeast(0L) else remaining
+        if (!running && left > 0L) return false
+        val newLeft = left + extraMs
+        // Kesto kasvaa tarvittaessa, jotta rengas ja kellotaulu näyttävät lisätyn ajan oikein.
+        if (newLeft > duration) duration = newLeft
+        remaining = newLeft
+        deadline = timer.start(newLeft, activeTask)
+        running = true
+        moreTimeUsed += 1
+        return true
     }
 
     /** Pysäyttää ajan säilyttäen jäljellä olevan ajan (ohjaajan tauko). */
@@ -184,6 +213,7 @@ internal class FlowTimer(private val timer: TimerPort) {
         running = false
         timer.stop(remaining)
         activeTask = ""
+        moreTimeUsed = 0
     }
 
     fun markStopped() {
@@ -202,7 +232,7 @@ internal class FlowTimer(private val timer: TimerPort) {
         const val DEFAULT_MS = 300_000L
 
         fun saver(timer: TimerPort) = Saver<FlowTimer, List<Any>>(
-            save = { listOf(it.duration, it.originalDuration, it.remaining, it.running, it.deadline, it.activeTask, it.voiceStarted) },
+            save = { listOf(it.duration, it.originalDuration, it.remaining, it.running, it.deadline, it.activeTask, it.voiceStarted, it.moreTimeUsed) },
             restore = { v ->
                 FlowTimer(timer).apply {
                     duration = v[0] as Long
@@ -212,6 +242,7 @@ internal class FlowTimer(private val timer: TimerPort) {
                     deadline = v[4] as Long
                     activeTask = v[5] as String
                     voiceStarted = v[6] as Boolean
+                    moreTimeUsed = v.getOrNull(7) as? Int ?: 0
                 }
             }
         )

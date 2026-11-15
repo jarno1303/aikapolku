@@ -434,7 +434,9 @@ internal fun AikaPolkuApp() {
                     onStartPause = {
                         timer.startPause(context.getString(R.string.timer_title)) { playFirstVoice() }
                     },
-                    onReset = { timer.reset() }
+                    onReset = { timer.reset() },
+                    moreTimeUsed = timer.moreTimeUsed,
+                    onMoreTime = { extraMs -> timer.addMoreTime(extraMs) }
                 )
 
                 AppPage.FIRST_THEN -> FirstThenScreen(
