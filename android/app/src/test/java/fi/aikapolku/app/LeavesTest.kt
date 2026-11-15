@@ -50,7 +50,7 @@ class LeavesTest {
     private fun names(d: LocalDate) = matti().eventsFor(d).map { it.cardName }
 
     @Test
-    fun `loman alkupaiva: aamupaiva normaalisti, lomakortti alusta`() {
+    fun `loman alkupaiva aamupaiva normaalisti ja lomakortti alusta`() {
         val fri = names(friday)
         assertTrue("Päivätoiminta" in fri)
         assertTrue("Lääke" in fri)
@@ -59,12 +59,12 @@ class LeavesTest {
     }
 
     @Test
-    fun `koko lomapaiva: vain omat kohdat ja lomakortti`() {
+    fun `koko lomapaiva vain omat kohdat ja lomakortti`() {
         assertEquals(listOf("Kotilomalla", "Lääke"), names(saturday))
     }
 
     @Test
-    fun `paluupaiva: yksikon kohdat paluusta alkaen`() {
+    fun `paluupaiva yksikon kohdat paluusta alkaen`() {
         val sun = matti().eventsFor(sunday)
         val card = sun.first { it.cardName == "Kotilomalla" }
         assertEquals("00:00", card.time)
