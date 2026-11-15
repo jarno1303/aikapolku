@@ -436,3 +436,9 @@
 - Odotetaan: ohjaajan etusivulta (mitä odotetaan, kesto tai ei tiedossa, Odottaessa voit -kortit). Asiakkaan etusivulla rauhallinen kuvio ilman sekuntilaskentaa; ohjaaja päättää: Nyt mennään. (V5a: aloitus ja lopetus asiakkaan laitteella.)
 - Oma tila (asiakkaan oma tieto): kasvot tai akku, Tarvitsen tauon -näkymästä ja valinnaisesti tehtävän jälkeen. Jää vain laitteelle (eilinen ja tämä päivä), ei näy ohjaajalle eikä siirry viennissä. Asiakas voi näyttää aikuiselle tai lähettää ohjaajalle; huonolla tarjotaan tauko ja apu.
 - Yksikön yhteys (V5a): ohjaajan puhelin vastaanottaa (etualan palvelu, DNS-SD), asiakkaan laite liitetään kerran numerovertailulla (ECDH P-256, HKDF, AES-GCM). Kerro ohjaajalle -painike apu-, tauko-, lisäaika- ja En halua kumpaakaan -viesteihin sekä omaan tilaan; valinta tiedoksi. Viestit ilmoituksena ja etusivulla (Viestit asiakkailta). Huom: avaimet sovelluksen yksityisessä tallennuksessa (ennen tuotantoa Keystore); Android 16:n paikallisverkon lupa tarkistettava targetSdk-päivityksessä.
+
+## 15.11.2026 – Androidin automaattinen varmuuskopio pois
+- `allowBackup="false"`, ja varmuuskopiosäännöt sulkevat pois kaiken (pilvivarmuuskopio ja laitesiirto, myös Android 11 ja vanhemmat).
+- Syy: oletusasetuksilla Android saattoi varmuuskopioida asiakkaiden tiedot (myös oman tilan) Googlen pilveen. Tämä oli ristiriidassa periaatteen "ei pilveä" kanssa.
+- Laitteen vaihto tehdään sovelluksen omalla viennillä ja tuonnilla.
+- Testi BackupPolicyTest.
