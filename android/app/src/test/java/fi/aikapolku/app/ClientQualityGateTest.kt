@@ -441,9 +441,9 @@ class ClientQualityGateTest {
         compose.onNodeWithText(t(R.string.support_more_time)).performScrollTo().performClick()
         compose.waitForIdle()
         assertTrue("Lisäaikaa annettiin yli rajan: $grants", grants.size == 1)
-        assertTrue("Viesti aikuiselle puuttuu", hasText(t(R.string.more_time_show_adult)))
+        assertTrue("Viesti aikuiselle puuttuu", hasText(t(R.string.more_time_show_adult, t(R.string.helper_caregiver_to))))
         compose.onNodeWithText(t(R.string.support_continue)).performScrollTo().performClick()
         compose.waitForIdle()
-        assertTrue("Viesti ei sulkeutunut", !hasText(t(R.string.more_time_show_adult)))
+        assertTrue("Viesti ei sulkeutunut", !hasText(t(R.string.more_time_show_adult, t(R.string.helper_caregiver_to))))
     }
 }

@@ -107,7 +107,7 @@ internal fun WaitingView(state: WaitState, modifier: Modifier = Modifier) {
             CardPhoto(state.name, state.photo, Modifier.fillMaxSize(0.62f).aspectRatio(1f).clip(RoundedCornerShape(22.dp)))
         }
         Text(
-            stringResource(if (fraction != null && fraction <= 0f) R.string.wait_a_little_more else R.string.wait_adult_tells),
+            stringResource(if (fraction != null && fraction <= 0f) R.string.wait_a_little_more else R.string.wait_adult_tells, fi.aikapolku.app.data.helperNominative()),
             fontSize = 19.sp,
             color = AppColors.Ink,
             textAlign = TextAlign.Center

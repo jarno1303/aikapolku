@@ -145,7 +145,7 @@ internal fun SupportMessageScreen(
                     when {
                         timerPaused -> stringResource(R.string.ajastin_on_pysaytetty)
                         // Lisäaikapyyntö ei pysäytä aikaa: kerrotaan se, ettei asiakas jää odottamaan.
-                        kind == SupportKind.MORE_TIME -> stringResource(R.string.more_time_show_adult)
+                        kind == SupportKind.MORE_TIME -> stringResource(R.string.more_time_show_adult, fi.aikapolku.app.data.helperTo())
                         else -> stringResource(R.string.nayta_viesti_tarvittaessa_toiselle)
                     },
                     fontSize = 15.sp,
@@ -234,7 +234,7 @@ internal fun SupportMessageScreen(
                                     sending -> stringResource(R.string.link_sending)
                                     sent == fi.aikapolku.app.link.SendResult.DELIVERED -> stringResource(R.string.link_sent_ok)
                                     sent == fi.aikapolku.app.link.SendResult.QUEUED -> stringResource(R.string.link_queued_short)
-                                    else -> stringResource(R.string.link_tell_caregiver)
+                                    else -> stringResource(R.string.link_tell_helper, fi.aikapolku.app.data.helperTo())
                                 },
                                 fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
                             )
@@ -266,7 +266,7 @@ internal fun SupportMessageScreen(
                 }
                 if (sent == fi.aikapolku.app.link.SendResult.QUEUED || sent == fi.aikapolku.app.link.SendResult.FAILED) {
                     Text(
-                        stringResource(if (sent == fi.aikapolku.app.link.SendResult.QUEUED) R.string.link_queued else R.string.link_sent_failed),
+                        stringResource(if (sent == fi.aikapolku.app.link.SendResult.QUEUED) R.string.link_queued else R.string.link_sent_failed, fi.aikapolku.app.data.helperTo()),
                         modifier = Modifier.fillMaxWidth(),
                         fontSize = 15.sp, color = fi.aikapolku.app.ui.AppColors.Coral, textAlign = TextAlign.Center
                     )

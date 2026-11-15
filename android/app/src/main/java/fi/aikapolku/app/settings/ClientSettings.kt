@@ -189,6 +189,19 @@ internal fun HomeSettings() {
             SettingsRevision.bump()
         }
     )
+    // Kuka auttaa: sana, jolla asiakkaan viestit puhuttelevat auttajaa (ohjaaja / läheinen / aikuinen).
+    val helpers = fi.aikapolku.app.data.Helper.entries
+    var helper by remember(SettingsRevision.value) { mutableStateOf(fi.aikapolku.app.data.Helper.current(context)) }
+    SettingLabel(stringResource(R.string.helper_label), stringResource(R.string.helper_info))
+    SegmentedChoice(
+        options = helpers.map { stringResource(it.label) },
+        selected = helpers.indexOf(helper).coerceAtLeast(0),
+        onSelect = {
+            helper = helpers[it]
+            fi.aikapolku.app.data.Helper.set(context, helpers[it])
+            SettingsRevision.bump()
+        }
+    )
     SettingLabel(stringResource(R.string.client_view_timeline))
     listOf(
         Triple(TimelineMode.FULL, R.string.client_view_full, R.string.client_view_full_info),

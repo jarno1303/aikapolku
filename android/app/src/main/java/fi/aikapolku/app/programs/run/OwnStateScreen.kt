@@ -158,7 +158,7 @@ internal fun OwnStateFlow(
                 }
             }
             showAdult -> {
-                // Iso kortti aikuiselle näytettäväksi.
+                // Iso kortti auttajalle (ohjaaja/läheinen) näytettäväksi.
                 Spacer(Modifier.weight(0.2f))
                 StateIcon(scale, chosen, if (low) 96.dp else 180.dp)
                 Text(
@@ -175,7 +175,7 @@ internal fun OwnStateFlow(
                     stringResource(R.string.own_state_card, stringResource(OwnStateTexts.label(scale, chosen))),
                     fontSize = 28.sp, fontWeight = FontWeight.Bold, color = RunColors.ink, textAlign = TextAlign.Center
                 )
-                Text(stringResource(R.string.own_state_private), fontSize = 15.sp, color = RunColors.secondary, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.own_state_private, fi.aikapolku.app.data.helperTo()), fontSize = 15.sp, color = RunColors.secondary, textAlign = TextAlign.Center)
                 sent?.let {
                     val ok = it == fi.aikapolku.app.link.SendResult.DELIVERED
                     Text(
@@ -184,7 +184,8 @@ internal fun OwnStateFlow(
                                 fi.aikapolku.app.link.SendResult.DELIVERED -> R.string.link_sent_ok
                                 fi.aikapolku.app.link.SendResult.QUEUED -> R.string.link_queued
                                 fi.aikapolku.app.link.SendResult.FAILED -> R.string.link_sent_failed
-                            }
+                            },
+                            fi.aikapolku.app.data.helperTo()
                         ),
                         fontSize = 16.sp, fontWeight = FontWeight.Bold,
                         color = if (ok) RunColors.teal else AppColors.Coral, textAlign = TextAlign.Center
@@ -199,9 +200,9 @@ internal fun OwnStateFlow(
                     }
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SmallAction(stringResource(R.string.own_state_show_adult), Modifier.weight(1f)) { showAdult = true }
+                    SmallAction(stringResource(R.string.own_state_show_adult, fi.aikapolku.app.data.helperTo()), Modifier.weight(1f)) { showAdult = true }
                     if (ClientMessages.canSend(context)) {
-                        SmallAction(stringResource(R.string.link_tell_caregiver), Modifier.weight(1f)) {
+                        SmallAction(stringResource(R.string.link_tell_helper, fi.aikapolku.app.data.helperTo()), Modifier.weight(1f)) {
                             val text = context.getString(R.string.own_state_card, context.getString(OwnStateTexts.label(scale, chosen)))
                             scope.launch { sent = ClientMessages.send(context, ClientMessages.KIND_STATE, text) }
                         }

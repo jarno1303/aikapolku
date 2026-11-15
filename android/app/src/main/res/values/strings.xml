@@ -309,8 +309,8 @@
     <string name="own_state_battery_ok">Puolillaan</string>
     <string name="own_state_battery_low">Akku vähissä</string>
     <string name="own_state_card">Minulla on nyt: %1$s</string>
-    <string name="own_state_private">Tämä on sinun omaa tietoasi. Voit näyttää sen aikuiselle, jos haluat.</string>
-    <string name="own_state_show_adult">Näytä aikuiselle</string>
+    <string name="own_state_private">Tämä on sinun omaa tietoasi. Voit näyttää sen %1$s, jos haluat.</string>
+    <string name="own_state_show_adult">Näytä %1$s</string>
     <string name="own_state_back">Takaisin</string>
     <string name="own_state_done">Valmis</string>
     <string name="own_state_skip">Ohita</string>
@@ -324,7 +324,7 @@
     <string name="link_tell_caregiver">Kerro ohjaajalle</string>
     <string name="link_settings_title">Yksikön yhteys</string>
     <string name="link_settings_info">Asiakkaan laite lähettää viestit ohjaajan puhelimeen samassa verkossa</string>
-    <string name="link_info">Laitteet liitetään kerran samassa wifi-verkossa. Viestit salataan, ja ne menevät vain liitettyihin laitteisiin. Vierasverkoissa laitteet eivät välttämättä näe toisiaan; silloin asiakas näyttää viestin aikuiselle.</string>
+    <string name="link_info">Laitteet liitetään kerran samassa wifi-verkossa. Viestit salataan, ja ne menevät vain liitettyihin laitteisiin. Vierasverkoissa laitteet eivät välttämättä näe toisiaan; silloin asiakas näyttää viestin ruudulta.</string>
     <string name="link_device_name">Tämän laitteen nimi</string>
     <string name="link_save_name">Tallenna nimi</string>
     <string name="link_receiver_label">Vastaanota asiakkaiden viestit tällä puhelimella</string>
@@ -357,11 +357,11 @@
     <string name="link_client_setting_info">Asiakas voi itse lähettää avun, tauon, lisäajan tai oman tilansa ohjaajan puhelimeen. Valinnat lähetetään tiedoksi.</string>
     <string name="link_client_setting_unpaired">Liitä ensin tämä laite ohjaajan puhelimeen: Asetukset → Yksikön yhteys.</string>
     <string name="link_sent_ok">Ohjaaja sai viestin.</string>
-    <string name="link_sent_failed">Viesti ei mennyt perille. Näytä aikuiselle.</string>
+    <string name="link_sent_failed">Viesti ei mennyt perille. Näytä %1$s.</string>
     <string name="link_sending">Lähetetään…</string>
     <string name="wait_title">Odotetaan: %1$s</string>
-    <string name="wait_adult_tells">Aikuinen kertoo, kun lähdetään.</string>
-    <string name="wait_a_little_more">Odotetaan vielä hetki. Aikuinen kertoo, kun lähdetään.</string>
+    <string name="wait_adult_tells">%1$s kertoo, kun lähdetään.</string>
+    <string name="wait_a_little_more">Odotetaan vielä hetki. %1$s kertoo, kun lähdetään.</string>
     <string name="wait_you_can">Odottaessa voit:</string>
     <string name="wait_running">Odotetaan: %1$s</string>
     <string name="wait_go_now">Nyt mennään</string>
@@ -384,7 +384,7 @@
     <string name="choice_or">tai %1$s</string>
     <string name="choice_remove_alternative">Poista vaihtoehto %1$s</string>
     <string name="choice_allow_none_label">Valinnassa saa vastata \"En halua kumpaakaan\"</string>
-    <string name="choice_allow_none_info">Silloin asiakkaalle näytetään viesti aikuiselle: Haluaisin jotain muuta.</string>
+    <string name="choice_allow_none_info">Silloin asiakas saa viestin, jonka voi näyttää: Haluaisin jotain muuta.</string>
     <string name="timer_done_early">Valmis – Ensin on tehty</string>
     <string name="timer_done_early_text">Oletko valmis? Aika lopetetaan ja siirrytään kohtaan Sitten: %1$s.</string>
     <string name="timer_pause_locked">Tauko (vaatii ohjaajan PIN-koodin)</string>
@@ -891,9 +891,9 @@
     <!-- Tarvitsen vielä hetken (tutkielma A2) -->
     <string name="support_more_time">Tarvitsen vielä hetken</string>
     <string name="more_time_granted">%1$d min lisää aikaa</string>
-    <string name="more_time_show_adult">Näytä viesti aikuiselle. Aika jatkuu.</string>
+    <string name="more_time_show_adult">Näytä viesti %1$s. Aika jatkuu.</string>
     <string name="more_time_label">Tarvitsen vielä hetken: lisäaika (min)</string>
-    <string name="more_time_info">Asiakas voi pyytää lisäaikaa, kun aika on loppumassa tai jo loppunut. Lisäaika tulee heti ilman PIN-koodia. Ei = painike näyttää viestin aikuiselle. Viesti näkyy myös, kun lisäaika on jo käytetty.</string>
+    <string name="more_time_info">Asiakas voi pyytää lisäaikaa, kun aika on loppumassa tai jo loppunut. Lisäaika tulee heti ilman PIN-koodia. Ei = painike näyttää viestin, jonka asiakas voi näyttää. Viesti näkyy myös, kun lisäaika on jo käytetty.</string>
     <string name="more_time_count_label">Lisäaikaa voi pyytää samassa toiminnossa</string>
     <string name="more_time_once">Kerran</string>
     <string name="more_time_twice">Kaksi kertaa</string>
@@ -1015,7 +1015,7 @@
     <!-- Palaute 15.11.2026: En ymmärrä, käytön seuranta, tuen taso, viestijono -->
     <string name="support_not_understand">En ymmärrä. Näytä minulle.</string>
     <string name="support_not_understand_button">En ymmärrä</string>
-    <string name="link_queued">Ohjaajan puhelinta ei tavoitettu. Viesti lähtee, kun yhteys palaa. Näytä viesti myös aikuiselle.</string>
+    <string name="link_queued">Puhelinta ei tavoitettu. Viesti lähtee, kun yhteys palaa. Näytä viesti myös %1$s.</string>
     <string name="link_queued_short">Lähtee, kun yhteys palaa</string>
     <string name="link_queue_count">Jonossa %1$d viestiä odottamassa yhteyttä (enintään 20 min).</string>
     <string name="link_queue_retry">Yritä nyt</string>
@@ -1067,6 +1067,18 @@
     <string name="support_level_hint_next">Pyyntöjä on ollut selvästi vähemmän. Jos asukas on samaa mieltä, voitte kokeilla seuraavaa tasoa.</string>
     <string name="support_level_hint_back">Pyyntöjä on ollut enemmän tason vaihdon jälkeen. Harkitkaa paluuta edelliseen.</string>
     <!-- Havainto 15.11.2026: vaakatila ja tabletit -->
+    <string name="link_tell_helper">Kerro %1$s</string>
+    <string name="helper_label">Kuka auttaa asiakasta</string>
+    <string name="helper_info">Asiakkaan viesteissä käytetään tätä sanaa, esimerkiksi “Ohjaaja kertoo, kun lähdetään” tai “Näytä läheiselle”.</string>
+    <string name="helper_caregiver">Ohjaaja</string>
+    <string name="helper_relative">Läheinen</string>
+    <string name="helper_adult">Aikuinen</string>
+    <string name="helper_caregiver_nom">Ohjaaja</string>
+    <string name="helper_relative_nom">Läheinen</string>
+    <string name="helper_adult_nom">Aikuinen</string>
+    <string name="helper_caregiver_to">ohjaajalle</string>
+    <string name="helper_relative_to">läheiselle</string>
+    <string name="helper_adult_to">aikuiselle</string>
     <string name="orientation_label">Näytön asento asiakkaalla</string>
     <string name="orientation_info">Automaattinen: puhelimessa pysty, tabletissa vapaa. Ohjaajana asento on aina vapaa.</string>
     <string name="orientation_auto">Autom.</string>

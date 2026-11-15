@@ -48,7 +48,7 @@ class ChoiceOwnStateUiTest {
     }
 
     @Test
-    fun `oma tila tarjoaa tauon ja avun ja nayttaa kortin aikuiselle`() {
+    fun `oma tila tarjoaa tauon ja avun ja nayttaa kortin ohjaajalle`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         OwnState.setEnabled(context, true)
         var breakAsked = false
@@ -59,7 +59,7 @@ class ChoiceOwnStateUiTest {
         rule.onNodeWithText("Kerro ohjaajalle").assertDoesNotExist()
         rule.onNodeWithText("Tarvitsen tauon").performClick()
         assertTrue(breakAsked)
-        rule.onNodeWithText("Näytä aikuiselle").performClick()
+        rule.onNodeWithText("Näytä ohjaajalle").performClick()
         rule.onNodeWithText("Takaisin").assertExists()
         assertEquals(1, OwnState.today(context).size)
     }

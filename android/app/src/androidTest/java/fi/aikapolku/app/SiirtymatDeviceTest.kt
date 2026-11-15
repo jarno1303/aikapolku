@@ -239,7 +239,7 @@ class EnsinSittenLisaaikaDeviceTest {
         // 8. Painike palaa lopussa; toinen pyyntö = viesti aikuiselle, aika jatkuu.
         ui.waitFor(150_000L, "\"$moreTime\" ei palannut näkyviin lisäajan lopussa.") { ui.shownText(moreTime) }
         ui.click(moreTime)
-        ui.waitForText(ui.t(R.string.more_time_show_adult), 4_000L)
+        ui.waitForText(ui.t(R.string.more_time_show_adult, ui.t(R.string.helper_caregiver_to)), 4_000L)
         ui.pause(2_000L)
         ui.click(ui.t(R.string.support_continue))
         ui.waitFor(6_000L, "Aika ei jatkunut viestin aikana.") { ui.timerRunning() || ui.shownText(ui.t(R.string.siirry_seuraavaan)) }
@@ -252,7 +252,7 @@ class EnsinSittenLisaaikaDeviceTest {
         ui.pause()
         ui.click(moreTime)
         ui.waitFor(4_000L, "Käytetty lisäaika: viestiä aikuiselle ei tullut (aika käynnistyi uudelleen?).") {
-            ui.shownText(ui.t(R.string.more_time_show_adult))
+            ui.shownText(ui.t(R.string.more_time_show_adult, ui.t(R.string.helper_caregiver_to)))
         }
         ui.pause(2_000L)
         ui.click(ui.t(R.string.support_continue))

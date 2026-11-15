@@ -152,7 +152,7 @@ const sisalto = [
   ...steps(['Valitse vaiheen alta **Anna valita: lisää toinen vaihtoehto**.', 'Valitse kortti omista korteista.', 'Poista vaihtoehto rististä, jos sitä ei enää tarvita.']),
   ...shot('o15-valinta-editori'),
   ...shot('a05-valinta'),
-  para('Asetuksissa (**Viestit** → **Valitse**) voi sallia vastauksen **En halua kumpaakaan**. Silloin asiakas saa viestin, jonka hän voi näyttää aikuiselle: Haluaisin jotain muuta.'),
+  para('Asetuksissa (**Viestit** → **Valitse**) voi sallia vastauksen **En halua kumpaakaan**. Silloin asiakas saa viestin, jonka hän voi näyttää ohjaajalle: Haluaisin jotain muuta.'),
   h2('Valmis-painike, kun aikaa on jäljellä'),
   table(['Asetus', 'Mitä tapahtuu'], [
     ['Aina sallittu', 'Valmis siirtää heti seuraavaan.'],
@@ -185,14 +185,15 @@ const sisalto = [
   ...shot('a03-ennakkovaroitus'),
   box('miksi', 'Ennakoimattomuus tekee siirtymistä vaikeita. Ennakkoilmoitus äänellä ja kuvalla on tutkimuksissa vähentänyt siirtymiin liittyvää kuormitusta. Ääni soi kerran tehtävää kohden eikä soi, kun puhelin on äänettömällä.'),
   h2('Tarvitsen tauon ja Tarvitsen apua'),
-  para('Painikkeet ovat aina asiakkaan käytössä ilman PIN-koodia. Tauko pysäyttää ajan, ja Jatka käynnistää sen uudelleen. Viestin voi näyttää aikuiselle, ja sille voi valita puheäänen tai oman äänitteen (**Asetukset** → **Viestit**).'),
+  para('Painikkeet ovat aina asiakkaan käytössä ilman PIN-koodia. Tauko pysäyttää ajan, ja Jatka käynnistää sen uudelleen. Viestin voi näyttää ohjaajalle, ja sille voi valita puheäänen tai oman äänitteen (**Asetukset** → **Viestit**).'),
   ...shot('a04-tauko'),
   h2('En ymmärrä'),
-  para('Tarvitsen apua -näkymässä on painike **En ymmärrä**. Se vaihtaa viestiksi "En ymmärrä. Näytä minulle." Asiakas voi näyttää viestin aikuiselle tai lähettää sen ohjaajan puhelimeen. Painike ei lisää tehtävänäkymään uutta painiketta, joten näkymä pysyy rauhallisena.'),
+  para('Tarvitsen apua -näkymässä on painike **En ymmärrä**. Se vaihtaa viestiksi "En ymmärrä. Näytä minulle." Asiakas voi näyttää viestin ohjaajalle tai lähettää sen ohjaajan puhelimeen. Painike ei lisää tehtävänäkymään uutta painiketta, joten näkymä pysyy rauhallisena.'),
   ...shot('a11-en-ymmarra'),
   box('vinkki', 'Jos asiakas valitsee usein En ymmärrä samassa tehtävässä, tehtävä kannattaa jakaa pienempiin osavaiheisiin tai lisätä siihen oma kuva tai äänite.'),
   h2('Tarvitsen vielä hetken'),
-  para('Kun aika on loppumassa, asiakas voi pyytää lisäaikaa ohjaajan asettamissa rajoissa (esimerkiksi 3 minuuttia kerran). Kun lisäaika on käytetty, pyyntö näyttää viestin aikuiselle eikä aika pysähdy.'),
+  box('vinkki', 'Asiakkaan viestit puhuvat ohjaajasta. Jos sovellusta käytetään kotona, valitse **Asetukset** → **Etusivu** → **Kuka auttaa asiakasta**: Ohjaaja, Läheinen tai Aikuinen. Esimerkiksi "Ohjaaja kertoo, kun lähdetään" muuttuu muotoon "Läheinen kertoo, kun lähdetään".'),
+  para('Kun aika on loppumassa, asiakas voi pyytää lisäaikaa ohjaajan asettamissa rajoissa (esimerkiksi 3 minuuttia kerran). Kun lisäaika on käytetty, pyyntö näyttää viestin ohjaajalle eikä aika pysähdy.'),
 
   // 11
   h1('11. Muutokset'),
@@ -224,7 +225,7 @@ const sisalto = [
   ...steps(['Avaa **Asetukset** → **Viestit** → **Oma tila** ja kytke se käyttöön.', 'Valitse asteikko: kasvot tai akku.', 'Valitse halutessa **Kysy päiväohjelmassa tehtävän jälkeen**. Kysymyksen voi aina ohittaa.']),
   ...shot('o21-asetukset-viestit'),
   ...shot('a06-oma-tila'),
-  box('huom', 'Oma tila on asiakkaan omaa tietoa. Se jää vain asiakkaan laitteelle eikä näy ohjaajan näkymissä. Asiakas voi itse näyttää sen aikuiselle tai lähettää sen ohjaajalle. Jos asiakas valitsee huonon tai vähäisen jaksamisen, sovellus tarjoaa tauon ja avun.'),
+  box('huom', 'Oma tila on asiakkaan omaa tietoa. Se jää vain asiakkaan laitteelle eikä näy ohjaajan näkymissä. Asiakas voi itse näyttää sen ohjaajalle tai lähettää sen ohjaajalle. Jos asiakas valitsee huonon tai vähäisen jaksamisen, sovellus tarjoaa tauon ja avun.'),
 
   // 15
   h1('15. Tänään yksikössä'),
@@ -239,10 +240,10 @@ const sisalto = [
   h2('Asiakkaan laite'),
   ...steps(['Avaa samassa verkossa **Yksikön yhteys** asiakkaan laitteessa ohjaajan roolissa.', 'Valitse **Liitä ohjaajan puhelimeen** ja ohjaajan puhelin luettelosta.', 'Vertaa koodia: molemmissa laitteissa pitää näkyä sama kuusinumeroinen koodi.', 'Hyväksy liitos ohjaajan puhelimessa.']),
   ...shot('o24-yhteys'),
-  box('huom', 'Viestit salataan ja ne menevät vain liitettyihin laitteisiin. Vierasverkoissa laitteet eivät aina näe toisiaan; silloin asiakas näyttää viestin aikuiselle. Ominaisuus on kokeiluvaiheessa.'),
+  box('huom', 'Viestit salataan ja ne menevät vain liitettyihin laitteisiin. Vierasverkoissa laitteet eivät aina näe toisiaan; silloin asiakas näyttää viestin ohjaajalle. Ominaisuus on kokeiluvaiheessa.'),
   h2('Kun yhteys katkeaa'),
   bullet('Jos ohjaajan puhelinta ei tavoiteta, asiakas näkee: **Lähtee, kun yhteys palaa**. Viesti jää jonoon ja lähtee itsestään, kun sovellus avataan tai yhteys palaa.'),
-  bullet('Jonossa viesti on enintään 20 minuuttia. Vanha avunpyyntö ei ole enää ajankohtainen, joten asiakasta ohjataan aina myös näyttämään viesti aikuiselle.'),
+  bullet('Jonossa viesti on enintään 20 minuuttia. Vanha avunpyyntö ei ole enää ajankohtainen, joten asiakasta ohjataan aina myös näyttämään viesti ohjaajalle.'),
   bullet('Ohjaajan puhelin ei näytä samaa viestiä kahdesti. **Yksikön yhteys** -kohdassa näkyy, milloin kukin asiakkaan laite viimeksi lähetti viestin.'),
 
   // 17
@@ -307,7 +308,7 @@ const sisalto = [
     ['Asukas näkee kodin tapahtumia päivätoiminnan aikana', 'Tarkista, että asukas on valittu toiminnan osallistujaksi ja toiminnan ajat ovat oikein (myös oma aika).'],
     ['Kaikki ei mahdu asiakkaan ruudulle', 'Valitse asiakkaan näkymäksi Nyt ja kaksi seuraavaa tai Ei aikajanaa.'],
     ['Ohjaajan puhelinta ei löydy liitettäessä', 'Laitteiden on oltava samassa wifissä ja vastaanoton päällä. Vierasverkko voi estää laitteiden näkymisen.'],
-    ['Viesti ei mennyt perille', 'Asiakas näyttää viestin aikuiselle. Viesti lähtee itsestään, kun yhteys palaa (enintään 20 min). Tarkista ohjaajan puhelimen vastaanotto ja verkko.'],
+    ['Viesti ei mennyt perille', 'Asiakas näyttää viestin ohjaajalle. Viesti lähtee itsestään, kun yhteys palaa (enintään 20 min). Tarkista ohjaajan puhelimen vastaanotto ja verkko.'],
     ['Kuva näkyy väärin päin', 'Ota kuva uudelleen sovelluksen Ota kuva -painikkeella; sovellus kääntää kuvan oikein päin.'],
   ], [3200, 5826]),
 ];

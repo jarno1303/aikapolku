@@ -465,3 +465,8 @@
 - NYT-kortin ja tapahtumakortin kuvan koko: aiempi `fillMaxWidth().sizeIn(max)` ei rajannut leveyttä; nyt kiinteä koko / `widthIn(max).fillMaxWidth()`.
 - Näytön asento asiakaskohtaisesti (Etusivu-asetukset): automaattinen (puhelin pysty, tabletti vapaa), pysty, vaaka, vapaa. Ohjaajana aina vapaa.
 - Mittaus: NakymaKoot*-testit piirtävät asiakkaan näkymät neljässä koossa (build/nakymakuvat); AdaptiveTest.
+
+## 16.11.2026 – Kuka auttaa asiakasta
+- Asiakkaan viestit puhuivat "aikuisesta", mikä ei sovi aikuisten asumisyksikköön. Uusi asiakaskohtainen asetus (Etusivu-asetukset): **Ohjaaja** (oletus), **Läheinen** tai **Aikuinen** (data/Helper.kt).
+- Taivutetut tekstit: "Ohjaaja kertoo, kun lähdetään", "Näytä ohjaajalle", "Näytä viesti ohjaajalle. Aika jatkuu.", "Kerro ohjaajalle", jonon ja epäonnistuneen lähetyksen viestit sekä oman tilan ohjeteksti.
+- Ohjaajan ohjetekstit kirjoitettu neutraaleiksi. Testi AuttajaTest varmistaa taivutuksen ja ettei asiakkaan teksteissä ole kiinteää "aikuinen"-sanaa.
