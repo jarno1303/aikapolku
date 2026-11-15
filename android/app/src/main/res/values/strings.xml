@@ -296,6 +296,9 @@
     <string name="timer_running_row">Ajastin käynnissä</string>
     <string name="timer_paused_row">Ajastin tauolla</string>
     <string name="timer_duration">Aika: %1$d min</string>
+    <string name="timer_minutes_big">%1$d min</string>
+    <string name="timer_minus">Vähennä aikaa</string>
+    <string name="timer_plus">Lisää aikaa</string>
     <string name="timer_pause_locked">Tauko (vaatii ohjaajan PIN-koodin)</string>
     <string name="tehtava">Tehtävä %1$s / %2$s</string>
     <string name="teksti">Teksti</string>

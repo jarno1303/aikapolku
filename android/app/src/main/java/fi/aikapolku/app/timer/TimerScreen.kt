@@ -230,6 +230,8 @@ internal fun TimerScreen(
 
         val lastTen = showLastTen && secs in 1..10
         val screenHeight = LocalConfiguration.current.screenHeightDp
+        // Ohjaaja asettaa aikaa (ei vielä käynnistetty): − / + ja pikavalinnat taulun alla.
+        val adjusting = canAdjust && !(running || remaining < duration)
         val compact = screenHeight < 750
 
         BoxWithConstraints(
@@ -242,7 +244,7 @@ internal fun TimerScreen(
             // Tauko-painike vie noin 60 dp ja ennakkovaroituksen paikka noin 50 dp.
             // Lisäajan varattu paikka vie noin 66 dp.
             val byHeight = (screenHeight - (if (guided) 570 else 420) - (if (soonPossible) 50 else 0) -
-                (if (moreEnabled) 66 else 0)).coerceAtLeast(150).dp
+                (if (moreEnabled) 66 else 0) - (if (adjusting) 100 else 0)).coerceAtLeast(150).dp
             val target = minOf(
                 byHeight,
                 when {
@@ -303,6 +305,13 @@ internal fun TimerScreen(
             }
         }
 
+        // Ajan asetus painikkeilla heti taulun alla (vain ohjaaja, ennen käynnistystä).
+        if (adjusting) {
+            TimeAdjustControls(
+                minutes = ((duration + 59_999L) / 60_000L).toInt(),
+                onSet = { minutes -> if (canAdjust) onPreset(minutes) }
+            )
+        }
         // Ohjaajan valmistelu valmis (aika valittu, ei vielä käynnistetty): yksi painallus antaa
         // toiminnan asiakkaalle tai aloittaa sen heti. Ei pyyhkäisyä eikä erillistä roolinvaihtoa.
         val handoff = onHandToClient != null && guided && caregiver.isCaregiver && !running && remaining >= duration
@@ -319,7 +328,7 @@ internal fun TimerScreen(
             )
         }
         // Asetettu kesto ohjaajalle. Rauhallisessa tilassa vain, kun ohjaajan toiminnot ovat auki.
-        if (timeMode != TimeDisplayPrefs.CALM || showSettings) {
+        if (!adjusting && (timeMode != TimeDisplayPrefs.CALM || showSettings)) {
             Text(
                 stringResource(R.string.timer_duration, ((duration + 59_999L) / 60_000L).toInt()),
                 modifier = Modifier.fillMaxWidth(),

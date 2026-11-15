@@ -132,6 +132,13 @@ internal fun LandscapeTimer(
                     color = LandscapeInk
                 )
             }
+            // Ajan asetus painikkeilla (vain ohjaaja, ennen käynnistystä).
+            if (canAdjust && !running && remaining >= duration) {
+                TimeAdjustControls(
+                    minutes = ((duration + 59_999L) / 60_000L).toInt(),
+                    onSet = { minutes -> if (canAdjust) onPreset(minutes) }
+                )
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

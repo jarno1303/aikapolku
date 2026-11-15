@@ -430,3 +430,4 @@
 - Ota kuva: korttiin, Ensin–Sitteniin ja profiiliin suoraan kameralla. Kuva tallentuu vain sovellukseen (ei galleriaan), kameran käyttölupaa ei tarvita. Kuvat käännetään oikein päin (EXIF) ja pienennetään (pisin sivu 2048 px) – korjaa myös galleriasta valitut kyljellään näkyneet kuvat.
 - Kellotaulu: viimeisten sekuntien laskenta ja mm:ss-lukema mitoitetaan taulun keskustan mukaan, eivät kasva fonttikoon mukana (puhelintesti: eivät mahtuneet). Pienessä taulussa pelkkä numero.
 - Puhelintestit: EnnakkoaaniDeviceTest (puheääni, yleinen ja asiakkaan oma äänite, kerran tehtävää kohden, äänetön) ja KuvaJaKelloDeviceTest (EXIF-kääntö, pienennys, kellotaulun mitat).
+- Ajastin: ohjaajalle ennen käynnistystä − / + (minuutti, pitkä painallus 5 min askelin) ja pikavalinnat 5, 10, 15, 30 min kellotaulun alla; aika näkyy isona taulun ulkopuolella. Asiakkaalle ei uusia painikkeita.
