@@ -277,6 +277,6 @@ class UnitsTest {
         assertEquals("omena", fi.aikapolku.app.week.GroupToday.absenceGroup(villa, "matti", all))
         // Toiminnan kokoontuminen on peruttavissa.
         val entries = fi.aikapolku.app.week.GroupToday.dayEntries(paiva, emptyList(), monday)
-        assertEquals(Units.sessionEventId(1), entries.first().original.id)
+        assertTrue(entries.any { it.original.id == Units.sessionEventId(1) && it.event.until == "14:00" })
     }
 }
