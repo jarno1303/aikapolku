@@ -255,6 +255,7 @@ const sisalto = [
   ], [3000, 3100, 2926]),
   spacer(),
   bullet('Sovellus ei käytä pilvipalvelua eikä lähetä tietoja internetiin.'),
+  bullet('Androidin automaattinen varmuuskopio on pois päältä, joten tiedot eivät siirry Googlen pilveen. Laitteen vaihto tehdään sovelluksen omalla viennillä ja tuonnilla.'),
   bullet('Kuvaa esineitä ja paikkoja, ei muita asukkaita. Ohjaajan kuvan voi käyttää vain hänen suostumuksellaan.'),
   bullet('Kun asiakas poistetaan, hänen tietonsa ja vain hänen käyttämänsä kuvat ja äänitteet poistetaan laitteesta.'),
   h2('Yksikön vastuut'),
