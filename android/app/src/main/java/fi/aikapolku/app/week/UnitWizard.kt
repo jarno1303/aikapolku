@@ -69,7 +69,7 @@ import java.util.UUID
 private data class WizardResident(val key: String, val name: String, val unitIndex: Int)
 
 /** Asukkaan tuki: kuinka pitkälle hän näkee ja mitä toiminnan aikana (Y5). */
-private data class WizardSupport(val timeline: TimelineMode = TimelineMode.NEXT, val activity: ActivityView = ActivityView.CARD)
+private data class WizardSupport(val timeline: TimelineMode = TimelineMode.FULL, val activity: ActivityView = ActivityView.CARD)
 
 private data class WizardActivity(
     val name: String,

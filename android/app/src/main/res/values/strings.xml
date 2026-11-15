@@ -640,9 +640,9 @@
     <string name="client_view_info">Aikajana, kellonajat ja asiakkaan työkalut</string>
     <string name="client_view_timeline">Päivän aikajana</string>
     <string name="client_view_full">Koko päivä</string>
-    <string name="client_view_full_info">Kaikki päivän tapahtumat aamusta iltaan.</string>
+    <string name="client_view_full_info">Kaikki päivän tapahtumat aamusta iltaan. Pitkää päivää vieritetään.</string>
     <string name="client_view_next">Nyt ja kaksi seuraavaa</string>
-    <string name="client_view_next_info">Kevyempi: vain lähin tuleva.</string>
+    <string name="client_view_next_info">Kevyempi: NYT-kortti ja kaksi seuraavaa. Mahtuu aina ruudulle. Sopii, jos koko päivän näkeminen kuormittaa.</string>
     <string name="client_view_none">Ei aikajanaa</string>
     <string name="client_view_none_info">Vain NYT-kortti.</string>
     <string name="client_view_times">Kellonajat näkyvissä</string>
