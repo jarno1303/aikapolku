@@ -164,7 +164,27 @@ if ($laitetesti -and $code -eq 0) {
     }
     $tila = (& $adb get-state 2>$null)
     if ($tila -ne "device") {
-        Write-Host "VIRHE: puhelin ei ole yhteydessä. Kytke kaapeli, salli USB-virheenkorjaus ja aja uudelleen." -ForegroundColor Yellow
+        # Usein auttaa adb-palvelimen uudelleenkäynnistys; odotetaan puhelinta ja lupaa enintään 60 s.
+        Write-Host "Puhelinta ei löytynyt: käynnistetään yhteys uudelleen. Avaa puhelimen lukitus ja hyväksy 'Salli USB-virheenkorjaus', jos se kysyy." -ForegroundColor Yellow
+        & $adb kill-server 2>$null | Out-Null
+        & $adb start-server 2>$null | Out-Null
+        for ($i = 0; $i -lt 30 -and $tila -ne "device"; $i++) {
+            Start-Sleep -Seconds 2
+            $tila = (& $adb get-state 2>$null)
+        }
+    }
+    if ($tila -ne "device") {
+        $laitteet = (& $adb devices -l 2>&1 | Out-String)
+        $laitteet | Out-File "$logs\adb-laitteet.txt" -Encoding utf8
+        Write-Host "VIRHE: puhelin ei ole yhteydessä. adb näkee:" -ForegroundColor Yellow
+        Write-Host $laitteet
+        if ($laitteet -match "unauthorized") {
+            Write-Host "Puhelin odottaa lupaa: avaa lukitus ja hyväksy 'Salli USB-virheenkorjaus' (rastita 'Salli aina')." -ForegroundColor Yellow
+        } elseif ($laitteet -match "offline") {
+            Write-Host "Yhteys on jumissa: irrota ja kytke kaapeli uudelleen." -ForegroundColor Yellow
+        } else {
+            Write-Host "Puhelinta ei näy lainkaan: tarkista, että USB-virheenkorjaus on päällä (Asetukset > Kehittäjäasetukset) ja kokeile toista USB-porttia. Valitse puhelimen USB-ilmoituksesta 'Tiedostonsiirto', jos lataus on valittuna." -ForegroundColor Yellow
+        }
         "laitetesti=VIRHE ei puhelinta" | Out-File "$logs\tulos.txt" -Append -Encoding utf8
         exit 1
     }
