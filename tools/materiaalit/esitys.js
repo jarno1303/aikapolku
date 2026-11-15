@@ -148,7 +148,7 @@ async function icon(Comp, color = '#FFFFFF') {
   await iconRow(s, md.MdCallSplit, 7.2, 1.7, 'Valinta', 'Asiakas valitsee kahdesta ja aloittaa itse. Ohjaaja voi sallia: En halua kumpaakaan.', 5.2);
   await iconRow(s, md.MdFavorite, 7.2, 3.0, 'Oma tila on asiakkaan omaa tietoa', 'Kasvot tai akku. Jää laitteelle – asiakas päättää, näyttääkö tai lähettääkö sen.', 5.2);
   await iconRow(s, md.MdSend, 7.2, 4.3, 'Kerro ohjaajalle', 'Asiakas lähettää avun pyynnön tai tilansa ohjaajan puhelimeen, kun haluaa.', 5.2);
-  await iconRow(s, md.MdLockOpen, 7.2, 5.6, 'Ei lukittuja oikeuksia', 'Tauko ja apu toimivat aina.', 5.2);
+  await iconRow(s, md.MdLockOpen, 7.2, 5.6, 'Ei lukittuja oikeuksia', 'Tauko, apu ja En ymmärrä toimivat aina.', 5.2);
 
   // 7 Ohjaajalle
   s = pres.addSlide({ masterName: 'Sisältö', sectionTitle: 'Sovellus' });
@@ -192,7 +192,7 @@ async function icon(Comp, color = '#FFFFFF') {
   card(s, 0.6 + 2 * (cw + 0.25), 1.5, cw, ch, 'Äänivihjeet', 'Äänivihjeiden hyöty muistamisessa näkyi erityisesti autistisilla lapsilla.', 'Sheppard ym. 2021, Res. Dev. Disabil.');
   card(s, 0.6, 4.15, cw, ch, 'Aika-apuvälineet', 'Satunnaistettu tutkimus: suuri vaikutus ajan hahmottamiseen (d = 0,81).', 'Janeslätt ym., Scand. J. Occup. Ther.');
   card(s, 0.6 + cw + 0.25, 4.15, cw, ch, 'Asumisyksikössä', 'Kognitiivinen apuväline toi ennakoitavuutta, kommunikoinnin tukea ja itsemääräämistä.', 'Søderstrøm ym., J. Intellect. Disabil.');
-  card(s, 0.6 + 2 * (cw + 0.25), 4.15, cw, ch, 'Päivitys 15.11.2026', 'Arvion pohjalta lisätty: valinta, oma tila, odotetaan ja ennakkovaroituksen ääni.', 'Seuraavaksi: tuen asteittainen vähentäminen');
+  card(s, 0.6 + 2 * (cw + 0.25), 4.15, cw, ch, 'Päivitys 15.11.2026', 'Arvion pohjalta lisätty: valinta, oma tila, odotetaan, ennakkovaroituksen ääni, En ymmärrä ja tuen asteittainen vähentäminen.', 'Seuraavaksi: vaikuttavuus pilotissa');
   s.addText('Tutkimus perustelee ratkaisut. AikaPolun oma vaikuttavuus osoitetaan pilotissa.', { x: 0.6, y: 6.68, w: 11.5, h: 0.35, fontSize: 13, italic: true, color: C.accent4, margin: 0, isTextBox: true });
 
   // 10 Tietosuoja
@@ -274,7 +274,7 @@ async function icon(Comp, color = '#FFFFFF') {
   ];
   const mw = 2.9, mh = 2.15;
   mittarit.forEach(([tt, tx], i) => card(s, 0.6 + (i % 4) * (mw + 0.17), 1.55 + Math.floor(i / 4) * (mh + 0.2), mw, mh, tt, tx));
-  s.addText('Oma tila ei ole mittari: se on asukkaan omaa tietoa, eikä sitä kerätä ilman hänen lupaansa.', { x: 0.6, y: 6.2, w: 12.1, h: 0.5, fontSize: 15, italic: true, color: C.accent4, margin: 0, isTextBox: true });
+  s.addText('Sovelluksessa on valmiina nimetön käytön seuranta (oletuksena pois). Oma tila ei ole mittari eikä sitä kerätä.', { x: 0.6, y: 6.2, w: 12.1, h: 0.5, fontSize: 15, italic: true, color: C.accent4, margin: 0, isTextBox: true });
 
   // 14 Seuraavat askeleet
   s = pres.addSlide({ masterName: 'Otsikkodia (tumma)', sectionTitle: 'Ehdotus' });

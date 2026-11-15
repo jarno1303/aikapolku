@@ -187,6 +187,9 @@ const sisalto = [
   h2('Tarvitsen tauon ja Tarvitsen apua'),
   para('Painikkeet ovat aina asiakkaan käytössä ilman PIN-koodia. Tauko pysäyttää ajan, ja Jatka käynnistää sen uudelleen. Viestin voi näyttää aikuiselle, ja sille voi valita puheäänen tai oman äänitteen (**Asetukset** → **Viestit**).'),
   ...shot('a04-tauko'),
+  h2('En ymmärrä'),
+  para('Tarvitsen apua -näkymässä on painike **En ymmärrä**. Se vaihtaa viestiksi "En ymmärrä. Näytä minulle." Asiakas voi näyttää viestin aikuiselle tai lähettää sen ohjaajan puhelimeen. Painike ei lisää tehtävänäkymään uutta painiketta, joten näkymä pysyy rauhallisena.'),
+  box('vinkki', 'Jos asiakas valitsee usein En ymmärrä samassa tehtävässä, tehtävä kannattaa jakaa pienempiin osavaiheisiin tai lisätä siihen oma kuva tai äänite.'),
   h2('Tarvitsen vielä hetken'),
   para('Kun aika on loppumassa, asiakas voi pyytää lisäaikaa ohjaajan asettamissa rajoissa (esimerkiksi 3 minuuttia kerran). Kun lisäaika on käytetty, pyyntö näyttää viestin aikuiselle eikä aika pysähdy.'),
 
@@ -236,21 +239,48 @@ const sisalto = [
   ...steps(['Avaa samassa verkossa **Yksikön yhteys** asiakkaan laitteessa ohjaajan roolissa.', 'Valitse **Liitä ohjaajan puhelimeen** ja ohjaajan puhelin luettelosta.', 'Vertaa koodia: molemmissa laitteissa pitää näkyä sama kuusinumeroinen koodi.', 'Hyväksy liitos ohjaajan puhelimessa.']),
   ...shot('o24-yhteys'),
   box('huom', 'Viestit salataan ja ne menevät vain liitettyihin laitteisiin. Vierasverkoissa laitteet eivät aina näe toisiaan; silloin asiakas näyttää viestin aikuiselle. Ominaisuus on kokeiluvaiheessa.'),
+  h2('Kun yhteys katkeaa'),
+  bullet('Jos ohjaajan puhelinta ei tavoiteta, asiakas näkee: **Lähtee, kun yhteys palaa**. Viesti jää jonoon ja lähtee itsestään, kun sovellus avataan tai yhteys palaa.'),
+  bullet('Jonossa viesti on enintään 20 minuuttia. Vanha avunpyyntö ei ole enää ajankohtainen, joten asiakasta ohjataan aina myös näyttämään viesti aikuiselle.'),
+  bullet('Ohjaajan puhelin ei näytä samaa viestiä kahdesti. **Yksikön yhteys** -kohdassa näkyy, milloin kukin asiakkaan laite viimeksi lähetti viestin.'),
 
   // 17
-  h1('17. Tietojen vienti ja tuonti'),
+  h1('17. Tuen taso'),
+  para('Tuen taso auttaa vähentämään kehotuksia askel kerrallaan, kun asukas itsenäistyy. Taso muuttaa vain kehotuksia: ennakkovaroitusta, Pian vaihtuu -ääntä ja sitä, näkyykö seuraava tehtävä kuvana vai tekstinä. Tieto siitä, mitä nyt tehdään, ja päivän rakenne pysyvät ennallaan.'),
+  table(['Taso', 'Ennakkovaroitus', 'Pian vaihtuu -ääni', 'Seuraava tehtävä'], [
+    ['Paljon tukea', '5 min', 'Kyllä', 'Kuvana'],
+    ['Kohtalainen tuki', '5 min', 'Ei', 'Kuvana'],
+    ['Kevyt tuki', '2 min', 'Ei', 'Tekstinä'],
+    ['Itsenäinen', 'Ei', 'Ei', 'Tekstinä'],
+  ], [2600, 2100, 2200, 2126]),
+  ...steps(['Avaa **Asetukset** ja valitse asiakas.', 'Avaa **Tuen taso** ja valitse taso.', 'Seuraa muutamaa viikkoa. Jos asukas pyytää apua, taukoa tai lisäaikaa aiempaa enemmän, valitse **Palaa edelliseen**.']),
+  box('miksi', 'Tukea on hyvä suunnitella vähennettäväksi heti alusta, jotta se ei muutu riippuvuudeksi. Vaihda tasoa yhdessä asukkaan kanssa. Sovellus ei koskaan vaihda tasoa itse: se vain näyttää, miten pyynnöt ovat muuttuneet, jos käytön seuranta on päällä.'),
+
+  // 18
+  h1('18. Käytön seuranta (pilotti)'),
+  para('Seuranta tuottaa pilotin arviointiin lukuja: kuinka usein sovellusta käytetään ja kuinka usein asukas pyytää apua, taukoa tai lisäaikaa. Seuranta on oletuksena pois.'),
+  ...steps(['Avaa **Asetukset** → **Käytön seuranta (pilotti)**.', 'Kytke **Seuranta käytössä**. Aloituspäivä tallentuu lähtötilanteen vertailuun.', 'Seuraa viikon koostetta asukkaittain.', 'Vie kooste pilotin arviointiin: **Vie kooste (CSV, ilman nimiä)**.']),
+  table(['Kirjataan', 'Ei kirjata'], [
+    ['Lukumäärät päivittäin: ohjelma aloitettu ja tehty, tehtävä tehty, apu, en ymmärrä, tauko, lisäaika, valinta, muutos kuitattu, odotus', 'Kellonajat, tehtävien sisältö, viestien teksti, oma tila'],
+  ], [4513, 4513]),
+  box('huom', 'Sovi seurannasta asukkaan tai hänen edustajansa kanssa ennen käyttöönottoa. Koosteessa asukkaat ovat tunnuksina (A1, A2 …), ja tunnusten vastineet näkyvät vain laitteessa. Tiedot säilyvät 180 päivää eivätkä tule vientiin.'),
+
+  // 17
+  h1('19. Tietojen vienti ja tuonti'),
   para('Päiväohjelmat, kortit ja viikko-ohjelman voi siirtää toiseen laitteeseen tai antaa kollegalle pohjaksi.'),
   ...steps(['Avaa **Asetukset** → **Vienti ja tuonti** → **Vie tiedostoksi**.', 'Valitse laajuus: kaikki asiakkaat, tämä asiakas tai valitut päiväohjelmat.', 'Valitse tarvittaessa **Ilman henkilötietoja** ja **Suojaa salasanalla**.', 'Jaa tai tallenna tiedosto. Tuo se toisessa laitteessa: **Tuo tiedostosta**.']),
   ...shot('o25-vienti'),
   box('huom', 'Vientitiedosto voi sisältää asiakkaan nimen, kuvia ja äänitteitä. Mukaan eivät tule kuittaukset, päivän muutokset, oma tila eikä PIN-koodi.'),
 
   // 18
-  h1('18. Tietosuoja'),
+  h1('20. Tietosuoja'),
   table(['Tieto', 'Missä se on', 'Kuka sen näkee'], [
     ['Asiakkaan päivä, ohjelmat, kortit, kuvat ja äänitteet', 'Asiakkaan laitteessa sovelluksen omassa tallennuksessa', 'Asiakas ja laitteen ohjaaja'],
     ['Oma tila', 'Vain asiakkaan laitteessa (eilinen ja tämä päivä)', 'Asiakas; ohjaaja vain, jos asiakas näyttää tai lähettää sen'],
     ['Kameralla otetut kuvat', 'Vain sovelluksessa, ei puhelimen kuvagalleriassa', 'Kuten muutkin asiakkaan tiedot'],
     ['Asiakkaan viestit (Kerro ohjaajalle)', 'Liitetyssä ohjaajan puhelimessa (eilinen ja tämä päivä)', 'Ohjaajat, joiden puhelimeen laite on liitetty'],
+    ['Käytön seuranta (lukumäärät)', 'Laitteessa 180 päivää, oletuksena pois', 'Ohjaaja; kooste tunnuksin ilman nimiä'],
+    ['Lähtevät viestit jonossa', 'Asiakkaan laitteessa enintään 20 minuuttia', 'Ei kukaan ennen lähetystä'],
     ['Vientitiedosto', 'Siellä, minne se tallennetaan tai jaetaan', 'Vastaanottaja; voi suojata salasanalla'],
   ], [3000, 3100, 2926]),
   spacer(),
@@ -267,14 +297,14 @@ const sisalto = [
   bullet('**Kuvat ja äänitteet:** asiakkaan suostumus, ja muita asukkaita ei kuvata.'),
 
   // 19
-  h1('19. Vianetsintä'),
+  h1('21. Vianetsintä'),
   table(['Ongelma', 'Ratkaisu'], [
     ['Muistutus ei tule', 'Tarkista ilmoitusten lupa ja että puhelin ei ole Älä häiritse -tilassa. Katso tila: Asetukset → muistutusten tila.'],
     ['Pian vaihtuu -ääni ei kuulu', 'Ääni ei soi äänettömällä tai Älä häiritse -tilassa. Tarkista, että ennakkovaroitus on päällä (Aika) ja ääni valittu (Viestit).'],
     ['Asukas näkee kodin tapahtumia päivätoiminnan aikana', 'Tarkista, että asukas on valittu toiminnan osallistujaksi ja toiminnan ajat ovat oikein (myös oma aika).'],
     ['Kaikki ei mahdu asiakkaan ruudulle', 'Valitse asiakkaan näkymäksi Nyt ja kaksi seuraavaa tai Ei aikajanaa.'],
     ['Ohjaajan puhelinta ei löydy liitettäessä', 'Laitteiden on oltava samassa wifissä ja vastaanoton päällä. Vierasverkko voi estää laitteiden näkymisen.'],
-    ['Viesti ei mennyt perille', 'Asiakas näyttää viestin aikuiselle. Tarkista ohjaajan puhelimen vastaanotto ja verkko.'],
+    ['Viesti ei mennyt perille', 'Asiakas näyttää viestin aikuiselle. Viesti lähtee itsestään, kun yhteys palaa (enintään 20 min). Tarkista ohjaajan puhelimen vastaanotto ja verkko.'],
     ['Kuva näkyy väärin päin', 'Ota kuva uudelleen sovelluksen Ota kuva -painikkeella; sovellus kääntää kuvan oikein päin.'],
   ], [3200, 5826]),
 ];
