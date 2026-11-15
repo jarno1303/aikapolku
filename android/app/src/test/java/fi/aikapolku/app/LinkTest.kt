@@ -32,9 +32,13 @@ class LinkTest {
         val keyB = LinkCrypto.sharedKey(b, LinkCrypto.publicBytes(a), "ohjaaja", "asiakas")
         assertArrayEquals(keyA, keyB)
         assertEquals(32, keyA.size)
-        val code = LinkCrypto.comparisonCode(LinkCrypto.publicBytes(a), LinkCrypto.publicBytes(b))
-        assertEquals(code, LinkCrypto.comparisonCode(LinkCrypto.publicBytes(b), LinkCrypto.publicBytes(a)))
+        val n1 = LinkCrypto.randomBytes(16)
+        val n2 = LinkCrypto.randomBytes(16)
+        val code = LinkCrypto.comparisonCode(LinkCrypto.publicBytes(a), LinkCrypto.publicBytes(b), n1, n2)
+        assertEquals(code, LinkCrypto.comparisonCode(LinkCrypto.publicBytes(a), LinkCrypto.publicBytes(b), n1, n2))
         assertTrue(code.matches(Regex("\\d{3} \\d{3}")))
+        // Asiakkaan satunnaisluku vaikuttaa koodiin: hyökkääjä ei voi valita sitä jälkikäteen.
+        assertTrue(code != LinkCrypto.comparisonCode(LinkCrypto.publicBytes(a), LinkCrypto.publicBytes(b), LinkCrypto.randomBytes(16), n2))
     }
 
     @Test
@@ -83,11 +87,15 @@ class LinkTest {
         assertEquals(1, host.senders.size)
         assertArrayEquals(peer.key, host.senders.first().key)
 
-        val sent = LinkProtocol.send("127.0.0.1", server.localPort, me, peer, LinkMessage("help", "Tarvitsen apua", "Matti", 1L, me.name))
+        val message = LinkMessage("help", "Tarvitsen apua", "Matti", System.currentTimeMillis(), me.name)
+        val sent = LinkProtocol.send("127.0.0.1", server.localPort, me, peer, message)
         assertTrue(sent)
         assertEquals("Tarvitsen apua", host.messages.single().text)
         assertEquals("Matti", host.messages.single().who)
         assertEquals("Matin tabletti", host.messages.single().fromName)
+        // Vanha viesti (yli 30 min) hylätään.
+        assertFalse(LinkProtocol.send("127.0.0.1", server.localPort, me, peer, message.copy(at = 1L)))
+        assertEquals(1, host.messages.size)
         server.close()
     }
 
@@ -99,7 +107,7 @@ class LinkTest {
         assertNull(LinkProtocol.pair("127.0.0.1", server.localPort, me) {})
         assertTrue(host.senders.isEmpty())
         val stranger = Peer("ohjaaja-id", "x", ByteArray(32), receiver = true)
-        assertFalse(LinkProtocol.send("127.0.0.1", server.localPort, me, stranger, LinkMessage("help", "x", "y", 1L, "z")))
+        assertFalse(LinkProtocol.send("127.0.0.1", server.localPort, me, stranger, LinkMessage("help", "x", "y", System.currentTimeMillis(), "z")))
         assertTrue(host.messages.isEmpty())
         server.close()
     }

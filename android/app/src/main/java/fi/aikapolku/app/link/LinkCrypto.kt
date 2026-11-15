@@ -44,22 +44,25 @@ internal object LinkCrypto {
         return hkdf(secret, salt, INFO.toByteArray(), 32)
     }
 
-    /** Kuusinumeroinen vertailukoodi molempien julkisista avaimista ("123 456"). */
-    fun comparisonCode(publicA: ByteArray, publicB: ByteArray): String {
-        val (first, second) = listOf(publicA, publicB).sortedWith { a, b -> compareBytes(a, b) }
-        val digest = MessageDigest.getInstance("SHA-256").apply { update(first); update(second) }.digest()
+    /**
+     * Kuusinumeroinen vertailukoodi ("123 456") asiakkaan ja ohjaajan julkisista avaimista ja
+     * satunnaisluvuista. Asiakas on sitoutunut omiin arvoihinsa (tiiviste) ennen kuin näkee ohjaajan
+     * arvot, joten välissä oleva hyökkääjä ei voi kokeilla avaimia, kunnes koodit täsmäävät.
+     */
+    fun comparisonCode(clientPublic: ByteArray, serverPublic: ByteArray, clientNonce: ByteArray, serverNonce: ByteArray): String {
+        val digest = MessageDigest.getInstance("SHA-256").apply {
+            update(clientPublic); update(serverPublic); update(clientNonce); update(serverNonce)
+        }.digest()
         val number = (ByteBuffer.wrap(digest, 0, 4).int.toLong() and 0xffffffffL) % 1_000_000L
         val text = "%06d".format(number)
         return text.substring(0, 3) + " " + text.substring(3)
     }
 
-    private fun compareBytes(a: ByteArray, b: ByteArray): Int {
-        for (i in 0 until minOf(a.size, b.size)) {
-            val d = (a[i].toInt() and 0xff) - (b[i].toInt() and 0xff)
-            if (d != 0) return d
-        }
-        return a.size - b.size
-    }
+    fun randomBytes(size: Int): ByteArray = ByteArray(size).also { random.nextBytes(it) }
+
+    /** Sitoumus: SHA-256(julkinen avain ‖ satunnaisluku). */
+    fun commitment(publicKey: ByteArray, nonce: ByteArray): ByteArray =
+        MessageDigest.getInstance("SHA-256").apply { update(publicKey); update(nonce) }.digest()
 
     fun hkdf(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
         val extract = Mac.getInstance("HmacSHA256").apply { init(SecretKeySpec(if (salt.isEmpty()) ByteArray(32) else salt, "HmacSHA256")) }

@@ -68,7 +68,7 @@ class LinkReceiverService : Service() {
             override fun addSender(peer: Peer) = store.addPeer(peer)
             override fun confirmPair(name: String, code: String): Boolean {
                 LinkNotify.pairRequest(app, name)
-                return LinkPairing.request(name, code, LinkProtocol.PAIR_TIMEOUT_MS - 10_000L).also { LinkNotify.cancelPair(app) }
+                return LinkPairing.request(name, code, LinkProtocol.PAIR_TIMEOUT_MS - 25_000L).also { LinkNotify.cancelPair(app) }
             }
             override fun onMessage(message: LinkMessage) {
                 LinkInbox.add(app, message)
@@ -77,11 +77,15 @@ class LinkReceiverService : Service() {
         }
         val socket = runCatching { ServerSocket(0) }.getOrNull() ?: return
         server = socket
-        val executor = Executors.newCachedThreadPool().also { pool = it }
+        // Enintään 4 yhtäaikaista yhteyttä ja 8 jonossa; ylimääräiset suljetaan heti.
+        val executor = java.util.concurrent.ThreadPoolExecutor(
+            4, 4, 30L, java.util.concurrent.TimeUnit.SECONDS, java.util.concurrent.ArrayBlockingQueue(8)
+        ).also { pool = it }
         thread(name = "aikapolku-link", isDaemon = true) {
             while (!socket.isClosed) {
                 val client = runCatching { socket.accept() }.getOrNull() ?: break
                 runCatching { executor.execute { runCatching { LinkProtocol.serve(client, host) } } }
+                    .onFailure { runCatching { client.close() } }
             }
         }
         register(socket.localPort, store.identity)

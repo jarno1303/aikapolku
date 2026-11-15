@@ -218,14 +218,21 @@ internal fun ProgramsScreen(
     }
 
     // Oma tila tehtävän jälkeen (asiakaskohtainen, aina ohitettavissa; tieto jää asiakkaalle).
+    // Kysytään ennen seuraavaa tehtävää, jottei sen ääni tai aika ala kysymyksen taustalla.
     var askOwnState by rememberSaveable { mutableStateOf(false) }
+    fun advanceStep() {
+        if (run.next()) finishRun()
+    }
     fun completeStep() {
-        val before = run.stepIndex
-        val finished = run.next()
-        if (finished) finishRun()
-        // Vain tehtävien välissä (ohjelman lopussa Kaikki valmista -näkymä).
-        val taskDone = !finished && run.stepIndex != before
-        if (taskDone && !caregiver.isCaregiver && fi.aikapolku.app.data.OwnState.askAfterTasks(context)) askOwnState = true
+        val step = run.currentStep
+        val lastSub = step == null || step.subSteps.isEmpty() || run.subStepIndex >= step.subSteps.size - 1
+        val lastTask = run.activeIndex >= run.activeCount - 1
+        if (lastSub && !lastTask && !caregiver.isCaregiver && fi.aikapolku.app.data.OwnState.askAfterTasks(context)) {
+            run.pause()
+            askOwnState = true
+        } else {
+            advanceStep()
+        }
     }
 
     // Valmis: vahinkonaputusten esto ja ohjaajan valitsema toiminta, kun aikaa on jäljellä.
@@ -291,10 +298,11 @@ internal fun ProgramsScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         val runStep = if (view == ProgramsView.RUN) run.currentStep else null
         if (askOwnState && runStep != null) {
+            // Tehtävä on valmis: suljettaessa siirrytään seuraavaan; tauko tai apu seuraavan alussa.
             fi.aikapolku.app.programs.run.OwnStateFlow(
-                onClose = { askOwnState = false },
-                onBreak = { askOwnState = false; run.requestSupport(SupportKind.BREAK) },
-                onHelp = { askOwnState = false; run.requestSupport(SupportKind.HELP) }
+                onClose = { askOwnState = false; advanceStep() },
+                onBreak = { askOwnState = false; advanceStep(); run.requestSupport(SupportKind.BREAK) },
+                onHelp = { askOwnState = false; advanceStep(); run.requestSupport(SupportKind.HELP) }
             )
         } else if (runStep != null) {
             val kind = run.support

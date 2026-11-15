@@ -61,27 +61,49 @@ internal object LinkProtocol {
     private fun Socket.reader() = BufferedReader(InputStreamReader(getInputStream(), Charsets.UTF_8))
     private fun Socket.writer() = PrintWriter(OutputStreamWriter(getOutputStream(), Charsets.UTF_8), true)
 
-    /** Palvelee yhden yhteyden (vastaanottajan puolella). */
-    fun serve(socket: Socket, host: Host) {
+    /** Ensimmäinen ja paljastusrivi on luettava nopeasti; odotus koskee vain ohjaajan päätöstä. */
+    const val LINE_TIMEOUT_MS = 10_000
+    /** Viestin aikaleiman sallittu ero (laitteiden kellot verkon ajassa). */
+    const val MAX_SKEW_MS = 30L * 60 * 1000
+
+    /** Jo vastaanotetut viestit (lähettäjä + nonce): toistettua viestiä ei hyväksytä uudelleen. */
+    private val seen = object : LinkedHashMap<String, Long>(256, 0.75f, false) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>?) = size > 500
+    }
+
+    private fun firstSeen(key: String, now: Long): Boolean = synchronized(seen) {
+        if (seen.containsKey(key)) false else { seen[key] = now; true }
+    }
+
+    /** Palvelee yhden yhteyden (vastaanottajan puolella). [now] testejä varten. */
+    fun serve(socket: Socket, host: Host, now: () -> Long = System::currentTimeMillis) {
         socket.use { s ->
-            s.soTimeout = PAIR_TIMEOUT_MS
+            s.soTimeout = LINE_TIMEOUT_MS
             val reader = s.reader()
             val writer = s.writer()
             val request = runCatching { JSONObject(reader.readLine() ?: return) }.getOrNull() ?: return
             when (request.optString("t")) {
                 "pair" -> {
+                    // 1) asiakas sitoutuu avaimeensa (tiiviste), 2) ohjaaja kertoo omansa,
+                    // 3) asiakas paljastaa avaimensa, 4) molemmat näyttävät koodin.
                     val clientId = request.optString("id")
                     val clientName = request.optString("name").take(60)
-                    val clientPub = runCatching { b64d.decode(request.optString("pub")) }.getOrNull() ?: return
-                    if (clientId.isBlank()) return
+                    val commit = runCatching { b64d.decode(request.optString("commit")) }.getOrNull() ?: return
+                    if (clientId.isBlank() || commit.size != 32) return
                     val pair = LinkCrypto.newKeyPair()
                     val ownPub = LinkCrypto.publicBytes(pair)
-                    val key = runCatching { LinkCrypto.sharedKey(pair, clientPub, host.identity.id, clientId) }.getOrNull() ?: return
-                    val code = LinkCrypto.comparisonCode(clientPub, ownPub)
+                    val ownNonce = LinkCrypto.randomBytes(16)
                     writer.println(
                         JSONObject().put("t", "pub").put("id", host.identity.id).put("name", host.identity.name)
-                            .put("pub", b64e.encodeToString(ownPub)).toString()
+                            .put("pub", b64e.encodeToString(ownPub)).put("n", b64e.encodeToString(ownNonce)).toString()
                     )
+                    val reveal = runCatching { JSONObject(reader.readLine() ?: return) }.getOrNull() ?: return
+                    if (reveal.optString("t") != "reveal") return
+                    val clientPub = runCatching { b64d.decode(reveal.optString("pub")) }.getOrNull() ?: return
+                    val clientNonce = runCatching { b64d.decode(reveal.optString("n")) }.getOrNull() ?: return
+                    if (!LinkCrypto.commitment(clientPub, clientNonce).contentEquals(commit)) return
+                    val key = runCatching { LinkCrypto.sharedKey(pair, clientPub, host.identity.id, clientId) }.getOrNull() ?: return
+                    val code = LinkCrypto.comparisonCode(clientPub, ownPub, clientNonce, ownNonce)
                     val ok = host.confirmPair(clientName, code)
                     if (ok) host.addSender(Peer(clientId, clientName, key, receiver = false))
                     writer.println(JSONObject().put("t", "result").put("ok", ok).toString())
@@ -89,25 +111,31 @@ internal object LinkProtocol {
                 "msg" -> {
                     val from = request.optString("id")
                     val peer = host.sender(from)
-                    val plain = peer?.let {
-                        runCatching {
-                            LinkCrypto.open(it.key, b64d.decode(request.optString("n")), b64d.decode(request.optString("c")), from.toByteArray())
-                        }.getOrNull()
-                    }
-                    val message = plain?.let { runCatching { JSONObject(String(it, Charsets.UTF_8)) }.getOrNull() }?.let {
-                        LinkMessage(
-                            kind = it.optString("k").take(20),
-                            text = it.optString("x").take(200),
-                            who = it.optString("w").take(60),
-                            at = it.optLong("a"),
-                            fromName = peer.name
-                        )
-                    }
-                    if (message == null) {
+                    val nonce = runCatching { b64d.decode(request.optString("n")) }.getOrNull()
+                    val plain = if (peer != null && nonce != null) runCatching {
+                        LinkCrypto.open(peer.key, nonce, b64d.decode(request.optString("c")), from.toByteArray())
+                    }.getOrNull() else null
+                    val json = plain?.let { runCatching { JSONObject(String(it, Charsets.UTF_8)) }.getOrNull() }
+                    val time = now()
+                    val fresh = json != null && kotlin.math.abs(time - json.optLong("a")) <= MAX_SKEW_MS &&
+                        firstSeen(from + ":" + request.optString("n"), time)
+                    if (peer == null || json == null || !fresh) {
                         writer.println(JSONObject().put("t", "err").put("e", if (peer == null) "unknown" else "invalid").toString())
                     } else {
-                        host.onMessage(message)
-                        writer.println(JSONObject().put("t", "ack").toString())
+                        host.onMessage(
+                            LinkMessage(
+                                kind = json.optString("k").take(20),
+                                text = json.optString("x").take(200),
+                                who = json.optString("w").take(60),
+                                at = json.optLong("a"),
+                                fromName = peer.name
+                            )
+                        )
+                        // Kuittaus salattuna: lähettäjä tietää, että juuri tämä ohjaajan puhelin sai viestin.
+                        val (ackNonce, ack) = LinkCrypto.seal(peer.key, ("ack:" + request.optString("n")).toByteArray(), host.identity.id.toByteArray())
+                        writer.println(
+                            JSONObject().put("t", "ack").put("n", b64e.encodeToString(ackNonce)).put("c", b64e.encodeToString(ack)).toString()
+                        )
                     }
                 }
             }
@@ -129,32 +157,43 @@ internal object LinkProtocol {
             val writer = s.writer()
             val pair = LinkCrypto.newKeyPair()
             val ownPub = LinkCrypto.publicBytes(pair)
+            val ownNonce = LinkCrypto.randomBytes(16)
             writer.println(
-                JSONObject().put("t", "pair").put("id", me.id).put("name", me.name).put("pub", b64e.encodeToString(ownPub)).toString()
+                JSONObject().put("t", "pair").put("id", me.id).put("name", me.name)
+                    .put("commit", b64e.encodeToString(LinkCrypto.commitment(ownPub, ownNonce))).toString()
             )
             val pub = JSONObject(reader.readLine() ?: return null)
             if (pub.optString("t") != "pub") return null
             val serverId = pub.optString("id")
             val serverPub = b64d.decode(pub.optString("pub"))
+            val serverNonce = b64d.decode(pub.optString("n"))
+            writer.println(
+                JSONObject().put("t", "reveal").put("pub", b64e.encodeToString(ownPub)).put("n", b64e.encodeToString(ownNonce)).toString()
+            )
             val key = LinkCrypto.sharedKey(pair, serverPub, me.id, serverId)
-            onCode(LinkCrypto.comparisonCode(ownPub, serverPub))
+            onCode(LinkCrypto.comparisonCode(ownPub, serverPub, ownNonce, serverNonce))
             val result = JSONObject(reader.readLine() ?: return null)
             if (result.optString("t") != "result" || !result.optBoolean("ok")) return null
             return Peer(serverId, pub.optString("name").take(60), key, receiver = true, host = host, port = port)
         }
     }
 
-    /** Lähettää salatun viestin; true, jos ohjaajan puhelin kuittasi. */
+    /** Lähettää salatun viestin; true vain, jos juuri liitetty ohjaajan puhelin kuittasi (salattu kuittaus). */
     fun send(host: String, port: Int, me: Identity, peer: Peer, message: LinkMessage): Boolean {
         val payload = JSONObject().put("k", message.kind).put("x", message.text).put("w", message.who).put("a", message.at)
             .toString().toByteArray(Charsets.UTF_8)
         val (nonce, ciphertext) = LinkCrypto.seal(peer.key, payload, me.id.toByteArray())
+        val nonceText = b64e.encodeToString(nonce)
         connect(host, port, READ_TIMEOUT_MS).use { s ->
             s.writer().println(
-                JSONObject().put("t", "msg").put("id", me.id).put("n", b64e.encodeToString(nonce)).put("c", b64e.encodeToString(ciphertext)).toString()
+                JSONObject().put("t", "msg").put("id", me.id).put("n", nonceText).put("c", b64e.encodeToString(ciphertext)).toString()
             )
             val reply = JSONObject(s.reader().readLine() ?: return false)
-            return reply.optString("t") == "ack"
+            if (reply.optString("t") != "ack") return false
+            val ack = runCatching {
+                LinkCrypto.open(peer.key, b64d.decode(reply.optString("n")), b64d.decode(reply.optString("c")), peer.id.toByteArray())
+            }.getOrNull() ?: return false
+            return String(ack) == "ack:$nonceText"
         }
     }
 

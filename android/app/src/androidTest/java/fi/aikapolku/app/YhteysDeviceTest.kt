@@ -81,7 +81,7 @@ class YhteysDeviceTest {
             assertNotNull("Pariliitos onnistui", peer)
             assertEquals("Sama koodi molemmissa", host.code, clientCode)
 
-            val sent = LinkProtocol.send(found.host, found.port, me, peer!!, LinkMessage("help", "Tarvitsen apua", "Testi", 1L, me.name))
+            val sent = LinkProtocol.send(found.host, found.port, me, peer!!, LinkMessage("help", "Tarvitsen apua", "Testi", System.currentTimeMillis(), me.name))
             assertTrue("Viesti kuitattiin", sent)
             assertEquals("Tarvitsen apua", host.messages.single().text)
         } finally {

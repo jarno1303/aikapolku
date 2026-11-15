@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -202,7 +203,7 @@ internal fun WaitStartDialog(onDismiss: () -> Unit) {
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.wait_what), fontWeight = FontWeight.Bold)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     quick.forEach { t ->
                         val label = stringResource(t.nameRes)
                         FilterChip(selected = photo == "builtin:${t.id}", onClick = { name = label; photo = "builtin:${t.id}" }, label = { Text(label, fontSize = 13.sp) })
@@ -212,7 +213,7 @@ internal fun WaitStartDialog(onDismiss: () -> Unit) {
                     Text(stringResource(R.string.wait_pick_card, name))
                 }
                 Text(stringResource(R.string.wait_how_long), fontWeight = FontWeight.Bold)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Waiting.DURATIONS.forEach { m ->
                         FilterChip(
                             selected = minutes == m,
