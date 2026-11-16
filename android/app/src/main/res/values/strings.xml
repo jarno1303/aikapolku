@@ -704,7 +704,7 @@
     <string name="role_back_caregiver">Palaa ohjaajaksi</string>
     <string name="role_settings_title">Roolit</string>
     <string name="role_test_switch">Testitila: roolin vaihto ilman PIN-koodia</string>
-    <string name="role_test_switch_info">Yläreunassa on aina Asiakas / Ohjaaja -vaihto. Kytke pois, kun sovellus annetaan asiakkaan käyttöön; silloin ohjaajaksi siirrytään PIN-koodilla (jos lukitus on käytössä).</string>
+    <string name="role_test_switch_info">Esittelyyn ja kokeiluun: yläreunassa on Asiakas / Ohjaaja -vaihto kaikille. Oletuksena pois. Älä käytä, kun laite on asukkaan käytössä.</string>
     <string name="menu_caregiver_mode">Ohjaajan tila</string>
     <string name="caregiver_tools">Ohjaajan työkalut</string>
     <string name="home_week">Asiakkaan viikko</string>
@@ -725,6 +725,8 @@
     <string name="client_no_events">Tänään ei ole merkittyjä tapahtumia.</string>
     <string name="client_my_day">Päiväni</string>
     <string name="client_done">tehty</string>
+    <string name="lock_off_warning">Lukitus ei ole käytössä: kuka tahansa pääsee tästä laitteesta ohjaajan tilaan ilman PIN-koodia.</string>
+    <string name="lock_off_action">Ota lukitus käyttöön</string>
     <string name="caregiver_home_title">Ohjaajan etusivu</string>
     <string name="caregiver_prepare">Valmistele asiakkaalle</string>
     <string name="caregiver_first_then_info">Ensin–Sitten-pari ja aika; näkyy asiakkaan NYT-kortissa</string>

@@ -103,7 +103,11 @@ internal fun SecondaryButton(
     }
 }
 
-/** Valinta kahdesta tai kolmesta vaihtoehdosta: yhtenäinen "segmentoitu" valitsin. */
+/**
+ * Valinta kahdesta tai kolmesta vaihtoehdosta: yhtenäinen "segmentoitu" valitsin. Jos jokin
+ * vaihtoehto ei mahdu riville kokonaan (esim. "Automaattinen" neljän joukossa), vaihtoehdot
+ * näytetään allekkain: tekstiä ei katkaista ("Aut…") eikä sanaa rivitetä kesken.
+ */
 @Composable
 internal fun SegmentedChoice(
     options: List<String>,
@@ -112,19 +116,19 @@ internal fun SegmentedChoice(
     modifier: Modifier = Modifier
 ) {
     val shape = RoundedCornerShape(14.dp)
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(AppColors.TealSoft)
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        options.forEachIndexed { index, label ->
+    val fontSize = if (options.size > 2) 15.sp else 16.sp
+    val style = androidx.compose.ui.text.TextStyle(fontSize = fontSize, fontWeight = FontWeight.SemiBold)
+    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    androidx.compose.foundation.layout.BoxWithConstraints(modifier.fillMaxWidth()) {
+        // Lohkon leveys: koko leveys − reunat (2 × 4 dp) − välit (4 dp) jaettuna; tekstille jää − 2 × 8 dp.
+        val slot = (maxWidth - 8.dp - 4.dp * (options.size - 1)) / options.size - 16.dp
+        val widest = options.maxOfOrNull { measurer.measure(it, style, maxLines = 1, softWrap = false).size.width } ?: 0
+        val fits = with(density) { widest.toDp() } <= slot
+        val item: @Composable (Int, String, Modifier) -> Unit = { index, label, itemModifier ->
             val isSelected = index == selected
             Box(
-                modifier = Modifier
-                    .weight(1f)
+                modifier = itemModifier
                     .heightIn(min = 48.dp)
                     .clip(RoundedCornerShape(11.dp))
                     .background(if (isSelected) AppColors.Teal else Color.Transparent)
@@ -133,18 +137,31 @@ internal fun SegmentedChoice(
                         role = Role.Tab
                         this.selected = isSelected
                     },
-                contentAlignment = Alignment.Center
+                contentAlignment = if (fits) Alignment.Center else Alignment.CenterStart
             ) {
                 Text(
                     label,
-                    modifier = Modifier.padding(horizontal = 8.dp),
+                    modifier = Modifier.padding(horizontal = if (fits) 8.dp else 14.dp, vertical = 6.dp),
                     color = if (isSelected) Color.White else AppColors.Teal,
-                    fontSize = if (options.size > 2) 15.sp else 16.sp,
+                    fontSize = fontSize,
                     fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    textAlign = if (fits) TextAlign.Center else TextAlign.Start
                 )
+            }
+        }
+        if (fits) {
+            Row(
+                modifier = Modifier.fillMaxWidth().clip(shape).background(AppColors.TealSoft).padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                options.forEachIndexed { index, label -> item(index, label, Modifier.weight(1f)) }
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth().clip(shape).background(AppColors.TealSoft).padding(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                options.forEachIndexed { index, label -> item(index, label, Modifier.fillMaxWidth()) }
             }
         }
     }

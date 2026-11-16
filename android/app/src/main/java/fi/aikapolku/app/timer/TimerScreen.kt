@@ -303,7 +303,7 @@ internal fun TimerScreen(
             // Tauko-painike vie noin 60 dp ja ennakkovaroituksen paikka noin 50 dp.
             // Lisäajan varattu paikka vie noin 66 dp.
             val byHeight = (screenHeight - (if (guided) 570 else 420) - (if (soonPossible) 50 else 0) -
-                (if (moreEnabled) 66 else 0) - (if (adjusting) 100 else 0)).coerceAtLeast(150).dp
+                (if (moreEnabled && moreVisible) 66 else 0) - (if (adjusting) 100 else 0)).coerceAtLeast(150).dp
             val target = minOf(
                 byHeight,
                 when {
@@ -386,7 +386,8 @@ internal fun TimerScreen(
             )
         }
         // Asetettu kesto ohjaajalle. Rauhallisessa tilassa vain, kun ohjaajan toiminnot ovat auki.
-        if (!adjusting && (timeMode != TimeDisplayPrefs.CALM || showSettings)) {
+        // Asiakkaalle ei: tila kuuluu kellotaululle (havainto 15.11.2026).
+        if (!adjusting && caregiver.isCaregiver && (timeMode != TimeDisplayPrefs.CALM || showSettings)) {
             Text(
                 stringResource(R.string.timer_duration, ((duration + 59_999L) / 60_000L).toInt()),
                 modifier = Modifier.fillMaxWidth(),
@@ -486,7 +487,11 @@ internal fun TimerScreen(
         // pysyvät paikallaan, kun painike tai vahvistus tulee näkyviin.
         // Ohjaajan valmistelun aikana tauko ja lisäaika eivät vielä koske asiakasta: tila taululle.
         if (!handoff) {
-            if (moreEnabled) fi.aikapolku.app.programs.run.MoreTimeSlot(moreVisible, moreGranted.value, requestMoreTime)
+            // Lisäajan paikka vain, kun painike tai vahvistus näkyy: muuten tila kuuluu kellotaululle
+            // (havainto: tyhjää tilaa painikkeiden alla). Aika on tällöin jo lopussa.
+            if (moreEnabled && (moreVisible || moreGranted.value != null)) {
+                fi.aikapolku.app.programs.run.MoreTimeSlot(moreVisible, moreGranted.value, requestMoreTime)
+            }
             BreakButton(openBreak)
         }
        }

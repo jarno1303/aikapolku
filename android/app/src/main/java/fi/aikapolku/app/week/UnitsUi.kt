@@ -127,11 +127,12 @@ internal fun ActivitySessionsEditor(sessions: List<ActivitySession>, onChange: (
     sessions.sortedBy { it.day }.forEach { s ->
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(dayShort(s.day), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(end = 4.dp))
-            OutlinedButton(onClick = { pickTime(context, s.start) { t -> update(s.day) { it.copy(start = t) } } }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.unit_start, formatClock(s.start)))
+            // Painikkeet jakavat rivin: "Päättyy 14.00" ei saa rivittyä kirjain kerrallaan.
+            OutlinedButton(onClick = { pickTime(context, s.start) { t -> update(s.day) { it.copy(start = t) } } }, modifier = Modifier.weight(1f).heightIn(min = 48.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)) {
+                Text(stringResource(R.string.unit_start, formatClock(s.start)), maxLines = 1, softWrap = false)
             }
-            OutlinedButton(onClick = { pickTime(context, s.end) { t -> update(s.day) { it.copy(end = t) } } }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.unit_end, formatClock(s.end)))
+            OutlinedButton(onClick = { pickTime(context, s.end) { t -> update(s.day) { it.copy(end = t) } } }, modifier = Modifier.weight(1f).heightIn(min = 48.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)) {
+                Text(stringResource(R.string.unit_end, formatClock(s.end)), maxLines = 1, softWrap = false)
             }
         }
     }
@@ -192,11 +193,11 @@ internal fun MemberTimeDialog(
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { pickTime(context, start) { start = it } }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(R.string.unit_start, formatClock(start)))
+                    OutlinedButton(onClick = { pickTime(context, start) { start = it } }, modifier = Modifier.weight(1f).heightIn(min = 48.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)) {
+                        Text(stringResource(R.string.unit_start, formatClock(start)), maxLines = 1, softWrap = false)
                     }
-                    OutlinedButton(onClick = { pickTime(context, end) { end = it } }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(R.string.unit_end, formatClock(end)))
+                    OutlinedButton(onClick = { pickTime(context, end) { end = it } }, modifier = Modifier.weight(1f).heightIn(min = 48.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)) {
+                        Text(stringResource(R.string.unit_end, formatClock(end)), maxLines = 1, softWrap = false)
                     }
                 }
                 if (WeekSchedule.minutesOf(end) <= WeekSchedule.minutesOf(start)) {

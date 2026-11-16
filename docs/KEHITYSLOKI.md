@@ -470,3 +470,13 @@
 - Asiakkaan viestit puhuivat "aikuisesta", mikä ei sovi aikuisten asumisyksikköön. Uusi asiakaskohtainen asetus (Etusivu-asetukset): **Ohjaaja** (oletus), **Läheinen** tai **Aikuinen** (data/Helper.kt).
 - Taivutetut tekstit: "Ohjaaja kertoo, kun lähdetään", "Näytä ohjaajalle", "Näytä viesti ohjaajalle. Aika jatkuu.", "Kerro ohjaajalle", jonon ja epäonnistuneen lähetyksen viestit sekä oman tilan ohjeteksti.
 - Ohjaajan ohjetekstit kirjoitettu neutraaleiksi. Testi AuttajaTest varmistaa taivutuksen ja ettei asiakkaan teksteissä ole kiinteää "aikuinen"-sanaa.
+
+## 16.11.2026 – Kuvakaappausten havainnot ja vapaa roolinvaihto pois
+- Ensin–Sitten-ajastin asiakkaalla: lisäajan paikkaa ei enää varata koko ajaksi (näkyy vasta, kun aika on lopussa) eikä "Aika: 5 min" -riviä näytetä asiakkaalle → kellotaulu saa tilan (havainto: tyhjää painikkeiden alla).
+- Valintapainikkeet (SegmentedChoice): jos vaihtoehto ei mahdu riville, vaihtoehdot allekkain eikä tekstiä katkaista ("Aut…", "Lähein…").
+- Toiminnan alkamis- ja päättymisaika: painikkeet jakavat rivin, ei rivitystä kirjain kerrallaan ("Pää ttyy 14. 00").
+- Päivän listan NYT-rivi: Aloita omalla rivillään koko leveydeltä, nimi ei katkea kesken sanan.
+- Muutoskortti: kuvat pienempinä tavallisella puhelimella, Tarvitsen tauon mahtuu ruudulle.
+- Odotetaan: vaihtoehdon nimi pienenee mahtumaan ("Lukemin…"); ohjaajan aloitusikkunan valinnat rivittyvät vierityksen sijaan.
+- Tapahtuman kellonaika: tunti- ja minuuttipainikkeet mahtuvat kapeaan ikkunaan.
+- Testitila (vapaa Asiakas/Ohjaaja-vaihto) oletuksena pois, uusi asetusavain (vanha "päällä" ei siirry). Ohjaajan etusivulla muistutus, jos PIN-lukitus ei ole käytössä.

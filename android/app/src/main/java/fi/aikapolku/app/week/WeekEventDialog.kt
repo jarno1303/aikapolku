@@ -109,13 +109,18 @@ internal fun WeekEventDialog(
             ) {
                 // Kellonaika: tunnit ja minuutit erikseen (minuutit 5 min välein), isot painikkeet.
                 Text(stringResource(R.string.week_time), fontWeight = FontWeight.SemiBold)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // Mahtuu kapeaan ikkunaan: rivi jakaa tilan, eikä viimeinen + jää reunan yli.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Stepper(stringResource(R.string.week_hour_down), "−") { hour = (hour + 23) % 24 }
-                    Text("%02d".format(hour), fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                    Text("%02d".format(hour), fontSize = 26.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                     Stepper(stringResource(R.string.week_hour_up), "+") { hour = (hour + 1) % 24 }
-                    Text(":", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                    Text(":", fontSize = 26.sp, fontWeight = FontWeight.Bold)
                     Stepper(stringResource(R.string.week_minute_down), "−") { minute = ((minute / 5) * 5 + 55) % 60 }
-                    Text("%02d".format(minute), fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                    Text("%02d".format(minute), fontSize = 26.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                     Stepper(stringResource(R.string.week_minute_up), "+") { minute = ((minute / 5) * 5 + 5) % 60 }
                 }
 

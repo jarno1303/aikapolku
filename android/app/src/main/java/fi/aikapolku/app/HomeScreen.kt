@@ -195,6 +195,23 @@ private fun CaregiverHome(
         )
         menu()
     }
+    // Ilman lukitusta asukas pääsee ohjaajan tilaan: muistutus, kunnes lukitus on käytössä
+    // (testitilassa roolin vaihto on tarkoituksella vapaa, joten ei muistutusta).
+    val access = LocalCaregiver.current
+    if (!access.lockEnabled && !access.testMode) {
+        androidx.compose.material3.Surface(
+            color = AppColors.ChangeSoft,
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(stringResource(R.string.lock_off_warning), fontSize = 15.sp, color = AppColors.Ink)
+                androidx.compose.material3.TextButton(onClick = access.openSetup, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.lock_off_action), fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
     CaregiverDayList(
         onOpenProgram = onOpenProgram,
         onOpenCard = onOpenCard,

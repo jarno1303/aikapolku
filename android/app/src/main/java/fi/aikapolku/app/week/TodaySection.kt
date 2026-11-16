@@ -314,6 +314,7 @@ private fun TodayRow(
             )
             .semantics(mergeDescendants = true) { contentDescription = a11y }
     ) {
+      Column {
         Row(
             modifier = Modifier.padding(start = 12.dp, end = if (trailing != null) 0.dp else 12.dp, top = if (isCurrent) 12.dp else 8.dp, bottom = if (isCurrent) 12.dp else 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -349,21 +350,29 @@ private fun TodayRow(
                 }
                 if (doneText != null) {
                     Text(doneText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Teal)
-                } else if (isCurrent && !item.event.ongoing) {
-                    // Koko rivi on painike; "Aloita" näyttää, mistä päivä jatkuu.
-                    Surface(color = AppColors.Teal, shape = RoundedCornerShape(12.dp)) {
-                        Text(
-                            stringResource(R.string.today_start) + " ›",
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
                 }
             }
             trailing?.invoke()
         }
+        // "Aloita" omalla rivillään koko leveydeltä: nimi saa rivin leveyden eikä katkea kesken sanan
+        // (havainto 16.11.2026: "Iltapäiv än ohj…" ohjaajan etusivulla). Koko rivi on painike.
+        if (doneText == null && isCurrent && !item.event.ongoing) {
+            Surface(
+                color = AppColors.Teal,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
+            ) {
+                Text(
+                    stringResource(R.string.today_start) + " ›",
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    color = Color.White,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+      }
     }
 }
 

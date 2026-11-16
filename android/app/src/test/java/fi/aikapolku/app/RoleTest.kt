@@ -50,9 +50,10 @@ class RoleTest {
     }
 
     @Test
-    fun `testitilassa rooli sailyy kun sovellus menee taustalle`() {
+    fun `testitila on oletuksena pois ja taustalle meno palauttaa asiakkaaksi`() {
+        assertFalse("vapaa roolinvaihto ei saa olla oletuksena päällä", RoleSession.testMode)
         RoleSession.toCaregiver()
         RoleSession.onBackgroundLock()
-        assertEquals("testitila on oletuksena päällä", AppRole.CAREGIVER, RoleSession.role)
+        assertEquals(AppRole.CLIENT, RoleSession.role)
     }
 }

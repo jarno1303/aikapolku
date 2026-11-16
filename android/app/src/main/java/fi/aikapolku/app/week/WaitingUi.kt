@@ -127,7 +127,7 @@ internal fun WaitingView(state: WaitState, modifier: Modifier = Modifier) {
                     ) {
                         Column(Modifier.padding(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             CardPhoto(option.name, option.photo, Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)))
-                            Text(option.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            fi.aikapolku.app.ui.FitText(option.name, maxFontSize = 14.sp, minFontSize = 10.sp, maxLines = 1, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         }
                     }
                 }
@@ -188,6 +188,7 @@ internal fun WaitingCaregiverCard() {
 }
 
 /** Ohjaaja aloittaa odotuksen: mitä odotetaan, kesto (tai ei tiedossa) ja "Odottaessa voit" -kortit. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 internal fun WaitStartDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
@@ -203,7 +204,7 @@ internal fun WaitStartDialog(onDismiss: () -> Unit) {
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.wait_what), fontWeight = FontWeight.Bold)
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     quick.forEach { t ->
                         val label = stringResource(t.nameRes)
                         FilterChip(selected = photo == "builtin:${t.id}", onClick = { name = label; photo = "builtin:${t.id}" }, label = { Text(label, fontSize = 13.sp) })
@@ -213,7 +214,7 @@ internal fun WaitStartDialog(onDismiss: () -> Unit) {
                     Text(stringResource(R.string.wait_pick_card, name))
                 }
                 Text(stringResource(R.string.wait_how_long), fontWeight = FontWeight.Bold)
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Waiting.DURATIONS.forEach { m ->
                         FilterChip(
                             selected = minutes == m,

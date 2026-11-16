@@ -300,6 +300,10 @@ private fun ChangeView(
     // Tiivis: koko muutos ja kaikki painikkeet näkyvät ruudulla ilman vieritystä (R11).
     // Matalalla ruudulla (puhelin vaakatasossa) muutos vasemmalla ja painikkeet oikealla.
     val low = fi.aikapolku.app.ui.windowSize() == fi.aikapolku.app.ui.WindowSize.LOW
+    // Tavallisella puhelimella (alle 900 dp korkea) kuvat pienemmiksi, jotta myös Tarvitsen tauon
+    // mahtuu ruudulle kokonaan (havainto 16.11.2026: painike jäi puoliksi näkyviin).
+    val scale = if (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 900) 0.8f else 1f
+    fun px(size: Int) = (size * scale).toInt()
     val visual: @Composable ColumnScope.() -> Unit = {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -315,25 +319,25 @@ private fun ChangeView(
 
         when (type) {
             ChangeType.CANCEL -> {
-                ImageWithName(original, 150, crossed = true)
+                ImageWithName(original, px(150), crossed = true)
                 Text(stringResource(R.string.change_cancelled_text), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink)
             }
             ChangeType.REPLACE -> if (showOriginal) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { ImageWithName(original, 100, crossed = true) }
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { ImageWithName(original, px(100), crossed = true) }
                     Box(
                         modifier = Modifier.size(40.dp).clip(RoundedCornerShape(50)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null, tint = AppColors.Change, modifier = Modifier.size(32.dp))
                     }
-                    Box(Modifier.weight(1.2f), contentAlignment = Alignment.Center) { ImageWithName(effective, 130, crossed = false) }
+                    Box(Modifier.weight(1.2f), contentAlignment = Alignment.Center) { ImageWithName(effective, px(130), crossed = false) }
                 }
             } else {
-                ImageWithName(effective, 170, crossed = false)
+                ImageWithName(effective, px(170), crossed = false)
             }
             ChangeType.MOVE -> {
-                ImageWithName(effective, 150, crossed = false)
+                ImageWithName(effective, px(150), crossed = false)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (showOriginal) {
                         Text(
@@ -393,7 +397,7 @@ private fun ChangeView(
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(if (scale < 1f) 8.dp else 10.dp)
         ) {
             visual()
             actions()
