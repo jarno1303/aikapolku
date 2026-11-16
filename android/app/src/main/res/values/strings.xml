@@ -1173,4 +1173,18 @@
     <string name="card_clock_off">Pois</string>
     <string name="card_clock_analog">Kellotaulu</string>
     <string name="card_clock_both">Kellotaulu ja numerot</string>
+    <!-- Kotinäytön widget -->
+    <string name="widget_now">Nyt</string>
+    <string name="widget_next">Seuraavaksi</string>
+    <string name="widget_until">%1$s asti</string>
+    <string name="widget_at">klo %1$s</string>
+    <string name="widget_day_done">Päivän ohjelma on tehty</string>
+    <string name="widget_nothing">Tänään ei ohjelmaa</string>
+    <string name="widget_small_label">AikaPolku: Nyt</string>
+    <string name="widget_wide_label">AikaPolku: Nyt ja seuraavaksi</string>
+    <string name="widget_small_description">Mitä nyt tehdään ja mihin asti</string>
+    <string name="widget_wide_description">Mitä nyt tehdään ja mitä tulee seuraavaksi</string>
+    <string name="widget_setting_title">Kotinäytön widget</string>
+    <string name="widget_setting_info">Puhelimen kotinäytöllä näkyy Nyt ja Seuraavaksi avaamatta sovellusta. Widgetissä ei näy vointia eikä muuta arkaluonteista, eikä se näy lukitusnäytöllä. Pois päältä widgetissä lukee vain AikaPolku.</string>
+    <string name="widget_setting_switch">Näytä päivän ohjelma widgetissä</string>
 </resources>

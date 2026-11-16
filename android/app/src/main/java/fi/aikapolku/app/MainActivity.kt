@@ -72,6 +72,8 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         fi.aikapolku.app.link.PlaceSync.stop()
+        // Kuittaukset ja muokkaukset näkyvät widgetissä heti, kun sovellus suljetaan.
+        runCatching { fi.aikapolku.app.widget.WidgetUpdater.update(this) }
         // Viikko-ohjelman muutokset ajan tasalle myös taustalla oleville ilmoituksille.
         EventReminders.reschedule(this)
         // P0-21e: ohjaajan toiminnot lukittuvat aina, kun sovellus siirtyy taustalle.

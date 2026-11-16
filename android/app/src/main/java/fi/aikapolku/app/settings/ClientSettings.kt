@@ -210,6 +210,15 @@ internal fun HomeSettings() {
         fi.aikapolku.app.data.CategoryStore.setEnabled(context, it)
         SettingsRevision.bump()
     }
+    // Kotinäytön widget: asukkaan Nyt ja Seuraavaksi (asukaskohtainen, oletus päällä).
+    var widgetOn by remember(SettingsRevision.value) { mutableStateOf(fi.aikapolku.app.widget.WidgetDay.enabled(context)) }
+    SettingLabel(stringResource(R.string.widget_setting_title), stringResource(R.string.widget_setting_info))
+    SwitchLine(stringResource(R.string.widget_setting_switch), widgetOn) {
+        widgetOn = it
+        fi.aikapolku.app.widget.WidgetDay.setEnabled(context, it)
+        SettingsRevision.bump()
+        fi.aikapolku.app.widget.WidgetUpdater.update(context)
+    }
     // Kello korteissa: kellotaulu näyttää alkamisajan (asukaskohtainen, oletus pois).
     val clockModes = fi.aikapolku.app.data.CardClockMode.entries
     var clockMode by remember(SettingsRevision.value) { mutableStateOf(fi.aikapolku.app.data.CardClockPrefs.mode(context)) }

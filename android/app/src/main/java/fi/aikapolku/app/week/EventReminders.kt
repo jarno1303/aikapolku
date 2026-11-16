@@ -80,6 +80,8 @@ internal object EventReminders {
 
     /** Ajastaa seuraavan ilmoitushetken (tai perii ajastuksen, jos ilmoituksia ei ole). */
     fun reschedule(c: Context) {
+        // Viikko-ohjelma, muutokset tai kellonaika muuttuivat: myös kotinäytön widget ajan tasalle.
+        runCatching { fi.aikapolku.app.widget.WidgetUpdater.update(c) }
         val am = c.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val next = WeekSchedule.nextReminderAt(plans(c), LocalDateTime.now(), changes(c))
         am.cancel(alarmIntent(c, null))
