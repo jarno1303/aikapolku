@@ -111,6 +111,7 @@ private fun LockSettings() {
     if (!caregiver.deviceSecure) {
         Text(stringResource(R.string.puhelimessa_ei_ole_nayton_lukitusta), fontSize = 13.sp, color = MaterialTheme.colorScheme.error)
     }
+    SecureScreensSetting()
     Text(stringResource(R.string.vinkki_nayton_kiinnitys), fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
     Text(stringResource(R.string.androidin_nayton_kiinnitys_pitaa_aikapolun), fontSize = 14.sp)
 

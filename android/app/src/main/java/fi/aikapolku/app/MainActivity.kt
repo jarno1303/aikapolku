@@ -35,9 +35,14 @@ class MainActivity : ComponentActivity() {
                     val context = LocalContext.current
                     val revision = ProfileSession.revision
                     val profileId = remember(revision) { ProfileStore.currentId(context) }
-                    key(profileId) {
-                        AikaPolkuApp()
+                    // T4: paikan laitteella ohjaajan tila vaatii näytön lukituksen.
+                    fi.aikapolku.app.caregiver.PlaceLockGate {
+                        key(profileId) {
+                            AikaPolkuApp()
+                        }
                     }
+                    // T5: ohjaajan näkymät piiloon kuvakaappauksilta ja sovellusvaihtajasta.
+                    fi.aikapolku.app.caregiver.SecureWindow()
                     // Ohjaajan puhelimessa: asiakkaan laitteen liitospyyntö missä tahansa näkymässä.
                     fi.aikapolku.app.link.PairingRequestDialog()
                     // Näytön asento asiakkaan asetuksen mukaan (puhelimessa oletuksena pysty).

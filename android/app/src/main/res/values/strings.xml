@@ -737,6 +737,13 @@
     <string name="place_not_delivered">ei vielä haettu</string>
     <string name="place_synced">haettu %1$s</string>
     <string name="place_sync_now">Hae tiedot nyt</string>
+    <string name="backup_password_required">Pakollinen, koska vienti sisältää asukkaiden tietoja. Kerro salasana vastaanottajalle eri tavalla kuin tiedosto (esim. puhelimessa).</string>
+    <string name="link_message_public">Uusi viesti asukkaalta</string>
+    <string name="place_lock_title">Ota laitteen näytön lukitus käyttöön</string>
+    <string name="place_lock_text">Tämä on paikan laite, jossa on koko yksikön tiedot. Ohjaajan tila avautuu vasta, kun laitteessa on näytön lukitus (PIN-koodi, kuvio tai sormenjälki). Silloin Android salaa laitteen tiedot, eikä kadonneesta laitteesta saa niitä esiin.</string>
+    <string name="place_lock_open_settings">Avaa lukituksen asetukset</string>
+    <string name="privacy_secure_label">Piilota ohjaajan näkymät</string>
+    <string name="privacy_secure_info">Ohjaajan näkymät eivät näy kuvakaappauksissa eivätkä viimeisimmissä sovelluksissa. Asukkaan näkymiä tämä ei koske.</string>
     <string name="caregiver_home_title">Ohjaajan etusivu</string>
     <string name="caregiver_prepare">Valmistele asiakkaalle</string>
     <string name="caregiver_first_then_info">Ensin–Sitten-pari ja aika; näkyy asiakkaan NYT-kortissa</string>

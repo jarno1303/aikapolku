@@ -398,11 +398,15 @@ internal fun ExportDialog(initialScope: BackupScope, initialProgramIds: Set<Stri
     val mismatch = stringResource(R.string.backup_password_mismatch)
     val needProgram = stringResource(R.string.backup_need_program)
 
+    // T3: kun vienti sisältää asukkaiden tietoja, salasana on pakollinen (vain nimetön ohjelmavienti ilman).
+    val personal = !(scope == BackupScope.PROGRAMS && anonymize)
+    val usePassword = protect || personal
+
     fun run(share: Boolean) {
         error = when {
             scope == BackupScope.PROGRAMS && selected.none { id -> programs.any { it.id == id } } -> needProgram
-            protect && password.length < BackupArchive.MIN_PASSWORD -> tooShort
-            protect && password != again -> mismatch
+            usePassword && password.length < BackupArchive.MIN_PASSWORD -> tooShort
+            usePassword && password != again -> mismatch
             else -> ""
         }
         if (error.isNotEmpty()) return
@@ -410,7 +414,7 @@ internal fun ExportDialog(initialScope: BackupScope, initialProgramIds: Set<Stri
         coroutines.launch {
             val file = runCatching {
                 withContext(Dispatchers.IO) {
-                    BackupExporter.export(context, scope, selected, anonymize, if (protect) password else null)
+                    BackupExporter.export(context, scope, selected, anonymize, if (usePassword) password else null)
                 }
             }.getOrNull()
             busy = false
@@ -474,12 +478,17 @@ internal fun ExportDialog(initialScope: BackupScope, initialProgramIds: Set<Stri
                     SwitchRow(stringResource(R.string.backup_anonymize), stringResource(R.string.backup_anonymize_info), anonymize) { anonymize = it }
                 }
 
-                SwitchRow(stringResource(R.string.backup_password), stringResource(R.string.backup_password_info), protect) {
-                    protect = it
-                    protectTouched = true
-                    error = ""
+                if (personal) {
+                    Text(stringResource(R.string.backup_password), fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, fontSize = 16.sp)
+                    Text(stringResource(R.string.backup_password_required), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    SwitchRow(stringResource(R.string.backup_password), stringResource(R.string.backup_password_info), protect) {
+                        protect = it
+                        protectTouched = true
+                        error = ""
+                    }
                 }
-                if (protect) {
+                if (usePassword) {
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it; error = "" },

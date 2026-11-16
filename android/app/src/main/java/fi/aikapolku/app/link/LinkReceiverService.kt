@@ -188,6 +188,16 @@ internal object LinkNotify {
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setContentIntent(openApp(context))
             .setAutoCancel(true)
+            // T2: lukitusnäytöllä vain yleinen teksti; nimi ja viesti näkyvät vasta avattuna.
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPublicVersion(
+                NotificationCompat.Builder(context, CHANNEL_MESSAGES)
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setContentTitle(context.getString(R.string.link_message_public))
+                    .setContentIntent(openApp(context))
+                    .setAutoCancel(true)
+                    .build()
+            )
             .build()
         runCatching { NotificationManagerCompat.from(context).notify((message.at % 100_000).toInt() + 8000, notification) }
     }

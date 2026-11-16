@@ -591,6 +591,8 @@ private object Demo {
 
         // Tuen taso ja käytön seuranta: muutaman viikon historia.
         RoleSession.setTestMode(app, false)
+        // Ohjaajan näkymien kuvat: FLAG_SECURE pois ajon ajaksi (asetus palautuu talteenotosta).
+        fi.aikapolku.app.caregiver.PrivacyPrefs.setSecureScreens(app, false)
         SupportLevels.apply(app, SupportLevel.MUCH, today.minusDays(45))
         SupportLevels.apply(app, SupportLevel.MODERATE, today.minusDays(20))
         // Taso asettaa ennakkovaroitukseksi 5 min; kuvan 3 min tehtävässä varoitus näkyy, kun se on 2 min.
