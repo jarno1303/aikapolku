@@ -58,10 +58,13 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         // Asiakkaan laite: jonossa odottavat viestit ohjaajalle, kun sovellus avataan.
         fi.aikapolku.app.link.ClientMessages.resume(this)
+        // Asukkaan puhelin: omat tiedot paikan laitteelta heti ja minuutin välein (A5).
+        fi.aikapolku.app.link.PlaceSync.start(this)
     }
 
     override fun onStop() {
         super.onStop()
+        fi.aikapolku.app.link.PlaceSync.stop()
         // Viikko-ohjelman muutokset ajan tasalle myös taustalla oleville ilmoituksille.
         EventReminders.reschedule(this)
         // P0-21e: ohjaajan toiminnot lukittuvat aina, kun sovellus siirtyy taustalle.

@@ -51,6 +51,10 @@ internal object BackgroundTimer {
     fun running(c: Context, owner: String): Boolean =
         prefs(c).getBoolean(key(owner, "running"), false)
 
+    /** Onko jokin ajastin käynnissä (paikan tietojen haku odottaa sen loppuun, A5). */
+    fun anyRunning(c: Context): Boolean =
+        prefs(c).all.any { (k, v) -> k.endsWith("_running") && v == true }
+
     /** Tarkat hälytykset: ilman niitä Android voi viivästyttää taustahälytystä. */
     fun exactAlarmsAllowed(c: Context): Boolean =
         Build.VERSION.SDK_INT < 31 || service(c).canScheduleExactAlarms()

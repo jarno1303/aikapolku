@@ -128,7 +128,17 @@ internal fun LinkSettings() {
             val seen = remember(seenRevision, p.id) { store.lastSeen(p.id) }
             val seenInfo = if (seen <= 0L) stringResource(R.string.link_never_seen) else stringResource(R.string.link_last_seen, seenText(context, seen))
             val resident = profiles.firstOrNull { it.id == p.resident && p.resident.isNotBlank() }?.name
-            val info = if (resident != null) stringResource(R.string.link_resident_of, resident) + " · " + seenInfo else seenInfo
+            // Paikan laite: onko asukkaan viimeisin muutos perillä hänen puhelimessaan (A5).
+            val statusRevision = PlaceStatus.revision
+            val delivery = if (resident != null && store.placeEnabled) remember(statusRevision, p.resident, fi.aikapolku.app.settings.SettingsRevision.value) {
+                val d = PlaceStatus.delivered(context, p.resident)
+                when {
+                    d == null -> context.getString(R.string.place_not_delivered)
+                    d.version == ResidentPackage.version(context, p.resident) -> context.getString(R.string.place_delivered, seenText(context, d.at))
+                    else -> context.getString(R.string.place_waiting)
+                }
+            } else null
+            val info = listOfNotNull(resident?.let { stringResource(R.string.link_resident_of, it) }, delivery, seenInfo).joinToString(" · ")
             PeerRow(p.name, info) { store.removePeer(p.id, receiver = false) }
         }
     }
@@ -136,8 +146,19 @@ internal fun LinkSettings() {
     // Asiakkaan laite: liitä ohjaajan puhelimeen.
     Text(stringResource(R.string.link_receivers), fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
     if (receivers.isEmpty()) Text(stringResource(R.string.link_no_receivers), fontSize = 14.sp, color = AppColors.Muted)
+    val syncRevision = PlaceSync.revision
     receivers.forEach { p ->
-        PeerRow(p.name, if (p.place) stringResource(R.string.link_place_tag) else null) { store.removePeer(p.id, receiver = true) }
+        val synced = remember(syncRevision, p.id) { PlaceSync.lastSync(context, p.id) }
+        val info = if (!p.place) null
+        else if (synced > 0L) stringResource(R.string.link_place_tag) + " · " + stringResource(R.string.place_synced, seenText(context, synced))
+        else stringResource(R.string.link_place_tag)
+        PeerRow(p.name, info) { store.removePeer(p.id, receiver = true) }
+    }
+    if (receivers.any { it.place }) {
+        val scope = rememberCoroutineScope()
+        TextButton(onClick = { scope.launch { PlaceSync.syncNow(context) } }, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.place_sync_now))
+        }
     }
     // Jonossa odottavat viestit (asiakkaan laite): lähtevät, kun yhteys palaa.
     val queueRevision = LinkOutbox.revision

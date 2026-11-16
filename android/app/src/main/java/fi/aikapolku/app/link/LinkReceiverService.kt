@@ -81,6 +81,8 @@ class LinkReceiverService : Service() {
                 if (LinkInbox.add(app, message)) LinkNotify.message(app, message)
             }
             override fun seen(id: String, at: Long) = store.markSeen(id, at)
+            override fun residentPackage(peer: Peer, version: String, known: Set<String>): Pair<String, ByteArray?>? =
+                if (store.placeEnabled) PlaceStatus.serve(app, peer, version, known) else null
         }
         val socket = runCatching { ServerSocket(0) }.getOrNull() ?: return
         server = socket

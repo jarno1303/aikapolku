@@ -62,6 +62,12 @@ class LinkTest {
         override fun addSender(peer: Peer) { senders.add(peer) }
         override fun confirmPair(name: String, code: String): Boolean { shownCode = code; return accept }
         override fun onMessage(message: LinkMessage) { messages.add(message) }
+        var askedKnown: Set<String> = emptySet()
+        override fun residentPackage(peer: Peer, version: String, known: Set<String>): Pair<String, ByteArray?>? {
+            if (!place) return null
+            askedKnown = known
+            return "v2" to (if (version == "v2") null else "paketti".toByteArray())
+        }
     }
 
     private fun serve(host: TestHost): ServerSocket {
@@ -110,6 +116,24 @@ class LinkTest {
         val stored = LinkStore.decode(LinkStore.encode(listOf(peer, host.senders.single().copy(resident = "aino"))))
         assertTrue(stored[0].place)
         assertEquals("aino", stored[1].resident)
+        server.close()
+    }
+
+    @Test
+    fun `asukkaan puhelin hakee paketin vain kun versio on vanhentunut`() {
+        val host = TestHost(accept = true, place = true)
+        val server = serve(host)
+        val me = Identity("aino-id", "Ainon puhelin")
+        val peer = LinkProtocol.pair("127.0.0.1", server.localPort, me) {}!!
+        val first = LinkProtocol.pull("127.0.0.1", server.localPort, me, peer, "", setOf("abc"))!!
+        assertEquals("v2", first.version)
+        assertEquals("paketti", String(first.bytes!!))
+        assertEquals(setOf("abc"), host.askedKnown)
+        val again = LinkProtocol.pull("127.0.0.1", server.localPort, me, peer, "v2", emptySet())!!
+        assertNull("Sama versio: ei pakettia uudelleen", again.bytes)
+        // Liittämätön laite ei saa mitään.
+        val stranger = Peer("ohjaaja-id", "x", ByteArray(32), receiver = true, place = true)
+        assertNull(LinkProtocol.pull("127.0.0.1", server.localPort, Identity("vieras", "Vieras"), stranger, "", emptySet()))
         server.close()
     }
 

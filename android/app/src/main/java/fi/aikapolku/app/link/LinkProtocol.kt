@@ -65,6 +65,11 @@ internal object LinkProtocol {
         fun seen(id: String, at: Long) {}
         /** Onko tämä paikan laite (A5): kerrotaan liitoksen tuloksessa asukkaan puhelimelle. */
         val isPlace: Boolean get() = false
+        /**
+         * Paikan laitteella (A5): asukkaan puhelimen [peer] paketti. Palauttaa nykyisen version ja
+         * paketin, tai paketin tilalla null, jos puhelimella on jo sama [version]. null = ei palvella.
+         */
+        fun residentPackage(peer: Peer, version: String, known: Set<String>): Pair<String, ByteArray?>? = null
     }
 
     private fun Socket.reader() = BufferedReader(InputStreamReader(getInputStream(), Charsets.UTF_8))
@@ -116,6 +121,32 @@ internal object LinkProtocol {
                     val ok = host.confirmPair(clientName, code)
                     if (ok) host.addSender(Peer(clientId, clientName, key, receiver = false))
                     writer.println(JSONObject().put("t", "result").put("ok", ok).put("place", ok && host.isPlace).toString())
+                }
+                "pull" -> {
+                    // Asukkaan puhelin hakee omat tietonsa (A5). Pyyntö ja vastaus salattuina; vain
+                    // liitetty puhelin ja vain sen asukkaan tiedot. Vastaus voi olla iso: pidempi aikaraja.
+                    val from = request.optString("id")
+                    val peer = host.sender(from)
+                    val nonce = runCatching { b64d.decode(request.optString("n")) }.getOrNull()
+                    val plain = if (peer != null && nonce != null) runCatching {
+                        LinkCrypto.open(peer.key, nonce, b64d.decode(request.optString("c")), from.toByteArray())
+                    }.getOrNull() else null
+                    val json = plain?.let { runCatching { JSONObject(String(it, Charsets.UTF_8)) }.getOrNull() }
+                    val time = now()
+                    val fresh = json != null && kotlin.math.abs(time - json.optLong("a")) <= MAX_SKEW_MS &&
+                        firstSeen(from + ":" + request.optString("n"), time)
+                    val known = json?.optJSONArray("k")?.let { a -> (0 until minOf(a.length(), 10_000)).map { a.optString(it) }.toSet() }.orEmpty()
+                    val result = if (peer != null && fresh) runCatching { host.residentPackage(peer, json!!.optString("v"), known) }.getOrNull() else null
+                    if (peer == null || result == null) {
+                        writer.println(JSONObject().put("t", "err").put("e", if (peer == null) "unknown" else "invalid").toString())
+                    } else {
+                        host.seen(from, time)
+                        s.soTimeout = PULL_TIMEOUT_MS
+                        val body = JSONObject().put("v", result.first).put("r", request.optString("n"))
+                            .put("p", result.second?.let { b64e.encodeToString(it) } ?: "")
+                        val (replyNonce, sealed) = LinkCrypto.seal(peer.key, body.toString().toByteArray(Charsets.UTF_8), host.identity.id.toByteArray())
+                        writer.println(JSONObject().put("t", "pkg").put("n", b64e.encodeToString(replyNonce)).put("c", b64e.encodeToString(sealed)).toString())
+                    }
                 }
                 "msg" -> {
                     val from = request.optString("id")
@@ -204,6 +235,37 @@ internal object LinkProtocol {
                 LinkCrypto.open(peer.key, b64d.decode(reply.optString("n")), b64d.decode(reply.optString("c")), peer.id.toByteArray())
             }.getOrNull() ?: return false
             return String(ack) == "ack:$nonceText"
+        }
+    }
+
+    /** Paketin siirron aikaraja (kuvat ja äänet ensimmäisellä kerralla). */
+    const val PULL_TIMEOUT_MS = 60_000
+
+    /** Asukkaan tietopaketin vastaus: nykyinen versio ja paketti (null = puhelimella jo sama versio). */
+    internal data class Pulled(val version: String, val bytes: ByteArray?)
+
+    /**
+     * Asukkaan puhelimesta paikan laitteeseen (A5): hakee asukkaan paketin, jos [version] on
+     * vanhentunut. [known] = laitteella jo olevat kuvat ja äänet (tiivisteet). null = ei vastausta.
+     */
+    fun pull(host: String, port: Int, me: Identity, peer: Peer, version: String, known: Set<String>, now: Long = System.currentTimeMillis()): Pulled? {
+        val payload = JSONObject().put("a", now).put("v", version).put("k", org.json.JSONArray(known.toList()))
+            .toString().toByteArray(Charsets.UTF_8)
+        val (nonce, ciphertext) = LinkCrypto.seal(peer.key, payload, me.id.toByteArray())
+        val nonceText = b64e.encodeToString(nonce)
+        connect(host, port, PULL_TIMEOUT_MS).use { s ->
+            s.writer().println(
+                JSONObject().put("t", "pull").put("id", me.id).put("n", nonceText).put("c", b64e.encodeToString(ciphertext)).toString()
+            )
+            val reply = JSONObject(s.reader().readLine() ?: return null)
+            if (reply.optString("t") != "pkg") return null
+            val plain = LinkCrypto.open(peer.key, b64d.decode(reply.optString("n")), b64d.decode(reply.optString("c")), peer.id.toByteArray())
+                ?: return null
+            val body = JSONObject(String(plain, Charsets.UTF_8))
+            // Vastaus juuri tähän pyyntöön (ei toistettu vanha vastaus).
+            if (body.optString("r") != nonceText) return null
+            val p = body.optString("p")
+            return Pulled(body.optString("v"), if (p.isEmpty()) null else b64d.decode(p))
         }
     }
 

@@ -732,6 +732,11 @@
     <string name="link_pair_pick_resident">Kenen asukkaan puhelin tämä on?</string>
     <string name="link_resident_of">Asukas: %1$s</string>
     <string name="link_place_tag">Paikan laite: asukkaan tiedot tulevat täältä</string>
+    <string name="place_delivered">perillä %1$s</string>
+    <string name="place_waiting">muutos odottaa: puhelin hakee sen, kun sovellus on auki samassa verkossa</string>
+    <string name="place_not_delivered">ei vielä haettu</string>
+    <string name="place_synced">haettu %1$s</string>
+    <string name="place_sync_now">Hae tiedot nyt</string>
     <string name="caregiver_home_title">Ohjaajan etusivu</string>
     <string name="caregiver_prepare">Valmistele asiakkaalle</string>
     <string name="caregiver_first_then_info">Ensin–Sitten-pari ja aika; näkyy asiakkaan NYT-kortissa</string>

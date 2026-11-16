@@ -190,6 +190,26 @@ internal object ResidentPackage {
         return Built(BackupArchive.zip(entries), bytesByName.size, sent)
     }
 
+    /**
+     * Asukkaan tietojen versio paikan laitteella: muuttuu, kun jokin pakettiin kuuluva muuttuu.
+     * Kevyt (ei lue kuvia): kuvan vaihto muuttaa polkua, joten versio muuttuu silloinkin.
+     */
+    fun version(context: Context, profileId: String): String {
+        val app = context.applicationContext
+        val text = StringBuilder()
+        BASES.forEach { base ->
+            ProfileScope.prefs(app, base, profileId).all.toSortedMap().forEach { (key, value) ->
+                if ("$base/$key" in SKIPPED) return@forEach
+                val v = if (value is Set<*>) value.map { it.toString() }.sorted().toString() else value.toString()
+                text.append(base).append('/').append(key).append('=').append(v).append('\n')
+            }
+        }
+        val store = GroupStore(app)
+        text.append(ResidentShare.encode(ResidentShare.of(store.load(), store.allChanges(), store.absences(), store.leaves(), profileId)))
+        ProfileStore.list(app).firstOrNull { it.id == profileId }?.let { text.append(it.name).append(it.photo) }
+        return sha256(text.toString().toByteArray(Charsets.UTF_8)).take(20)
+    }
+
     /** Asukkaan puhelimessa jo olevat kuvat ja äänet (tiivisteet), kerrotaan pyynnössä. */
     fun known(context: Context): Set<String> =
         File(context.applicationContext.filesDir, SYNC_DIR).listFiles()?.map { it.name.substringBefore('.') }?.toSet().orEmpty()
