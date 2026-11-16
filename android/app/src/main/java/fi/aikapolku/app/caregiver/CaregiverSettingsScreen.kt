@@ -52,6 +52,7 @@ internal fun CaregiverSettingsScreen() {
     SettingsSection(stringResource(R.string.support_level_title), stringResource(R.string.support_level_section_info), Icons.Rounded.Build) {
         fi.aikapolku.app.settings.SupportLevelSettings()
     }
+    CopySettingsToOthers()
 
     SettingsHeading(stringResource(R.string.settings_device_title), stringResource(R.string.settings_device_info))
     SettingsSection(stringResource(R.string.ohjaajan_lukitus), stringResource(R.string.settings_lock_info), Icons.Rounded.Lock) {
@@ -150,6 +151,33 @@ private fun RoleSettings() {
             checked = RoleSession.testMode,
             onCheckedChange = { RoleSession.setTestMode(context, it) },
             modifier = Modifier.semantics { contentDescription = label }
+        )
+    }
+}
+
+/** Kopioi tämän asukkaan asetukset muille (näkymävalinnat ja tuen tason historia säilyvät kullakin). */
+@Composable
+private fun CopySettingsToOthers() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val others = remember(fi.aikapolku.app.profiles.ProfileSession.revision) { fi.aikapolku.app.data.ProfileStore.list(context).size > 1 }
+    if (!others) return
+    var open by remember { mutableStateOf(false) }
+    val name = remember(fi.aikapolku.app.profiles.ProfileSession.revision) { fi.aikapolku.app.data.ProfileStore.current(context).name }
+    fi.aikapolku.app.ui.SecondaryButton(
+        text = stringResource(R.string.copy_settings_to_others),
+        onClick = { open = true },
+        modifier = Modifier.fillMaxWidth()
+    )
+    if (open) {
+        fi.aikapolku.app.profiles.CopyToResidentsDialog(
+            title = stringResource(R.string.copy_settings_to_others),
+            info = stringResource(R.string.copy_settings_info, name),
+            onDismiss = { open = false },
+            onCopy = { ids ->
+                fi.aikapolku.app.data.ResidentCopy.copySettings(context, fi.aikapolku.app.data.ProfileStore.currentId(context), ids)
+                open = false
+                android.widget.Toast.makeText(context, context.getString(R.string.copy_done, ids.size), android.widget.Toast.LENGTH_SHORT).show()
+            }
         )
     }
 }

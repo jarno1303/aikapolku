@@ -35,7 +35,7 @@ internal data class StateEntry(val level: StateLevel, val at: Long)
 internal object OwnState {
     private const val ENTRIES_BASE = ProfileScope.OWN_STATE
     private const val KEY_ENTRIES = "entries"
-    private const val KEY_ENABLED = "own_state_enabled"
+    internal const val KEY_ENABLED = "own_state_enabled"
     private const val KEY_SCALE = "own_state_scale"
     private const val KEY_AFTER = "own_state_after_tasks"
 

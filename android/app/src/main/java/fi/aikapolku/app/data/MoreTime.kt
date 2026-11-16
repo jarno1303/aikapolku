@@ -25,8 +25,8 @@ internal object MoreTime {
     /** Painikkeen näkymisaika, kun ennakkovaroitus on pois päältä. */
     const val FALLBACK_WINDOW_MIN = 2
 
-    private const val MINUTES_KEY = "more_time_min"
-    private const val COUNT_KEY = "more_time_count"
+    internal const val MINUTES_KEY = "more_time_min"
+    internal const val COUNT_KEY = "more_time_count"
 
     fun minutes(context: Context): Int =
         ProfileScope.prefs(context, ProfileScope.TIMER_PREFS).getInt(MINUTES_KEY, MINUTES_DEFAULT)

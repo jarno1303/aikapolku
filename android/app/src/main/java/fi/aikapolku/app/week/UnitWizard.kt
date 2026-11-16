@@ -99,7 +99,10 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
     var meals by remember { mutableStateOf(UnitSetup.defaultMeals(::cardName)) }
     var activities by remember { mutableStateOf(listOf<WizardActivity>()) }
     var support by remember { mutableStateOf(mapOf<String, WizardSupport>()) }
-    val steps = 6
+    // Yhteiset perusasetukset ja perusrutiinit kaikille kerralla (toisto pois käyttöönotosta).
+    var common by remember { mutableStateOf(fi.aikapolku.app.data.CommonSettings()) }
+    var routines by remember { mutableStateOf(listOf<fi.aikapolku.app.data.RoutineSpec>()) }
+    val steps = 8
 
     fun back() { if (step == 0) onCancel() else step-- }
     BackOverride(::back)
@@ -118,7 +121,8 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
     Text(stringResource(R.string.wizard_step, step + 1, steps), fontSize = 14.sp, color = AppColors.Muted)
     val titles = listOf(
         R.string.wizard_unit_title, R.string.wizard_residents_title, R.string.wizard_meals_title,
-        R.string.wizard_activities_title, R.string.wizard_support_title, R.string.wizard_preview_title
+        R.string.wizard_activities_title, R.string.wizard_support_title, R.string.wizard_common_title,
+        R.string.wizard_routines_title, R.string.wizard_preview_title
     )
     Text(stringResource(titles[step]), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, modifier = Modifier.semantics { heading() })
 
@@ -307,7 +311,106 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
             }
         }
 
-        // 6. Esikatselu asukkaana.
+        // 6. Yhteiset asetukset kaikille asukkaille (poikkeukset myöhemmin asukkaan omista asetuksista).
+        5 -> {
+            Text(stringResource(R.string.wizard_common_info), fontSize = 15.sp, color = AppColors.Muted)
+            Text(stringResource(R.string.wizard_common_time), fontWeight = FontWeight.SemiBold)
+            val modes = listOf(fi.aikapolku.app.data.TimeDisplayPrefs.NUMBERS, fi.aikapolku.app.data.TimeDisplayPrefs.RING, fi.aikapolku.app.data.TimeDisplayPrefs.CALM)
+            SegmentedChoice(
+                options = listOf(stringResource(R.string.wizard_time_numbers), stringResource(R.string.wizard_time_ring), stringResource(R.string.wizard_time_calm)),
+                selected = modes.indexOf(common.timeMode).coerceAtLeast(0),
+                onSelect = { common = common.copy(timeMode = modes[it]) }
+            )
+            Text(stringResource(R.string.wizard_common_warn), fontWeight = FontWeight.SemiBold)
+            val warns = fi.aikapolku.app.data.TimeDisplayPrefs.WARN_OPTIONS
+            SegmentedChoice(
+                options = warns.map { if (it == 0) stringResource(R.string.wizard_none) else stringResource(R.string.wizard_minutes, it) },
+                selected = warns.indexOf(common.warnMinutes).coerceAtLeast(0),
+                onSelect = { common = common.copy(warnMinutes = warns[it]) }
+            )
+            Text(stringResource(R.string.wizard_common_more), fontWeight = FontWeight.SemiBold)
+            val mores = fi.aikapolku.app.data.MoreTime.MINUTE_OPTIONS
+            SegmentedChoice(
+                options = mores.map { if (it == 0) stringResource(R.string.wizard_none) else stringResource(R.string.wizard_minutes, it) },
+                selected = mores.indexOf(common.moreMinutes).coerceAtLeast(0),
+                onSelect = { common = common.copy(moreMinutes = mores[it]) }
+            )
+            Text(stringResource(R.string.helper_label), fontWeight = FontWeight.SemiBold)
+            val helpers = fi.aikapolku.app.data.Helper.entries
+            SegmentedChoice(
+                options = helpers.map { stringResource(it.label) },
+                selected = helpers.indexOf(common.helper),
+                onSelect = { common = common.copy(helper = helpers[it]) }
+            )
+            Row(modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.wizard_common_own_state), fontSize = 16.sp)
+                    Text(stringResource(R.string.wizard_common_own_state_info), fontSize = 13.sp, color = AppColors.Muted)
+                }
+                Switch(checked = common.ownState, onCheckedChange = { common = common.copy(ownState = it) })
+            }
+        }
+
+        // 7. Perusrutiinit: valmis pohja, aika, päivät ja keille; jokainen saa oman kopion.
+        6 -> {
+            Text(stringResource(R.string.wizard_routines_info), fontSize = 15.sp, color = AppColors.Muted)
+            fi.aikapolku.app.data.RoutineTemplates.all.forEach { template ->
+                val index = routines.indexOfFirst { it.template == template }
+                val routine = routines.getOrNull(index)
+                fun update(x: fi.aikapolku.app.data.RoutineSpec) { routines = routines.toMutableList().also { it[index] = x } }
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(template.nameRes), fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                                Text(stringResource(template.descriptionRes), fontSize = 13.sp, color = AppColors.Muted)
+                            }
+                            Switch(checked = routine != null, onCheckedChange = { on ->
+                                routines = if (on) routines + fi.aikapolku.app.data.RoutineSpec(
+                                    template,
+                                    time = when (template.nameRes) {
+                                        R.string.template_morning -> "07:30"
+                                        R.string.template_evening -> "20:00"
+                                        else -> "09:00"
+                                    },
+                                    days = (1..7).toSet(),
+                                    members = residents.map { it.key }.toSet()
+                                ) else routines.filterNot { it.template == template }
+                            })
+                        }
+                        if (routine != null) {
+                            OutlinedButton(onClick = { pickTime(context, routine.time) { t -> update(routine.copy(time = t)) } }, modifier = Modifier.heightIn(min = 48.dp)) {
+                                Text(stringResource(R.string.wizard_routine_time, formatClock(routine.time)))
+                            }
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                (1..7).forEach { d ->
+                                    FilterChip(
+                                        selected = d in routine.days,
+                                        onClick = { update(routine.copy(days = if (d in routine.days) routine.days - d else routine.days + d)) },
+                                        label = { Text(dayShort(d)) }
+                                    )
+                                }
+                            }
+                            Text(stringResource(R.string.wizard_who), fontWeight = FontWeight.SemiBold)
+                            residents.forEach { res ->
+                                val checked = res.key in routine.members
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(role = Role.Checkbox) {
+                                        update(routine.copy(members = if (checked) routine.members - res.key else routine.members + res.key))
+                                    },
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(checked = checked, onCheckedChange = null)
+                                    Text(res.name.ifBlank { stringResource(R.string.profile_unnamed) }, fontSize = 16.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 8. Esikatselu asukkaana.
         else -> {
             Text(stringResource(R.string.wizard_preview_info), fontSize = 15.sp, color = AppColors.Muted)
             var who by remember { mutableStateOf(residents.firstOrNull()?.key) }
@@ -370,7 +473,12 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
                     val id = ids.getValue(r.key)
                     ClientViewPrefs.setTimeline(app, s.timeline, id)
                     ClientViewPrefs.setActivityView(app, s.activity, id)
+                    fi.aikapolku.app.data.ResidentCopy.applyCommon(app, id, common)
                 }
+                // Perusrutiinit: jokaiselle valitulle oma päiväohjelma ja viikon kohdat.
+                fi.aikapolku.app.data.ResidentCopy.applyRoutines(
+                    app, routines.filter { it.days.isNotEmpty() }, ids
+                ) { context.getString(it) }
                 EventReminders.reschedule(app)
                 GroupSession.changed()
                 fi.aikapolku.app.profiles.ProfileSession.changed()

@@ -8,7 +8,7 @@ internal object TimeDisplayPrefs {
     const val NUMBERS = "numbers"
     const val RING = "ring"
     const val CALM = "calm"
-    private const val KEY = "time_display_mode"
+    internal const val KEY = "time_display_mode"
     private val values = setOf(NUMBERS, RING, CALM)
 
     fun load(context: Context): String {
@@ -58,7 +58,7 @@ internal object TimeDisplayPrefs {
 
     val WARN_OPTIONS = listOf(0, 2, 5, 10)
     const val WARN_DEFAULT = 5
-    private const val WARN_KEY = "transition_warn_min"
+    internal const val WARN_KEY = "transition_warn_min"
 
     const val SOUND_OFF = "off"
     const val SOUND_SHORT = "short"

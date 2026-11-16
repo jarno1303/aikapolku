@@ -65,6 +65,8 @@ internal fun ProgramListView(
     onPrint: (DayProgram) -> Unit,
     onShare: (DayProgram) -> Unit,
     onExport: (DayProgram) -> Unit = {},
+    /** Kopioi päiväohjelman muille asukkaille (null = ei tarjota, esim. yksi asukas). */
+    onCopy: ((DayProgram) -> Unit)? = null,
     onEdit: (DayProgram) -> Unit,
     onDelete: (DayProgram) -> Unit
 ) {
@@ -103,6 +105,7 @@ internal fun ProgramListView(
     val printLabel = stringResource(R.string.tulosta_pdf)
     val shareLabel = stringResource(R.string.share_as_image)
     val exportLabel = stringResource(R.string.backup_export)
+    val copyLabel = stringResource(R.string.copy_program_to_others)
     val editLabel = stringResource(R.string.edit)
     val deleteLabel = stringResource(R.string.delete)
     programs.forEach { program ->
@@ -143,6 +146,7 @@ internal fun ProgramListView(
                         add(shareLabel to { onShare(program) })
                         if (canEdit) {
                             add(exportLabel to { onExport(program) })
+                            onCopy?.let { copy -> add(copyLabel to { copy(program) }) }
                             add(editLabel to { onEdit(program) })
                             add(deleteLabel to { onDelete(program) })
                         }

@@ -20,7 +20,7 @@ internal enum class Helper(val key: String, val label: Int, val nominative: Int,
     ADULT("aikuinen", R.string.helper_adult, R.string.helper_adult_nom, R.string.helper_adult_to);
 
     companion object {
-        private const val KEY = "helper_word"
+        internal const val KEY = "helper_word"
 
         fun of(key: String?): Helper = entries.firstOrNull { it.key == key } ?: CAREGIVER
 

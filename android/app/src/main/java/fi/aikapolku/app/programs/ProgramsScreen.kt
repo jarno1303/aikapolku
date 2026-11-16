@@ -117,6 +117,20 @@ internal fun ProgramsScreen(
     var deleteTarget by remember { mutableStateOf<DayProgram?>(null) }
     // Yhden päiväohjelman vienti tiedostoksi (ohjelman ⋮-valikosta).
     var exportTarget by remember { mutableStateOf<String?>(null) }
+    // Kopioi päiväohjelma muille asukkaille: kukin saa oman ohjelman.
+    var copyTarget by remember { mutableStateOf<DayProgram?>(null) }
+    copyTarget?.let { program ->
+        fi.aikapolku.app.profiles.CopyToResidentsDialog(
+            title = stringResource(R.string.copy_program_to_others),
+            info = stringResource(R.string.copy_program_info, program.name),
+            onDismiss = { copyTarget = null },
+            onCopy = { ids ->
+                fi.aikapolku.app.data.ResidentCopy.copyProgram(context, program, ids)
+                copyTarget = null
+                android.widget.Toast.makeText(context, context.getString(R.string.copy_done, ids.size), android.widget.Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
     exportTarget?.let { id ->
         fi.aikapolku.app.backup.ExportDialog(
             initialScope = fi.aikapolku.app.backup.BackupScope.PROGRAMS,
@@ -442,6 +456,7 @@ internal fun ProgramsScreen(
             onPrint = { ProgramPrint.open(context, it) },
             onShare = { ProgramPrint.shareImage(context, it) },
             onExport = { exportTarget = it.id },
+            onCopy = if (fi.aikapolku.app.data.ProfileStore.list(context).size > 1) { p -> copyTarget = p } else null,
             onEdit = {
                 draft = ProgramTiming.infer(it)
                 view = ProgramsView.EDIT

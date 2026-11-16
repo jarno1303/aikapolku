@@ -494,3 +494,8 @@
 ## 16.11.2026 – Tietosuoja ennen pilottia (kohta 5)
 - T1 avaimet Keystoreen, T2 lukitusnäytön ilmoitukset, T3 pakollinen viennin salasana, T4 näytön lukitus paikan laitteelle, T5 ohjaajan näkymien piilotus, T6 kaikkien tietojen poisto.
 - Laitteen tiedot -osio: automaattinen salattu varmuuskopio (koko laite, 7 uusinta) valittuun kansioon ja palautus. Testi LaitteenVarmuuskopioTest.
+
+## 16.11.2026 – Ohjattu aloitus: yhteiset asetukset, perusrutiinit ja kopiointi
+- Ohjattuun aloitukseen kaksi vaihetta: **Yhteiset asetukset** (ajan näyttö, ennakkovaroitus, lisäaika, auttajan sana, oma tila – kaikille kerralla) ja **Perusrutiinit** (valmis pohja, aika, päivät ja keille; jokainen saa oman ohjelman ja viikon kohdat).
+- **Kopioi muille asukkaille**: asukkaan asetukset (Asetukset) ja päiväohjelma (ohjelman valikko). Kunkin oma näkymävalinta ja tuen taso säilyvät.
+- data/ResidentCopy.kt, profiles/CopyToResidents.kt; testi KopiointiTest.
