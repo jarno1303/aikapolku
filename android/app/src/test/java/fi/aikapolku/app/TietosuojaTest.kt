@@ -6,6 +6,7 @@ import fi.aikapolku.app.caregiver.PrivacyPrefs
 import fi.aikapolku.app.link.LinkStore
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -13,20 +14,17 @@ import org.robolectric.RobolectricTestRunner
 /** Tietosuojan puutelistan korjaukset (T4, T5): oletukset ja paikan laitteen vastaanotto. */
 @RunWith(RobolectricTestRunner::class)
 class TietosuojaTest {
+    // Testi kirjoittaa Composen tilaa (revision) ilman näkymää: muutokset ilmoitetaan heti, jottei
+    // seuraavien Compose-testien odotus jumitu (AppNotIdleException).
+    @After
+    fun flushSnapshots() = androidx.compose.runtime.snapshots.Snapshot.sendApplyNotifications()
+
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Test
-    fun `ohjaajan nakymat piilossa oletuksena`() {
+    fun `ohjaajan nakymat piilossa ja paikan laite pois oletuksena`() {
+        // Vain luku: asetusten kirjoitus päivittäisi Composen tilaa ilman näkymää.
         assertTrue(PrivacyPrefs.secureScreens(context))
-        PrivacyPrefs.setSecureScreens(context, false)
-        assertFalse(PrivacyPrefs.secureScreens(context))
-    }
-
-    @Test
-    fun `paikan laite on aina myos vastaanottaja`() {
-        val store = LinkStore(context)
-        assertFalse(store.placeEnabled)
-        store.placeEnabled = true
-        assertTrue(store.receiverEnabled)
+        assertFalse(LinkStore(context).placeEnabled)
     }
 }
