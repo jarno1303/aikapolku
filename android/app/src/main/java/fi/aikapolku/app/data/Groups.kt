@@ -388,17 +388,18 @@ internal class GroupStore(context: Context) {
 
     /**
      * Asukkaan puhelimessa (A5): paikan paketin muutokset ja poissaolot korvaavat ryhmien
-     * [removeIds] aiemmat; lomat korvataan kokonaan (asukkaan puhelimessa vain hänen omansa).
+     * [removeIds] aiemmat; asukkaan [memberId] lomat korvataan, muiden profiilien lomat säilyvät.
      */
     fun replaceShared(
         removeIds: Set<String>,
         changes: Map<String, List<EventChange>>,
         absences: Map<String, Map<LocalDate, Set<String>>>,
-        leaves: List<Leave>
+        leaves: List<Leave>,
+        memberId: String
     ) {
         saveChanges(allChanges().filterKeys { it !in removeIds } + changes)
         saveAbsences(absences().filterKeys { it !in removeIds } + absences)
-        prefs.edit().putString(KEY_LEAVES, Leaves.encode(leaves)).commit()
+        prefs.edit().putString(KEY_LEAVES, Leaves.encode(leaves().filterNot { it.memberId == memberId } + leaves)).commit()
     }
 
     private fun saveAbsences(value: Map<String, Map<LocalDate, Set<String>>>) {

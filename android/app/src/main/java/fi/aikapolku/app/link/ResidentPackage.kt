@@ -140,7 +140,10 @@ internal object ResidentPackage {
      * Paikan laitteella: asukkaan [profileId] paketti. [known] = tiivisteet, jotka asukkaan puhelin
      * jo omistaa. Salaus hoidetaan siirrossa (LinkProtocol), joten paketti itse on salaamaton zip.
      */
-    fun build(context: Context, profileId: String, known: Set<String> = emptySet()): Built {
+    /** Kuvia ja ääniä enintään näin paljon yhdessä paketissa; loput seuraavalla haulla (muisti). */
+    const val MAX_MEDIA_BYTES = 12L * 1024 * 1024
+
+    fun build(context: Context, profileId: String, known: Set<String> = emptySet(), maxMedia: Long = MAX_MEDIA_BYTES): Built {
         val app = context.applicationContext
         val candidates = app.filesDir.walkTopDown().maxDepth(5).filter { it.isFile }.map { it.absolutePath }.toList()
         val names = LinkedHashMap<String, String>()
@@ -181,9 +184,11 @@ internal object ResidentPackage {
         val entries = LinkedHashMap<String, ByteArray>()
         entries[BackupFormat.DATA] = root.toString().toByteArray(Charsets.UTF_8)
         var sent = 0
+        var size = 0L
         bytesByName.forEach { (name, bytes) ->
-            if (name.substringBefore('.') !in known) {
+            if (name.substringBefore('.') !in known && (sent == 0 || size + bytes.size <= maxMedia)) {
                 entries[BackupFormat.MEDIA + name] = bytes
+                size += bytes.size
                 sent++
             }
         }
@@ -212,7 +217,8 @@ internal object ResidentPackage {
 
     /** Asukkaan puhelimessa jo olevat kuvat ja äänet (tiivisteet), kerrotaan pyynnössä. */
     fun known(context: Context): Set<String> =
-        File(context.applicationContext.filesDir, SYNC_DIR).listFiles()?.map { it.name.substringBefore('.') }?.toSet().orEmpty()
+        File(context.applicationContext.filesDir, SYNC_DIR).listFiles()?.filterNot { it.name.endsWith(".tmp") }
+            ?.map { it.name.substringBefore('.') }?.toSet().orEmpty()
 
     /** Puretun paketin tulos. [missing] = kuvat, joita ei ollut paketissa eikä laitteessa. */
     internal data class Applied(val name: String, val groups: Int, val missing: Int)
@@ -237,7 +243,12 @@ internal object ResidentPackage {
             val name = key.removePrefix(BackupFormat.MEDIA)
             if (!SAFE_NAME.matches(name) || sha256(data) != name.substringBefore('.')) return@forEach
             val file = File(folder, name)
-            if (!file.exists()) file.writeBytes(data)
+            if (!file.exists()) {
+                // Ensin väliaikaiseen ja sitten nimetään: keskeytynyt kirjoitus ei jää "valmiiksi".
+                val tmp = File(folder, "$name.tmp")
+                tmp.writeBytes(data)
+                if (!tmp.renameTo(file)) tmp.delete()
+            }
         }
         val paths = HashMap<String, String>()
         var missing = 0
@@ -263,7 +274,7 @@ internal object ResidentPackage {
             ResidentShare.decode(root.optJSONObject("share") ?: JSONObject()) { MediaRefs.fromTokens(it, paths, json = true) },
             localId
         )
-        SyncState.replacePlaceGroups(app, placeId, share)
+        SyncState.replacePlaceGroups(app, placeId, share, localId)
 
         val name = root.optString("name")
         val profile = ProfileStore.list(app).firstOrNull { it.id == localId }
@@ -302,13 +313,15 @@ internal object SyncState {
         prefs(context).edit().putString(KEY_ORIGIN, obj.toString()).commit()
     }
 
-    fun replacePlaceGroups(context: Context, placeId: String, share: ResidentShare) {
+    fun replacePlaceGroups(context: Context, placeId: String, share: ResidentShare, localId: String = ProfileStore.currentId(context)) {
         val store = GroupStore(context)
         val origins = origins(context)
         val previous = origins[placeId].orEmpty()
         val incoming = share.groups.map { it.id }.toSet()
-        // Toisen paikan tai laitteen omaa ryhmää samalla tunnuksella ei korvata.
-        val foreign = origins.filterKeys { it != placeId }.values.flatten().toSet()
+        // Toisen paikan tai laitteen oman (paikattoman) ryhmän samalla tunnuksella ei korvata.
+        val fromPlaces = origins.values.flatten().toSet()
+        val foreign = origins.filterKeys { it != placeId }.values.flatten().toSet() +
+            (store.load().map { it.id }.toSet() - fromPlaces)
         val accepted = share.groups.filter { it.id !in foreign }
         store.save(store.load().filterNot { it.id in previous || it.id in incoming && it.id !in foreign } + accepted)
         val ids = accepted.map { it.id }.toSet()
@@ -316,7 +329,8 @@ internal object SyncState {
             removeIds = previous + ids,
             changes = share.groupChanges.filterKeys { it in ids },
             absences = share.absences.filterKeys { it in ids },
-            leaves = share.leaves
+            leaves = share.leaves,
+            memberId = localId
         )
         saveOrigins(context, origins + (placeId to ids))
     }

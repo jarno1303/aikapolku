@@ -89,6 +89,15 @@ internal object LinkProtocol {
         if (seen.containsKey(key)) false else { seen[key] = now; true }
     }
 
+    /** Hakujen oma välimuisti: minuutin välein hakevat puhelimet eivät työnnä viestien tunnisteita pois. */
+    private val seenPulls = object : LinkedHashMap<String, Long>(256, 0.75f, false) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>?) = size > 5000
+    }
+
+    private fun firstPull(key: String, now: Long): Boolean = synchronized(seenPulls) {
+        if (seenPulls.containsKey(key)) false else { seenPulls[key] = now; true }
+    }
+
     /** Palvelee yhden yhteyden (vastaanottajan puolella). [now] testejä varten. */
     fun serve(socket: Socket, host: Host, now: () -> Long = System::currentTimeMillis) {
         socket.use { s ->
@@ -134,7 +143,7 @@ internal object LinkProtocol {
                     val json = plain?.let { runCatching { JSONObject(String(it, Charsets.UTF_8)) }.getOrNull() }
                     val time = now()
                     val fresh = json != null && kotlin.math.abs(time - json.optLong("a")) <= MAX_SKEW_MS &&
-                        firstSeen(from + ":" + request.optString("n"), time)
+                        firstPull(from + ":" + request.optString("n"), time)
                     val known = json?.optJSONArray("k")?.let { a -> (0 until minOf(a.length(), 10_000)).map { a.optString(it) }.toSet() }.orEmpty()
                     val result = if (peer != null && fresh) runCatching { host.residentPackage(peer, json!!.optString("v"), known) }.getOrNull() else null
                     if (peer == null || result == null) {

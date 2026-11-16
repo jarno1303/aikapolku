@@ -80,7 +80,8 @@ class AsukaspakettiTest {
         val photo = File(context.filesDir, "photos/omakuva.jpg").apply { parentFile?.mkdirs(); writeBytes(ByteArray(64) { it.toByte() }) }
         WeekStore(context, aino.id).save(WeekPlan(listOf(card("oma", 1, "16:00", "Uinti", photo.absolutePath))))
         WeekStore(context, eero.id).save(WeekPlan(listOf(card("eeron", 1, "16:00", "Eeron oma"))))
-        ChangeStore(context, aino.id).upsert(EventChange("m1", monday, "oma", ChangeType.CANCEL, reason = "Allas kiinni"))
+        // save ilman päiväsiivousta (upsert siivoaa yli viikon vanhat nykypäivästä laskien).
+        ChangeStore(context, aino.id).save(listOf(EventChange("m1", monday, "oma", ChangeType.CANCEL, reason = "Allas kiinni")))
         val groups = GroupStore(context)
         groups.save(listOf(villa, omena(aino.id, eero.id), tammi(aino.id, eero.id)))
         groups.upsertLeave(Leave("l1", eero.id, monday.atTime(10, 0), monday.plusDays(3).atTime(18, 0)), monday.atTime(9, 0))
@@ -92,7 +93,8 @@ class AsukaspakettiTest {
         // Asukkaan puhelin: tyhjennetään kaikki ja puretaan omaan oletusprofiiliin.
         listOf(aino.id, eero.id).forEach { id -> ProfileScope.SCOPED.forEach { b -> ProfileScope.prefs(context, b, id).edit().clear().commit() } }
         groups.save(emptyList())
-        groups.replaceShared(setOf("villa", "omena", "tammi"), emptyMap(), emptyMap(), emptyList())
+        groups.replaceShared(setOf("villa", "omena", "tammi"), emptyMap(), emptyMap(), emptyList(), ProfileScope.DEFAULT_ID)
+        groups.replaceShared(emptySet(), emptyMap(), emptyMap(), emptyList(), eero.id)
         photo.delete()
         val local = ProfileScope.DEFAULT_ID
         val applied = ResidentPackage.apply(context, built.bytes, placeId = "paikka-1", localId = local)

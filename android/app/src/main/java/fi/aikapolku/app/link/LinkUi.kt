@@ -228,6 +228,8 @@ private fun PairWithReceiver(me: Identity) {
                         }
                         if (peer != null) {
                             status = context.getString(R.string.link_paired, peer.name)
+                            // Paikan laite: omat tiedot heti (A5).
+                            if (peer.place) PlaceSync.start(context)
                         } else {
                             status = context.getString(R.string.link_pair_failed)
                         }

@@ -44,9 +44,12 @@ internal object PlaceStatus {
         val profileId = peer.resident.takeIf { it.isNotBlank() } ?: return null
         if (fi.aikapolku.app.data.ProfileStore.list(context).none { it.id == profileId }) return null
         val current = ResidentPackage.version(context, profileId)
-        val bytes = if (version == current) null else ResidentPackage.build(context, profileId, known).bytes
-        markDelivered(context, profileId, current, now)
-        return current to bytes
+        // Perillä vasta, kun puhelin kertoo jo omistavansa nykyisen version (seuraava haku vahvistaa).
+        if (version == current) {
+            markDelivered(context, profileId, current, now)
+            return current to null
+        }
+        return current to ResidentPackage.build(context, profileId, known).bytes
     }
 }
 
@@ -110,10 +113,18 @@ internal object PlaceSync {
             var applied = 0
             var found: List<FoundReceiver>? = null
             places(app).forEach { peer ->
+                // Päiväohjelma tai ajastin kesken: ei haeta nyt (ei turhaa siirtoa), enintään MAX_DEFER kierrosta.
+                if (busy(app) && deferred < MAX_DEFER) {
+                    deferred++
+                    return@forEach
+                }
+                deferred = 0
                 val known = ResidentPackage.known(app)
+                // Jos edellisestä paketista puuttui kuvia (kokoraja), pyydetään uusi paketti.
+                val asked = if (prefs(app).getBoolean("missing_${peer.id}", false)) "" else version(app, peer.id)
                 fun attempt(host: String, port: Int) =
                     if (host.isBlank()) null
-                    else runCatching { LinkProtocol.pull(host, port, me, peer, version(app, peer.id), known) }.getOrNull()
+                    else runCatching { LinkProtocol.pull(host, port, me, peer, asked, known) }.getOrNull()
                 var result = attempt(peer.host, peer.port)
                 if (result == null) {
                     // Osoite voi vaihtua (DHCP): haetaan verkosta.
@@ -125,16 +136,14 @@ internal object PlaceSync {
                 }
                 val pulled = result ?: return@forEach
                 val now = System.currentTimeMillis()
+                var missing = false
                 if (pulled.bytes != null) {
-                    if (busy(app) && deferred < MAX_DEFER) {
-                        deferred++
-                        return@forEach
-                    }
-                    deferred = 0
-                    runCatching { ResidentPackage.apply(app, pulled.bytes, peer.id) }.getOrNull() ?: return@forEach
+                    val result = runCatching { ResidentPackage.apply(app, pulled.bytes, peer.id) }.getOrNull() ?: return@forEach
+                    missing = result.missing > 0
                     applied++
                 }
-                prefs(app).edit().putString("v_${peer.id}", pulled.version).putLong("at_${peer.id}", now).apply()
+                prefs(app).edit().putString("v_${peer.id}", pulled.version).putLong("at_${peer.id}", now)
+                    .putBoolean("missing_${peer.id}", missing).apply()
             }
             withContext(Dispatchers.Main) {
                 revision++
