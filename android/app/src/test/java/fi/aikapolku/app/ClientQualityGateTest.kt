@@ -53,6 +53,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * Asiakasnäkymän laatuportti (tutkielma docs/TUTKIELMA_OPTIMAALINEN_SOVELLUS.md, periaatteet P1–P9).
@@ -327,6 +328,9 @@ class ClientQualityGateTest {
         assertTrue(report, fresh.isEmpty() && fixed.isEmpty())
     }
 
+    // Pystyasento (puhelin): järjestys ylhäältä alas. Matalalla ruudulla (vaaka) muutos ja
+    // painikkeet ovat rinnakkain, ja järjestys tarkistetaan sarakkeittain NakymaKoot-testeissä.
+    @Config(qualifiers = "w411dp-h891dp")
     @Test
     fun `muutosnakyman osat ovat aina samassa jarjestyksessa`() {
         val change = dayWithChange()
