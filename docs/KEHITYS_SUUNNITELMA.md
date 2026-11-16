@@ -29,8 +29,8 @@
 Jakaminen, Chromecast ja maksut myöhemmin.
 
 ## Pilotin jälkeen (sovittu 16.11.2026)
-1. **Kotinäytön widget** (ensimmäinen): asukas näkee puhelimen kotinäytöltä "Nyt" ja "Seuraavaksi" sekä käynnissä olevan ajan avaamatta sovellusta. Ei lukitusnäytölle (tietosuoja). Ajatus Tiimon widgeteistä.
-2. Toimintatyyppien värikoodaus (muutama kiinteä väri, esim. ruokailu, ulkoilu, lepo) – harkitaan.
+1. ~~**Kotinäytön widget**~~ – tehty jo ennen pilottia 16.11.2026 (ks. KEHITYSLOKI). Alkuperäinen kuvaus: asukas näkee puhelimen kotinäytöltä "Nyt" ja "Seuraavaksi" sekä käynnissä olevan ajan avaamatta sovellusta. Ei lukitusnäytölle (tietosuoja). Ajatus Tiimon widgeteistä.
+2. ~~Toimintatyyppien värikoodaus~~ – tehty ennen pilottia 16.11.2026 (kuusi luokkaa merkkeineen). Myös kello korteissa tehty samalla.
 3. Värinä älykelloon ennen siirtymää – harkitaan.
 
 ## Kotiversio (sovittu 16.11.2026, toteutus pilotin jälkeen)

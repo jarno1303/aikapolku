@@ -503,3 +503,9 @@
 ## 16.11.2026 – Testien Compose-tila (AppNotIdleException)
 - Tarkistusajossa 4 Compose-testiä jumittui (60 s) tietosuoja- ja kopiointitestien jälkeen. Syy: testi kirjoittaa Composen tilaa ilman näkymää, Compose lähettää ilmoituksen pääsäikeelle ja Robolectric tyhjentää jonon testien välissä.
 - Korjaus: uusi testisääntö `ComposeStateFlush` (ilmoittaa muutokset ja ajaa pääsäikeen jonon tyhjäksi testin lopussa) kaikkiin 24 Robolectric-testiluokkaan, joissa ei ole Compose-näkymää. Varmuuskopio: `varmuus/ennen-testien-tilakorjaus-2026-11-16`.
+
+## 16.11.2026 – Värikoodaus, kello korteissa ja kotinäytön widget (tehty ennen pilottia)
+- **Värikoodaus:** kuusi luokkaa (ruokailu, hygienia ja pukeutuminen, ulkoilu ja liikunta, lepo ja vapaa-aika, toiminta ja työ, lääke ja terveys) + ei luokkaa. Kortin alareunassa luokan väri ja isoissa kuvissa vasemmassa yläkulmassa merkki (muoto, ei pelkkä väri). Valmiilla korteilla oletusluokka; ohjaaja valitsee luokan viikko-ohjelman tapahtumassa ja omassa kortissa, ja nimeää luokat (Asetukset → Luokat ja värit). Asukaskohtainen päälle/pois (oletus päällä). Luokat siirtyvät paikan laitteelta asukkaan puhelimeen vain hänen omien korttiensa osalta.
+- **Kello korteissa:** kellotaulu (valinnaisesti myös numeroina) isojen korttikuvien oikeassa alakulmassa: Nyt-kortti, päiväohjelman kellonaikavaiheet. Asukaskohtainen, oletus pois.
+- **Kotinäytön widget:** pieni (Nyt) ja leveä (Nyt ja Seuraavaksi). Värit ja kello asukkaan asetusten mukaan; lääke- ja terveyskortit nimellä "Oma asia"; ei lukitusnäytölle; paikan laitteella aina pois; asukaskohtainen esto. Päivitys tapahtumien rajoilla, muutosten näkymishetkinä, kuittauksessa ja sovelluksen sulkeutuessa.
+- Tarkastaja kävi läpi kaikki kolme; löydökset korjattu (mm. tietosuoja: muiden asukkaiden korttien luokat eivät lähde paketissa).
