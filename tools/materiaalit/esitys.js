@@ -203,13 +203,28 @@ async function icon(Comp, color = '#FFFFFF') {
     .forEach(([id, text], i) => phoneColumn(s, i, id, i + 1, text, 4.6));
   s.addText('Oma tila on asukkaan omaa tietoa: se ei näy ohjaajalle, ellei asukas itse halua.', { x: 0.6, y: 7.0, w: 11.4, h: 0.4, fontSize: 15, italic: true, color: C.accent4, margin: 0, isTextBox: true });
 
-  // 7 Ohjaajan työ
+  // 7 Yhdellä silmäyksellä: värit, kello ja widget
   s = pres.addSlide({ masterName: 'Sisältö', sectionTitle: 'Sovellus' });
-  s.addText('Ohjaajalle kevyt: yksikkö noin 15 minuutissa', { placeholder: 'title' });
-  [['o03-ohjattu-1-yksikko', 'Yksikkö ja asukkaat ohjatusti'], ['o12-asiakkaan-viikko', 'Viikko: yhteiset ja omat'], ['o18-tee-muutos', 'Muutos muutamalla napautuksella']]
+  s.addText('Päivä näkyy yhdellä silmäyksellä', { placeholder: 'title' });
+  phoneColumn(s, 0, 'a12-kello-kortissa', 1, 'Kello kertoo, milloin', 4.95);
+  phoneColumn(s, 1, 'o31-luokat-ja-varit', 2, 'Väri ja merkki kertovat, mitä', 4.95);
+  {
+    const slotX = 0.6 + 2 * 4.05;
+    s.addShape(pres.shapes.OVAL, { x: slotX + 0.15, y: 1.42, w: 0.5, h: 0.5, fill: { color: C.accent2 }, line: { color: C.accent2 } });
+    s.addText('3', { x: slotX + 0.15, y: 1.42, w: 0.5, h: 0.5, fontSize: 18, bold: true, color: C.text1, align: 'center', valign: 'middle', margin: 0, isTextBox: true });
+    s.addText('Kotinäytöllä ilman sovellusta', { x: slotX + 0.78, y: 1.3, w: 4.05 - 0.95, h: 0.75, fontSize: 18, bold: true, color: C.text1, valign: 'middle', margin: 0, isTextBox: true });
+    const wfile = path.join(__dirname, 'kuvat-rajattu', 'w01-widget-levea.png');
+    s.addImage({ path: wfile, x: slotX + 0.1, y: 2.5, w: 3.85, h: 3.85 * 210 / 380, altText: 'Kotinäytön widget: Nyt ja Seuraavaksi' });
+    s.addText('Värit, kello ja widget valitaan asukaskohtaisesti. Lääkekortit näkyvät kotinäytöllä nimellä Oma asia.', { x: slotX + 0.1, y: 4.85, w: 3.85, h: 1.4, fontSize: 15, color: C.text1, valign: 'top', margin: 0, isTextBox: true });
+  }
+
+  // 8 Ohjaajan työ
+  s = pres.addSlide({ masterName: 'Sisältö', sectionTitle: 'Sovellus' });
+  s.addText('Ohjaajalle kevyt: yksikkö yhdellä kertaa', { placeholder: 'title' });
+  [['o03-ohjattu-1-yksikko', 'Yksikkö ja asukkaat ohjatusti'], ['o29-ohjattu-rutiinit', 'Perusrutiinit kaikille kerralla'], ['o18-tee-muutos', 'Muutos menee asukkaan puhelimeen itsestään']]
     .forEach(([id, text], i) => phoneColumn(s, i, id, i + 1, text, 4.95));
 
-  // 8 Tutkimus
+  // 9 Tutkimus
   pres.addSection({ title: 'Näyttö ja turvallisuus' });
   s = pres.addSlide({ masterName: 'Sisältö', sectionTitle: 'Näyttö ja turvallisuus' });
   s.addText('Ratkaisut nojaavat tutkimukseen', { placeholder: 'title' });
@@ -219,20 +234,20 @@ async function icon(Comp, color = '#FFFFFF') {
   bigCard(s, 0.6 + 2 * (rw + 0.2), 1.6, rw, 3.6, 'Aika näkyväksi', 'Satunnaistetussa tutkimuksessa aika-apuvälineillä oli suuri vaikutus ajan hahmottamiseen ja ajanhallintaan.', 'Janeslätt ym.');
   s.addText('Tutkimus perustelee ratkaisut. AikaPolun oma vaikuttavuus osoitetaan pilotissa.', { x: 0.6, y: 5.6, w: 11.4, h: 0.4, fontSize: 18, italic: true, color: C.accent4, margin: 0, isTextBox: true });
 
-  // 9 Turvallisuus ja rajaus
+  // 10 Turvallisuus ja rajaus
   s = pres.addSlide({ masterName: 'Sisältö', sectionTitle: 'Näyttö ja turvallisuus' });
   s.addText('Turvallinen ja selkeästi rajattu', { placeholder: 'title' });
   s.addText('Tieto pysyy laitteella', { x: 0.6, y: 1.5, w: 5.8, h: 0.6, fontSize: 26, bold: true, color: C.text2, margin: 0, isTextBox: true });
-  await iconRow(s, md.MdCloudOff, 0.6, 2.35, 'Ei pilveä eikä palvelinta', 'Ei Googlen varmuuskopiota; laitteet keskustelevat vain samassa verkossa salattuna.', 5.2);
+  await iconRow(s, md.MdCloudOff, 0.6, 2.35, 'Ei pilveä eikä palvelinta', 'Muutokset kulkevat asukkaan puhelimeen yksikön omassa verkossa salattuna. Asukas saa vain omat tietonsa.', 5.2);
   await iconRow(s, md.MdFavorite, 0.6, 3.65, 'Oma tila on asukkaan', 'Ei näy ohjaajalle eikä siirry mihinkään ilman asukkaan painallusta.', 5.2);
-  await iconRow(s, md.MdLock, 0.6, 4.95, 'Ohjaajan toiminnot PIN-koodin takana', 'Asukkaan apu ja tauko eivät koskaan ole lukossa.', 5.2);
+  await iconRow(s, md.MdLock, 0.6, 4.95, 'Laite suojattu, tiedot tallessa', 'Paikan laite vaatii näytön lukituksen ja tekee salatun varmuuskopion päivittäin. Asukkaan apu ja tauko eivät ole koskaan lukossa.', 5.2);
   s.addText('AikaPolku ei ole', { x: 7.0, y: 1.5, w: 5.8, h: 0.6, fontSize: 26, bold: true, color: C.accent6, margin: 0, isTextBox: true });
   await iconRow(s, md.MdDescription, 7.0, 2.35, 'Asiakastietojärjestelmä', 'Kirjaukset tehdään yksikön omaan järjestelmään.', 5.2);
   await iconRow(s, md.MdMedication, 7.0, 3.65, 'Lääkityksen hallinta', 'Muistutus käy, mutta lääkkeenantoa ei kuitata eikä kirjata.', 5.2);
   await iconRow(s, md.MdVisibilityOff, 7.0, 4.95, 'Valvontaväline', 'Asukkaasta ei raportoida ohjaajalle automaattisesti.', 5.2);
   s.addText('Laitteiden suojaus, säilytysajat ja vastuut sovitaan yhdessä ennen pilottia.', { x: 0.6, y: 6.45, w: 11.6, h: 0.4, fontSize: 16, italic: true, color: C.accent4, margin: 0, isTextBox: true });
 
-  // 10 Ehdotus
+  // 11 Ehdotus
   pres.addSection({ title: 'Ehdotus' });
   s = pres.addSlide({ masterName: 'Sisältö', sectionTitle: 'Ehdotus' });
   s.addText('Ehdotamme kumppanuutta ja pilottia', { placeholder: 'title' });
@@ -252,7 +267,7 @@ async function icon(Comp, color = '#FFFFFF') {
   });
   s.addText('Palaute joka toinen viikko. Lähtötilanne kirjataan ennen käyttöönottoa.', { x: 0.6, y: 6.15, w: 11.6, h: 0.4, fontSize: 17, color: C.accent4, margin: 0, isTextBox: true });
 
-  // 11 Mittarit
+  // 12 Mittarit
   s = pres.addSlide({ masterName: 'Sisältö', sectionTitle: 'Ehdotus' });
   s.addText('Miten onnistumista mitataan', { placeholder: 'title' });
   const mw = 5.95, mh = 2.15;
@@ -263,7 +278,7 @@ async function icon(Comp, color = '#FFFFFF') {
     .forEach(([t, x2], i) => bigCard(s, 0.6 + (i % 2) * (mw + 0.2), 1.5 + Math.floor(i / 2) * (mh + 0.2), mw, mh, t, x2));
   s.addText('Sovelluksessa on valmiina nimetön käytön seuranta (oletuksena pois). Oma tila ei ole mittari.', { x: 0.6, y: 6.45, w: 11.6, h: 0.4, fontSize: 16, italic: true, color: C.accent4, margin: 0, isTextBox: true });
 
-  // 12 Seuraavat askeleet
+  // 13 Seuraavat askeleet
   s = pres.addSlide({ masterName: 'Otsikkodia (tumma)', sectionTitle: 'Ehdotus' });
   s.addImage({ path: logo, x: 0.8, y: 0.9, w: 1.1, h: 1.1 });
   s.addText('Seuraavat askeleet', { placeholder: 'title' });

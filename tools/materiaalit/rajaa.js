@@ -14,7 +14,8 @@ const top = marker ? parseInt(marker.match(/\d+/)[0], 10) : 0;
     if (!f.endsWith('.png') || f.includes('-VIRHE')) continue;
     const img = sharp(path.join(src, f));
     const { width, height } = await img.metadata();
-    const cut = height > width ? top : 0; // vain pystykuvista
+    // Vain pystysuuntaiset kuvakaappaukset; widgetit (w-) on piirretty ilman tilapalkkia.
+    const cut = height > width && !f.startsWith('w') ? top : 0;
     await img.extract({ left: 0, top: cut, width, height: height - cut }).png().toFile(path.join(out, f));
     n++;
   }

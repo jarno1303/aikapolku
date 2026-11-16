@@ -6,7 +6,7 @@
   "o05-ohjattu-3-ruokailut": "Ohjattu aloitus, vaihe 3: yhteiset ruokailut ja muistutukset",
   "o06-ohjattu-4-toiminnat": "Ohjattu aloitus, vaihe 4: päivätoiminta ja työpaja, ajat ja osallistujat",
   "o07-ohjattu-5-tuki": "Ohjattu aloitus, vaihe 5: asiakkaan näkymän oletukset",
-  "o08-ohjattu-6-esikatselu": "Ohjattu aloitus, vaihe 6: esikatselu ennen tallennusta",
+  "o08-ohjattu-6-esikatselu": "Ohjattu aloitus, vaihe 8: esikatselu ennen tallennusta",
   "o09-toiminta-oma-aika": "Päivän toiminta: istuntoajat, osallistujat ja asukkaan oma aika",
   "o10-tanaan-yksikossa": "Tänään yksikössä: kuka on missä ja milloin kotona",
   "o11-loma": "Merkitse loma tai poissaolo",
@@ -22,7 +22,7 @@
   "o21-asetukset-viestit": "Asetukset: Viestit (äänet, Pian vaihtuu -ääni, valinta, oma tila)",
   "o22-asetukset-aika": "Asetukset: Aika (ennakkovaroitus, lisäaika, äänimerkki)",
   "o23-lukitus": "Ohjaajan lukitus (PIN) ja roolit",
-  "o24-yhteys": "Yksikön yhteys: vastaanotto ja laitteen liittäminen",
+  "o24-yhteys": "Yksikön yhteys: paikan laite, vastaanotto ja asukkaiden puhelimet",
   "o25-vienti": "Vienti ja tuonti",
   "a01-nyt-kortti": "Asiakkaan etusivu: NYT-kortti ja päivän aikajana",
   "a02-paivaohjelma": "Päiväohjelman vaihe asiakkaalla: kuva, aika, apu ja tauko, Valmis",
@@ -37,6 +37,12 @@
   "o26-tuen-taso": "Asetukset: Tuen taso, palaa edelliseen ja seurannan huomio",
   "o27-kayton-seuranta": "Asetukset: Käytön seuranta (pilotti) ja kooste",
   "a11-en-ymmarra": "Tarvitsen apua -näkymä: En ymmärrä. Näytä minulle.",
-  "o28-ohjattu-yhteiset": "Ohjattu aloitus: yhteiset asetukset kaikille asukkaille kerralla",
-  "o29-ohjattu-rutiinit": "Ohjattu aloitus: perusrutiinit (aamu- ja iltatoimet) valituille asukkaille"
+  "o28-ohjattu-yhteiset": "Ohjattu aloitus, vaihe 6: yhteiset asetukset kaikille asukkaille kerralla",
+  "o29-ohjattu-rutiinit": "Ohjattu aloitus, vaihe 7: perusrutiinit valituille asukkaille",
+  "o30-luokka-tapahtumassa": "Tapahtuman muokkaus: Luokka (värikoodaus)",
+  "o31-luokat-ja-varit": "Asetukset: Luokat ja värit – luokkien nimet",
+  "o32-asetukset-varit-kello-widget": "Asiakkaan asetukset: värikoodaus, kotinäytön widget ja kello korteissa",
+  "a12-kello-kortissa": "NYT-kortti, jossa kellotaulu ja alkamisaika",
+  "w01-widget-levea": "Kotinäytön widget: Nyt ja Seuraavaksi",
+  "w02-widget-pieni": "Pieni kotinäytön widget: Nyt"
 }

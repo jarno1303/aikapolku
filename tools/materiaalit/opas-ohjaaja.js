@@ -6,7 +6,7 @@ const kansi = cover({
   title: 'Ohjaajan käyttöopas',
   subtitle: 'AikaPolku asumisyksikössä ja päivätoiminnassa',
   audience: 'Ohjaajille, jotka ottavat AikaPolun käyttöön ja käyttävät sitä päivittäin',
-  version: 'Versio 1.0 · marraskuu 2026'
+  version: 'Versio 1.1 · marraskuu 2026'
 });
 
 const sisalto = [
@@ -100,9 +100,16 @@ const sisalto = [
     ['Ei aikajanaa', 'vain NYT-kortin', 'rauhallisin vaihtoehto on tarpeen'],
   ], [2300, 3800, 2926]),
   ...shot('o07-ohjattu-5-tuki'),
-  h2('Vaihe 6: Esikatselu ja tallennus'),
-  ...steps(['Tarkista yhteenveto: alayksiköt, asukkaat, ruokailut ja toiminnat.', 'Valitse **Tallenna**. Asukkaiden profiilit ja yksikön runko luodaan.']),
+  h2('Vaihe 6: Yhteiset asetukset'),
+  para('Valitse kerran koko yksikölle, miten aika näytetään, ennakkovaroitus ennen vaihtoa, Tarvitsen vielä hetken -lisäaika, oma tila ja auttajan sana. Asetukset tulevat kaikille asukkaille. Yksittäisen asukkaan poikkeukset tehdään myöhemmin hänen omista asetuksistaan.'),
+  ...shot('o28-ohjattu-yhteiset'),
+  h2('Vaihe 7: Perusrutiinit'),
+  para('Valitse yksikön perusrutiinit, esimerkiksi aamu- ja iltatoimet, niiden aika ja päivät sekä keille ne tulevat. Jokainen valittu asukas saa oman päiväohjelman, jota voi myöhemmin muokata juuri hänelle sopivaksi.'),
+  ...shot('o29-ohjattu-rutiinit'),
+  h2('Vaihe 8: Esikatselu ja tallennus'),
+  ...steps(['Tarkista yhteenveto: alayksiköt, asukkaat, ruokailut, toiminnat ja rutiinit.', 'Valitse **Tallenna**. Asukkaiden profiilit, yksikön runko ja perusrutiinit luodaan.']),
   ...shot('o08-ohjattu-6-esikatselu'),
+  box('vinkki', 'Ohjattu aloitus säästää toistoa: 14 asukkaan yksikkö on pystyssä alle tunnissa. Jos asetuksia tai päiväohjelmia pitää myöhemmin jakaa useammalle, käytä kopiointia (luku 4).'),
 
   // 4
   h1('4. Yksiköt, alayksiköt ja ryhmät jälkikäteen'),
@@ -114,6 +121,12 @@ const sisalto = [
   ...shot('o09-toiminta-oma-aika'),
   h2('Lähtö- ja paluukortit'),
   para('Toiminnalle voi ottaa käyttöön siirtymäkortit: **Lähtö** 10 minuuttia ennen alkua ja **Paluu kotiin** lopussa. Ne valmistavat asukasta siirtymään.'),
+  h2('Kopiointi muille asukkaille'),
+  para('Kun yksi asukas on asetettu valmiiksi, saman voi antaa muille ilman toistoa.'),
+  ...steps([
+    '**Asetukset:** valitse asukas ja sitten **Kopioi asetukset muille asukkaille**. Valitse asukkaat ja **Kopioi**. Viestit, aika, ennakkovaroitus, lisäaika, oma tila ja auttajan sana kopioituvat. Kunkin oma näkymävalinta ja tuen taso säilyvät.',
+    '**Päiväohjelma:** avaa **Päiväohjelmat**, ohjelman valikko (⋮) ja **Kopioi muille asukkaille**. Jokainen saa oman kopion, jota voi muokata vaikuttamatta muihin. Kopio ei tule viikkoon itsestään.',
+  ]),
   h2('Laitteen rajaus alayksikköön'),
   para('Jos ohjaajan puhelin on käytössä vain yhdessä alayksikössä, rajaa näkymä: **Yksiköt ja ryhmät** → **Tämä laite** → valitse alayksikkö. Silloin luettelot ja Tänään yksikössä -näkymä näyttävät vain sen asukkaat.'),
 
@@ -127,14 +140,45 @@ const sisalto = [
   ...shot('a01-nyt-kortti'),
   box('vinkki', 'Valitse **Katso asiakkaana** ohjaajan etusivulta, niin näet asiakkaan näkymän muuttamatta mitään.'),
 
+  h1('6. Värikoodaus, kello korteissa ja kotinäytön widget'),
+  para('Kolme asukaskohtaista apua, jotka valitaan kohdassa **Asetukset** → **Asiakkaan asetukset** → **Etusivu**.'),
+  ...shot('o32-asetukset-varit-kello-widget'),
+  h2('Värikoodaus'),
+  para('Jokainen kortti voi kuulua luokkaan. Luokan väri näkyy kortin alareunassa ja isoissa kuvissa sen merkki vasemmassa yläkulmassa. Merkki on muoto, joten luokan tunnistaa myös ilman värejä.'),
+  table(['Luokka', 'Merkki', 'Esimerkkejä valmiista korteista'], [
+    ['Ruokailu', 'lautanen (rengas)', 'Aamupala, Lounas, Välipala, Päivällinen, Iltapala'],
+    ['Hygienia ja pukeutuminen', 'pisara', 'Hampaiden pesu, Pukeutuminen, WC, Käsienpesu'],
+    ['Ulkoilu ja liikunta', 'kolmio', 'Ulkoilu, Liikunta'],
+    ['Lepo ja vapaa-aika', 'kuunsirppi', 'Lepo, Tauko, Nukkumaan, Vapaa-aika, Lukeminen'],
+    ['Toiminta ja työ', 'neliö', 'Aamupiiri, Koulutyö, Askartelu, Musiikki'],
+    ['Lääke ja terveys', 'risti', 'ei valmiita; ohjaaja valitsee'],
+  ], [2700, 2100, 4226]),
+  ...steps([
+    'Valmiilla korteilla on luokka valmiina. Omalle kortille valitse luokka viikko-ohjelman tapahtumassa (**Luokka (värikoodaus)**) tai omien korttien muokkauksessa.',
+    'Luokka koskee korttia tai päiväohjelmaa kaikkialla laitteella ja asukkaiden puhelimissa.',
+    'Nimeä luokat yksikön omilla sanoilla: **Asetukset** → **Puhelimen asetukset** → **Luokat ja värit**.',
+    'Jos värit ovat asukkaalle liikaa, kytke **Näytä luokkien värit ja merkit** pois hänen asetuksistaan.',
+  ]),
+  ...shot('o30-luokka-tapahtumassa'),
+  ...shot('o31-luokat-ja-varit'),
+  h2('Kello korteissa'),
+  para('Pieni kellotaulu kortin oikeassa alakulmassa näyttää, mihin aikaan toiminta alkaa. Siitä on apua, jos asukas tunnistaa kellotaulun mutta ei lue numeroita. Valitse **Kellotaulu** tai **Kellotaulu ja numerot**. Oletuksena kello on pois.'),
+  ...shot('a12-kello-kortissa'),
+  h2('Kotinäytön widget'),
+  para('Asukas näkee puhelimen kotinäytöltä, mitä nyt tehdään ja mitä tulee seuraavaksi, avaamatta sovellusta. Widgettejä on kaksi: pieni (Nyt) ja leveä (Nyt ja Seuraavaksi). Värit ja kello noudattavat asukkaan asetuksia.'),
+  ...steps(['Paina asukkaan puhelimen kotinäyttöä pitkään.', 'Valitse **Widgetit** ja **AikaPolku**.', 'Vedä widget kotinäytölle. Napautus avaa sovelluksen.']),
+  ...shot('w01-widget-levea', 360),
+  ...shot('w02-widget-pieni', 200),
+  box('huom', 'Kotinäytön näkee kuka tahansa, joten widgetissä ei näy vointia, ja lääkkeitä ja terveyttä koskevat kortit näkyvät nimellä **Oma asia**. Widget ei näy lukitusnäytöllä eikä paikan laitteella. Widgetin voi kytkeä pois asukkaan asetuksista.'),
+
   // 6
-  h1('6. Ruokailut ja muistutukset'),
+  h1('7. Ruokailut ja muistutukset'),
   para('Yksikön runko sisältää yhteiset ruokailut. Ne näkyvät kaikille yksikön asukkaille, paitsi kun asukas on päivän toiminnassa tai lomalla.'),
   ...steps(['Avaa **Yksiköt ja ryhmät** ja yksikkö (esim. Villa Metsämaja).', 'Valitse **Ryhmän runko** ja ruokailu.', 'Muuta aikaa, päiviä tai muistutusta ja tallenna.']),
   box('huom', 'Muistutukset vaativat ilmoitusten luvan. Tarkista tila kohdasta **Asetukset** → **Puhelimen asetukset** → muistutusten tila.'),
 
   // 7
-  h1('7. Viikko-ohjelma'),
+  h1('8. Viikko-ohjelma'),
   para('Asiakkaan viikossa näkyvät hänen omat kohtansa ja yksikön, toimintojen ja ryhmien kohdat.'),
   ...steps(['Valitse ohjaajan etusivulta **Asiakkaan viikko**.', 'Valitse päivä ja **+**.', 'Valitse kortti tai päiväohjelma, aika ja toisto (esim. joka maanantai tai vuoroviikoin).', 'Valitse, tuleeko muistutus.', 'Tallenna.']),
   ...shot('o12-asiakkaan-viikko'),
@@ -142,7 +186,7 @@ const sisalto = [
   box('vinkki', 'Lääkkeet ja muut tärkeät asiat merkitään viikko-ohjelmaan muistutuksen kanssa. Asiakas kuittaa ne tehdyiksi, ja kuittaus näkyy vielä seuraavana aamuna.'),
 
   // 8
-  h1('8. Päiväohjelmat'),
+  h1('9. Päiväohjelmat'),
   para('Päiväohjelma ohjaa vaihe vaiheelta, esimerkiksi aamutoimet. Vaiheessa voi olla osavaiheita (Kengät, Takki), oma ääni ja kesto.'),
   h2('Päiväohjelman tekeminen'),
   ...steps(['Valitse **Päiväohjelmat** → uusi ohjelma tai valmis pohja.', 'Valitse kortit vaiheiksi.', 'Järjestä vaiheet vetämällä ja lisää tarvittaessa osavaiheet.', 'Valitse ajat: omaan tahtiin, kesto tai kellonaika.', 'Anna nimi ja tallenna.']),
@@ -163,7 +207,7 @@ const sisalto = [
   ...shot('a02-paivaohjelma'),
 
   // 9
-  h1('9. Ensin–Sitten ja ajastin'),
+  h1('10. Ensin–Sitten ja ajastin'),
   para('Ensin–Sitten näyttää kaksi korttia: ensin tämä, sitten tuo. Ensin-toiminnolle voi asettaa ajan.'),
   ...steps([
     'Valitse ohjaajan etusivulta **Valmistele asiakkaalle** → **Ensin–Sitten**.',
@@ -177,7 +221,7 @@ const sisalto = [
   box('vinkki', 'Kellotaulua voi myös napauttaa (lähin viisi minuuttia) tai vetää (minuutin tarkkuus). Ajan voi asettaa vain ohjaaja, eikä käynnissä olevaa aikaa voi muuttaa.'),
 
   // 10
-  h1('10. Siirtymien tuki'),
+  h1('11. Siirtymien tuki'),
   h2('Pian vaihtuu -ennakkovaroitus'),
   para('Kun aikaa on jäljellä valittu määrä, asiakas näkee rauhallisen kortin: Pian vaihtuu – Seuraavaksi: Lounas.'),
   ...steps(['Avaa **Asetukset** → **Aika** ja valitse ennakkovaroituksen aika.', 'Avaa **Viestit** → **Pian vaihtuu -ennakkovaroitus** ja valitse ääni: ei ääntä (oletus), puheääni tai oma ääni.', 'Äänitä **yleinen äänite** kaikille asiakkaille ja tarvittaessa **tämän asiakkaan oma äänite**, joka korvaa yleisen.']),
@@ -196,7 +240,7 @@ const sisalto = [
   para('Kun aika on loppumassa, asiakas voi pyytää lisäaikaa ohjaajan asettamissa rajoissa (esimerkiksi 3 minuuttia kerran). Kun lisäaika on käytetty, pyyntö näyttää viestin ohjaajalle eikä aika pysähdy.'),
 
   // 11
-  h1('11. Muutokset'),
+  h1('12. Muutokset'),
   para('Muutos on päivän poikkeus: toiminta perutaan, tilalle tulee muuta tai aika muuttuu. Asiakas näkee muutoskortin, joka kertoo, mikä muuttuu ja mikä pysyy samana.'),
   ...steps(['Valitse ohjaajan etusivulta **Tee muutos**.', 'Valitse päivä (tänään, huomenna tai muu päivä) ja **Mikä muuttuu?**', 'Valitse **Peruttu**, **Tilalle muuta** tai **Uusi aika**.', 'Valitse **Lisävalinnat**: syy, äänite ja milloin asiakas näkee muutoksen (heti, aamulla, edellisenä iltana tai vasta tapahtuman aikaan).', 'Valitse **Tallenna muutos**.']),
   ...shot('o18-tee-muutos'),
@@ -206,13 +250,13 @@ const sisalto = [
   para('Ryhmä tänään -kortissa muutos koskee kaikkia paikalla olevia. Päivän toiminnan voi perua tulevalle päivälle valitsemalla päivän ja **Peru kaikki toiminnat tältä päivältä**. Peruttu toiminta tarkoittaa, että asukas on kotona.'),
 
   // 12
-  h1('12. Poissaolot ja lomat'),
+  h1('13. Poissaolot ja lomat'),
   ...steps(['Avaa **Tänään yksikössä** ja valitse **Merkitse loma tai poissaolo**.', 'Valitse asukas, syy (loma, kotona, sairaalassa tai muu) ja aikaväli.', 'Tallenna.']),
   ...shot('o11-loma'),
   para('Lomalla olevalle asukkaalle ei näytetä yksikön ja toimintojen kohtia. Hän näkee omat kohtansa ja kortin, joka kertoo, milloin hän palaa.'),
 
   // 13
-  h1('13. Odotetaan'),
+  h1('14. Odotetaan'),
   para('Odotetaan on tilanteisiin, joissa odotuksen kestoa ei aina tiedä: taksi on myöhässä, ruoka ei ole valmis tai pitää odottaa vuoroa.'),
   ...steps(['Valitse ohjaajan etusivulta **Valmistele asiakkaalle** → **Odotetaan**.', 'Valitse, mitä odotetaan (esim. Lähtö).', 'Valitse kesto tai **Ei tiedossa**.', 'Valitse enintään kolme **Odottaessa voit** -korttia, esimerkiksi musiikki, lukeminen ja lepo.', 'Valitse **Aloita odotus**. Kun lähdetään, valitse **Nyt mennään**.']),
   ...shot('o19-odotetaan'),
@@ -220,7 +264,7 @@ const sisalto = [
   box('miksi', 'Väärä tarkkuus lisää ahdistusta. Siksi odotuksessa ei näytetä sekunteja: kesto tiedossa näkyy hitaasti pienenevänä kaarena, muuten rauhallisena kuviona.'),
 
   // 14
-  h1('14. Oma tila'),
+  h1('15. Oma tila'),
   para('Asiakas voi kertoa, miltä tuntuu (kasvot: hyvä, ihan ok, huono) tai paljonko jaksaa (akku: jaksan hyvin, puolillaan, akku vähissä).'),
   ...steps(['Avaa **Asetukset** → **Viestit** → **Oma tila** ja kytke se käyttöön.', 'Valitse asteikko: kasvot tai akku.', 'Valitse halutessa **Kysy päiväohjelmassa tehtävän jälkeen**. Kysymyksen voi aina ohittaa.']),
   ...shot('o21-asetukset-viestit'),
@@ -228,26 +272,40 @@ const sisalto = [
   box('huom', 'Oma tila on asiakkaan omaa tietoa. Se jää vain asiakkaan laitteelle eikä näy ohjaajan näkymissä. Asiakas voi itse näyttää sen ohjaajalle tai lähettää sen ohjaajalle. Jos asiakas valitsee huonon tai vähäisen jaksamisen, sovellus tarjoaa tauon ja avun.'),
 
   // 15
-  h1('15. Tänään yksikössä'),
+  h1('16. Tänään yksikössä'),
   para('Ohjaajan etusivun **Tänään yksikössä** kertoo yhdellä silmäyksellä, kuka on missä: kotona, päivätoiminnassa, työpajassa tai lomalla, ja kuinka monta on kotona seuraavassa yhteisessä kohdassa (esim. lounaalla).'),
   ...shot('o10-tanaan-yksikossa'),
 
   // 16
-  h1('16. Yksikön yhteys (kokeiluvaihe)'),
-  para('Asiakkaan laite voi lähettää viestin ohjaajan puhelimeen samassa wifi-verkossa. Asiakas päättää joka kerta itse: viestien yhteydessä on **Kerro ohjaajalle** -painike. Asiakkaan valinta lähtee ohjaajalle tiedoksi.'),
-  h2('Ohjaajan puhelin'),
-  ...steps(['Avaa **Asetukset** → **Puhelimen asetukset** → **Yksikön yhteys**.', 'Kytke päälle **Vastaanota asiakkaiden viestit tällä puhelimella** ja salli ilmoitukset.']),
-  h2('Asiakkaan laite'),
-  ...steps(['Avaa samassa verkossa **Yksikön yhteys** asiakkaan laitteessa ohjaajan roolissa.', 'Valitse **Liitä ohjaajan puhelimeen** ja ohjaajan puhelin luettelosta.', 'Vertaa koodia: molemmissa laitteissa pitää näkyä sama kuusinumeroinen koodi.', 'Hyväksy liitos ohjaajan puhelimessa.']),
+  h1('17. Paikan laite ja asukkaiden puhelimet'),
+  para('Jokaisella paikalla (esimerkiksi koti, päivätoiminta, työpaja) voi olla oma **paikan laite**: tabletti tai puhelin, jolla ohjaajat suunnittelevat ja tekevät muutokset. Kunkin asukkaan omat tiedot siirtyvät siitä hänen puhelimeensa samassa wifi-verkossa. Asukkaan puhelimeen tulevat vain hänen omat tietonsa, ei muiden asukkaiden.'),
+  box('miksi', 'Tieto ei lähde talosta: siirto kulkee yksikön omassa verkossa salattuna, eikä mitään tallenneta pilveen.'),
+  h2('Paikan laitteen käyttöönotto'),
+  ...steps([
+    'Ota laitteessa käyttöön näytön lukitus (PIN-koodi, kuvio tai sormenjälki). Ilman sitä ohjaajan tila ei aukea paikan laitteella.',
+    'Avaa **Asetukset** → **Puhelimen asetukset** → **Yksikön yhteys**.',
+    'Kytke päälle **Tämä laite on paikan laite**.',
+  ]),
   ...shot('o24-yhteys'),
-  box('huom', 'Viestit salataan ja ne menevät vain liitettyihin laitteisiin. Vierasverkoissa laitteet eivät aina näe toisiaan; silloin asiakas näyttää viestin ohjaajalle. Ominaisuus on kokeiluvaiheessa.'),
-  h2('Kun yhteys katkeaa'),
-  bullet('Jos ohjaajan puhelinta ei tavoiteta, asiakas näkee: **Lähtee, kun yhteys palaa**. Viesti jää jonoon ja lähtee itsestään, kun sovellus avataan tai yhteys palaa.'),
-  bullet('Jonossa viesti on enintään 20 minuuttia. Vanha avunpyyntö ei ole enää ajankohtainen, joten asiakasta ohjataan aina myös näyttämään viesti ohjaajalle.'),
-  bullet('Ohjaajan puhelin ei näytä samaa viestiä kahdesti. **Yksikön yhteys** -kohdassa näkyy, milloin kukin asiakkaan laite viimeksi lähetti viestin.'),
+  h2('Asukkaan puhelimen liittäminen'),
+  para('Asukkaan puhelin liitetään kerran kuhunkin paikkaan.'),
+  ...steps([
+    'Avaa asukkaan puhelimessa samassa verkossa ohjaajan roolissa **Asetukset** → **Yksikön yhteys** → **Liitä ohjaajan puhelimeen**.',
+    'Paikan laitteeseen tulee kysymys **Liitetäänkö laite?**. Vertaa koodia: molemmissa laitteissa pitää näkyä sama koodi.',
+    'Valitse, kenen asukkaan puhelin on kyseessä, ja **Hyväksy**.',
+  ]),
+  h2('Muutokset siirtyvät itsestään'),
+  bullet('Kun asukkaan puhelin on samassa verkossa ja sovellus auki, se hakee omat tietonsa heti ja sen jälkeen noin minuutin välein.'),
+  bullet('Käynnissä oleva päiväohjelma tai ajastin ei vaihdu kesken. Uudet tiedot tulevat, kun se on päättynyt.'),
+  bullet('Paikan laitteessa näkyy asukkaittain, onko viimeisin muutos perillä (**perillä klo …**) vai odottaako se vielä.'),
+  bullet('Asukkaan puhelimessa voi hakea tiedot heti: **Hae tiedot nyt**.'),
+  h2('Asukkaan viestit ohjaajalle'),
+  para('Asukkaan puhelin voi lähettää viestin (apu, tauko, lisäaika, oma tila) liitettyyn ohjaajan puhelimeen. Asukas päättää joka kerta itse **Kerro ohjaajalle** -painikkeella. Ohjaajan puhelimessa kytketään päälle **Vastaanota asiakkaiden viestit tällä puhelimella**.'),
+  bullet('Jos ohjaajan puhelinta ei tavoiteta, asukas näkee: **Lähtee, kun yhteys palaa**. Viesti on jonossa enintään 20 minuuttia, joten asukasta ohjataan aina myös näyttämään viesti ohjaajalle.'),
+  box('huom', 'Organisaatioiden ja vierasverkkojen wifi voi estää laitteita näkemästä toisiaan (client isolation). Tarkista yksikön IT:ltä ennen käyttöönottoa, että samassa verkossa olevat laitteet näkevät toisensa.'),
 
   // 17
-  h1('17. Tuen taso'),
+  h1('18. Tuen taso'),
   para('Tuen taso auttaa vähentämään kehotuksia askel kerrallaan, kun asukas itsenäistyy. Taso muuttaa vain kehotuksia: ennakkovaroitusta, Pian vaihtuu -ääntä ja sitä, näkyykö seuraava tehtävä kuvana vai tekstinä. Tieto siitä, mitä nyt tehdään, ja päivän rakenne pysyvät ennallaan.'),
   table(['Taso', 'Ennakkovaroitus', 'Pian vaihtuu -ääni', 'Seuraava tehtävä'], [
     ['Paljon tukea', '5 min', 'Kyllä', 'Kuvana'],
@@ -260,7 +318,7 @@ const sisalto = [
   box('miksi', 'Tukea on hyvä suunnitella vähennettäväksi heti alusta, jotta se ei muutu riippuvuudeksi. Vaihda tasoa yhdessä asukkaan kanssa. Sovellus ei koskaan vaihda tasoa itse: se vain näyttää, miten pyynnöt ovat muuttuneet, jos käytön seuranta on päällä.'),
 
   // 18
-  h1('18. Käytön seuranta (pilotti)'),
+  h1('19. Käytön seuranta (pilotti)'),
   para('Seuranta tuottaa pilotin arviointiin lukuja: kuinka usein sovellusta käytetään ja kuinka usein asukas pyytää apua, taukoa tai lisäaikaa. Seuranta on oletuksena pois.'),
   ...steps(['Avaa **Asetukset** → **Käytön seuranta (pilotti)**.', 'Kytke **Seuranta käytössä**. Aloituspäivä tallentuu lähtötilanteen vertailuun.', 'Seuraa viikon koostetta asukkaittain.', 'Vie kooste pilotin arviointiin: **Vie kooste (CSV, ilman nimiä)**.']),
   ...shot('o27-kayton-seuranta'),
@@ -270,14 +328,31 @@ const sisalto = [
   box('huom', 'Sovi seurannasta asukkaan tai hänen edustajansa kanssa ennen käyttöönottoa. Koosteessa asukkaat ovat tunnuksina (A1, A2 …), ja tunnusten vastineet näkyvät vain laitteessa. Tiedot säilyvät 180 päivää eivätkä tule vientiin.'),
 
   // 17
-  h1('19. Tietojen vienti ja tuonti'),
+  h1('20. Tietojen vienti ja tuonti'),
   para('Päiväohjelmat, kortit ja viikko-ohjelman voi siirtää toiseen laitteeseen tai antaa kollegalle pohjaksi.'),
   ...steps(['Avaa **Asetukset** → **Vienti ja tuonti** → **Vie tiedostoksi**.', 'Valitse laajuus: kaikki asiakkaat, tämä asiakas tai valitut päiväohjelmat.', 'Valitse tarvittaessa **Ilman henkilötietoja** ja **Suojaa salasanalla**.', 'Jaa tai tallenna tiedosto. Tuo se toisessa laitteessa: **Tuo tiedostosta**.']),
   ...shot('o25-vienti'),
   box('huom', 'Vientitiedosto voi sisältää asiakkaan nimen, kuvia ja äänitteitä. Mukaan eivät tule kuittaukset, päivän muutokset, oma tila eikä PIN-koodi.'),
 
+  h1('21. Laitteen tiedot ja varmuuskopio'),
+  para('Paikan laitteella on koko yksikön tiedot. Jos laite hajoaa tai katoaa, uusi laite palautetaan varmuuskopiosta. Toiminnot ovat kohdassa **Asetukset** → **Puhelimen asetukset** → **Laitteen tiedot**.'),
+  h2('Automaattinen varmuuskopio'),
+  ...steps([
+    'Valitse **Valitse kansio ja ota käyttöön** ja kansio, esimerkiksi muistikortti tai USB-tikku.',
+    'Anna varmuuskopion salasana. Säilytä se yksikön ohjeiden mukaan erillään laitteesta.',
+    'Laite tekee salatun varmuuskopion kerran vuorokaudessa. Seitsemän uusinta säilyy. Varmuuskopion voi tehdä myös heti: **Tee varmuuskopio nyt**.',
+  ]),
+  h2('Palautus uuteen laitteeseen'),
+  ...steps([
+    'Asenna AikaPolku uuteen laitteeseen.',
+    'Valitse **Palauta laitteen varmuuskopio**, varmuuskopiotiedosto ja anna salasana.',
+    'Palautus korvaa laitteen tiedot ja käynnistää sovelluksen uudelleen. Asukkaiden puhelimet jatkavat tiedon hakua ilman uutta liittämistä.',
+  ]),
+  h2('Kaikkien tietojen poisto'),
+  para('Kun laite poistuu käytöstä, valitse **Poista kaikki tiedot tästä laitteesta** ja kirjoita vahvistukseksi POISTA. Asukkaat, ohjelmat, kuvat, äänitteet, liitokset ja asetukset poistetaan pysyvästi.'),
+
   // 18
-  h1('20. Tietosuoja'),
+  h1('22. Tietosuoja'),
   table(['Tieto', 'Missä se on', 'Kuka sen näkee'], [
     ['Asiakkaan päivä, ohjelmat, kortit, kuvat ja äänitteet', 'Asiakkaan laitteessa sovelluksen omassa tallennuksessa', 'Asiakas ja laitteen ohjaaja'],
     ['Oma tila', 'Vain asiakkaan laitteessa (eilinen ja tämä päivä)', 'Asiakas; ohjaaja vain, jos asiakas näyttää tai lähettää sen'],
@@ -286,9 +361,15 @@ const sisalto = [
     ['Käytön seuranta (lukumäärät)', 'Laitteessa 180 päivää, oletuksena pois', 'Ohjaaja; kooste tunnuksin ilman nimiä'],
     ['Lähtevät viestit jonossa', 'Asiakkaan laitteessa enintään 20 minuuttia', 'Ei kukaan ennen lähetystä'],
     ['Vientitiedosto', 'Siellä, minne se tallennetaan tai jaetaan', 'Vastaanottaja; voi suojata salasanalla'],
+    ['Asukkaan tiedot hänen puhelimessaan', 'Vain hänen omat tietonsa (paikan laitteelta salattuna samassa verkossa)', 'Asukas'],
+    ['Laitteen varmuuskopio', 'Valitussa kansiossa salattuna, seitsemän uusinta', 'Vain salasanan tietävä'],
+    ['Kotinäytön widget', 'Asukkaan puhelimen kotinäytöllä (ei lukitusnäytöllä)', 'Kuka tahansa puhelimen näkevä; ei vointia, lääkekortit nimellä Oma asia'],
   ], [3000, 3100, 2926]),
   spacer(),
-  bullet('Sovellus ei käytä pilvipalvelua eikä lähetä tietoja internetiin.'),
+  bullet('Sovellus ei käytä pilvipalvelua eikä lähetä tietoja internetiin. Siirto paikan laitteelta asukkaan puhelimeen kulkee yksikön omassa verkossa salattuna.'),
+  bullet('Paikan laitteella ohjaajan tila vaatii laitteen näytön lukituksen, jolloin Android salaa laitteen tiedot.'),
+  bullet('Ohjaajan näkymistä ei voi ottaa kuvakaappausta, eivätkä ne näy viimeisimpien sovellusten listassa. Laiteliitosten avaimet on salattu laitteen suojattuun avainvarastoon.'),
+  bullet('Ilmoitukset eivät näytä sisältöä lukitusnäytöllä.'),
   bullet('Androidin automaattinen varmuuskopio on pois päältä, joten tiedot eivät siirry Googlen pilveen. Laitteen vaihto tehdään sovelluksen omalla viennillä ja tuonnilla.'),
   bullet('Kuvaa esineitä ja paikkoja, ei muita asukkaita. Ohjaajan kuvan voi käyttää vain hänen suostumuksellaan.'),
   bullet('Kun asiakas poistetaan, hänen tietonsa ja vain hänen käyttämänsä kuvat ja äänitteet poistetaan laitteesta.'),
@@ -301,7 +382,7 @@ const sisalto = [
   bullet('**Kuvat ja äänitteet:** asiakkaan suostumus, ja muita asukkaita ei kuvata.'),
 
   // 19
-  h1('21. Vianetsintä'),
+  h1('23. Vianetsintä'),
   table(['Ongelma', 'Ratkaisu'], [
     ['Muistutus ei tule', 'Tarkista ilmoitusten lupa ja että puhelin ei ole Älä häiritse -tilassa. Katso tila: Asetukset → muistutusten tila.'],
     ['Pian vaihtuu -ääni ei kuulu', 'Ääni ei soi äänettömällä tai Älä häiritse -tilassa. Tarkista, että ennakkovaroitus on päällä (Aika) ja ääni valittu (Viestit).'],
@@ -310,6 +391,9 @@ const sisalto = [
     ['Ohjaajan puhelinta ei löydy liitettäessä', 'Laitteiden on oltava samassa wifissä ja vastaanoton päällä. Vierasverkko voi estää laitteiden näkymisen.'],
     ['Viesti ei mennyt perille', 'Asiakas näyttää viestin ohjaajalle. Viesti lähtee itsestään, kun yhteys palaa (enintään 20 min). Tarkista ohjaajan puhelimen vastaanotto ja verkko.'],
     ['Kuva näkyy väärin päin', 'Ota kuva uudelleen sovelluksen Ota kuva -painikkeella; sovellus kääntää kuvan oikein päin.'],
+    ['Muutos ei tule asukkaan puhelimeen', 'Puhelimen pitää olla samassa verkossa ja sovelluksen auki. Käynnissä oleva ohjelma ei vaihdu kesken. Kokeile Hae tiedot nyt. Tarkista, ettei verkko estä laitteita näkemästä toisiaan.'],
+    ['Ohjaajan tila ei aukea paikan laitteella', 'Ota laitteen näytön lukitus käyttöön (Avaa lukituksen asetukset).'],
+    ['Widget ei päivity', 'Widget päivittyy toiminnon alkaessa ja kun sovellus suljetaan. Avaa ja sulje sovellus. Tarkista, ettei widget ole kytketty pois asukkaan asetuksista.'],
   ], [3200, 5826]),
 ];
 
