@@ -202,8 +202,15 @@ if ($laitetesti -and $code -eq 0) {
     Write-Host "Testit: $luokat"
     & $adb logcat -c | Out-Null
     $alkuT = Get-Date
+    # Kuva-ajon eteneminen tiedostoon heti (näkyy, vaikka ajo keskeytettäisiin): tunniste AikaPolkuKuvat.
+    $etenemisLoki = $null
+    if ($kuvat) {
+        $etenemisLoki = Start-Process -FilePath $adb -ArgumentList 'logcat', '-v', 'time', '-s', 'AikaPolkuKuvat:V', 'AndroidRuntime:E', 'TestRunner:V' `
+            -RedirectStandardOutput "$logs\kuvat-eteneminen.txt" -RedirectStandardError "$logs\kuvat-eteneminen-virheet.txt" -WindowStyle Hidden -PassThru
+    }
     & $adb shell am instrument -w -r -e class $luokat fi.aikapolku.app.test/androidx.test.runner.AndroidJUnitRunner 2>&1 | ForEach-Object { $_; "$_" | Out-File $tulos -Append -Encoding utf8 }
     $kestoT = [int]((Get-Date) - $alkuT).TotalSeconds
+    if ($etenemisLoki) { Start-Sleep -Seconds 1; Stop-Process -Id $etenemisLoki.Id -Force -ErrorAction SilentlyContinue }
     if ($kuvat) {
         # Kuvat puhelimesta PC:lle (vanhat kuvat korvataan) ja puhelimesta pois.
         $kuvaKansio = "$repo\materiaalit\kuvat"

@@ -72,6 +72,9 @@ import java.time.LocalDateTime
 import java.time.temporal.TemporalAdjusters
 import org.json.JSONArray
 import org.json.JSONObject
+import android.util.Log
+import androidx.test.espresso.IdlingPolicies
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -119,18 +122,25 @@ class KuvakaappauksetDeviceTest {
 
     /** Yksi kuva: virhe ei kaada ajoa, vaan ruutu tallentuu nimellä <id>-VIRHE. */
     private fun shot(id: String, block: () -> Unit) {
+        Log.i(TAG, "alku $id")
+        val started = SystemClock.elapsedRealtime()
         try {
             block()
             capture(id)
             ok += id
+            Log.i(TAG, "ok $id ${(SystemClock.elapsedRealtime() - started) / 1000} s")
         } catch (e: Throwable) {
-            failed += "$id: ${e.javaClass.simpleName}: ${e.message?.lineSequence()?.firstOrNull()?.take(160)}"
-            runCatching { capture("$id-VIRHE") }
+            val reason = "${e.javaClass.simpleName}: ${e.message?.lineSequence()?.firstOrNull()?.take(160)}"
+            failed += "$id: $reason"
+            Log.w(TAG, "virhe $id ${(SystemClock.elapsedRealtime() - started) / 1000} s $reason")
+            // Kuva virheestä ilman Composen odotusta (näkymä ei ehkä rauhoitu koskaan).
+            runCatching { shell("screencap -p $DIR/$id-VIRHE.png") }
         }
     }
 
     /** Uusi käynnistys roolissa (tila alusta, ettei edellinen kuva vaikuta). */
     private fun launch(caregiver: Boolean, block: () -> Unit) {
+        Log.i(TAG, "kaynnistys ${if (caregiver) "ohjaaja" else "asiakas"}")
         if (caregiver) RoleSession.toCaregiver() else RoleSession.toClient()
         try {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -224,6 +234,10 @@ class KuvakaappauksetDeviceTest {
 
     @Test
     fun kuvakaappaukset_oppaaseen_ja_esitykseen() {
+        // Näkymä, joka ei rauhoitu, ei saa jumittaa koko ajoa: odotus enintään 20 s, sitten virhekuva.
+        IdlingPolicies.setMasterPolicyTimeout(20, TimeUnit.SECONDS)
+        IdlingPolicies.setIdlingResourceTimeout(20, TimeUnit.SECONDS)
+        Log.i(TAG, "ajo alkaa")
         PrefsSnapshot.restoreLeftover(ctx)
         PrefsSnapshot.save(ctx)
         try {
@@ -253,6 +267,8 @@ class KuvakaappauksetDeviceTest {
         }
         val report = "Kuvat OK ${ok.size}: ${ok.joinToString(", ")}" +
             if (failed.isEmpty()) "" else "\nEPÄONNISTUI ${failed.size}:\n" + failed.joinToString("\n")
+        Log.i(TAG, "ajo valmis: ok ${ok.size}, virheet ${failed.size}")
+        failed.forEach { Log.w(TAG, "EPÄONNISTUI $it") }
         println(report)
         assertTrue(report, failed.isEmpty())
     }
@@ -475,6 +491,7 @@ class KuvakaappauksetDeviceTest {
 
     companion object {
         const val DIR = "/sdcard/Pictures/AikaPolku-kuvat"
+        const val TAG = "AikaPolkuKuvat"
     }
 }
 
