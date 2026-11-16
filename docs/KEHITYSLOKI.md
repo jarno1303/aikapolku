@@ -480,3 +480,8 @@
 - Odotetaan: vaihtoehdon nimi pienenee mahtumaan ("Lukemin…"); ohjaajan aloitusikkunan valinnat rivittyvät vierityksen sijaan.
 - Tapahtuman kellonaika: tunti- ja minuuttipainikkeet mahtuvat kapeaan ikkunaan.
 - Testitila (vapaa Asiakas/Ohjaaja-vaihto) oletuksena pois, uusi asetusavain (vanha "päällä" ei siirry). Ohjaajan etusivulla muistutus, jos PIN-lukitus ei ole käytössä.
+
+## 16.11.2026 – Paikan laite (A5), vaihe 1: asukaspaketti
+- Suunnitelma: docs/PAIKAN_LAITE_SUUNNITELMA.md (paikan laite, päällä/pois paikkakohtaisesti, mitä siirtyy, automaattinen siirto + Lähetä nyt, liitos paikkaan).
+- link/ResidentPackage.kt: asukkaan paketti paikan laitteella (viikko, ohjelmat, kortit, muutokset, odotus, asetukset, asukkaan ryhmät ja yksiköt vain hänen osaltaan, kuvat ja äänet tiivisteellä) ja purku asukkaan puhelimeen. Muiden asukkaiden tiedot eivät siirry; asukkaan omat tiedot (oma tila, käytön seuranta, kuittaukset) säilyvät.
+- Testi AsukaspakettiTest: sama päivä asukkaan puhelimessa, ei toisen asukkaan tietoja, kuvat vain kerran, paikan ryhmien korvaus.

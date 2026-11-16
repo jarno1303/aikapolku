@@ -386,6 +386,21 @@ internal class GroupStore(context: Context) {
         saveAbsences(absences().mapValues { (_, days) -> days.mapValues { it.value - memberId }.filterValues { it.isNotEmpty() } })
     }
 
+    /**
+     * Asukkaan puhelimessa (A5): paikan paketin muutokset ja poissaolot korvaavat ryhmien
+     * [removeIds] aiemmat; lomat korvataan kokonaan (asukkaan puhelimessa vain hänen omansa).
+     */
+    fun replaceShared(
+        removeIds: Set<String>,
+        changes: Map<String, List<EventChange>>,
+        absences: Map<String, Map<LocalDate, Set<String>>>,
+        leaves: List<Leave>
+    ) {
+        saveChanges(allChanges().filterKeys { it !in removeIds } + changes)
+        saveAbsences(absences().filterKeys { it !in removeIds } + absences)
+        prefs.edit().putString(KEY_LEAVES, Leaves.encode(leaves)).commit()
+    }
+
     private fun saveAbsences(value: Map<String, Map<LocalDate, Set<String>>>) {
         prefs.edit().putString(KEY_ABSENCES, encodeAbsences(value)).commit()
     }
