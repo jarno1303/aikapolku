@@ -273,7 +273,7 @@ internal fun HomeSettings() {
                     .padding(5.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CardPhoto(name, "builtin:$id", Modifier.size(54.dp).clip(RoundedCornerShape(12.dp)))
+                CardPhoto(name, "builtin:$id", Modifier.size(54.dp).clip(RoundedCornerShape(12.dp)), showCategory = false)
                 Text(name, fontSize = 13.sp, maxLines = 1, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
             }
         }

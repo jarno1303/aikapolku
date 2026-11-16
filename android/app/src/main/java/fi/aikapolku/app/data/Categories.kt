@@ -72,8 +72,8 @@ internal object CategoryStore {
         return "n:${norm(name)}"
     }
 
-    /** Päiväohjelman tunnus (nimi). */
-    fun programKey(name: String): String = "n:${norm(name)}"
+    /** Päiväohjelman tunnus (nimi); oma etuliite, jottei samanniminen kortti ja ohjelma sekoitu. */
+    fun programKey(name: String): String = "p:${norm(name)}"
 
     /** Viimeksi luettu valintojen JSON (kortteja piirretään listoissa paljon; ei jäsennetä joka kerta). */
     @Volatile private var cached: Pair<String, JSONObject>? = null
@@ -91,7 +91,7 @@ internal object CategoryStore {
 
     /** Ohjaajan valinta tunnukselle: null = ei valintaa (oletus), [Result.None] = valittu "ei luokkaa". */
     private fun explicit(map: JSONObject, key: String): Result? = when {
-        key == "n:" || !map.has(key) -> null
+        key == "n:" || key == "p:" || !map.has(key) -> null
         map.optString(key) == NONE -> Result.None
         else -> Category.from(map.optString(key))?.let { Result.Some(it) }
     }
@@ -107,7 +107,7 @@ internal object CategoryStore {
      */
     fun resolve(context: Context, name: String, imagePath: String = "", title: String? = null, texts: Texts? = null): Category? {
         val map = readMap(context)
-        if (!title.isNullOrBlank() && title != name) {
+        if (!title.isNullOrBlank()) {
             when (val r = explicit(map, programKey(title))) {
                 is Result.Some -> return r.category
                 Result.None -> return null
@@ -125,8 +125,9 @@ internal object CategoryStore {
     }
 
     /** Ohjaajan valinta: [category] null = ei luokkaa. */
+    @Synchronized
     fun set(context: Context, key: String, category: Category?) {
-        if (key == "n:") return
+        if (key == "n:" || key == "p:") return
         val map = map(context).put(key, category?.id ?: NONE)
         prefs(context).edit().putString(KEY_MAP, map.toString()).apply()
         revision++
@@ -139,7 +140,22 @@ internal object CategoryStore {
     private fun names(context: Context): JSONObject =
         runCatching { JSONObject(prefs(context).getString(KEY_NAMES, null) ?: "{}") }.getOrDefault(JSONObject())
 
+    /**
+     * Kortti tai ohjelma nimettiin uudelleen: ohjaajan valinta siirtyy uudelle nimelle, ellei
+     * uudella nimellä ole jo omaa valintaa.
+     */
+    @Synchronized
+    fun rekey(context: Context, oldKey: String, newKey: String) {
+        if (oldKey == newKey || newKey == "n:" || newKey == "p:") return
+        val map = map(context)
+        if (!map.has(oldKey) || map.has(newKey)) return
+        map.put(newKey, map.optString(oldKey))
+        prefs(context).edit().putString(KEY_MAP, map.toString()).apply()
+        revision++
+    }
+
     /** Uusi nimi luokalle; tyhjä palauttaa oletusnimen. */
+    @Synchronized
     fun rename(context: Context, category: Category, name: String) {
         val names = names(context)
         val clean = name.trim().take(30)
@@ -152,15 +168,37 @@ internal object CategoryStore {
     fun enabled(context: Context, profileId: String = ProfileStore.currentId(context)): Boolean =
         ProfileScope.prefs(context, ProfileScope.RUN_PREFS, profileId).getBoolean(ENABLED_KEY, true)
 
+    @Synchronized
     fun setEnabled(context: Context, on: Boolean) {
         ProfileScope.prefs(context, ProfileScope.RUN_PREFS).edit().putBoolean(ENABLED_KEY, on).apply()
         revision++
     }
 
-    /** Siirto asukkaan puhelimeen (paikan laitteen paketti): valinnat ja nimet. */
-    fun export(context: Context): JSONObject = JSONObject().put(KEY_MAP, map(context)).put(KEY_NAMES, names(context))
+    /**
+     * Siirto asukkaan puhelimeen (paikan laitteen paketti): valinnat ja nimet. [residentText] =
+     * asukkaan paketin tiedot tekstinä: muiden asukkaiden omien korttien ja ohjelmien nimiä
+     * ei viedä (valmiiden korttien valinnat menevät aina). null = kaikki (laitteen varmuuskopio).
+     */
+    fun export(context: Context, residentText: String? = null): JSONObject {
+        val all = map(context)
+        val map = if (residentText == null) all else {
+            val text = residentText.lowercase(Locale.ROOT)
+            JSONObject().also { out ->
+                all.keys().forEach { key ->
+                    val keep = key.startsWith("b:") || key.substring(2).let { it.isNotBlank() && text.contains(it) }
+                    if (keep) out.put(key, all.optString(key))
+                }
+            }
+        }
+        return JSONObject().put(KEY_MAP, map).put(KEY_NAMES, names(context))
+    }
 
-    /** Paikan laitteen luokat: paikan valinnat ja nimet voittavat, laitteen omat muut valinnat säilyvät. */
+    /**
+     * Paikan laitteen luokat: paikan valinnat voittavat, laitteen omat muut valinnat säilyvät.
+     * Luokkien nimet tulevat kokonaan paikalta (yksikön yhteiset sanat). Näkymät päivittyvät
+     * PlaceSyncin kautta pääsäikeessä (SettingsRevision), joten tämä ei kirjoita Composen tilaa.
+     */
+    @Synchronized
     fun importFrom(context: Context, json: JSONObject?) {
         json ?: return
         val map = map(context)
@@ -176,6 +214,5 @@ internal object CategoryStore {
             }
         } ?: names(context)
         prefs(context).edit().putString(KEY_MAP, map.toString()).putString(KEY_NAMES, names.toString()).apply()
-        revision++
     }
 }

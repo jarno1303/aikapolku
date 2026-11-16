@@ -224,7 +224,7 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
                 Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
                     Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            CardPhoto(meal.name, "builtin:${meal.cardId}", Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)))
+                            CardPhoto(meal.name, "builtin:${meal.cardId}", Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)), showCategory = false)
                             Text(meal.name, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                             Switch(checked = meal.weekday != null || meal.weekend != null, onCheckedChange = { on ->
                                 update(if (on) meal.copy(weekday = meal.weekday ?: "12:00", weekend = meal.weekend ?: "12:00") else meal.copy(weekday = null, weekend = null))
@@ -435,7 +435,7 @@ internal fun UnitWizard(onDone: () -> Unit, onCancel: () -> Unit) {
                         events.forEach { e ->
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 Text(if (e.until.isNotBlank()) rangeText(e.time, e.until) else formatClock(e.time), fontSize = 15.sp, color = AppColors.Muted)
-                                CardPhoto(e.cardName, e.cardPhoto, Modifier.size(36.dp).clip(RoundedCornerShape(8.dp)))
+                                CardPhoto(e.cardName, e.cardPhoto, Modifier.size(36.dp).clip(RoundedCornerShape(8.dp)), showCategory = false)
                                 Text(e.cardName, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }

@@ -66,6 +66,8 @@ internal fun CardLibraryDialog(
     var errorMessage by remember { mutableStateOf("") }
     // Luokka (värikoodaus): null = ei valintaa (oletus), muuten ohjaajan valinta.
     var categoryChoice by remember { mutableStateOf<Pair<Boolean, fi.aikapolku.app.data.Category?>>(false to null) }
+    // Muokattavan kortin alkuperäinen nimi: nimen vaihtuessa luokka siirtyy uudelle nimelle.
+    var originalName by remember { mutableStateOf("") }
     var deleteCandidate by remember {
         mutableStateOf<CardItem?>(null)
     }
@@ -79,6 +81,7 @@ internal fun CardLibraryDialog(
         autoPlayVoice = card?.autoPlayVoice ?: false
         dayTime = card?.dayTime ?: DayTime.ANYTIME
         categoryChoice = false to null
+        originalName = card?.name ?: ""
         errorMessage = ""
         editing = true
     }
@@ -311,11 +314,14 @@ internal fun CardLibraryDialog(
                             autoPlayVoice = autoPlayVoice,
                             dayTime = dayTime
                         )
+                        val newKey = fi.aikapolku.app.data.CategoryStore.key(savedCard.name, savedCard.photoPath) { context.getString(it) }
                         if (categoryChoice.first) {
-                            fi.aikapolku.app.data.CategoryStore.set(
+                            fi.aikapolku.app.data.CategoryStore.set(context, newKey, categoryChoice.second)
+                        } else if (editingId != null && originalName.isNotBlank() && originalName != savedCard.name) {
+                            fi.aikapolku.app.data.CategoryStore.rekey(
                                 context,
-                                fi.aikapolku.app.data.CategoryStore.key(savedCard.name, savedCard.photoPath) { context.getString(it) },
-                                categoryChoice.second
+                                fi.aikapolku.app.data.CategoryStore.key(originalName, savedCard.photoPath) { context.getString(it) },
+                                newKey
                             )
                         }
 

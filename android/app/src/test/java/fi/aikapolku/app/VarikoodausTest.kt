@@ -4,7 +4,13 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import fi.aikapolku.app.data.Category
 import fi.aikapolku.app.data.CategoryStore
+import fi.aikapolku.app.backup.BackupArchive
+import fi.aikapolku.app.backup.BackupFormat
+import fi.aikapolku.app.data.EventKind
 import fi.aikapolku.app.data.ProfileStore
+import fi.aikapolku.app.data.WeekEvent
+import fi.aikapolku.app.data.WeekPlan
+import fi.aikapolku.app.data.WeekStore
 import fi.aikapolku.app.link.ResidentPackage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -55,6 +61,16 @@ class VarikoodausTest {
     }
 
     @Test
+    fun `samanniminen kortti ja ohjelma eivat sekoitu ja nimen vaihto siirtaa luokan`() {
+        CategoryStore.set(context, CategoryStore.programKey("Lounas"), Category.ACTIVITY)
+        assertEquals(Category.ACTIVITY, resolve("Lounas", "builtin:lunch_meal", title = "Lounas"))
+        assertEquals(Category.MEAL, resolve("Lounas", "builtin:lunch_meal"))
+        CategoryStore.set(context, CategoryStore.key("Kauppareissu", "", texts), Category.OUTDOOR)
+        CategoryStore.rekey(context, CategoryStore.key("Kauppareissu", "", texts), CategoryStore.key("Kauppa", "", texts))
+        assertEquals(Category.OUTDOOR, resolve("Kauppa"))
+    }
+
+    @Test
     fun `paivaohjelman oma luokka voittaa ensimmaisen kortin luokan`() {
         assertEquals(Category.MEAL, resolve("Aamupala", "builtin:breakfast", title = "Aamutoimet"))
         CategoryStore.set(context, CategoryStore.programKey("Aamutoimet"), Category.HYGIENE)
@@ -83,10 +99,20 @@ class VarikoodausTest {
     @Test
     fun `luokat siirtyvat asukkaan puhelimeen ja muuttavat paketin version`() {
         val aino = ProfileStore.add(context, "Aino").id
+        WeekStore(context, aino).save(WeekPlan(listOf(
+            WeekEvent("s", 1, 0, "18:00", EventKind.CARD, cardName = "Sauna"),
+            WeekEvent("k", 2, 0, "10:00", EventKind.CARD, cardName = "Kauppa")
+        )))
         CategoryStore.set(context, CategoryStore.key("Sauna", "", texts), Category.HYGIENE)
+        // Toisen asukkaan oma kortti ei kuulu Ainon pakettiin (tietosuoja).
+        CategoryStore.set(context, CategoryStore.key("Eeron lääke", "", texts), Category.HEALTH)
         CategoryStore.rename(context, Category.ACTIVITY, "Työtoiminta")
         val before = ResidentPackage.version(context, aino)
         val bytes = ResidentPackage.build(context, aino).bytes
+        val data = org.json.JSONObject(String(BackupArchive.unzip(bytes).getValue(BackupFormat.DATA), Charsets.UTF_8))
+        val sent = data.getJSONObject("categories").getJSONObject("map")
+        assertTrue(sent.has("n:sauna"))
+        assertFalse("Muiden asukkaiden kortit eivät lähde", sent.has("n:eeron lääke"))
 
         // Asukkaan puhelimessa oma valinta toiselle kortille säilyy, paikan valinnat voittavat.
         CategoryStore.set(context, CategoryStore.key("Sauna", "", texts), null)

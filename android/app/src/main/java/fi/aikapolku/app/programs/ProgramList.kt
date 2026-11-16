@@ -121,7 +121,7 @@ internal fun ProgramListView(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 val first = program.steps.firstOrNull()
-                CardPhoto(first?.name ?: program.name, first?.photo ?: "", Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)))
+                CardPhoto(first?.name ?: program.name, first?.photo ?: "", Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)), title = program.name)
                 Column(modifier = Modifier.weight(1f)) {
                     Text(program.name, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Text(

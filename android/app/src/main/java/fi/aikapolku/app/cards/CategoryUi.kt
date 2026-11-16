@@ -62,11 +62,11 @@ internal fun categoryName(category: Category): String {
 @Composable
 internal fun shownCategory(name: String, imagePath: String, title: String? = null): Category? {
     val context = LocalContext.current
-    // Luetaan tilat, jotta näkymä päivittyy valinnan, asetuksen tai profiilin vaihtuessa.
-    CategoryStore.revision
-    SettingsRevision.value
-    if (!CategoryStore.enabled(context)) return null
-    return CategoryStore.resolve(context, name, imagePath, title) { context.getString(it) }
+    // Lasketaan uudelleen vain, kun kortti, valinta tai asetus muuttuu (listoissa paljon kortteja).
+    return androidx.compose.runtime.remember(name, imagePath, title, CategoryStore.revision, SettingsRevision.value) {
+        if (!CategoryStore.enabled(context)) null
+        else CategoryStore.resolve(context, name, imagePath, title) { context.getString(it) }
+    }
 }
 
 /**
@@ -80,7 +80,7 @@ internal fun Modifier.categoryMark(category: Category?): Modifier =
         val small = size.minDimension
         val bar = (small * 0.07f).coerceIn(3.dp.toPx(), 10.dp.toPx())
         drawRect(color, topLeft = Offset(0f, size.height - bar), size = Size(size.width, bar))
-        if (small >= 40.dp.toPx()) {
+        if (small >= 56.dp.toPx()) {
             val d = (small * 0.22f).coerceIn(18.dp.toPx(), 44.dp.toPx())
             val inset = (small * 0.06f).coerceAtLeast(4.dp.toPx())
             translate(inset, inset) { drawBadge(category, d) }
@@ -185,14 +185,16 @@ internal fun CategoryNamesSettings() {
         Category.entries.forEach { category ->
             val current = categoryName(category)
             var text by remember(category) { mutableStateOf(current) }
+            // Tallennus pienen tauon jälkeen: ei joka näppäilyllä (kortit piirtyvät uudelleen).
+            androidx.compose.runtime.LaunchedEffect(text) {
+                kotlinx.coroutines.delay(700)
+                if (text != CategoryStore.name(context, category)) CategoryStore.rename(context, category, text)
+            }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 CategoryBadge(category, Modifier.size(32.dp))
                 OutlinedTextField(
                     value = text,
-                    onValueChange = {
-                        text = it.take(30)
-                        CategoryStore.rename(context, category, text)
-                    },
+                    onValueChange = { text = it.take(30) },
                     singleLine = true,
                     label = { Text(stringResource(category.nameRes)) },
                     modifier = Modifier.fillMaxWidth()
