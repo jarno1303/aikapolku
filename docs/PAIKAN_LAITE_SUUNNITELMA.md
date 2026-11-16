@@ -10,6 +10,11 @@ Sovittu 16.11.2026 (JarnoL). Tutkielman kohta A5.
 - **Sijainti:** ei GPS:ää. Puhelin löytää liitetyn paikan laitteen samasta verkosta (mDNS, `_aikapolku._tcp`). Sijaintia ei tallenneta.
 - **Kaksi paikkaa samassa verkossa:** asukkaan viikko ratkaisee, kumman ohjelma näkyy.
 
+## Päätös 16.11.2026: pilotissa paikallinen malli
+- Ohjaajat suunnittelevat ja muokkaavat **paikan laitteella** (esim. toimiston tabletti). Ohjaajan oma puhelin vastaanottaa asukkaiden viestit kuten nyt.
+- Ei pilvipalvelua pilotissa: tieto ei lähde talosta. Vertailu: kuluttajasovellukset (Tiimo, Goally) käyttävät pilveä käyttäjän hyväksynnällä; organisaatioille myyty MEMOplanner käyttää EU-pilveä, käsittelijäsopimusta, ISO-sertifiointia ja MDR-luokitusta.
+- Pilotin jälkeen harkitaan valinnaista EU-pilveä (PC-suunnittelu, etämuokkaus) ja ohjaajien puhelimia etämuokkaajina, jos organisaatiot sitä pyytävät.
+
 ## Mitä siirtyy asukkaan puhelimeen
 - Siirtyy: oma viikko, päiväohjelmat, kortit, muutokset, odotus, asukkaan asetukset (RUN_PREFS, TIMER_PREFS), asukkaan ryhmät ja yksiköt (vain hänen jäsenyytensä, poikkeuksensa ja omat aikansa), ryhmien muutokset, hänen poissaolonsa ja lomansa, viitatut kuvat ja äänitteet.
 - Ei siirry: muiden asukkaiden tiedot, PIN-koodi, ohjaajan laiteasetukset.
