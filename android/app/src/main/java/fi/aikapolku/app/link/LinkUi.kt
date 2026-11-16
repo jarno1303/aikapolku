@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -75,13 +78,30 @@ internal fun LinkSettings() {
         TextButton(onClick = { store.setName(name) }) { Text(stringResource(R.string.link_save_name)) }
     }
 
+    // Paikan laite (A5): pitää paikan tiedot ja jakaa asukkaille heidän omansa.
+    var place by remember(revision) { mutableStateOf(store.placeEnabled) }
+    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.link_place_label), fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.link_place_info), fontSize = 13.sp, color = AppColors.Muted)
+        }
+        Switch(checked = place, onCheckedChange = { on ->
+            place = on
+            store.placeEnabled = on
+            if (on) {
+                receiver = true
+                LinkReceiverService.start(context)
+            }
+        })
+    }
+
     // Ohjaajan puhelin: vastaanotto.
     Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.link_receiver_label), fontWeight = FontWeight.Bold)
             Text(stringResource(R.string.link_receiver_info), fontSize = 13.sp, color = AppColors.Muted)
         }
-        Switch(checked = receiver, onCheckedChange = { on ->
+        Switch(checked = receiver, enabled = !place, onCheckedChange = { on ->
             receiver = on
             store.receiverEnabled = on
             if (on) {
@@ -103,9 +123,12 @@ internal fun LinkSettings() {
     if (senders.isNotEmpty()) {
         Text(stringResource(R.string.link_senders), fontWeight = FontWeight.Bold)
         val seenRevision = LinkStore.seenRevision
+        val profiles = remember(revision) { fi.aikapolku.app.data.ProfileStore.list(context) }
         senders.forEach { p ->
             val seen = remember(seenRevision, p.id) { store.lastSeen(p.id) }
-            val info = if (seen <= 0L) stringResource(R.string.link_never_seen) else stringResource(R.string.link_last_seen, seenText(context, seen))
+            val seenInfo = if (seen <= 0L) stringResource(R.string.link_never_seen) else stringResource(R.string.link_last_seen, seenText(context, seen))
+            val resident = profiles.firstOrNull { it.id == p.resident && p.resident.isNotBlank() }?.name
+            val info = if (resident != null) stringResource(R.string.link_resident_of, resident) + " · " + seenInfo else seenInfo
             PeerRow(p.name, info) { store.removePeer(p.id, receiver = false) }
         }
     }
@@ -113,7 +136,9 @@ internal fun LinkSettings() {
     // Asiakkaan laite: liitä ohjaajan puhelimeen.
     Text(stringResource(R.string.link_receivers), fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
     if (receivers.isEmpty()) Text(stringResource(R.string.link_no_receivers), fontSize = 14.sp, color = AppColors.Muted)
-    receivers.forEach { p -> PeerRow(p.name) { store.removePeer(p.id, receiver = true) } }
+    receivers.forEach { p ->
+        PeerRow(p.name, if (p.place) stringResource(R.string.link_place_tag) else null) { store.removePeer(p.id, receiver = true) }
+    }
     // Jonossa odottavat viestit (asiakkaan laite): lähtevät, kun yhteys palaa.
     val queueRevision = LinkOutbox.revision
     val queued = remember(queueRevision) { LinkOutbox.pending(context).size }
@@ -214,18 +239,39 @@ private fun PairWithReceiver(me: Identity) {
 @Composable
 internal fun PairingRequestDialog() {
     val request = LinkPairing.pending ?: return
+    val context = LocalContext.current
+    // Paikan laitteella valitaan, kenen asukkaan puhelin liitetään (vain hänen tietonsa siirtyvät).
+    val profiles = remember(request) { if (request.place) fi.aikapolku.app.data.ProfileStore.list(context).filter { it.name.isNotBlank() } else emptyList() }
+    var resident by remember(request) { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = {},
         title = { Text(stringResource(R.string.link_pair_request_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.link_pair_request_text, request.name))
                 Text(request.code, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink)
                 Text(stringResource(R.string.link_pair_request_check), fontSize = 14.sp, color = AppColors.Muted)
+                if (request.place) {
+                    Text(stringResource(R.string.link_pair_pick_resident), fontWeight = FontWeight.Bold)
+                    profiles.forEach { p ->
+                        Row(
+                            Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                                .selectable(selected = resident == p.id, role = androidx.compose.ui.semantics.Role.RadioButton) { resident = p.id },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            androidx.compose.material3.RadioButton(selected = resident == p.id, onClick = null)
+                            Text(p.name, modifier = Modifier.padding(start = 8.dp))
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
-            Button(onClick = { LinkPairing.answer(true) }, colors = ButtonDefaults.buttonColors(containerColor = AppColors.Teal)) {
+            Button(
+                onClick = { LinkPairing.answer(true, resident) },
+                enabled = !request.place || resident.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = AppColors.Teal)
+            ) {
                 Text(stringResource(R.string.link_accept))
             }
         },

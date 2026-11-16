@@ -62,13 +62,20 @@ class LinkReceiverService : Service() {
     private fun startServer() {
         val app = applicationContext
         val store = LinkStore(app)
+        // Pariliitoksen vahvistus ja tallennus tapahtuvat samassa säikeessä: valittu asukas välitetään säikeen kautta.
+        val chosenResident = ThreadLocal<String>()
         val host = object : LinkProtocol.Host {
             override val identity: Identity get() = store.identity
+            override val isPlace: Boolean get() = store.placeEnabled
             override fun sender(id: String) = store.peers().firstOrNull { it.id == id && !it.receiver }
-            override fun addSender(peer: Peer) = store.addPeer(peer)
+            override fun addSender(peer: Peer) = store.addPeer(peer.copy(resident = chosenResident.get().orEmpty()))
             override fun confirmPair(name: String, code: String): Boolean {
                 LinkNotify.pairRequest(app, name)
-                return LinkPairing.request(name, code, LinkProtocol.PAIR_TIMEOUT_MS - 25_000L).also { LinkNotify.cancelPair(app) }
+                val resident = LinkPairing.request(name, code, LinkProtocol.PAIR_TIMEOUT_MS - 25_000L, place = store.placeEnabled)
+                LinkNotify.cancelPair(app)
+                chosenResident.set(resident.orEmpty())
+                // Paikan laitteella liitos vaatii asukkaan valinnan.
+                return resident != null && (!store.placeEnabled || resident.isNotBlank())
             }
             override fun onMessage(message: LinkMessage) {
                 if (LinkInbox.add(app, message)) LinkNotify.message(app, message)

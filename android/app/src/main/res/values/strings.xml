@@ -727,6 +727,11 @@
     <string name="client_done">tehty</string>
     <string name="lock_off_warning">Lukitus ei ole käytössä: kuka tahansa pääsee tästä laitteesta ohjaajan tilaan ilman PIN-koodia.</string>
     <string name="lock_off_action">Ota lukitus käyttöön</string>
+    <string name="link_place_label">Tämä laite on paikan laite</string>
+    <string name="link_place_info">Laite pitää paikan tiedot, ja ohjaajat suunnittelevat sillä. Kunkin asukkaan omat tiedot siirtyvät hänen puhelimeensa samassa verkossa.</string>
+    <string name="link_pair_pick_resident">Kenen asukkaan puhelin tämä on?</string>
+    <string name="link_resident_of">Asukas: %1$s</string>
+    <string name="link_place_tag">Paikan laite: asukkaan tiedot tulevat täältä</string>
     <string name="caregiver_home_title">Ohjaajan etusivu</string>
     <string name="caregiver_prepare">Valmistele asiakkaalle</string>
     <string name="caregiver_first_then_info">Ensin–Sitten-pari ja aika; näkyy asiakkaan NYT-kortissa</string>

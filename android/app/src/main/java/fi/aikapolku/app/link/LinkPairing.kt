@@ -11,26 +11,32 @@ import java.util.concurrent.TimeUnit
  * kunnes ohjaaja hyväksyy tai hylkää näkymässä (PairingRequestDialog), tai aika loppuu.
  */
 internal object LinkPairing {
-    class Request(val name: String, val code: String) {
+    /** [place] = tämä on paikan laite: ohjaaja valitsee, kenen asukkaan puhelin liitetään. */
+    class Request(val name: String, val code: String, val place: Boolean = false) {
         internal val latch = CountDownLatch(1)
         @Volatile internal var accepted = false
+        @Volatile internal var resident = ""
     }
 
     var pending by mutableStateOf<Request?>(null)
         private set
 
-    /** Estävä: palauttaa true, jos ohjaaja hyväksyi ajoissa. */
-    fun request(name: String, code: String, timeoutMs: Long): Boolean {
-        val request = Request(name, code)
+    /**
+     * Estävä: palauttaa null, jos ohjaaja hylkäsi tai aika loppui; muuten valitun asukkaan
+     * tunnuksen (tyhjä, kun laite ei ole paikan laite).
+     */
+    fun request(name: String, code: String, timeoutMs: Long, place: Boolean = false): String? {
+        val request = Request(name, code, place)
         pending = request
         val answered = request.latch.await(timeoutMs, TimeUnit.MILLISECONDS)
         if (pending === request) pending = null
-        return answered && request.accepted
+        return if (answered && request.accepted) request.resident else null
     }
 
-    fun answer(accept: Boolean) {
+    fun answer(accept: Boolean, resident: String = "") {
         val request = pending ?: return
         request.accepted = accept
+        request.resident = resident
         pending = null
         request.latch.countDown()
     }

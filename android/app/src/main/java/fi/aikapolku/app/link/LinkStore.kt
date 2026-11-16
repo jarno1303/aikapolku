@@ -29,6 +29,18 @@ internal class LinkStore(context: Context) {
         revision++
     }
 
+    /**
+     * Paikan laite (A5, docs/PAIKAN_LAITE_SUUNNITELMA.md): pitää paikan tiedot ja jakaa kunkin
+     * asukkaan omat tiedot hänen puhelimeensa. Paikan laite on aina myös vastaanottaja.
+     */
+    var placeEnabled: Boolean
+        get() = prefs.getBoolean(KEY_PLACE, false)
+        set(value) {
+            prefs.edit().putBoolean(KEY_PLACE, value).apply()
+            if (value) prefs.edit().putBoolean(KEY_RECEIVER, true).apply()
+            revision++
+        }
+
     var receiverEnabled: Boolean
         get() = prefs.getBoolean(KEY_RECEIVER, false)
         set(value) {
@@ -72,6 +84,7 @@ internal class LinkStore(context: Context) {
         private const val KEY_ID = "device_id"
         private const val KEY_NAME = "device_name"
         private const val KEY_RECEIVER = "receiver"
+        private const val KEY_PLACE = "place"
         private const val KEY_PEERS = "peers"
 
         /** Näkymät päivittyvät, kun liitokset muuttuvat. */
@@ -87,6 +100,7 @@ internal class LinkStore(context: Context) {
                 arr.put(
                     JSONObject().put("id", it.id).put("name", it.name).put("key", LinkProtocol.encodeKey(it.key))
                         .put("receiver", it.receiver).put("host", it.host).put("port", it.port)
+                        .put("place", it.place).put("resident", it.resident)
                 )
             }
         }.toString()
@@ -95,7 +109,10 @@ internal class LinkStore(context: Context) {
             val arr = JSONArray(text ?: return emptyList())
             (0 until arr.length()).map { i ->
                 val o = arr.getJSONObject(i)
-                Peer(o.getString("id"), o.optString("name"), LinkProtocol.decodeKey(o.getString("key")), o.optBoolean("receiver"), o.optString("host"), o.optInt("port"))
+                Peer(
+                    o.getString("id"), o.optString("name"), LinkProtocol.decodeKey(o.getString("key")), o.optBoolean("receiver"),
+                    o.optString("host"), o.optInt("port"), o.optBoolean("place"), o.optString("resident")
+                )
             }
         }.getOrDefault(emptyList())
     }

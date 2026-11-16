@@ -22,7 +22,11 @@ internal data class Peer(
     val key: ByteArray,
     val receiver: Boolean,
     val host: String = "",
-    val port: Int = 0
+    val port: Int = 0,
+    /** Asukkaan puhelimessa: liitetty laite on paikan laite (A5), josta haetaan asukkaan tiedot. */
+    val place: Boolean = false,
+    /** Paikan laitteella: kenen asukkaan (profiilin tunnus) puhelin tämä lähettäjä on. */
+    val resident: String = ""
 ) {
     override fun equals(other: Any?) = other is Peer && other.id == id && other.receiver == receiver
     override fun hashCode() = id.hashCode() * 31 + receiver.hashCode()
@@ -59,6 +63,8 @@ internal object LinkProtocol {
         fun onMessage(message: LinkMessage)
         /** Liitetty lähettäjä oli yhteydessä (ohjaaja näkee, milloin laite viimeksi tavoitettiin). */
         fun seen(id: String, at: Long) {}
+        /** Onko tämä paikan laite (A5): kerrotaan liitoksen tuloksessa asukkaan puhelimelle. */
+        val isPlace: Boolean get() = false
     }
 
     private fun Socket.reader() = BufferedReader(InputStreamReader(getInputStream(), Charsets.UTF_8))
@@ -109,7 +115,7 @@ internal object LinkProtocol {
                     val code = LinkCrypto.comparisonCode(clientPub, ownPub, clientNonce, ownNonce)
                     val ok = host.confirmPair(clientName, code)
                     if (ok) host.addSender(Peer(clientId, clientName, key, receiver = false))
-                    writer.println(JSONObject().put("t", "result").put("ok", ok).toString())
+                    writer.println(JSONObject().put("t", "result").put("ok", ok).put("place", ok && host.isPlace).toString())
                 }
                 "msg" -> {
                     val from = request.optString("id")
@@ -178,7 +184,7 @@ internal object LinkProtocol {
             onCode(LinkCrypto.comparisonCode(ownPub, serverPub, ownNonce, serverNonce))
             val result = JSONObject(reader.readLine() ?: return null)
             if (result.optString("t") != "result" || !result.optBoolean("ok")) return null
-            return Peer(serverId, pub.optString("name").take(60), key, receiver = true, host = host, port = port)
+            return Peer(serverId, pub.optString("name").take(60), key, receiver = true, host = host, port = port, place = result.optBoolean("place"))
         }
     }
 

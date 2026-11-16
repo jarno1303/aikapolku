@@ -52,8 +52,9 @@ class LinkTest {
         assertNull("väärä avain", LinkCrypto.open(ByteArray(32), nonce, sealed, "asiakas".toByteArray()))
     }
 
-    private class TestHost(private val accept: Boolean) : LinkProtocol.Host {
+    private class TestHost(private val accept: Boolean, private val place: Boolean = false) : LinkProtocol.Host {
         override val identity = Identity("ohjaaja-id", "Ohjaajan puhelin")
+        override val isPlace: Boolean get() = place
         val senders = CopyOnWriteArrayList<Peer>()
         val messages = CopyOnWriteArrayList<LinkMessage>()
         var shownCode: String? = null
@@ -84,6 +85,7 @@ class LinkTest {
         assertNotNull(peer)
         assertEquals("Molemmissa sama koodi", host.shownCode, clientCode)
         assertTrue(peer!!.receiver)
+        assertFalse("Tavallinen ohjaajan puhelin ei ole paikan laite", peer.place)
         assertEquals(1, host.senders.size)
         assertArrayEquals(peer.key, host.senders.first().key)
 
@@ -96,6 +98,18 @@ class LinkTest {
         // Vanha viesti (yli 30 min) hylätään.
         assertFalse(LinkProtocol.send("127.0.0.1", server.localPort, me, peer, message.copy(at = 1L)))
         assertEquals(1, host.messages.size)
+        server.close()
+    }
+
+    @Test
+    fun `paikan laitteeseen liitetty puhelin tietaa sen paikaksi`() {
+        val host = TestHost(accept = true, place = true)
+        val server = serve(host)
+        val peer = LinkProtocol.pair("127.0.0.1", server.localPort, Identity("aino-id", "Ainon puhelin")) {}
+        assertTrue(peer!!.place)
+        val stored = LinkStore.decode(LinkStore.encode(listOf(peer, host.senders.single().copy(resident = "aino"))))
+        assertTrue(stored[0].place)
+        assertEquals("aino", stored[1].resident)
         server.close()
     }
 
