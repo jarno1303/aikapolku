@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -89,26 +90,32 @@ internal fun WaitingView(state: WaitState, modifier: Modifier = Modifier) {
     }
     var picked by rememberSaveable { mutableStateOf(-1) }
     val fraction = state.fractionLeft(now)
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    // Matalalla ruudulla (puhelin vaakatasossa) kuvio vasemmalla, teksti ja vaihtoehdot oikealla.
+    val low = fi.aikapolku.app.ui.windowSize() == fi.aikapolku.app.ui.WindowSize.LOW
+    val title: @Composable () -> Unit = {
         Text(
             stringResource(R.string.wait_title, state.name),
             modifier = Modifier.fillMaxWidth().semantics { heading() },
-            fontSize = 28.sp,
+            fontSize = if (low) 24.sp else 28.sp,
             fontWeight = FontWeight.Bold,
             color = AppColors.Ink,
             textAlign = TextAlign.Center
         )
-        Box(Modifier.fillMaxWidth().sizeIn(maxWidth = 260.dp, maxHeight = 260.dp).aspectRatio(1f), contentAlignment = Alignment.Center) {
+    }
+    val visual: @Composable () -> Unit = {
+        // Koko rajataan oikeasti: widthIn ennen fillMaxWidth (aiempi sizeIn jälkeen ei rajannut vaakatasossa).
+        Box(
+            if (low) Modifier.size(170.dp) else Modifier.widthIn(max = 260.dp).fillMaxWidth().aspectRatio(1f),
+            contentAlignment = Alignment.Center
+        ) {
             CalmWaitVisual(fraction, Modifier.fillMaxSize())
             CardPhoto(state.name, state.photo, Modifier.fillMaxSize(0.62f).aspectRatio(1f).clip(RoundedCornerShape(22.dp)))
         }
+    }
+    val rest: @Composable () -> Unit = {
         Text(
             stringResource(if (fraction != null && fraction <= 0f) R.string.wait_a_little_more else R.string.wait_adult_tells, fi.aikapolku.app.data.helperNominative()),
-            fontSize = 19.sp,
+            fontSize = if (low) 17.sp else 19.sp,
             color = AppColors.Ink,
             textAlign = TextAlign.Center
         )
@@ -125,13 +132,43 @@ internal fun WaitingView(state: WaitState, modifier: Modifier = Modifier) {
                         border = BorderStroke(if (isPicked) 4.dp else 1.dp, if (isPicked) AppColors.Teal else AppColors.Border),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
-                        Column(Modifier.padding(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            CardPhoto(option.name, option.photo, Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)))
-                            fi.aikapolku.app.ui.FitText(option.name, maxFontSize = 14.sp, minFontSize = 10.sp, maxLines = 1, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        Column(Modifier.fillMaxWidth().padding(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            CardPhoto(
+                                option.name, option.photo,
+                                (if (low) Modifier.size(56.dp) else Modifier.fillMaxWidth().aspectRatio(1f)).clip(RoundedCornerShape(12.dp))
+                            )
+                            fi.aikapolku.app.ui.FitText(option.name, maxFontSize = 14.sp, minFontSize = 10.sp, maxLines = 1, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
                         }
                     }
                 }
             }
+        }
+    }
+    if (low) {
+        Row(
+            modifier = modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            visual()
+            Column(
+                Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                title()
+                rest()
+            }
+        }
+    } else {
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            title()
+            visual()
+            rest()
         }
     }
 }

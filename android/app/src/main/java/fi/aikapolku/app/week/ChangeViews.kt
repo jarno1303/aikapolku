@@ -366,23 +366,40 @@ private fun ChangeView(
         if (unchanged.isNotEmpty()) UnchangedSection(unchanged)
         // Kuuntele ennen Selvää: kuuntelija ehtii kuulla ennen kuittausta.
         // Ohjaajan äänite, muuten puhesynteesi muutoksesta, syystä ja siitä mikä pysyy.
-        if (voicePath.isNotBlank() || spokenText.isNotBlank()) {
+        val canListen = voicePath.isNotBlank() || spokenText.isNotBlank()
+        val listen: @Composable (Modifier) -> Unit = { m ->
             SecondaryButton(
                 text = stringResource(R.string.change_listen),
                 icon = AppIcons.Speaker,
                 onClick = {
                     if (voicePath.isNotBlank()) VoicePlayer.play(context, voicePath) else speech?.speak(spokenText)
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = m
             )
         }
-        PrimaryButton(
-            text = stringResource(R.string.change_ok),
-            icon = Icons.Rounded.Check,
-            onClick = onOk,
-            modifier = Modifier.fillMaxWidth()
-        )
-        if (onBreak != null) BreakButton(onBreak)
+        if (low && canListen && onBreak != null) {
+            // Matala ruutu: Kuuntele ja Tarvitsen tauon rinnakkain, jotta kaikki mahtuu (R11).
+            // Kuuntele on yhä ennen Selvää.
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listen(Modifier.weight(1f))
+                BreakButton(onBreak, Modifier.weight(1f))
+            }
+            PrimaryButton(
+                text = stringResource(R.string.change_ok),
+                icon = Icons.Rounded.Check,
+                onClick = onOk,
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            if (canListen) listen(Modifier.fillMaxWidth())
+            PrimaryButton(
+                text = stringResource(R.string.change_ok),
+                icon = Icons.Rounded.Check,
+                onClick = onOk,
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (onBreak != null) BreakButton(onBreak)
+        }
     }
     if (low) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
