@@ -412,6 +412,14 @@ class KuvakaappauksetDeviceTest {
             click(next)
             waitText(t(R.string.wizard_support_title))
         }
+        shot("o28-ohjattu-yhteiset") {
+            click(next)
+            waitText(t(R.string.wizard_common_title))
+        }
+        shot("o29-ohjattu-rutiinit") {
+            click(next)
+            waitText(t(R.string.wizard_routines_title))
+        }
         shot("o08-ohjattu-6-esikatselu") {
             click(next)
             waitText(t(R.string.wizard_preview_title))
