@@ -17,6 +17,9 @@ import org.robolectric.RobolectricTestRunner
 /** Viikko-ohjelman tallennus: tiedot säilyvät ja ovat profiilikohtaisia. */
 @RunWith(RobolectricTestRunner::class)
 class WeekStoreTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
     private lateinit var context: Context
 
     @Before

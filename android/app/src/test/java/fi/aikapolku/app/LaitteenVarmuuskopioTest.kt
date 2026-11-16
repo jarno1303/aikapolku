@@ -14,7 +14,6 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
-import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -22,10 +21,8 @@ import org.robolectric.RobolectricTestRunner
 /** Koko laitteen varmuuskopio ja palautus (paikan laite): tunnukset, yksiköt, kuvat ja liitokset säilyvät. */
 @RunWith(RobolectricTestRunner::class)
 class LaitteenVarmuuskopioTest {
-    // Testi kirjoittaa Composen tilaa (revision) ilman näkymää: muutokset ilmoitetaan heti, jottei
-    // seuraavien Compose-testien odotus jumitu (AppNotIdleException).
-    @After
-    fun flushSnapshots() = androidx.compose.runtime.snapshots.Snapshot.sendApplyNotifications()
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 

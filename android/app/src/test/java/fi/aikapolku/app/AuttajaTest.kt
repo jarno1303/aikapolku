@@ -15,6 +15,9 @@ import org.robolectric.RobolectricTestRunner
  */
 @RunWith(RobolectricTestRunner::class)
 class AuttajaTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Test

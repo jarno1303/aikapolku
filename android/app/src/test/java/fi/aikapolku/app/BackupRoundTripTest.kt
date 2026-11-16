@@ -30,6 +30,9 @@ import org.robolectric.RobolectricTestRunner
 /** Vienti ja tuonti kokonaisuutena: kuvat kulkevat mukana, profiili syntyy, mitään ei korvata. */
 @RunWith(RobolectricTestRunner::class)
 class BackupRoundTripTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
     private lateinit var context: Context
     private lateinit var photo: File
 

@@ -22,6 +22,9 @@ import org.robolectric.RobolectricTestRunner
 /** P0-21e – Ohjaajan lukitus: linjaus, PIN-koodi, väärien yritysten esto ja avauksen kesto. */
 @RunWith(RobolectricTestRunner::class)
 class CaregiverLockTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
 
     private lateinit var context: Context
     private var clock = 1_000_000_000L

@@ -28,6 +28,9 @@ import org.robolectric.RobolectricTestRunner
  */
 @RunWith(RobolectricTestRunner::class)
 class PalauteMuutoksetTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
     private val today = LocalDate.of(2026, 11, 15)
 
     @Test

@@ -15,6 +15,9 @@ import org.robolectric.RobolectricTestRunner
 /** Käyttäjän näkymä- ja ääniasetukset: oletukset, tallennus ja virheellisten arvojen torjunta. */
 @RunWith(RobolectricTestRunner::class)
 class PreferencesTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
 
     private lateinit var context: Context
 

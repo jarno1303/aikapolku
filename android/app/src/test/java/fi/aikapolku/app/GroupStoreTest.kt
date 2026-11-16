@@ -27,6 +27,9 @@ import org.robolectric.RobolectricTestRunner
  */
 @RunWith(RobolectricTestRunner::class)
 class GroupStoreTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
     private lateinit var context: Context
     private val monday = LocalDate.of(2026, 11, 2)
 

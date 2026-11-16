@@ -14,6 +14,9 @@ import org.robolectric.RobolectricTestRunner
 /** Omat toimintokortit ja viimeisin Ensin–Sitten-valinta (CardStore). */
 @RunWith(RobolectricTestRunner::class)
 class CardStoreTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
 
     private lateinit var context: Context
     private lateinit var store: CardStore

@@ -37,6 +37,9 @@ import org.robolectric.RobolectricTestRunner
  */
 @RunWith(RobolectricTestRunner::class)
 class AsukaspakettiTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val monday = LocalDate.of(2026, 11, 16)
 

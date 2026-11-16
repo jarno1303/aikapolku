@@ -24,6 +24,9 @@ import org.robolectric.RobolectricTestRunner
 /** Yksikön yhteys (V5a): salaus, pariliitos numerovertailulla ja salatut viestit paikallisesti. */
 @RunWith(RobolectricTestRunner::class)
 class LinkTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
     @Test
     fun `molemmat laitteet saavat saman avaimen ja koodin`() {
         val a = LinkCrypto.newKeyPair()

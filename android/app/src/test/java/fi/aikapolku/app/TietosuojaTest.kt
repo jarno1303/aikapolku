@@ -6,7 +6,6 @@ import fi.aikapolku.app.caregiver.PrivacyPrefs
 import fi.aikapolku.app.link.LinkStore
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -14,10 +13,8 @@ import org.robolectric.RobolectricTestRunner
 /** Tietosuojan puutelistan korjaukset (T4, T5): oletukset ja paikan laitteen vastaanotto. */
 @RunWith(RobolectricTestRunner::class)
 class TietosuojaTest {
-    // Testi kirjoittaa Composen tilaa (revision) ilman näkymää: muutokset ilmoitetaan heti, jottei
-    // seuraavien Compose-testien odotus jumitu (AppNotIdleException).
-    @After
-    fun flushSnapshots() = androidx.compose.runtime.snapshots.Snapshot.sendApplyNotifications()
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 

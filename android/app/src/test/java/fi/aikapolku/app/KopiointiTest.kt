@@ -24,6 +24,9 @@ import org.robolectric.RobolectricTestRunner
 /** Yksikön käyttöönotto ilman toistoa: yhteiset asetukset, perusrutiinit ja kopiointi asukkaalta toiselle. */
 @RunWith(RobolectricTestRunner::class)
 class KopiointiTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Test

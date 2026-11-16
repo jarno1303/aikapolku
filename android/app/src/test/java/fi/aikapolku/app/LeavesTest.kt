@@ -26,6 +26,9 @@ import org.robolectric.RobolectricTestRunner
 /** Loma / poissaolo ajanjaksona ja laitteen rajaus alayksikköön. */
 @RunWith(RobolectricTestRunner::class)
 class LeavesTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
     // 2026-11-20 perjantai … 2026-11-22 sunnuntai.
     private val friday = LocalDate.of(2026, 11, 20)
     private val saturday = friday.plusDays(1)

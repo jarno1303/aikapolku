@@ -499,3 +499,7 @@
 - Ohjattuun aloitukseen kaksi vaihetta: **Yhteiset asetukset** (ajan näyttö, ennakkovaroitus, lisäaika, auttajan sana, oma tila – kaikille kerralla) ja **Perusrutiinit** (valmis pohja, aika, päivät ja keille; jokainen saa oman ohjelman ja viikon kohdat).
 - **Kopioi muille asukkaille**: asukkaan asetukset (Asetukset) ja päiväohjelma (ohjelman valikko). Kunkin oma näkymävalinta ja tuen taso säilyvät.
 - data/ResidentCopy.kt, profiles/CopyToResidents.kt; testi KopiointiTest.
+
+## 16.11.2026 – Testien Compose-tila (AppNotIdleException)
+- Tarkistusajossa 4 Compose-testiä jumittui (60 s) tietosuoja- ja kopiointitestien jälkeen. Syy: testi kirjoittaa Composen tilaa ilman näkymää, Compose lähettää ilmoituksen pääsäikeelle ja Robolectric tyhjentää jonon testien välissä.
+- Korjaus: uusi testisääntö `ComposeStateFlush` (ilmoittaa muutokset ja ajaa pääsäikeen jonon tyhjäksi testin lopussa) kaikkiin 24 Robolectric-testiluokkaan, joissa ei ole Compose-näkymää. Varmuuskopio: `varmuus/ennen-testien-tilakorjaus-2026-11-16`.

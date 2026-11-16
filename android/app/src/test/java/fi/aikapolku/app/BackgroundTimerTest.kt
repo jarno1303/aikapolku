@@ -27,6 +27,9 @@ import org.robolectric.shadows.ShadowSystemClock
  */
 @RunWith(RobolectricTestRunner::class)
 class BackgroundTimerTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
 
     private lateinit var app: Application
     private lateinit var alarms: AlarmManager

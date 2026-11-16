@@ -20,6 +20,9 @@ import org.robolectric.RobolectricTestRunner
 /** Valinta, odotetaan ja oma tila (15.11.2026). */
 @RunWith(RobolectricTestRunner::class)
 class ChoiceWaitStateTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
     private val step = ProgramStep(
         id = "s1", name = "Ulkoilu", photo = "builtin:outdoors", description = "Kenkä jalkaan",
         subSteps = listOf("Kengät", "Takki"), alternative = ChoiceAlt("Musiikki", "builtin:music", "/aani.m4a")

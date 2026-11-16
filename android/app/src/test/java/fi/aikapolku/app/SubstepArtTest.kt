@@ -16,6 +16,9 @@ import org.robolectric.RobolectricTestRunner
 /** P0-22a: osavaiheiden kuvat ja viestinäkymän kuva. */
 @RunWith(RobolectricTestRunner::class)
 class SubstepArtTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val texts: (Int) -> String = { context.getString(it) }

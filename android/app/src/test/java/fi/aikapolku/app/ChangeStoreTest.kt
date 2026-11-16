@@ -20,6 +20,9 @@ import org.robolectric.RobolectricTestRunner
 /** Muutosten tallennus: kentät säilyvät, edelliset valinnat muistetaan, profiilikohtainen. */
 @RunWith(RobolectricTestRunner::class)
 class ChangeStoreTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
     private lateinit var context: Context
 
     @Before

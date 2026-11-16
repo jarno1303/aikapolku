@@ -13,6 +13,9 @@ import org.robolectric.RobolectricTestRunner
 /** Yksikkömallin kentät säilyvät tallennuksessa; vanhat ryhmät lukeutuvat ennallaan. */
 @RunWith(RobolectricTestRunner::class)
 class UnitsStoreTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
     @Test
     fun `yksikot ja toiminnat sailyvat tallennuksessa`() {
         val groups = listOf(

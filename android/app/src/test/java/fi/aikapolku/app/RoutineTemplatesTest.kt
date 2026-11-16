@@ -17,6 +17,9 @@ import org.robolectric.RobolectricTestRunner
 /** Valmiit rutiinipohjat, oletuskortit ja osavaiheiden oletukset (suomenkieliset resurssit). */
 @RunWith(RobolectricTestRunner::class)
 class RoutineTemplatesTest {
+    @get:org.junit.Rule
+    val composeFlush = fi.aikapolku.app.ComposeStateFlush()
+
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val texts: (Int) -> String = { context.getString(it) }
