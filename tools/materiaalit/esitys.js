@@ -91,7 +91,7 @@ async function icon(Comp, color = '#FFFFFF') {
   }
 
   // --- Apuvälineet uudelle rakenteelle: isot puhelinkuvat ja numeroidut nostot ---
-  const RATIO = 1080 / 2261; // rajattu kuvakaappaus (leveys / korkeus)
+  const RATIO = 1080 / 2256; // rajattu kuvakaappaus (leveys / korkeus)
   // Puhelin, jonka koko seuraa kuvaa: palauttaa kuvan alueen numeromerkkejä varten.
   function bigPhone(slide, id, x, y, h) {
     const w = h * RATIO;
@@ -188,8 +188,8 @@ async function icon(Comp, color = '#FFFFFF') {
   s = pres.addSlide({ masterName: 'Sisältö', sectionTitle: 'Sovellus' });
   s.addText('Siirtymät tuetaan ennen kuin ne tulevat', { placeholder: 'title' });
   const b5a = bigPhone(s, 'a03-ennakkovaroitus', 0.9, 1.35, 5.85);
-  marker(s, b5a, 1, 1.08, 0.81);
-  marker(s, b5a, 2, 1.08, 0.9);
+  marker(s, b5a, 1, 1.08, 0.735);
+  marker(s, b5a, 2, 1.08, 0.835);
   const b5b = bigPhone(s, 'a07-odotetaan', 4.3, 1.35, 5.85);
   marker(s, b5b, 3, 1.08, 0.3);
   point(s, 1, 7.85, 1.6, 'Pian vaihtuu', 'Rauhallinen ennakkovaroitus kuvalla – halutessa läheisen tai ohjaajan omalla äänellä.', 4.4);
