@@ -41,6 +41,17 @@ Versio 1.0 · 15.11.2026 · Laadittu sovelluksen koodin perusteella. Tämä ei o
 | T7 | Android 16:n lähiverkkolupa | Yhteys ei toimi uusissa laitteissa | Lupapyyntö ja selkeä virheilmoitus | Ennen laajempaa käyttöä |
 | T8 | Kehitysvaiheen testitila (vapaa roolinvaihto) | Asiakas pääsee ohjaajan toimintoihin | Testitila pois pilottilaitteista, PIN käyttöön | Käyttöönotossa |
 
+## 3b. Korjattu 16.11.2026
+- T1: laiteliitosten avaimet Android Keystoren avaimella salattuina.
+- T2: lukitusnäytöllä vain "Uusi viesti asukkaalta"; nimi ja viesti vasta avattuna.
+- T3: viennin salasana pakollinen aina, kun vienti sisältää asukkaiden tietoja.
+- T4: paikan laitteella ohjaajan tila vaatii laitteen näytön lukituksen (Android salaa silloin tiedot); asukkaan laitteessa muistutus.
+- T5: ohjaajan näkymät piilossa kuvakaappauksilta ja sovellusvaihtajasta (asetus, oletuksena päällä).
+- T6: "Poista kaikki tiedot tästä laitteesta" (kirjoitettu vahvistus).
+- T8: testitila oletuksena pois; muistutus ohjaajan etusivulla, jos PIN-lukitus puuttuu.
+- Uusi: automaattinen salattu koko laitteen varmuuskopio kerran vuorokaudessa valittuun kansioon (7 uusinta) ja palautus.
+- Jäljellä: T7 (Android 16:n lähiverkkolupa) ennen laajempaa käyttöä.
+
 ## 4. Dokumentaatio, joka tarvitaan ennen pilottia
 
 - **Roolit:** yksikkö / palveluntuottaja on rekisterinpitäjä. Bon Vivo ei käsittele asiakastietoja (ei palvelinta), mikä kirjataan sopimukseen.

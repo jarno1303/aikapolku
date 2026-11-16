@@ -65,6 +65,8 @@ class MainActivity : ComponentActivity() {
         fi.aikapolku.app.link.ClientMessages.resume(this)
         // Asukkaan puhelin: omat tiedot paikan laitteelta heti ja minuutin välein (A5).
         fi.aikapolku.app.link.PlaceSync.start(this)
+        // Paikan laite: automaattinen varmuuskopio kerran vuorokaudessa (taustalla).
+        fi.aikapolku.app.backup.AutoBackup.runIfDue(this)
     }
 
     override fun onStop() {

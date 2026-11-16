@@ -48,25 +48,31 @@ internal class LinkStore(context: Context) {
             revision++
         }
 
-    fun peers(): List<Peer> = decode(prefs.getString(KEY_PEERS, null))
+    /** Liitokset; avaimet tallennetaan Android Keystoren avaimella salattuina (T1). */
+    fun peers(): List<Peer> = decode(prefs.getString(KEY_PEERS, null)?.let { KeyVault.open(it) })
+
+    private fun savePeers(list: List<Peer>, now: Boolean = true) {
+        val editor = prefs.edit().putString(KEY_PEERS, KeyVault.seal(encode(list)))
+        if (now) editor.commit() else editor.apply()
+    }
 
     @Synchronized
     fun addPeer(peer: Peer) {
         val list = peers().filterNot { it.id == peer.id && it.receiver == peer.receiver } + peer
-        prefs.edit().putString(KEY_PEERS, encode(list)).commit()
+        savePeers(list)
         revision++
     }
 
     @Synchronized
     fun removePeer(id: String, receiver: Boolean) {
-        prefs.edit().putString(KEY_PEERS, encode(peers().filterNot { it.id == id && it.receiver == receiver })).commit()
+        savePeers(peers().filterNot { it.id == id && it.receiver == receiver })
         revision++
     }
 
     @Synchronized
     fun updateAddress(id: String, host: String, port: Int) {
         val list = peers().map { if (it.id == id && it.receiver) it.copy(host = host, port = port) else it }
-        prefs.edit().putString(KEY_PEERS, encode(list)).apply()
+        savePeers(list, now = false)
     }
 
     /** Milloin liitetty asiakkaan laite viimeksi lähetti viestin (ohjaajan puhelimessa). */

@@ -490,3 +490,7 @@
 - Yksikön yhteys: "Tämä laite on paikan laite". Asukkaan puhelin liitetään paikkaan kerran; paikan laitteella valitaan, kenen asukkaan puhelin se on.
 - Siirto: salattu `pull`-pyyntö (versio + jo olevat kuvat). Paikan laite vastaa vain liitetylle puhelimelle ja vain sen asukkaan tiedoilla. Asukkaan puhelin hakee sovelluksen auetessa ja minuutin välein; käynnissä oleva päiväohjelma tai ajastin ei vaihdu kesken (purku odottaa enintään noin 20 min).
 - Paikan laitteella asukkaittain: "perillä klo …" / "muutos odottaa". Asukkaan puhelimessa: "haettu klo …" ja "Hae tiedot nyt".
+
+## 16.11.2026 – Tietosuoja ennen pilottia (kohta 5)
+- T1 avaimet Keystoreen, T2 lukitusnäytön ilmoitukset, T3 pakollinen viennin salasana, T4 näytön lukitus paikan laitteelle, T5 ohjaajan näkymien piilotus, T6 kaikkien tietojen poisto.
+- Laitteen tiedot -osio: automaattinen salattu varmuuskopio (koko laite, 7 uusinta) valittuun kansioon ja palautus. Testi LaitteenVarmuuskopioTest.

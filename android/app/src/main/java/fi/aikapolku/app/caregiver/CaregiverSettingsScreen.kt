@@ -68,6 +68,9 @@ internal fun CaregiverSettingsScreen() {
     ) {
         BackupSettingsCard(framed = false)
     }
+    SettingsSection(stringResource(R.string.device_data_title), stringResource(R.string.device_data_info), Icons.Rounded.Share) {
+        fi.aikapolku.app.backup.DeviceDataSettings()
+    }
     SettingsSection(stringResource(R.string.role_settings_title), stringResource(R.string.settings_roles_info), Icons.Rounded.Build) {
         RoleSettings()
     }
