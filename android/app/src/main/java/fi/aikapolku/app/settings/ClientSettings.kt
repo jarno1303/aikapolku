@@ -202,6 +202,14 @@ internal fun HomeSettings() {
             SettingsRevision.bump()
         }
     )
+    // Värikoodaus: luokkien värit ja merkit korteissa (asukaskohtainen, oletus päällä).
+    var colors by remember(SettingsRevision.value) { mutableStateOf(fi.aikapolku.app.data.CategoryStore.enabled(context)) }
+    SettingLabel(stringResource(R.string.category_colors_title), stringResource(R.string.category_colors_info))
+    SwitchLine(stringResource(R.string.category_colors_switch), colors) {
+        colors = it
+        fi.aikapolku.app.data.CategoryStore.setEnabled(context, it)
+        SettingsRevision.bump()
+    }
     SettingLabel(stringResource(R.string.client_view_timeline))
     listOf(
         Triple(TimelineMode.FULL, R.string.client_view_full, R.string.client_view_full_info),

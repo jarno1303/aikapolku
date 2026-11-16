@@ -95,9 +95,15 @@ internal fun rememberCachedImage(path: String?, res: Int?): PhotoState {
 internal fun CardPhoto(
     name: String,
     imagePath: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Päiväohjelman nimi, kun kuva on ohjelman ensimmäinen kortti (ohjelman luokka voittaa). */
+    title: String? = null,
+    /** Luokan merkintä (värikoodaus); pois esim. valintaruudukoissa, joissa luokka ei ole olennainen. */
+    showCategory: Boolean = true
 ) {
     val context = LocalContext.current
+    val category = if (showCategory) shownCategory(name, imagePath, title) else null
+    val marked = modifier.categoryMark(category)
     val path = imagePath.takeIf { it.isNotBlank() && !it.startsWith("builtin:") }
     val res = CardArt.imageRes(name, imagePath) { context.getString(it) }
     val state = rememberCachedImage(path, res)
@@ -108,12 +114,12 @@ internal fun CardPhoto(
             bitmap = image,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = modifier
+            modifier = marked
         )
         // Latautuu: tyhjä pinta samassa koossa, jotta asettelu ei hypi.
-        !state.done -> Box(modifier = modifier.background(Color(0xFFE6F4F1)))
+        !state.done -> Box(modifier = marked.background(Color(0xFFE6F4F1)))
         else -> Box(
-            modifier = modifier.background(Color(0xFFE6F4F1)),
+            modifier = marked.background(Color(0xFFE6F4F1)),
             contentAlignment = Alignment.Center
         ) {
             Text("◇", fontSize = 50.sp, color = FlowColors.teal)

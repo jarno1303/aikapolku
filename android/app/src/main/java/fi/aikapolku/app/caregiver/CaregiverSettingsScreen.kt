@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Build
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Share
@@ -60,6 +61,9 @@ internal fun CaregiverSettingsScreen() {
     }
     SettingsSection(stringResource(R.string.reminder_status_title), stringResource(R.string.settings_reminders_info), Icons.Rounded.Notifications) {
         NotificationStatusCard(framed = false)
+    }
+    SettingsSection(stringResource(R.string.category_names_title), stringResource(R.string.category_names_section_info), Icons.Rounded.Edit) {
+        fi.aikapolku.app.cards.CategoryNamesSettings()
     }
     SettingsSection(
         stringResource(R.string.backup_title),

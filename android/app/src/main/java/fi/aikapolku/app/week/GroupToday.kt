@@ -389,7 +389,7 @@ private fun GroupEntryRow(entry: DayEntry, canEdit: Boolean, onClick: () -> Unit
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text(entry.event.time.replace(':', '.'), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = AppColors.Ink, modifier = Modifier.width(52.dp))
-        CardPhoto(resolved.imageName, resolved.imagePath, Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)))
+        CardPhoto(resolved.imageName, resolved.imagePath, Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)), title = resolved.title.takeIf { resolved.isProgram })
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 resolved.title,

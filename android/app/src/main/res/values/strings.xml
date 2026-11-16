@@ -1150,4 +1150,21 @@
     <string name="orientation_portrait">Pysty</string>
     <string name="orientation_landscape">Vaaka</string>
     <string name="orientation_free">Vapaa</string>
+
+    <!-- Värikoodaus (luokat) -->
+    <string name="category_meal">Ruokailu</string>
+    <string name="category_hygiene">Hygienia ja pukeutuminen</string>
+    <string name="category_outdoor">Ulkoilu ja liikunta</string>
+    <string name="category_rest">Lepo ja vapaa-aika</string>
+    <string name="category_activity">Toiminta ja työ</string>
+    <string name="category_health">Lääke ja terveys</string>
+    <string name="category_none">Ei luokkaa</string>
+    <string name="category_label">Luokka (värikoodaus)</string>
+    <string name="category_info">Luokka koskee tätä korttia tai päiväohjelmaa kaikkialla tällä laitteella ja asukkaiden puhelimissa.</string>
+    <string name="category_names_title">Luokat ja värit</string>
+    <string name="category_names_section_info">Värikoodauksen luokkien nimet</string>
+    <string name="category_names_info">Voit nimetä luokat yksikön omilla sanoilla. Tyhjä kenttä palauttaa oletusnimen. Nimet siirtyvät asukkaiden puhelimiin.</string>
+    <string name="category_colors_title">Värikoodaus</string>
+    <string name="category_colors_info">Kortin alareunassa näkyy luokan väri ja kulmassa sen merkki. Jos värit ovat asukkaalle liikaa, ne voi kytkeä pois.</string>
+    <string name="category_colors_switch">Näytä luokkien värit ja merkit</string>
 </resources>

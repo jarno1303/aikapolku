@@ -95,6 +95,25 @@ internal fun WeekEventDialog(
     var showBuiltin by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
 
+    // Luokka (värikoodaus): koskee korttia tai päiväohjelmaa koko laitteella, ei vain tätä tapahtumaa.
+    val selectedProgram = programs.firstOrNull { it.id == programId }
+    val categoryKey = when {
+        kind == EventKind.PROGRAM -> selectedProgram?.name?.takeIf { it.isNotBlank() }?.let { fi.aikapolku.app.data.CategoryStore.programKey(it) }
+        cardName.isNotBlank() -> fi.aikapolku.app.data.CategoryStore.key(cardName, cardPhoto) { context.getString(it) }
+        else -> null
+    }
+    val resolvedCategory = if (kind == EventKind.PROGRAM) {
+        selectedProgram?.let { p ->
+            val first = p.steps.firstOrNull()
+            fi.aikapolku.app.data.CategoryStore.resolve(context, first?.name ?: p.name, first?.photo ?: "", title = p.name) { context.getString(it) }
+        }
+    } else if (cardName.isNotBlank()) {
+        fi.aikapolku.app.data.CategoryStore.resolve(context, cardName, cardPhoto) { context.getString(it) }
+    } else null
+    // Valinta nollautuu, kun kortti tai ohjelma vaihtuu.
+    var categoryChoice by remember(categoryKey) { mutableStateOf<Pair<Boolean, fi.aikapolku.app.data.Category?>>(false to null) }
+    val shownCategory = if (categoryChoice.first) categoryChoice.second else resolvedCategory
+
     val needProgram = stringResource(R.string.week_need_program)
     val needCard = stringResource(R.string.week_need_card)
     val needDay = stringResource(R.string.week_need_day)
@@ -176,6 +195,12 @@ internal fun WeekEventDialog(
                         OutlinedButton(onClick = { showLibrary = true }) { Text(stringResource(R.string.week_own_cards)) }
                         OutlinedButton(onClick = { showBuiltin = true }) { Text(stringResource(R.string.week_builtin_cards)) }
                     }
+                }
+
+                if (categoryKey != null) {
+                    Text(stringResource(R.string.category_label), fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.category_info), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    fi.aikapolku.app.cards.CategoryChooser(shownCategory) { categoryChoice = true to it }
                 }
 
                 // Kestävä tapahtuma (koulu, päivätoiminta): ei kuitata, päättyy seuraavaan.
@@ -292,6 +317,9 @@ internal fun WeekEventDialog(
                             notifyBefore = if (notify) notifyBefore else 0,
                             ongoing = kind == EventKind.CARD && ongoing
                         )
+                        if (categoryChoice.first && categoryKey != null) {
+                            fi.aikapolku.app.data.CategoryStore.set(context, categoryKey, categoryChoice.second)
+                        }
                         onSave(
                             if (initial != null) listOf(build(initial.id, initial.day))
                             else days.sorted().map { build(UUID.randomUUID().toString(), it) }

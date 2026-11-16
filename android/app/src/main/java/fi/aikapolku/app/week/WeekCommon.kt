@@ -31,7 +31,7 @@ internal fun resolveEvent(event: WeekEvent, programs: List<DayProgram>): Resolve
 
 @Composable
 internal fun EventImage(resolved: ResolvedEvent, modifier: Modifier) {
-    CardPhoto(resolved.imageName, resolved.imagePath, modifier)
+    CardPhoto(resolved.imageName, resolved.imagePath, modifier, title = resolved.title.takeIf { resolved.isProgram })
 }
 
 /** Viikonpäivän nimet laitteen kielellä (java.time), joten käännöksiä ei tarvita. */

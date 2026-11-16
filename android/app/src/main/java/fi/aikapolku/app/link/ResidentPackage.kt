@@ -179,6 +179,7 @@ internal object ResidentPackage {
             .put("photo", text(profile?.photo.orEmpty()))
             .put("prefs", prefs)
             .put("share", shareJson)
+            .put("categories", fi.aikapolku.app.data.CategoryStore.export(app))
             .put("media", JSONArray(bytesByName.keys.toList()))
 
         val entries = LinkedHashMap<String, ByteArray>()
@@ -212,6 +213,8 @@ internal object ResidentPackage {
         val store = GroupStore(app)
         text.append(ResidentShare.encode(ResidentShare.of(store.load(), store.allChanges(), store.absences(), store.leaves(), profileId)))
         ProfileStore.list(app).firstOrNull { it.id == profileId }?.let { text.append(it.name).append(it.photo) }
+        // Luokat ja niiden nimet (värikoodaus) ovat laitteen yhteisiä: muutos menee kaikille.
+        text.append(fi.aikapolku.app.data.CategoryStore.export(app).toString())
         return sha256(text.toString().toByteArray(Charsets.UTF_8)).take(20)
     }
 
@@ -275,6 +278,7 @@ internal object ResidentPackage {
             localId
         )
         SyncState.replacePlaceGroups(app, placeId, share, localId)
+        fi.aikapolku.app.data.CategoryStore.importFrom(app, root.optJSONObject("categories"))
 
         val name = root.optString("name")
         val profile = ProfileStore.list(app).firstOrNull { it.id == localId }

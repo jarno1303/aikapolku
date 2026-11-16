@@ -64,6 +64,8 @@ internal fun CardLibraryDialog(
     var showBuiltinPicker by remember { mutableStateOf(false) }
     var fromTemplate by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    // Luokka (värikoodaus): null = ei valintaa (oletus), muuten ohjaajan valinta.
+    var categoryChoice by remember { mutableStateOf<Pair<Boolean, fi.aikapolku.app.data.Category?>>(false to null) }
     var deleteCandidate by remember {
         mutableStateOf<CardItem?>(null)
     }
@@ -76,6 +78,7 @@ internal fun CardLibraryDialog(
         voicePath = card?.voicePath ?: ""
         autoPlayVoice = card?.autoPlayVoice ?: false
         dayTime = card?.dayTime ?: DayTime.ANYTIME
+        categoryChoice = false to null
         errorMessage = ""
         editing = true
     }
@@ -268,6 +271,17 @@ internal fun CardLibraryDialog(
                         }
                     }
 
+                    if (name.isNotBlank()) {
+                        Text(
+                            stringResource(R.string.category_label),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = AppColors.Ink
+                        )
+                        val resolved = fi.aikapolku.app.data.CategoryStore.resolve(context, name, photoPath) { context.getString(it) }
+                        CategoryChooser(if (categoryChoice.first) categoryChoice.second else resolved) { categoryChoice = true to it }
+                    }
+
                     VoiceControls(
                         voicePath = voicePath,
                         autoPlay = autoPlayVoice,
@@ -297,6 +311,13 @@ internal fun CardLibraryDialog(
                             autoPlayVoice = autoPlayVoice,
                             dayTime = dayTime
                         )
+                        if (categoryChoice.first) {
+                            fi.aikapolku.app.data.CategoryStore.set(
+                                context,
+                                fi.aikapolku.app.data.CategoryStore.key(savedCard.name, savedCard.photoPath) { context.getString(it) },
+                                categoryChoice.second
+                            )
+                        }
 
                         store.upsert(savedCard)
                         cards = store.loadCards()
