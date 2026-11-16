@@ -120,13 +120,16 @@ class KuvakaappauksetDeviceTest {
         shell("screencap -p $DIR/$name.png")
     }
 
-    /** Yksi kuva: virhe ei kaada ajoa, vaan ruutu tallentuu nimellä <id>-VIRHE. */
-    private fun shot(id: String, block: () -> Unit) {
+    /**
+     * Yksi kuva: virhe ei kaada ajoa, vaan ruutu tallentuu nimellä <id>-VIRHE.
+     * [screen] = false: [block] tallentaa kuvan itse (esim. widget piirrettynä).
+     */
+    private fun shot(id: String, screen: Boolean = true, block: () -> Unit) {
         Log.i(TAG, "alku $id")
         val started = SystemClock.elapsedRealtime()
         try {
             block()
-            capture(id)
+            if (screen) capture(id)
             ok += id
             Log.i(TAG, "ok $id ${(SystemClock.elapsedRealtime() - started) / 1000} s")
         } catch (e: Throwable) {
@@ -253,6 +256,7 @@ class KuvakaappauksetDeviceTest {
             demoStatusBar(true)
             Demo.create(ctx)
             caregiverShots()
+            newSettingShots()
             clientShots()
         } finally {
             runCatching { demoStatusBar(false) }
@@ -313,6 +317,7 @@ class KuvakaappauksetDeviceTest {
                 waitText(t(R.string.card_reading))
             }
             shot("o13-tapahtuma") { click(t(R.string.card_reading)) }
+            shot("o30-luokka-tapahtumassa") { bringToTop(hasText(t(R.string.category_label))) }
         }
         // Päiväohjelman editori ja valinta.
         launch(caregiver = true) {
@@ -360,6 +365,7 @@ class KuvakaappauksetDeviceTest {
             "o24-yhteys" to R.string.link_settings_title,
             "o25-vienti" to R.string.backup_title,
             "o27-kayton-seuranta" to R.string.usage_title,
+            "o31-luokat-ja-varit" to R.string.category_names_title,
         ).forEach { (id, title) ->
             launch(caregiver = true) {
                 shot(id) {
@@ -369,6 +375,50 @@ class KuvakaappauksetDeviceTest {
                 }
             }
         }
+    }
+
+    /** Asukkaan näkymäasetuksista värikoodaus, widget ja kello korteissa. */
+    private fun newSettingShots() {
+        launch(caregiver = true) {
+            shot("o32-asetukset-varit-kello-widget") {
+                click(t(R.string.home_settings))
+                click(t(R.string.settings_home))
+                bringToTop(hasText(t(R.string.category_colors_title)))
+            }
+        }
+    }
+
+    /**
+     * Kotinäytön widget piirrettynä (testi ei pääse puhelimen kotinäytölle): sama RemoteViews kuin
+     * kotinäytöllä, vaaleaa taustaa vasten. Kuva ei sisällä tilapalkkia (ei rajata).
+     */
+    private fun widgetShot(id: String, wide: Boolean) = shot(id, screen = false) {
+        val content = fi.aikapolku.app.widget.WidgetDay.compute(ctx)
+        val views = fi.aikapolku.app.widget.WidgetUpdater.views(ctx, content, wide)
+        val d = ctx.resources.displayMetrics.density
+        val w = ((if (wide) 340 else 170) * d).toInt()
+        val h = (170 * d).toInt()
+        val pad = (20 * d).toInt()
+        var out: android.graphics.Bitmap? = null
+        instrumentation.runOnMainSync {
+            val frame = android.widget.FrameLayout(ctx)
+            val view = views.apply(ctx, frame)
+            frame.addView(view, android.widget.FrameLayout.LayoutParams(w, h))
+            val spec = { size: Int -> android.view.View.MeasureSpec.makeMeasureSpec(size, android.view.View.MeasureSpec.EXACTLY) }
+            frame.measure(spec(w), spec(h))
+            frame.layout(0, 0, w, h)
+            val bitmap = android.graphics.Bitmap.createBitmap(w + 2 * pad, h + 2 * pad, android.graphics.Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(bitmap)
+            canvas.drawColor(0xFFCFE3DF.toInt())
+            canvas.translate(pad.toFloat(), pad.toFloat())
+            frame.draw(canvas)
+            out = bitmap
+        }
+        // Sovellus ei kirjoita kuvakansioon suoraan: oma ulkoinen kansio, josta komentorivi kopioi.
+        val file = File(ctx.getExternalFilesDir(null), "$id.png")
+        file.outputStream().use { out!!.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        shell("cp ${file.absolutePath} $DIR/$id.png")
+        file.delete()
     }
 
     private fun wizardShots() {
@@ -428,6 +478,16 @@ class KuvakaappauksetDeviceTest {
     }
 
     private fun clientShots() {
+        // Ennen päiväohjelman läpikäyntiä, jotta Nyt on vielä päiväohjelma.
+        // Kotinäytön widget (värit ja asukkaan asetukset kuten sovelluksessa).
+        widgetShot("w01-widget-levea", wide = true)
+        widgetShot("w02-widget-pieni", wide = false)
+        // Kello korteissa: Nyt-kortti kellotaululla ja numeroilla (asetus vain tätä kuvaa varten).
+        fi.aikapolku.app.data.CardClockPrefs.setMode(ctx, fi.aikapolku.app.data.CardClockMode.BOTH)
+        launch(caregiver = false) {
+            shot("a12-kello-kortissa") { waitText(Demo.PROGRAM) }
+        }
+        fi.aikapolku.app.data.CardClockPrefs.setMode(ctx, fi.aikapolku.app.data.CardClockMode.OFF)
         // Päiväohjelma alusta loppuun: tehtävä, tauko, oma tila, En ymmärrä, ennakkovaroitus, valinta, valmis.
         launch(caregiver = false) {
             shot("a01-nyt-kortti") { waitText(Demo.PROGRAM) }
