@@ -185,7 +185,7 @@ internal object CategoryStore {
             val text = residentText.lowercase(Locale.ROOT)
             JSONObject().also { out ->
                 all.keys().forEach { key ->
-                    val keep = key.startsWith("b:") || key.substring(2).let { it.isNotBlank() && text.contains(it) }
+                    val keep = key.startsWith("b:") || (key.length > 2 && text.contains(key.substring(2)))
                     if (keep) out.put(key, all.optString(key))
                 }
             }

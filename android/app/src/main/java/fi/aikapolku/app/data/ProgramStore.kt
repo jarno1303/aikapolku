@@ -6,6 +6,7 @@ import org.json.JSONArray
 internal class ProgramStore(context: Context, profileId: String = ProfileStore.currentId(context)) {
     // Profiilin (oletuksena nykyisen) päiväohjelmat.
     private val prefs = ProfileScope.prefs(context, ProfileScope.PROGRAMS, profileId)
+    private val appContext = context.applicationContext
 
     fun load(): List<DayProgram> {
         val array = runCatching {
@@ -31,6 +32,11 @@ internal class ProgramStore(context: Context, profileId: String = ProfileStore.c
         val index = programs.indexOfFirst { it.id == program.id }
 
         if (index >= 0) {
+            // Nimen vaihto: ohjelman luokka (värikoodaus) siirtyy uudelle nimelle.
+            val oldName = programs[index].name
+            if (oldName != program.name) {
+                CategoryStore.rekey(appContext, CategoryStore.programKey(oldName), CategoryStore.programKey(program.name))
+            }
             programs[index] = program
         } else {
             programs.add(program)

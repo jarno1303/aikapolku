@@ -29,24 +29,26 @@ private val ClockInk = Color(0xFF1F2937)
 @Composable
 internal fun cardClockMode(): CardClockMode {
     val context = LocalContext.current
-    SettingsRevision.value
-    return CardClockPrefs.mode(context)
+    return androidx.compose.runtime.remember(SettingsRevision.value) { CardClockPrefs.mode(context) }
 }
 
 /**
- * Kello kortin oikeaan yläkulmaan: kellotaulu, jonka viisarit näyttävät alkamisajan, ja
- * valinnan mukaan aika numeroina sen alla. Pienissä kuvissa kelloa ei piirretä (ei luettavissa).
+ * Kello kortin oikeaan alakulmaan (yläkulmissa ovat luokan merkki ja muutosmerkki): kellotaulu,
+ * jonka viisarit näyttävät alkamisajan, ja valinnan mukaan aika numeroina sen vasemmalla puolella.
+ * Vain isoissa kuvissa: pienissä riveissä aika näkyy jo tekstinä, eikä kello olisi luettavissa.
  */
-internal fun Modifier.clockMark(time: String?, mode: CardClockMode, measurer: TextMeasurer): Modifier {
+internal fun Modifier.clockMark(time: String?, mode: CardClockMode, measurer: TextMeasurer?): Modifier {
     val minutes = CardClockPrefs.minutes(time)
-    if (mode == CardClockMode.OFF || minutes == null) return this
+    if (mode == CardClockMode.OFF || minutes == null || measurer == null) return this
     return drawWithContent {
         drawContent()
         val small = size.minDimension
-        if (small < 56.dp.toPx()) return@drawWithContent
-        val d = (small * 0.28f).coerceIn(28.dp.toPx(), 72.dp.toPx())
+        if (small < 96.dp.toPx()) return@drawWithContent
+        val d = (small * 0.28f).coerceIn(32.dp.toPx(), 72.dp.toPx())
         val inset = (small * 0.06f).coerceAtLeast(4.dp.toPx())
-        val center = Offset(size.width - inset - d / 2, inset + d / 2)
+        // Luokan värireuna alareunassa: kello sen yläpuolelle.
+        val bar = (small * 0.07f).coerceIn(3.dp.toPx(), 10.dp.toPx())
+        val center = Offset(size.width - inset - d / 2, size.height - bar - inset - d / 2)
         drawDial(center, d / 2, minutes, measurer)
         if (mode == CardClockMode.BOTH) {
             val text = "%d.%02d".format(minutes / 60, minutes % 60)
@@ -55,8 +57,8 @@ internal fun Modifier.clockMark(time: String?, mode: CardClockMode, measurer: Te
             val padX = 4.dp.toPx()
             val w = layout.size.width + padX * 2
             val h = layout.size.height.toFloat()
-            val left = (center.x - w / 2).coerceAtMost(size.width - inset - w)
-            val top = center.y + d / 2 + 3.dp.toPx()
+            val left = (center.x - d / 2 - 4.dp.toPx() - w).coerceAtLeast(0f)
+            val top = center.y - h / 2
             drawRoundRect(Color.White, topLeft = Offset(left, top), size = Size(w, h), cornerRadius = CornerRadius(h / 2))
             drawText(layout, topLeft = Offset(left + padX, top))
         }
@@ -71,8 +73,8 @@ private fun DrawScope.drawDial(center: Offset, r: Float, minutes: Int, measurer:
     listOf(0 to "12", 90 to "3", 180 to "6", 270 to "9").forEach { (deg, label) ->
         val a = Math.toRadians(deg.toDouble())
         if (numbers) {
-            val layout = measurer.measure(label, TextStyle(fontSize = (r * 0.36f).toSp(), fontWeight = FontWeight.Bold, color = ClockInk))
-            val pos = Offset(center.x + (r * 0.7f * sin(a)).toFloat(), center.y - (r * 0.7f * cos(a)).toFloat())
+            val layout = measurer.measure(label, TextStyle(fontSize = (r * 0.3f).toSp(), fontWeight = FontWeight.Bold, color = ClockInk))
+            val pos = Offset(center.x + (r * 0.72f * sin(a)).toFloat(), center.y - (r * 0.72f * cos(a)).toFloat())
             drawText(layout, topLeft = Offset(pos.x - layout.size.width / 2f, pos.y - layout.size.height / 2f))
         } else {
             val outer = Offset(center.x + (r * 0.82f * sin(a)).toFloat(), center.y - (r * 0.82f * cos(a)).toFloat())
@@ -87,6 +89,6 @@ private fun DrawScope.drawDial(center: Offset, r: Float, minutes: Int, measurer:
         drawLine(ClockInk, center, end, strokeWidth = width, cap = StrokeCap.Round)
     }
     hand(hourDeg, r * 0.36f, r * 0.14f)
-    hand(minuteDeg, r * 0.56f, r * 0.09f)
+    hand(minuteDeg, r * 0.5f, r * 0.09f)
     drawCircle(ClockInk, radius = r * 0.1f, center = center)
 }

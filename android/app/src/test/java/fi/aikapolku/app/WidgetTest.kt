@@ -46,7 +46,9 @@ class WidgetTest {
         val c = WidgetDay.compute(context, today.atTime(9, 0))
         assertEquals(WidgetState.ACTIVE, c.state)
         assertEquals("Aamupala", c.now?.title)
-        assertEquals("12:00", c.until)
+        // Tavallinen tapahtuma: ei "asti"-aikaa (vain kestävällä tapahtumalla ja väliajalla).
+        assertNull(c.until)
+        assertEquals("08:00", c.now?.time)
         assertEquals("Lounas", c.next?.title)
         assertEquals(today.atTime(12, 0), WidgetDay.nextChange(context, today.atTime(9, 0)))
     }
@@ -72,6 +74,20 @@ class WidgetTest {
         val off = WidgetDay.compute(context, today.atTime(9, 0))
         assertEquals(WidgetState.OFF, off.state)
         assertNull(off.now)
+    }
+
+    @Test
+    fun `laakekortti nakyy kotinaytolla neutraalisti`() {
+        fi.aikapolku.app.data.CategoryStore.set(context, fi.aikapolku.app.data.CategoryStore.key("Lounas", "") { context.getString(it) }, fi.aikapolku.app.data.Category.HEALTH)
+        val c = WidgetDay.compute(context, today.atTime(9, 0))
+        assertEquals("Oma asia", c.next?.title)
+        assertEquals("", c.next?.imagePath)
+    }
+
+    @Test
+    fun `paikan laitteella widget on aina pois`() {
+        fi.aikapolku.app.link.LinkStore(context).placeEnabled = true
+        assertEquals(WidgetState.OFF, WidgetDay.compute(context, today.atTime(9, 0)).state)
     }
 
     @Test

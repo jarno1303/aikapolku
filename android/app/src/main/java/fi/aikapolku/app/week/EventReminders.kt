@@ -290,6 +290,7 @@ class EventAckReceiver : BroadcastReceiver() {
         val date = intent.getStringExtra(EventReminders.EXTRA_DATE)
             ?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: LocalDate.now()
         EventReminders.acknowledge(context, profile, event, date)
+        runCatching { fi.aikapolku.app.widget.WidgetUpdater.update(context) }
         val id = intent.getIntExtra(EventReminders.EXTRA_NOTIFICATION, 0)
         (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(id)
     }

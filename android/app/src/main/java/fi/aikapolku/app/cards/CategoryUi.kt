@@ -190,6 +190,13 @@ internal fun CategoryNamesSettings() {
                 kotlinx.coroutines.delay(700)
                 if (text != CategoryStore.name(context, category)) CategoryStore.rename(context, category, text)
             }
+            // Näkymästä poistuttaessa viimeinen muutos tallennetaan heti.
+            val latest = androidx.compose.runtime.rememberUpdatedState(text)
+            androidx.compose.runtime.DisposableEffect(category) {
+                onDispose {
+                    if (latest.value != CategoryStore.name(context, category)) CategoryStore.rename(context, category, latest.value)
+                }
+            }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 CategoryBadge(category, Modifier.size(32.dp))
                 OutlinedTextField(

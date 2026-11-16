@@ -68,7 +68,10 @@ internal object WidgetArt {
         val opts = BitmapFactory.Options().apply { inSampleSize = sample }
         if (file != null) BitmapFactory.decodeFile(file, opts)
         else BitmapFactory.decodeResource(context.resources, CardArt.imageRes(name, imagePath) { context.getString(it) }!!, opts)
-    }.getOrNull()
+    }.getOrNull() ?: if (imagePath.isNotBlank() && !imagePath.startsWith("builtin:")) {
+        // Oma kuva puuttuu tai on rikki: valmis kuva nimen mukaan (kuten sovelluksessa).
+        load(context, name, "", size)
+    } else null
 
     private fun paint(color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
 
@@ -121,20 +124,20 @@ internal object WidgetArt {
         }
     }
 
-    /** Kellotaulu oikeassa yläkulmassa (vrt. CardClock.clockMark). */
+    /** Kellotaulu oikeassa alakulmassa luokan reunan yläpuolella (vrt. CardClock.clockMark). */
     private fun drawClock(canvas: Canvas, minutes: Int, mode: CardClockMode, size: Float) {
         val d = size * 0.3f
         val inset = size * 0.06f
         val cx = size - inset - d / 2
-        val cy = inset + d / 2
+        val cy = size - size * 0.07f - inset - d / 2
         val r = d / 2
         canvas.drawCircle(cx, cy, r, paint(0xFFFFFFFF.toInt()))
         canvas.drawCircle(cx, cy, r * 0.95f, paint(INK).apply { style = Paint.Style.STROKE; strokeWidth = r * 0.1f })
-        val text = paint(INK).apply { textSize = r * 0.36f; typeface = Typeface.DEFAULT_BOLD; textAlign = Paint.Align.CENTER }
+        val text = paint(INK).apply { textSize = r * 0.3f; typeface = Typeface.DEFAULT_BOLD; textAlign = Paint.Align.CENTER }
         listOf(0 to "12", 90 to "3", 180 to "6", 270 to "9").forEach { (deg, label) ->
             val a = Math.toRadians(deg.toDouble())
-            val x = cx + (r * 0.7f * sin(a)).toFloat()
-            val y = cy - (r * 0.7f * cos(a)).toFloat() - (text.ascent() + text.descent()) / 2
+            val x = cx + (r * 0.72f * sin(a)).toFloat()
+            val y = cy - (r * 0.72f * cos(a)).toFloat() - (text.ascent() + text.descent()) / 2
             canvas.drawText(label, x, y, text)
         }
         val (hourDeg, minuteDeg) = CardClockPrefs.handAngles(minutes)
@@ -144,15 +147,15 @@ internal object WidgetArt {
                 paint(INK).apply { strokeWidth = width; strokeCap = Paint.Cap.ROUND })
         }
         hand(hourDeg, r * 0.36f, r * 0.14f)
-        hand(minuteDeg, r * 0.56f, r * 0.09f)
+        hand(minuteDeg, r * 0.5f, r * 0.09f)
         canvas.drawCircle(cx, cy, r * 0.1f, paint(INK))
         if (mode == CardClockMode.BOTH) {
             val label = "%d.%02d".format(minutes / 60, minutes % 60)
             val p = paint(INK).apply { textSize = d * 0.3f; typeface = Typeface.DEFAULT_BOLD; textAlign = Paint.Align.CENTER }
             val w = p.measureText(label) + d * 0.2f
             val h = p.textSize * 1.3f
-            val top = cy + r + d * 0.06f
-            val left = (cx - w / 2).coerceAtMost(size - inset - w)
+            val top = cy - h / 2
+            val left = (cx - r - d * 0.06f - w).coerceAtLeast(0f)
             canvas.drawRoundRect(RectF(left, top, left + w, top + h), h / 2, h / 2, paint(0xFFFFFFFF.toInt()))
             canvas.drawText(label, left + w / 2, top + h / 2 - (p.ascent() + p.descent()) / 2, p)
         }

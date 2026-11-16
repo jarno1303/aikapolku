@@ -179,7 +179,7 @@ internal object ResidentPackage {
             .put("photo", text(profile?.photo.orEmpty()))
             .put("prefs", prefs)
             .put("share", shareJson)
-            .put("categories", fi.aikapolku.app.data.CategoryStore.export(app, prefs.toString() + shareJson.toString()))
+            .put("categories", fi.aikapolku.app.data.CategoryStore.export(app, residentText(app, profileId)))
             .put("media", JSONArray(bytesByName.keys.toList()))
 
         val entries = LinkedHashMap<String, ByteArray>()
@@ -202,6 +202,14 @@ internal object ResidentPackage {
      */
     fun version(context: Context, profileId: String): String {
         val app = context.applicationContext
+        val text = StringBuilder(residentText(app, profileId))
+        // Luokat ja niiden nimet (värikoodaus): vain asukkaan omia kortteja koskevat valinnat.
+        text.append(fi.aikapolku.app.data.CategoryStore.export(app, text.toString()).toString())
+        return sha256(text.toString().toByteArray(Charsets.UTF_8)).take(20)
+    }
+
+    /** Asukkaan paketin tiedot tekstinä (versio ja luokkien suodatus): asetukset, ryhmät, nimi. */
+    private fun residentText(app: Context, profileId: String): String {
         val text = StringBuilder()
         BASES.forEach { base ->
             ProfileScope.prefs(app, base, profileId).all.toSortedMap().forEach { (key, value) ->
@@ -213,9 +221,7 @@ internal object ResidentPackage {
         val store = GroupStore(app)
         text.append(ResidentShare.encode(ResidentShare.of(store.load(), store.allChanges(), store.absences(), store.leaves(), profileId)))
         ProfileStore.list(app).firstOrNull { it.id == profileId }?.let { text.append(it.name).append(it.photo) }
-        // Luokat ja niiden nimet (värikoodaus): vain asukkaan omia kortteja koskevat valinnat.
-        text.append(fi.aikapolku.app.data.CategoryStore.export(app, text.toString()).toString())
-        return sha256(text.toString().toByteArray(Charsets.UTF_8)).take(20)
+        return text.toString()
     }
 
     /** Asukkaan puhelimessa jo olevat kuvat ja äänet (tiivisteet), kerrotaan pyynnössä. */

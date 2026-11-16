@@ -106,7 +106,7 @@ internal fun CardPhoto(
     val context = LocalContext.current
     val category = if (showCategory) shownCategory(name, imagePath, title) else null
     val clockMode = if (time != null) cardClockMode() else fi.aikapolku.app.data.CardClockMode.OFF
-    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val measurer = if (clockMode != fi.aikapolku.app.data.CardClockMode.OFF) androidx.compose.ui.text.rememberTextMeasurer() else null
     val marked = modifier.categoryMark(category).clockMark(time, clockMode, measurer)
     val path = imagePath.takeIf { it.isNotBlank() && !it.startsWith("builtin:") }
     val res = CardArt.imageRes(name, imagePath) { context.getString(it) }

@@ -34,14 +34,15 @@ internal object WidgetUpdater {
             return
         }
         val content = runCatching { WidgetDay.compute(app) }.getOrElse { WidgetContent(WidgetState.EMPTY) }
-        small.forEach { runCatching { manager.updateAppWidget(it, views(app, content, wide = false)) } }
-        wide.forEach { runCatching { manager.updateAppWidget(it, views(app, content, wide = true)) } }
+        // Kuvat piirretään kerran kutakin kokoa kohden, vaikka widgettejä olisi useita.
+        if (small.isNotEmpty()) runCatching { views(app, content, wide = false) }.getOrNull()?.let { v -> small.forEach { runCatching { manager.updateAppWidget(it, v) } } }
+        if (wide.isNotEmpty()) runCatching { views(app, content, wide = true) }.getOrNull()?.let { v -> wide.forEach { runCatching { manager.updateAppWidget(it, v) } } }
         schedule(app)
     }
 
     private fun openApp(context: Context): PendingIntent = PendingIntent.getActivity(
         context, REQUEST,
-        Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+        Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
@@ -63,19 +64,20 @@ internal object WidgetUpdater {
         return RemoteViews(context.packageName, layout).apply {
             setImageViewBitmap(R.id.widget_now_image, WidgetArt.render(context, now))
             setTextViewText(R.id.widget_now_title, now.title)
-            val until = content.until?.let { context.getString(R.string.widget_until, it.replace(':', '.')) }
+            val until = if (!content.showTimes) null else when {
+                content.until != null -> context.getString(R.string.widget_until, content.until.replace(':', '.'))
+                now.time.isNotBlank() -> context.getString(R.string.widget_at, now.time.replace(':', '.'))
+                else -> null
+            }
             setTextViewText(R.id.widget_now_until, until ?: "")
             setViewVisibility(R.id.widget_now_until, if (until == null) View.GONE else View.VISIBLE)
-            setContentDescription(R.id.widget_root, listOfNotNull(
-                context.getString(R.string.widget_now) + ": " + now.title, until,
-                content.next?.let { context.getString(R.string.widget_next) + ": " + it.title }
-            ).joinToString(". "))
             if (wide) {
                 val next = content.next
                 if (next != null) {
                     setImageViewBitmap(R.id.widget_next_image, WidgetArt.render(context, next))
                     setTextViewText(R.id.widget_next_title, next.title)
-                    setTextViewText(R.id.widget_next_at, context.getString(R.string.widget_at, next.time.replace(':', '.')))
+                    setTextViewText(R.id.widget_next_at, if (content.showTimes) context.getString(R.string.widget_at, next.time.replace(':', '.')) else "")
+                    setViewVisibility(R.id.widget_next_at, if (content.showTimes) View.VISIBLE else View.GONE)
                     setViewVisibility(R.id.widget_next_box, View.VISIBLE)
                     setViewVisibility(R.id.widget_arrow, View.VISIBLE)
                 } else {

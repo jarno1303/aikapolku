@@ -1185,6 +1185,7 @@
     <string name="widget_small_description">Mitä nyt tehdään ja mihin asti</string>
     <string name="widget_wide_description">Mitä nyt tehdään ja mitä tulee seuraavaksi</string>
     <string name="widget_setting_title">Kotinäytön widget</string>
-    <string name="widget_setting_info">Puhelimen kotinäytöllä näkyy Nyt ja Seuraavaksi avaamatta sovellusta. Widgetissä ei näy vointia eikä muuta arkaluonteista, eikä se näy lukitusnäytöllä. Pois päältä widgetissä lukee vain AikaPolku.</string>
+    <string name="widget_setting_info">Puhelimen kotinäytöllä näkyy Nyt ja Seuraavaksi avaamatta sovellusta. Widgetissä ei näy vointia, ja lääkkeitä ja terveyttä koskevat kortit näkyvät nimellä Oma asia. Widget ei näy lukitusnäytöllä eikä paikan laitteella. Pois päältä widgetissä lukee vain AikaPolku.</string>
+    <string name="widget_private_title">Oma asia</string>
     <string name="widget_setting_switch">Näytä päivän ohjelma widgetissä</string>
 </resources>
