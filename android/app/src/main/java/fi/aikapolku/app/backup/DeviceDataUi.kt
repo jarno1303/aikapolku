@@ -47,7 +47,7 @@ internal fun DeviceDataSettings() {
     val revision = AutoBackup.revision
     val enabled = remember(revision) { AutoBackup.enabled(context) }
     val last = remember(revision) { AutoBackup.last(context) }
-    val error = remember(revision) { AutoBackup.error(context) }
+    val error = remember(revision) { AutoBackup.lastError(context) }
     var pendingTree by remember { mutableStateOf<Uri?>(null) }
     var busy by remember { mutableStateOf(false) }
     var restoreBytes by remember { mutableStateOf<ByteArray?>(null) }

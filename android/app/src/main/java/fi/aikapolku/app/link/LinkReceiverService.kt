@@ -188,16 +188,9 @@ internal object LinkNotify {
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setContentIntent(openApp(context))
             .setAutoCancel(true)
-            // T2: lukitusnäytöllä vain yleinen teksti; nimi ja viesti näkyvät vasta avattuna.
-            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-            .setPublicVersion(
-                NotificationCompat.Builder(context, CHANNEL_MESSAGES)
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .setContentTitle(context.getString(R.string.link_message_public))
-                    .setContentIntent(openApp(context))
-                    .setAutoCancel(true)
-                    .build()
-            )
+            // T2: ei lukitusnäytölle lainkaan (ääni kuuluu); nimi ja viesti näkyvät vasta avattuna.
+            // VISIBILITY_SECRET ohittaa myös laitteen "näytä kaikki sisältö" -asetuksen.
+            .setVisibility(NotificationCompat.VISIBILITY_SECRET)
             .build()
         runCatching { NotificationManagerCompat.from(context).notify((message.at % 100_000).toInt() + 8000, notification) }
     }
@@ -208,6 +201,7 @@ internal object LinkNotify {
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(context.getString(R.string.link_pair_request_title))
             .setContentText(context.getString(R.string.link_pair_request_notify, name))
+            .setVisibility(NotificationCompat.VISIBILITY_SECRET)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(openApp(context))
             .setAutoCancel(true)

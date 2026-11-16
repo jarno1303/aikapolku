@@ -16,6 +16,8 @@ internal object KeyVault {
     private const val ALIAS = "aikapolku_vault_v1"
     private const val PREFIX = "kv1:"
 
+    /** Yksi luonti kerrallaan: kaksi säiettä ei saa luoda kahta eri avainta. */
+    @Synchronized
     private fun key(): SecretKey? = runCatching {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         (store.getEntry(ALIAS, null) as? KeyStore.SecretKeyEntry)?.secretKey ?: run {
@@ -34,9 +36,11 @@ internal object KeyVault {
         }
     }.getOrNull()
 
+    fun isSealed(text: String): Boolean = text.startsWith(PREFIX)
+
     /** Salattu teksti etuliitteellä; ilman Keystorea alkuperäinen. */
     fun seal(plain: String): String {
-        val k = key() ?: return plain
+        val k = key() ?: return plain.also { runCatching { android.util.Log.w("AikaPolku", "Keystore ei käytettävissä: arvo salaamatta") } }
         return runCatching {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.ENCRYPT_MODE, k)

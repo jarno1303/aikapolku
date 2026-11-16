@@ -67,6 +67,9 @@ internal fun LinkSettings() {
     val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     Text(stringResource(R.string.link_info), fontSize = 14.sp, color = AppColors.Muted)
+    if (remember(revision) { store.peersLost }) {
+        Text(stringResource(R.string.link_peers_lost), fontSize = 14.sp, color = androidx.compose.material3.MaterialTheme.colorScheme.error)
+    }
     OutlinedTextField(
         value = name,
         onValueChange = { name = it.take(40) },
@@ -263,6 +266,11 @@ private fun PairWithReceiver(me: Identity) {
 internal fun PairingRequestDialog() {
     val request = LinkPairing.pending ?: return
     val context = LocalContext.current
+    // T4: paikan laite ilman näytön lukitusta ei hyväksy uusia liitoksia.
+    if (request.place && !fi.aikapolku.app.caregiver.PrivacyPrefs.deviceSecure(context)) {
+        androidx.compose.runtime.LaunchedEffect(request) { LinkPairing.answer(false) }
+        return
+    }
     // Paikan laitteella valitaan, kenen asukkaan puhelin liitetään (vain hänen tietonsa siirtyvät).
     val profiles = remember(request) { if (request.place) fi.aikapolku.app.data.ProfileStore.list(context).filter { it.name.isNotBlank() } else emptyList() }
     var resident by remember(request) { mutableStateOf("") }

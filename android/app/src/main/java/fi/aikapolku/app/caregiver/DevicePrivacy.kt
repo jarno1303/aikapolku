@@ -124,7 +124,10 @@ private fun ScreenLockRequired() {
         )
         SecondaryButton(
             text = stringResource(R.string.role_to_client),
-            onClick = { RoleSession.toClient() },
+            onClick = {
+                CaregiverSession.close()
+                RoleSession.toClient()
+            },
             modifier = Modifier.fillMaxWidth()
         )
     }

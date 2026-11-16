@@ -49,7 +49,22 @@ internal class LinkStore(context: Context) {
         }
 
     /** Liitokset; avaimet tallennetaan Android Keystoren avaimella salattuina (T1). */
-    fun peers(): List<Peer> = decode(prefs.getString(KEY_PEERS, null)?.let { KeyVault.open(it) })
+    fun peers(): List<Peer> {
+        val raw = prefs.getString(KEY_PEERS, null) ?: return emptyList()
+        val plain = KeyVault.open(raw)
+        if (plain == null) {
+            // Keystoren avain menetetty: salattu tieto talteen (ei ylikirjoiteta), liitokset tehdään uudelleen.
+            prefs.edit().putString(KEY_BROKEN, raw).remove(KEY_PEERS).commit()
+            revision++
+            return emptyList()
+        }
+        // Vanha salaamaton tallennus salataan heti (T1).
+        if (!KeyVault.isSealed(raw)) KeyVault.seal(raw).takeIf { it != raw }?.let { prefs.edit().putString(KEY_PEERS, it).apply() }
+        return decode(plain)
+    }
+
+    /** Liitokset jouduttiin tekemään uudelleen (salausavain menetetty). */
+    val peersLost: Boolean get() = prefs.contains(KEY_BROKEN)
 
     private fun savePeers(list: List<Peer>, now: Boolean = true) {
         val editor = prefs.edit().putString(KEY_PEERS, KeyVault.seal(encode(list)))
@@ -92,6 +107,7 @@ internal class LinkStore(context: Context) {
         private const val KEY_RECEIVER = "receiver"
         private const val KEY_PLACE = "place"
         private const val KEY_PEERS = "peers"
+        private const val KEY_BROKEN = "peers_broken"
 
         /** Näkymät päivittyvät, kun liitokset muuttuvat. */
         var revision by mutableIntStateOf(0)

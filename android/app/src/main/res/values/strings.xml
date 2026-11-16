@@ -765,6 +765,7 @@
     <string name="device_erase_text">Kaikki asukkaat, ohjelmat, kuvat, äänitteet, liitokset ja asetukset poistetaan pysyvästi, ja sovellus sulkeutuu. Kirjoita %1$s vahvistukseksi.</string>
     <string name="device_erase_word">POISTA</string>
     <string name="device_erase_confirm">Poista kaikki</string>
+    <string name="link_peers_lost">Laitteen salausavain on vaihtunut, joten aiemmat liitokset eivät enää toimi. Liitä laitteet uudelleen.</string>
     <string name="caregiver_home_title">Ohjaajan etusivu</string>
     <string name="caregiver_prepare">Valmistele asiakkaalle</string>
     <string name="caregiver_first_then_info">Ensin–Sitten-pari ja aika; näkyy asiakkaan NYT-kortissa</string>
