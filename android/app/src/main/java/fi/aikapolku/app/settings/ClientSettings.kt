@@ -210,6 +210,19 @@ internal fun HomeSettings() {
         fi.aikapolku.app.data.CategoryStore.setEnabled(context, it)
         SettingsRevision.bump()
     }
+    // Kello korteissa: kellotaulu näyttää alkamisajan (asukaskohtainen, oletus pois).
+    val clockModes = fi.aikapolku.app.data.CardClockMode.entries
+    var clockMode by remember(SettingsRevision.value) { mutableStateOf(fi.aikapolku.app.data.CardClockPrefs.mode(context)) }
+    SettingLabel(stringResource(R.string.card_clock_title), stringResource(R.string.card_clock_info))
+    SegmentedChoice(
+        options = listOf(stringResource(R.string.card_clock_off), stringResource(R.string.card_clock_analog), stringResource(R.string.card_clock_both)),
+        selected = clockModes.indexOf(clockMode).coerceAtLeast(0),
+        onSelect = {
+            clockMode = clockModes[it]
+            fi.aikapolku.app.data.CardClockPrefs.setMode(context, clockModes[it])
+            SettingsRevision.bump()
+        }
+    )
     SettingLabel(stringResource(R.string.client_view_timeline))
     listOf(
         Triple(TimelineMode.FULL, R.string.client_view_full, R.string.client_view_full_info),

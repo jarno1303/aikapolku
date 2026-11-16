@@ -99,11 +99,15 @@ internal fun CardPhoto(
     /** Päiväohjelman nimi, kun kuva on ohjelman ensimmäinen kortti (ohjelman luokka voittaa). */
     title: String? = null,
     /** Luokan merkintä (värikoodaus); pois esim. valintaruudukoissa, joissa luokka ei ole olennainen. */
-    showCategory: Boolean = true
+    showCategory: Boolean = true,
+    /** Alkamisaika ("08:30"): kello kortin kulmaan, jos asukkaalla on Kello korteissa päällä. */
+    time: String? = null
 ) {
     val context = LocalContext.current
     val category = if (showCategory) shownCategory(name, imagePath, title) else null
-    val marked = modifier.categoryMark(category)
+    val clockMode = if (time != null) cardClockMode() else fi.aikapolku.app.data.CardClockMode.OFF
+    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val marked = modifier.categoryMark(category).clockMark(time, clockMode, measurer)
     val path = imagePath.takeIf { it.isNotBlank() && !it.startsWith("builtin:") }
     val res = CardArt.imageRes(name, imagePath) { context.getString(it) }
     val state = rememberCachedImage(path, res)

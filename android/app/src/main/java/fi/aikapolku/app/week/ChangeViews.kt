@@ -160,7 +160,7 @@ private fun ChangeRow(day: String, summary: String, onClick: () -> Unit) {
 @Composable
 private fun CrossedImage(item: ResolvedEvent, modifier: Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        EventImage(item, Modifier.fillMaxSize().clip(RoundedCornerShape(20.dp)).alpha(0.4f))
+        EventImage(item, Modifier.fillMaxSize().clip(RoundedCornerShape(20.dp)).alpha(0.4f), showClock = false)
         Canvas(Modifier.fillMaxSize().padding(14.dp)) {
             val w = 9.dp.toPx()
             drawLine(AppColors.ChangeFill, Offset(0f, 0f), Offset(size.width, size.height), w, StrokeCap.Round)
@@ -173,7 +173,7 @@ private fun CrossedImage(item: ResolvedEvent, modifier: Modifier) {
 private fun ImageWithName(item: ResolvedEvent, size: Int, crossed: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         val modifier = Modifier.sizeIn(maxWidth = size.dp, maxHeight = size.dp).aspectRatio(1f)
-        if (crossed) CrossedImage(item, modifier) else EventImage(item, modifier.clip(RoundedCornerShape(20.dp)))
+        if (crossed) CrossedImage(item, modifier) else EventImage(item, modifier.clip(RoundedCornerShape(20.dp)), showClock = false)
         Text(
             item.title,
             fontSize = if (crossed) 18.sp else 24.sp,
@@ -476,7 +476,7 @@ private fun UnchangedSection(items: List<ResolvedEvent>) {
                         .heightIn(min = 48.dp)
                         .semantics(mergeDescendants = true) { contentDescription = "$time ${item.title}" }
                 ) {
-                    EventImage(item, Modifier.size(38.dp).clip(RoundedCornerShape(10.dp)))
+                    EventImage(item, Modifier.size(38.dp).clip(RoundedCornerShape(10.dp)), showClock = false)
                     Text(time, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Muted)
                     Text(
                         item.title,

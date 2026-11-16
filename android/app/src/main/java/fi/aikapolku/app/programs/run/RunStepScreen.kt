@@ -192,7 +192,9 @@ internal fun RunStepScreen(
                         taskName = taskName,
                         taskPhoto = taskPhoto,
                         subStepName = currentSubStep,
-                        modifier = imageModifier.clip(RoundedCornerShape(24.dp))
+                        modifier = imageModifier.clip(RoundedCornerShape(24.dp)),
+                        // Kellonaikatilassa toiminnon alkamisaika kellona (asukkaan asetus).
+                        clockTime = (time as? RunTime.Clock)?.time
                     )
                     // Pitkä otsikko pienenee, jotta se mahtuu kahdelle riville eikä vie kuvan tilaa.
                     val titleSize = when {
@@ -451,12 +453,12 @@ private fun RunNextRow(next: RunNext, mode: String) {
 
 /** Osavaiheen oma kuva, jos sellainen on; muuten tehtävän kuva (oma valokuva tai valmis kortti). */
 @Composable
-internal fun RunImage(taskName: String, taskPhoto: String, subStepName: String?, modifier: Modifier) {
+internal fun RunImage(taskName: String, taskPhoto: String, subStepName: String?, modifier: Modifier, clockTime: String? = null) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val subStepImage = subStepName?.let { SubstepArt.imageRes(it) { context.getString(it) } }
     if (subStepImage != null) {
         ResourceImage(subStepImage, modifier)
     } else {
-        CardPhoto(taskName, taskPhoto, modifier)
+        CardPhoto(taskName, taskPhoto, modifier, time = clockTime)
     }
 }

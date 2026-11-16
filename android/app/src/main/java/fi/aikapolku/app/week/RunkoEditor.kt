@@ -520,7 +520,7 @@ private fun OwnRow(event: WeekEvent, programs: List<DayProgram>, canEdit: Boolea
         time = event.time,
         canEdit = canEdit,
         onClick = onClick,
-        image = { EventImage(resolved, it) },
+        image = { EventImage(resolved, it, showClock = false) },
         title = resolved.title.ifBlank { stringResource(R.string.week_missing_program) },
         subtitle = details,
         notify = event.notify

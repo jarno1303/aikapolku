@@ -1167,4 +1167,10 @@
     <string name="category_colors_title">Värikoodaus</string>
     <string name="category_colors_info">Kortin alareunassa näkyy luokan väri ja kulmassa sen merkki. Jos värit ovat asukkaalle liikaa, ne voi kytkeä pois.</string>
     <string name="category_colors_switch">Näytä luokkien värit ja merkit</string>
+    <!-- Kello korteissa -->
+    <string name="card_clock_title">Kello korteissa</string>
+    <string name="card_clock_info">Pieni kellotaulu kortin kulmassa näyttää, mihin aikaan toiminta alkaa. Avuksi, jos asukas tunnistaa kellotaulun mutta ei lue numeroita.</string>
+    <string name="card_clock_off">Pois</string>
+    <string name="card_clock_analog">Kellotaulu</string>
+    <string name="card_clock_both">Kellotaulu ja numerot</string>
 </resources>
