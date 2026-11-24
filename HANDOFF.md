@@ -32,7 +32,7 @@ Kaikki työ on yhdessä ketjussa; uusin haara sisältää kaikki aiemmat (muutos
 
 | Haara | Sisältö | Tila |
 |---|---|---|
-| `claude/aikapolku-yksikkomalli-2026-11-15` | **Uusin.** A1–A4, A2, yksikkömalli V1–V4, valinta/odotus/oma tila, yksikön yhteys, palautemuutokset, vaakatila ja tabletit, paikan laite (A5), tietosuoja T1–T6, ohjatun aloituksen laajennus, värikoodaus, kello, widget, materiaalit; 24.11. tietoturvakorjaukset ja dokumenttien ajantasaistus | Käännös ja yksikkötestit OK 16.11. (90b9084). 24.11. muutokset: **käännös PC:llä ajamatta**. **Puhelintestit kuittaamatta** |
+| `claude/aikapolku-yksikkomalli-2026-11-15` | **Uusin.** A1–A4, A2, yksikkömalli V1–V4, valinta/odotus/oma tila, yksikön yhteys, palautemuutokset, vaakatila ja tabletit, paikan laite (A5), tietosuoja T1–T6, ohjatun aloituksen laajennus, värikoodaus, kello, widget, materiaalit; 24.11. tietoturvakorjaukset ja dokumenttien ajantasaistus | Täysi tarkistus OK 24.11. (3530241): käännös, kaikki yksikkötestit, lint 0 virhettä. **Puhelintestit kuittaamatta** |
 | `main` | Vain dokumentit 15.11. asti | Yhdistetään vasta puhelintestien jälkeen |
 | `varmuus/ennen-ajantasaistus-20261124` | Varmuuskopio ennen 24.11. muutoksia (13ba513) | – |
 | `varmuus/*`, `varmuuskopio/*`, `backup/*` | Aiemmat varmuuskopiot | Voi siivota mainiin yhdistämisen jälkeen |
@@ -68,7 +68,7 @@ Valmistelu: uusin APK (`aja-aikapolku.ps1 -branch claude/aikapolku-yksikkomalli-
 
 **Uusia ominaisuuksia ei lisätä ennen kohtia 1–4.**
 
-1. 24.11. muutosten käännös ja testit PC:llä (`-taysi`), korjaukset.
+1. ~~24.11. muutosten käännös ja testit PC:llä~~ – tehty 24.11. (3530241), kaikki OK.
 2. Puhelintestit (yllä) ja kahden laitteen siirtotesti → VIKA-korjaukset.
 3. Yhdistäminen mainiin, täysi tarkistus, tutkielman tilat `Testattu`.
 4. Uudet kuvakaappaukset (`-kuvat`) ja materiaalit (opas, esitys, muistiinpanot) niistä uudelleen.
