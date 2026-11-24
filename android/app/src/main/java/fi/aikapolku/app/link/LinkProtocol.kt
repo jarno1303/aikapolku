@@ -83,7 +83,7 @@ internal object LinkProtocol {
      * Asukkaan paketti kuvineen ja äänineen: zip (media enintään ResidentPackage.MAX_MEDIA_BYTES + tiedot)
      * → base64 JSONiin → AES-GCM → base64, eli noin 16/9 × zipin koko. Varaa 4 Mt tiedoille.
      */
-    const val MAX_PACKAGE_CHARS = ((12L * 1024 * 1024 + 4L * 1024 * 1024) * 16 / 9).toInt()
+    const val MAX_PACKAGE_CHARS = ((ResidentPackage.MAX_MEDIA_BYTES + 4L * 1024 * 1024) * 16 / 9).toInt()
     /** Pyynnön ensimmäisen rivin kokonaisaika (hidas tiputtelu ei saa varata yhteyksiä loputtomasti). */
     const val REQUEST_DEADLINE_MS = 30_000L
 

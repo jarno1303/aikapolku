@@ -45,14 +45,14 @@ internal object KeyVault {
      */
     private val keystoreMissing: Boolean by lazy { java.security.Security.getProvider("AndroidKeyStore") == null }
 
+    /** Vain testeihin: pakottaa salauksen epäonnistumaan (oikean laitteen virhepolku). */
+    @Volatile internal var failForTest = false
+
     /**
      * Salattu teksti etuliitteellä. null = salaus epäonnistui laitteessa, jossa Keystore on:
      * kutsuja ei saa tallentaa arvoa (salaisuutta ei koskaan tallenneta salaamatta oikeaan laitteeseen).
      * Vain testiympäristössä ilman Keystorea palautetaan alkuperäinen.
      */
-    /** Vain testeihin: pakottaa salauksen epäonnistumaan (oikean laitteen virhepolku). */
-    @Volatile internal var failForTest = false
-
     fun seal(plain: String): String? {
         if (failForTest) return null
         if (keystoreMissing) return plain
