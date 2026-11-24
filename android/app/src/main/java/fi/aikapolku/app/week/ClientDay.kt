@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -336,21 +337,24 @@ internal fun ClientDayView(
             }
         }
         val measured = fitting && index == rows.last() && rows.size > 1
+        // Mittaamaton rivi on näkymätön eikä ruudunlukija tai kosketus tavoita sitä.
+        val hidden = fitting && !verified && index != rows.first()
+        val hide = if (hidden) Modifier.alpha(0f).clearAndSetSemantics {} else Modifier
         TimelineRow(
             item = item,
             isCurrent = index == state.current,
             isDone = state.ackTimes[item.event.id] != null,
             isPast = index in skipped || (state.current >= 0 && index < state.current),
             showTime = prefs.showTimes,
-            onClick = { open(item) },
-            modifier = when {
-                !fitting || verified || index == rows.first() -> Modifier
-                measured -> Modifier.alpha(0f).onGloballyPositioned { c ->
-                    val visible = c.boundsInWindow()
-                    if (visible.height < c.size.height - 1f) shown = rows.size - 1 else verified = true
-                }
-                else -> Modifier.alpha(0f)
-            }
+            onClick = { if (!hidden) open(item) },
+            // Viimeistä riviä mitataan jatkuvasti: jos sisältö myöhemmin kasvaa (kuvat, muutosilmoitus,
+            // järjestelmäpalkit), rivi jätetään pois. Määrä voi vain pienentyä, joten ei heilumista.
+            modifier = if (measured) hide.onGloballyPositioned { c ->
+                // Vain alareunan leikkaus ratkaisee (ylös vieritetty sivu ei poista riviä).
+                val visibleBottom = c.boundsInWindow().bottom
+                val fullBottom = c.localToWindow(androidx.compose.ui.geometry.Offset(0f, c.size.height.toFloat())).y
+                if (visibleBottom < fullBottom - 1f) shown = rows.size - 1 else if (!verified) verified = true
+            } else hide
         )
     }
     }
