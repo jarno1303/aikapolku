@@ -17,6 +17,9 @@
 # Kuvakaappaukset käyttöoppaaseen ja esitykseen (puhelin kaapelilla; puhelimen omat tiedot palautetaan lopuksi):
 #   ... aja-aikapolku.ps1 -branch <haara> -kuvat
 # Kuvat: AikaPolku\materiaalit\kuvat (myös tarkistukset\<aika>\kuvat).
+# Kahden laitteen siirtotesti (paikan laite + asukkaan puhelin, molemmat USB:llä samassa Wi-Fissä):
+#   ... aja-aikapolku.ps1 -branch <haara> -kaksiLaitetta
+# Tulokset: tarkistukset\<aika>\kaksi-laitetta.txt ja kummankin laitteen kohdat ja logcat.
 param(
     [string]$branch = "main",
     [string]$testit = "",
@@ -24,6 +27,7 @@ param(
     [switch]$taysi,
     [switch]$laitetesti,
     [switch]$kuvat,
+    [switch]$kaksiLaitetta,
     [string]$laitetestit = "EnsinSittenLisaaikaDeviceTest,PaivaohjelmaLisaaikaDeviceTest,MuutoskorttiDeviceTest,ProgramDayDeviceTest,EnnakkoaaniDeviceTest,KuvaJaKelloDeviceTest,YhteysDeviceTest"
 )
 $repo  = "$env:USERPROFILE\AndroidStudioProjects\AikaPolku"
@@ -38,6 +42,11 @@ if ($kuvat) {
     $laitetesti = $true
     $eiTesteja = $true
     $laitetestit = "KuvakaappauksetDeviceTest"
+}
+
+# Kahden laitteen testi: sovellus ja testipaketti, ei JVM-testejä (ajetaan erikseen).
+if ($kaksiLaitetta) {
+    $eiTesteja = $true
 }
 
 # Java 17-23 (Android Studion oma jbr käy).
@@ -99,7 +108,7 @@ if (-not $eiTesteja) {
     foreach ($t in ($testit -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })) { $tasks += " --tests $t" }
 }
 if ($taysi) { $tasks += " :app:lintDebug" }
-if ($laitetesti) { $tasks += " :app:assembleDebugAndroidTest" }
+if ($laitetesti -or $kaksiLaitetta) { $tasks += " :app:assembleDebugAndroidTest" }
 $android = "$wt\android"
 $log = "$logs\aikapolku.log"
 Remove-Item -Recurse -Force "$android\app\build\test-results" -ErrorAction SilentlyContinue
@@ -150,6 +159,20 @@ if ($code -eq 0 -and (Test-Path $apk)) {
 # Skriptin uusin versio talteen seuraavaa kertaa varten (ajetaan tarkistukset-kansion kopiosta).
 $uusiSkripti = "$wt\tools\pc\aja-aikapolku.ps1"
 if (Test-Path $uusiSkripti) { Copy-Item $uusiSkripti "$repo\tarkistukset\aja-aikapolku.ps1" -Force -ErrorAction SilentlyContinue }
+$kahdenSkripti = "$wt\tools\pc\kahden-puhelimen-testi.ps1"
+if (Test-Path $kahdenSkripti) { Copy-Item $kahdenSkripti "$repo\tarkistukset\kahden-puhelimen-testi.ps1" -Force -ErrorAction SilentlyContinue }
+
+# Kahden laitteen siirtotesti (vain onnistuneesta käännöksestä).
+if ($kaksiLaitetta) {
+    $testApkK = "$android\app\build\outputs\apk\androidTest\debug\app-debug-androidTest.apk"
+    if ($code -eq 0 -and (Test-Path $apk) -and (Test-Path $testApkK)) {
+        & powershell -ExecutionPolicy Bypass -File "$repo\tarkistukset\kahden-puhelimen-testi.ps1" -vaihe automaatti -apk $apk -testApk $testApkK -kansio $logs
+        $kk = $LASTEXITCODE
+        "kaksiLaitetta=$(if ($kk -eq 0) { 'OK' } else { 'VIRHE' })" | Out-File "$logs\tulos.txt" -Append -Encoding utf8
+    } else {
+        "kaksiLaitetta=EI AJETTU (käännös)" | Out-File "$logs\tulos.txt" -Append -Encoding utf8
+    }
+}
 
 # Puhelintestit (vain onnistuneesta käännöksestä).
 $testApk = "$android\app\build\outputs\apk\androidTest\debug\app-debug-androidTest.apk"
