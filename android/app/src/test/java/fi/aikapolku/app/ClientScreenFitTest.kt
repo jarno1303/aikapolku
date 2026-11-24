@@ -44,6 +44,10 @@ import fi.aikapolku.app.timer.TimerScreen
 import fi.aikapolku.app.week.ChangeScreen
 import fi.aikapolku.app.week.EventCardScreen
 import java.time.LocalDate
+import java.time.LocalTime
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -66,6 +70,21 @@ class ClientScreenFitTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private fun t(id: Int, vararg args: Any) = context.getString(id, *args)
     private val today = LocalDate.now()
+
+    /**
+     * Kello lukitaan aamuun (07.52): NYT on 07.00 ja kaksi seuraavaa (08.00, 09.00) olisi
+     * näytettävissä – etusivun vaikein tilanne. Ennen 24.11.2026 testi käytti oikeaa kelloa ja
+     * meni läpi vain iltapäivisin.
+     */
+    @Before
+    fun lockClock() {
+        fi.aikapolku.app.data.AppClock.fixed = today.atTime(LocalTime.of(7, 52))
+    }
+
+    @After
+    fun releaseClock() {
+        fi.aikapolku.app.data.AppClock.fixed = null
+    }
 
     companion object {
         const val WIDTH = 411
@@ -200,5 +219,16 @@ class ClientScreenFitTest {
         val report = "R11: ${problems.size} piilossa olevaa painiketta.\n" + problems.joinToString("\n")
         println(report)
         assertTrue(report, problems.isEmpty())
+    }
+
+    @Test
+    fun `lahimmat nayttaa niin monta seuraavaa kuin mahtuu`() {
+        changeId()
+        compose.setContent { AsClient(true) { HomeScreen(open = {}) } }
+        compose.waitForIdle()
+        val labels = clickables().map { it.label() }
+        // Tavallisella puhelimella mahtuu NYT-kortin alle yksi seuraava: 08.00 näkyy, 09.00 jää pois.
+        assertEquals(labels.joinToString(), 1, labels.count { it.contains("08:00") })
+        assertEquals(labels.joinToString(), 0, labels.count { it.contains("09:00") })
     }
 }

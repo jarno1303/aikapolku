@@ -45,6 +45,13 @@ import fi.aikapolku.app.data.DayParts
 import fi.aikapolku.app.data.NowKind
 import fi.aikapolku.app.cards.CardArt
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import fi.aikapolku.app.data.EventChange
 import fi.aikapolku.app.data.TimelineMode
 import fi.aikapolku.app.data.WeekEvent
@@ -52,7 +59,6 @@ import fi.aikapolku.app.data.WeekSchedule
 import fi.aikapolku.app.firstthen.FirstThenPair
 import fi.aikapolku.app.ui.AppColors
 import fi.aikapolku.app.ui.ChangeSymbol
-import java.time.LocalTime
 
 /** Ohjaajan asiakkaalle valmistelema tai jo käynnissä oleva toiminta (näkyy NYT-kortissa). */
 internal sealed class ClientActivity {
@@ -210,7 +216,7 @@ internal fun ClientDayView(
         }
         state != null && dayItem != null -> {
             val item = dayItem
-            val nowMinutes = LocalTime.now().let { it.hour * 60 + it.minute }
+            val nowMinutes = fi.aikapolku.app.data.AppClock.now().toLocalTime().let { it.hour * 60 + it.minute }
             when (DayParts.nowKind(item.event.time, nowMinutes, item.event.ongoing)) {
                 NowKind.GAP -> NowFrame {
                     // Väliaika: edellinen tehty, seuraava ei vielä alkanut.
@@ -302,8 +308,16 @@ internal fun ClientDayView(
     fun TimelinePart() {
     if (state == null || prefs.timeline == TimelineMode.NONE) return
     val skipped = state.items.indices.filter { state.items[it].cancelled || state.ackTimes[state.items[it].event.id] != null }.toSet()
-    val rows = DayParts.visible(state.items.size, state.current, { it in skipped }, prefs.timeline)
-    if (rows.isEmpty()) return
+    val allRows = DayParts.visible(state.items.size, state.current, { it in skipped }, prefs.timeline)
+    if (allRows.isEmpty()) return
+    // "Lähimmät": näytetään niin monta seuraavaa kuin ruudulle mahtuu (R11, 24.11.2026). Viimeinen
+    // rivi mitataan näkyvä alue vastaan; jos se jää osin piiloon, se jätetään pois. Mittaamaton
+    // rivi on näkymätön, joten asukas ei näe rivin ilmestyvän ja katoavan.
+    val config = LocalConfiguration.current
+    val fitting = prefs.timeline == TimelineMode.NEXT && allRows.size > 1
+    var shown by remember(allRows, config.screenHeightDp, config.screenWidthDp, config.fontScale) { mutableIntStateOf(allRows.size) }
+    var verified by remember(allRows, config.screenHeightDp, config.screenWidthDp, config.fontScale) { mutableStateOf(!fitting) }
+    val rows = if (fitting) allRows.take(shown) else allRows
     Text(
         stringResource(R.string.client_my_day),
         modifier = Modifier.padding(top = 8.dp).semantics { heading() },
@@ -321,13 +335,22 @@ internal fun ClientDayView(
                 Text(stringResource(p.labelRes()), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AppColors.Teal, modifier = Modifier.padding(top = 4.dp))
             }
         }
+        val measured = fitting && index == rows.last() && rows.size > 1
         TimelineRow(
             item = item,
             isCurrent = index == state.current,
             isDone = state.ackTimes[item.event.id] != null,
             isPast = index in skipped || (state.current >= 0 && index < state.current),
             showTime = prefs.showTimes,
-            onClick = { open(item) }
+            onClick = { open(item) },
+            modifier = when {
+                !fitting || verified || index == rows.first() -> Modifier
+                measured -> Modifier.alpha(0f).onGloballyPositioned { c ->
+                    val visible = c.boundsInWindow()
+                    if (visible.height < c.size.height - 1f) shown = rows.size - 1 else verified = true
+                }
+                else -> Modifier.alpha(0f)
+            }
         )
     }
     }
@@ -345,7 +368,7 @@ internal fun ClientDayView(
 
 /** Aikajanan rivi: aika, kuva, nimi; nyt korostettuna, tehdyt kuitattuina ja himmeinä. */
 @Composable
-private fun TimelineRow(item: DayItem, isCurrent: Boolean, isDone: Boolean, isPast: Boolean, showTime: Boolean, onClick: () -> Unit) {
+private fun TimelineRow(item: DayItem, isCurrent: Boolean, isDone: Boolean, isPast: Boolean, showTime: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val change = item.change ?: item.entry.stepChanges.firstOrNull()
     val changeText = change?.let { changeSummary(it, item.original, item.resolved) }
     val nowLabel = stringResource(R.string.now_label)
@@ -361,7 +384,7 @@ private fun TimelineRow(item: DayItem, isCurrent: Boolean, isDone: Boolean, isPa
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         color = if (isCurrent) AppColors.TealSoft else Color.White,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .alpha(if (isPast && !isCurrent) 0.5f else 1f)
             .then(if (isCurrent) Modifier.border(2.dp, AppColors.Teal, RoundedCornerShape(16.dp)) else Modifier)

@@ -77,7 +77,6 @@ import fi.aikapolku.app.data.EventChange
 import fi.aikapolku.app.ui.ChangeSymbol
 import fi.aikapolku.app.ui.OverflowMenu
 import fi.aikapolku.app.ui.SegmentedChoice
-import java.time.LocalDateTime
 import fi.aikapolku.app.cards.CardPhoto
 import fi.aikapolku.app.data.ProgramStore
 import fi.aikapolku.app.data.AckStore
@@ -123,7 +122,7 @@ internal fun rememberTodayState(dayOffset: Int = 0, caregiverView: Boolean = fal
     // Asiakkaan omat ja ryhmien muutokset (oma edellä).
     val changes = remember(context, refresh, groupsRevision) { plan.withGroupChanges(ChangeStore(context.applicationContext).load()) }
     val acks = remember(context) { AckStore(context.applicationContext) }
-    var now by remember { mutableStateOf(LocalDateTime.now()) }
+    var now by remember { mutableStateOf(fi.aikapolku.app.data.AppClock.now()) }
     val date = now.toLocalDate().plusDays(dayOffset.toLong())
 
     val items = DayChanges.entries(plan.eventsFor(date), changes, date, if (caregiverView) null else now)
@@ -134,7 +133,7 @@ internal fun rememberTodayState(dayOffset: Int = 0, caregiverView: Boolean = fal
     LaunchedEffect(Unit) {
         while (true) {
             delay(30_000L)
-            now = LocalDateTime.now()
+            now = fi.aikapolku.app.data.AppClock.now()
         }
     }
     // Kuitatut (tehdyt) ja perutut eivät ole korostettuina; korostus siirtyy seuraavaan.
