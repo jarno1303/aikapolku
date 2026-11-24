@@ -1,5 +1,6 @@
 package fi.aikapolku.app.link
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -7,6 +8,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
@@ -199,7 +201,7 @@ internal object LinkNotify {
             // VISIBILITY_SECRET ohittaa myös laitteen "näytä kaikki sisältö" -asetuksen.
             .setVisibility(NotificationCompat.VISIBILITY_SECRET)
             .build()
-        runCatching { NotificationManagerCompat.from(context).notify((message.at % 100_000).toInt() + 8000, notification) }
+        post(context, (message.at % 100_000).toInt() + 8000, notification)
     }
 
     fun pairRequest(context: Context, name: String) {
@@ -213,7 +215,7 @@ internal object LinkNotify {
             .setContentIntent(openApp(context))
             .setAutoCancel(true)
             .build()
-        runCatching { NotificationManagerCompat.from(context).notify(PAIR_ID, notification) }
+        post(context, PAIR_ID, notification)
     }
 
     /** Ohjaaja hyväksyi liitoksen, mutta avainta ei voitu tallentaa turvallisesti (Keystore). */
@@ -229,7 +231,17 @@ internal object LinkNotify {
             .setContentIntent(openApp(context))
             .setAutoCancel(true)
             .build()
-        runCatching { NotificationManagerCompat.from(context).notify(PAIR_ID, notification) }
+        post(context, PAIR_ID, notification)
+    }
+
+    /** Ilmoitus vain, jos lupa on annettu (Android 13+); muuten hiljaa ohi (lint MissingPermission). */
+    private fun post(context: Context, id: Int, notification: Notification) {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
+        try {
+            NotificationManagerCompat.from(context).notify(id, notification)
+        } catch (_: SecurityException) {
+        }
     }
 
     fun cancelPair(context: Context) {
