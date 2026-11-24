@@ -509,3 +509,12 @@
 - **Kello korteissa:** kellotaulu (valinnaisesti myös numeroina) isojen korttikuvien oikeassa alakulmassa: Nyt-kortti, päiväohjelman kellonaikavaiheet. Asukaskohtainen, oletus pois.
 - **Kotinäytön widget:** pieni (Nyt) ja leveä (Nyt ja Seuraavaksi). Värit ja kello asukkaan asetusten mukaan; lääke- ja terveyskortit nimellä "Oma asia"; ei lukitusnäytölle; paikan laitteella aina pois; asukaskohtainen esto. Päivitys tapahtumien rajoilla, muutosten näkymishetkinä, kuittauksessa ja sovelluksen sulkeutuessa.
 - Tarkastaja kävi läpi kaikki kolme; löydökset korjattu (mm. tietosuoja: muiden asukkaiden korttien luokat eivät lähde paketissa).
+
+## 24.11.2026 – Ajantasaistus ja tietoturvakorjaukset
+- Varmuuskopio: `varmuus/ennen-ajantasaistus-20261124`.
+- **Vain lähiverkko:** vastaanotto (`LinkReceiverService`) sulkee yhteydet, jotka tulevat mobiilidatan tai internetin kautta (`link/LinkNetwork.kt`). Sallittu: Wi-Fi, Ethernet ja puhelimen jakama yhteyspiste (yksityiset osoitteet ja oman lähiverkon osoitealue, myös IPv6).
+- **Rivin kokoraja:** `LinkProtocol.readLineLimited` korvaa rajattoman `readLine`:n. Pyyntö enintään 2 M merkkiä, pariliitoksen ja kuittausten rivit 64 k, asukkaan paketti 64 M.
+- **Salaisuuksia ei tallenneta salaamatta:** `KeyVault.seal` palauttaa null, jos salaus epäonnistuu laitteessa (salaamaton arvo vain testiympäristössä, jossa Keystorea ei ole). Pariliitos epäonnistuu näkyvästi, automaattisen varmuuskopion käyttöönotto näyttää virheen, palautus salaa avaimet kerralla (`LinkStore.resealAll`).
+- Testi `LinkSecurityTest`.
+- Dokumentit: mainin dokumentit (HANDOFF, tutkielma v1.7, yksikkömallin suunnitelma) yhdistetty haaraan; tutkielma v1.8 (P9 tarkennettu: verkko-oikeus vain lähiverkon siirtoon; tilat 15.–16.11. töiden mukaan); tietosuojan puutelista; opas ja muistiinpanot (verkko-oikeus, mobiilidata); `tools/pc/kahden-puhelimen-testi.ps1` lisätty repoon.
+- Sovittu: ei uusia ominaisuuksia ennen puhelintestejä, kahden laitteen siirtotestiä ja yhdistämistä mainiin.

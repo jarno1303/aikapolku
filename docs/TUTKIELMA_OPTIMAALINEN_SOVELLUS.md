@@ -1,6 +1,6 @@
 # AikaPolku – tutkielma: nykytila vs. optimaalinen toiminnanohjauksen sovellus
 
-**Versio:** 1.7 · **Päivitetty:** 15.11.2026 · **Koodin tila arvioitaessa:** päähaara 3.11.2026 (5051179)
+**Versio:** 1.8 · **Päivitetty:** 24.11.2026 · **Koodin tila arvioitaessa:** alkuperäinen arvio päähaara 3.11.2026 (5051179); tilat päivitetty haaran `claude/aikapolku-yksikkomalli-2026-11-15` mukaan (16.11. ja 24.11.2026)
 
 > **Tämä tiedosto on päälähde.** Word-versio (`AikaPolku_tutkielma_optimaalinen_sovellus.docx`) tehdään tästä.
 > Kun suunta tarkentuu, päivitetään ensin tämä tiedosto (tila-sarakkeet, Päätökset-loki, versio ja päivämäärä),
@@ -54,14 +54,14 @@ Arvio perustuu lähdekoodiin (~35 000 riviä Kotlinia), dokumentteihin ja tutkim
 | --- | --- | --- |
 | P1 | Yksi asia kerrallaan, seuraava näkyvissä [T] | Toteutuu (NYT-kortti, aikajana 3 tilassa) |
 | P2 | Aika näkyväksi [K] | Toteutuu (kellotaulu, rengas, numerot, rauhallinen) |
-| P3 | Ei yllätyksiä ilman ennakkoa [T] | Osittain (muutoskortti on, siirtymiä ei varoiteta) |
+| P3 | Ei yllätyksiä ilman ennakkoa [T] | Toteutettu, odottaa puhelintestiä (muutoskortti, ilta-ennakko A4, ennakkovaroitus A1) |
 | P4 | Säädettävyys yksilön mukaan [T] | Hyvin (profiilikohtaiset asetukset) |
 | P5 | Rauhallisuus, aistikuorman välttäminen [T] | Osittain (ei yleistä kuormitusasetusta) |
-| P6 | Käyttäjän ääni ja valta [T] | Heikosti (apu ja tauko, ei valintaa tai lisäaikaa) |
+| P6 | Käyttäjän ääni ja valta [T] | Osittain, odottaa puhelintestiä (apu, tauko, lisäaika A2, valinta kahdesta B1, En ymmärrä, oma tila) |
 | P7 | Ohjaaja rakentaa, käyttäjä näkee olennaisen [K] | Toteutuu (roolit, PIN, omat etusivut) |
-| P10 | Asukas näkee vain sen, mitä tapahtuu siellä, missä hän on; ei koskaan toisten tietoja [K] | Sovittu 15.11.2026, toteutus yksikkömallissa (V2) |
+| P10 | Asukas näkee vain sen, mitä tapahtuu siellä, missä hän on; ei koskaan toisten tietoja [K] | Toteutettu 15.11.2026 yksikkömallissa (sijaintisääntö); paikan laite siirtää asukkaalle vain hänen tietonsa (16.11.). Odottaa puhelintestiä |
 | P8 | Ei kontrollia, ei kilpailua [K] | Toteutuu (ei pisteitä, tauko aina vapaa) |
-| P9 | Toimii ilman verkkoa, ei kerää tietoja [H] | Toteutuu (ei verkkolupaa). Yksikkömallissa tarkennettu: verkko vain lähiverkkoon, tiedot eivät lähde talosta (Y7) |
+| P9 | Toimii ilman verkkoa, ei kerää tietoja [H] | Toteutuu: ei pilveä, ei internetiä, ei käyttäjätiliä. Verkko-oikeus (INTERNET) on käytössä vain lähiverkon salattuun siirtoon (paikan laite → asukkaan puhelin, asukkaan viestit ohjaajalle); vastaanotto hyväksyy vain lähiverkon yhteydet (24.11.). Androidin pilvivarmuuskopio pois |
 
 ## 3. Ominaisuudet alueittain
 
@@ -181,7 +181,7 @@ Ei: valintaa joka kohtaan · rangaistusta "en halua" -viestistä · kieltäytymi
 | A2 | "Tarvitsen vielä hetken" ohjaajan rajoissa | Käyttäjän keino neuvotella | 2 pv | Valmis (odottaa puhelintestiä) |
 | A3 | Muutoskorttiin "Mikä pysyy samana" + valinnat "Haluan kuulla uudestaan", "Tarvitsen tauon" | Kohdistuu epävarmuuteen | 1–2 pv | Valmis (odottaa puhelintestiä) |
 | A4 | Ilta-ennakko ja vaiheittainen ilmoitus muutokselle | Toivottu, puuttuu koodista | 1–2 pv | Valmis (odottaa puhelintestiä) |
-| A5 | Lähilaitesiirto ohjaajalta asiakkaan laitteeseen | Ryhmät eivät muuten toimi yksiköissä | 5–8 pv | Korvattu 15.11.2026: yksikön laite palvelimena (Y7, YKSIKKOMALLI_SUUNNITELMA.md V5) |
+| A5 | Lähilaitesiirto ohjaajalta asiakkaan laitteeseen | Ryhmät eivät muuten toimi yksiköissä | 5–8 pv | Valmis 16.11.2026 paikan laitteena (Y7, `docs/PAIKAN_LAITE_SUUNNITELMA.md`). **Odottaa kahden laitteen testiä** |
 | A6 | Ruudunlukijan kuvaukset toimintakorteille | Saavutettavuus | 1 pv | Ehdotettu |
 | A7 | Ohjaajan käyttöönottokortit | Visuaalinen tuki toimii opetuksen kanssa | 1–2 pv | Ehdotettu |
 
@@ -189,7 +189,7 @@ Ei: valintaa joka kohtaan · rangaistusta "en halua" -viestistä · kieltäytymi
 
 | ID | Ehdotus | Tila |
 | --- | --- | --- |
-| B1 | Valintakortti (2 vaihtoehtoa, myös järjestyksen valinta) | Ehdotettu |
+| B1 | Valintakortti (2 vaihtoehtoa, myös järjestyksen valinta) | Osittain: valinta kahdesta päiväohjelmaan ja Sitten-korttiin tehty 15.11. (odottaa puhelintestiä); järjestyksen valinta puuttuu |
 | B2 | "Jatka myöhemmin" -kortti | Ehdotettu |
 | B3 | Muutostyypit: ihminen vaihtuu, paikka vaihtuu | Ehdotettu |
 | B4 | Kuva/teksti-taso ja aistikuorma-asetus profiiliin | Ehdotettu |
@@ -201,11 +201,11 @@ Ei: valintaa joka kohtaan · rangaistusta "en halua" -viestistä · kieltäytymi
 | ID | Ehdotus | Tila |
 | --- | --- | --- |
 | C1 | "Mitä tapahtuu" -kuvatarina uuteen tilanteeseen | Ehdotettu |
-| C2 | Tunnekortti ja "En halua nyt" | Ehdotettu |
+| C2 | Tunnekortti ja "En halua nyt" | Osittain: oma tila (asiakkaan oma tieto) ja "En halua kumpaakaan" valinnassa tehty 15.11. |
 | C3 | Käyttäjän ehdotukset ja oma suunnittelu rajoissa | Ehdotettu |
 | C4 | Kesto muuttuu -muutostyyppi | Ehdotettu |
 | C5 | Usean päivän muutokset | Ehdotettu |
-| C6 | Aikuisten kuvasto, valinnainen seurantanäkymä | Ehdotettu |
+| C6 | Aikuisten kuvasto, valinnainen seurantanäkymä | Osittain: käytön seuranta pilottia varten (laitekohtainen, oletus pois, vain lukumäärät) tehty 15.11. |
 | C7 | **Päiväni:** asiakkaan oma kuvallinen yhteenveto päivästä (tehdyt, muutokset, tauot, oma valinta 😊/😐/🙁), jonka asiakas näyttää itse kotona tai asumisyksikössä (digitaalinen reissuvihko). Tieto pysyy asiakkaan laitteessa; henkilökunta ei kirjoita siihen havaintoja tai arvioita. Arvio 3–5 pv, pilotin jälkeen | Ehdotettu |
 
 ### X. Ei tehdä
@@ -228,7 +228,7 @@ Tehtävänannon seitsemän kysymystä jokaiselle ominaisuudelle: ratkaiseeko tod
 | Valmis vasta kun aika loppunut | Voi turhauttaa | Vaihtoehtona, ei oletuksena (nykyinen kolmen tilan valinta oikea) |
 | Muutos näkyy heti (oletus) | Osalle aikainen tieto pidentää jännitystä | Kysy ajoitus profiilia luotaessa |
 | Laaja asetusvalikko | Uusi ohjaaja ei tiedä, mistä aloittaa | Ohjattu aloitus: 5 kysymystä asiakkaasta |
-| Kaksi roolia samassa laitteessa | Asiakas voi nähdä ohjaajan näkymän | Ratkeaa A5:llä; testitilan vapaa roolinvaihto pois ennen julkaisua |
+| Kaksi roolia samassa laitteessa | Asiakas voi nähdä ohjaajan näkymän | Paikan laite (A5) ja vapaan roolinvaihdon poisto (16.11.) tehty; testataan pilotissa |
 | Valmiiden kuvien tyyli | Voi tuntua lapselliselta aikuiselle | Aikuisprofiilissa oletuksena omat valokuvat |
 
 **Kokonaisarvio:** AikaPolussa näkyy ammattilaisen ote (tauko aina vapaa, roolit erillään, asiakaskohtainen ajoitus). Heikkous ei ole väärissä ratkaisuissa vaan siinä, että käyttäjän kokemusta ei ole vielä kuultu. Tärkein seuraava askel on pilotti, jossa myös autistiset aikuiset ovat mukana itseään edustamassa.
@@ -246,11 +246,11 @@ Arvioitu 14.11.2026 kaikki 38 valmista kuvaa (`res/drawable-nodpi`).
 | ID | Ehdotus | Miksi | Vaihe | Tila |
 | --- | --- | --- | --- | --- |
 | G1 | Hahmot: aikuisprofiilissa oletuksena esinekortit ja omat valokuvat; myöhemmin 3–4 hahmovaihtoehtoa (ikä, sukupuoli) profiilissa | Samaistuminen ja aikuisen arvokkuus | B | Ehdotettu |
-| G2 | Taustaväri: joko johdonmukainen luokka (ruoka, hygienia, liikunta, lepo) tai yksi neutraali väri | Osa käyttäjistä etsii väreistä merkitystä | B | Ehdotettu |
+| G2 | Taustaväri: joko johdonmukainen luokka (ruoka, hygienia, liikunta, lepo) tai yksi neutraali väri | Osa käyttäjistä etsii väreistä merkitystä | B | Valmis 16.11.2026: värikoodaus, kuusi luokkaa merkkeineen, asukaskohtainen päälle/pois (odottaa puhelintestiä) |
 | G3 | Vilkkaiden kohtauskuvien yksinkertaistus (esim. ryhmätilanne, puhekuplat) | Vähemmän tulkittavaa | C | Ehdotettu |
 | G4 | Uudet kuvat: lisäaika, "pysyy samana" -merkki, ihminen vaihtuu, valinta, jatka myöhemmin | Tarvitaan A1–A3:lle ja B1–B3:lle | A (toimintojen mukana) | Osittain: lisäajan viestikuva tehty (A2) |
 | G5 | Asiakkaan omat symbolit: käyttöönotto-ohjeeseen "käytä samoja kuvia kuin muualla arjessa"; symbolipankit vain lisenssitarkistuksen jälkeen (monet ei-kaupallisia); nykyisten kuvien käyttöoikeudet dokumentoidaan ennen myyntiä | Johdonmukaisuus ja juridinen varmuus | A (ohje A7:n mukana), B (pankit) | Ehdotettu |
-| G6 | Ohjattu aloitus ohjaajalle: 5 kysymystä asiakkaasta (ikä, lukutaito, aistiherkkyys, muutosten ennakointi, omatoimisuus) → asetukset valmiiksi; lisäksi Oikeudet ja päätökset -kortin kysymykset (B6) | Ohjaajan puolella on paljon valintoja | A | Ehdotettu |
+| G6 | Ohjattu aloitus ohjaajalle: 5 kysymystä asiakkaasta (ikä, lukutaito, aistiherkkyys, muutosten ennakointi, omatoimisuus) → asetukset valmiiksi; lisäksi Oikeudet ja päätökset -kortin kysymykset (B6) | Ohjaajan puolella on paljon valintoja | A | Osittain: ohjattu aloitus yksikölle (yksiköt, asukkaat, yhteiset asetukset, perusrutiinit, kopiointi) tehty 15.–16.11.; B6:n kysymykset puuttuvat |
 
 **Järjestys:** toimintojen aukot (A) ensin, kuvamuutokset kohdennetusti pilottia varten, laaja UI/UX-viilaus vasta pilotin palautteen jälkeen.
 
@@ -309,6 +309,15 @@ Kirjaa tähän jokainen suunnan tarkennus: päivämäärä, tunniste, päätös,
 
 | Päivä | ID | Päätös | Perustelu |
 | --- | --- | --- | --- |
+| 24.11.2026 | P9 | Tietoturvakorjaukset: vastaanotto hyväksyy vain lähiverkon yhteydet (ei mobiilidataa eikä internetiä), viestirivien kokoraja, salaisuuksia (laiteavaimet, varmuuskopion salasana) ei koskaan tallenneta salaamatta – jos salaus epäonnistuu, pariliitos tai käyttöönotto epäonnistuu näkyvästi. P9:n kuvaus korjattu: verkko-oikeus on käytössä lähiverkon siirtoa varten | Siirto toi verkko-oikeuden; lupaus "ei internetiä" pitää paikkansa vain, kun vastaanotto on rajattu lähiverkkoon |
+| 24.11.2026 | – | Uusia ominaisuuksia ei lisätä ennen puhelintestejä, kahden laitteen siirtotestiä ja yhdistämistä päähaaraan | 14.–16.11. tehty paljon; mitään ei ole vielä kuitattu puhelimella |
+| 16.11.2026 | A5, Y7 | Paikan laite: jokaisella paikalla (koti, päivätoiminta, työpaja) voi olla oma laite; asukkaan puhelin hakee vain omat tietonsa sen paikan laitteelta, jonka verkossa on. Pilotissa paikallinen malli, suunnittelu ja muokkaus paikan laitteella; EU-pilvi harkitaan pilotin jälkeen | Tieto pysyy talossa; ohjaajan puhelin palvelimena on hauras |
+| 16.11.2026 | – | Tietosuoja ennen pilottia: T1 avaimet Keystoreen, T2 lukitusnäytön ilmoitukset, T3 pakollinen viennin salasana, T4 paikan laitteella ohjaajatila vain näytön lukituksella, T5 ohjaajan näkymien piilotus, T6 kaikkien tietojen poisto; päivittäinen salattu automaattinen varmuuskopio valittuun kansioon | `docs/TIETOSUOJA_PUUTELISTA.md` |
+| 16.11.2026 | G2 | Värikoodaus, kello korteissa ja kotinäytön widget tehty ennen pilottia | Sovellus näyttää pilotissa siltä kuin sen pitää |
+| 16.11.2026 | G6, Y8 | Ohjattuun aloitukseen yhteiset asetukset ja perusrutiinit kaikille asukkaille sekä kopiointi muille | Ohjaajan työ yksikköä perustettaessa |
+| 16.11.2026 | – | Asiakkaan teksteissä "aikuinen" korvattu asukaskohtaisella sanalla (ohjaaja/läheinen/aikuinen); testitilan vapaa roolinvaihto oletuksena pois | Asumisyksikön asukkaat ovat aikuisia; roolit selviksi |
+| 16.11.2026 | – | Kotiversio (omaisnäkymä) omana sovelluksena samasta koodista, käsitellään kokonaisuutena pilotin jälkeen | Yksikkömalli ja kotikäyttö ovat eri tarpeita |
+| 15.11.2026 | B1, C2, C6 | Valinta kahdesta, odotetaan-tila, oma tila (asiakkaan oma tieto), En ymmärrä, viestijono, tuen taso, käytön seuranta pilottiin; Androidin automaattinen varmuuskopio pois | Palautteen ja auditoinnin muutokset ennen pilottia |
 | 15.11.2026 | P10, Y1–Y8 | **Yksikkömalli** (suunnitelma `docs/YKSIKKOMALLI_SUUNNITELMA.md`). Y1 yksikkö ja alayksiköt (esim. Villa Metsäketo → Omena, Appelsiini, Päärynä), yhteinen runko (ruokailut). Y2 päivän toiminnat omina ryhminään (päivätoiminta, työpaja); asukas yhteen tai ei mihinkään; samaan aikaan eri toimintoja eri asukkailla. Y3 asukkaan oma aika saman toiminnan sisällä poikkeuksena (erillinen ryhmä vain oikeille vuoroille). P10 asukas näkee vain sen, mitä tapahtuu siellä, missä hän on (sijainti viikko-ohjelmasta, ei paikannusta) eikä koskaan toisten tietoja. Y4 peruttu toiminta = kotona, ellei muuta määritellä. Y5 ohjaaja valitsee asukaskohtaisesti, kuinka paljon ja pitkälle asukas näkee (toiminnan aikana yksi kortti / runko). Y6 siirtymäkortit ehdotuksina, ohjaaja aktivoi. Y7 yksikön oma laite palvelimena lähiverkossa (ei ohjaajan puhelin, ei pilvi nyt); TV-näkymässä vain yhteiset asiat. Y8 kaikki ohjatussa aloituksessa kerran, esikatselun kanssa | Asukasta kuormittaa tieto, joka ei koske häntä; arki on yksikössä yhteistä ruokailujen osalta mutta päivät eroavat. Ohjaajan puhelin palvelimena on hauras (vuorot, lepotila); oma laite pitää tiedot talossa ja sopii P9:ään. Pilvi myöhemmin, jos tarve. Asiakastietolain soveltuminen selvitettävä ennen myyntiä (V7) |
 | 15.11.2026 | A2, G4 | A2 toteutettu: "Tarvitsen vielä hetken" ajastimessa ja päiväohjelmassa, kun aika on loppumassa tai loppunut. Ohjaajan rajat Ei/2/3/5 min (oletus 3) ja kerran/kahdesti toimintoa kohden (oletus kerran); lisäaika ilman PIN-koodia. Kun lisäaikaa ei voi antaa, painike näyttää viestin aikuiselle eikä pysäytä aikaa. Uusi viestikuva (G4 osittain: lisäaika) | Käyttäjän keino neuvotella ajasta ilman, että ajan säätö avautuu kokonaan; ei porsaanreikää loputtomaan aikaan. Oletukset vahvistetaan ohjaajilta pilotissa |
 | 14.11.2026 | A1, P | A1 toteutettu: ennakkovaroitus "Pian vaihtuu – Seuraavaksi" ajastimessa ja päiväohjelmassa, asetus Ei/2/5/10 min (oletus 5), ei ääntä. Lisäksi "Tarvitsen tauon" ajastimeen ja tapahtumakorttiin (aina ilman PIN-koodia, pysäyttää ajan). A2 (lisäaika) yhä tekemättä | Siirtymät heikoin alue; tauko aina vapaa (laatuportti R5) |
@@ -327,6 +336,7 @@ Kirjaa tähän jokainen suunnan tarkennus: päivämäärä, tunniste, päätös,
 - Hyväksytäänkö A1–A7 ennen pilottia, ja missä järjestyksessä suhteessa käyttöliittymän yhtenäistämiseen (osa 3) ja kuvakkeeseen?
 - Mikä yksikkö pilottiin, ja ketkä autistiset aikuiset mukaan arvioimaan?
 - Lisäajan oletusrajat (0/3/5 min, kerran) – vahvistetaan ohjaajien kanssa.
+- Android 16:n paikallisverkon käyttölupa: tarkistettava, kun targetSdk nostetaan (nyt 35).
 
 ## Lähteet
 
@@ -343,4 +353,4 @@ Kirjaa tähän jokainen suunnan tarkennus: päivämäärä, tunniste, päätös,
 - Vasquez, S. ym. (2017). Effects of Advance Notice on Problem Behavior Occasioned by Interruptions. *Behavior Analysis in Practice* 10. https://link.springer.com/article/10.1007/s40617-017-0187-7
 - Waters, M. B. ym. (2009). Visual schedules and extinction plus DRO (tiivistelmä). *JABA* 42. https://behavioristbookclub.com/aba-research/aba-fundamentals/separate-and-combined-effects-of-visual-schedules-and-extinction-plus/
 
-Versiohistoria: v1.7 (15.11.2026) yksikkömalli (P10, Y1–Y8), A5 korvattu · v1.6 (15.11.2026) A2 toteutettu (odottaa puhelintestiä), lisäajan viestikuva · v1.5 (14.11.2026) A1, A3, A4 toteutettu (odottaa puhelintestiä), laatuportti · v1.4 (14.11.2026) B6 Oikeudet ja päätökset -kortti, pysyvä jakopäätös · v1.3 (14.11.2026) luku 12: Päiväni-tarkennus ja kotiverkkovaihtoehto · v1.2 (14.11.2026) C7 Päiväni, X4 yksiköiden välinen viestintä · v1.1 (14.11.2026) luku 11: grafiikka ja ohjattu aloitus (G1–G6) · v1.0 (14.11.2026) ensimmäinen versio.
+Versiohistoria: v1.8 (24.11.2026) tilat päivitetty 15.–16.11. töiden mukaan (A5, B1, C2, C6, G2, G6, P10), P9 tarkennettu (verkko-oikeus lähiverkon siirtoon), tietoturvakorjaukset · v1.7 (15.11.2026) yksikkömalli (P10, Y1–Y8), A5 korvattu · v1.6 (15.11.2026) A2 toteutettu (odottaa puhelintestiä), lisäajan viestikuva · v1.5 (14.11.2026) A1, A3, A4 toteutettu (odottaa puhelintestiä), laatuportti · v1.4 (14.11.2026) B6 Oikeudet ja päätökset -kortti, pysyvä jakopäätös · v1.3 (14.11.2026) luku 12: Päiväni-tarkennus ja kotiverkkovaihtoehto · v1.2 (14.11.2026) C7 Päiväni, X4 yksiköiden välinen viestintä · v1.1 (14.11.2026) luku 11: grafiikka ja ohjattu aloitus (G1–G6) · v1.0 (14.11.2026) ensimmäinen versio.

@@ -1,13 +1,13 @@
-# HANDOFF – AikaPolku (päivitetty 15.11.2026)
+# HANDOFF – AikaPolku (päivitetty 24.11.2026)
 
-Lue tämä ensin. Sitten `docs/TUTKIELMA_OPTIMAALINEN_SOVELLUS.md` ja `docs/YKSIKKOMALLI_SUUNNITELMA.md` (päälähde: periaatteet, tunnisteet A1–C7, G1–G6, X1–X4, Päätökset-loki).
+Lue tämä ensin. Sitten `docs/TUTKIELMA_OPTIMAALINEN_SOVELLUS.md` (v1.8), `docs/YKSIKKOMALLI_SUUNNITELMA.md`, `docs/PAIKAN_LAITE_SUUNNITELMA.md` ja `docs/TIETOSUOJA_PUUTELISTA.md` (päälähde: periaatteet, tunnisteet A1–C7, G1–G6, X1–X4, Päätökset-loki).
 
 ## Rooli ja työtapa
 
 - Claude toimii autismin kirjon, toiminnanohjauksen ja UX:n asiantuntijana: kriittinen, näyttöön perustuva, ei kehittäjää miellyttävä.
 - Suomeksi, selkeää yleiskieltä. Yksi kysymys kerrallaan.
 - Sovitaan ensin, sitten tehdään. Kerro malli ja taso ennen työtä (Opus Medium keskusteluun, Opus High rakenteeseen ja käyttöliittymään).
-- Varmuuskopiohaara ennen muutoksia: `backup/<kuvaus>-<vvvvkkpp>`, pushattuna.
+- Varmuuskopiohaara ennen muutoksia: `varmuus/ennen-<kuvaus>-<vvvvkkpp>`, pushattuna.
 - Skripti tekee asetusvaiheet, ei JarnoL käsin.
 - Iso koodimuutos: erillinen tarkastaja-agentti käy muutoksen läpi ennen käännöstä.
 
@@ -19,48 +19,71 @@ Pilvessä ei ole Android SDK:ta. JarnoL ajaa PC:llä:
 powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\AndroidStudioProjects\AikaPolku\tarkistukset\aja-aikapolku.ps1" -branch <haara> [-testit "*Nimi*"] [-eiTesteja] [-taysi]
 ```
 
+- `-laitetesti` = puhelintestit kaapelilla, `-kuvat` = kuvakaappaukset oppaaseen ja esitykseen. Kahden puhelimen testi: `tarkistukset\kahden-puhelimen-testi.ps1 -vaihe asenna` / `-vaihe lokit` (source `tools/pc/`).
 - `-taysi` = myös lint. Tulos: `AikaPolku\tarkistukset\<aikaleima>\tulos.txt`, testien XML:t `testit\`, loki `aikapolku.log`.
 - APK: `Desktop\AikaPolku-APK\UUSIN-AikaPolku.apk`. Asennus: `& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r <apk>`.
 - Claude lukee tulokset liitetyn kansion kautta (`$HOME/mnt/AikaPolku/tarkistukset/...`). Tarkista aina uusimman kansion aikaleima: JarnoL liittää joskus vanhan tulosteen.
 - Git-pushit tehdään pilvikloonista. PC:n repo synkataan: `git fetch; git reset origin/main` (PC:n git ei voi poistaa lukkotiedostoja).
 - Skriptin source: `tools/pc/aja-aikapolku.ps1` (kopio PC:n `tarkistukset`-kansiossa). Pieni korjattava: konsolin merkistö (ä näkyy "├ñ").
 
-## Haarat (ketjussa, kukin edellisen päällä)
+## Haarat
+
+Kaikki työ on yhdessä ketjussa; uusin haara sisältää kaikki aiemmat (muutoskortti, laatuportti, siirtymät, lisäaika, testit).
 
 | Haara | Sisältö | Tila |
 |---|---|---|
-| `claude/aikapolku-muutoskortti-2026-11-14` (2f168d3) | A3, A4: Pysyy samana, Kuuntele, Tarvitsen tauon, ilta-ennakko, muistutus, Palauta alkuperäinen + vahvistus | 348 testiä OK, lint 0 virhettä. **Puhelintesti 1–15 kuittaamatta** |
-| `claude/aikapolku-laatuportti-2026-11-14` (49c8122) | `ClientQualityGateTest` (R1–R8) | OK |
-| `claude/aikapolku-siirtymat-2026-11-14` (8c425ba) | A1 ennakkovaroitus, Tarvitsen tauon ajastimeen ja tapahtumakorttiin, R9 | 357 testiä OK, laatuportti 0 havaintoa. **Puhelintesti 1–15 kuittaamatta** |
-| `claude/aikapolku-lisaaika-2026-11-15` | A2 "Tarvitsen vielä hetken": lisäaika ohjaajan rajoissa (Ei/2/3/5 min, kerran/kahdesti), muuten viesti aikuiselle; uusi viestikuva ja kuvake; laatuportti R10 | **Käännös ja testit PC:llä ajamatta. Puhelintesti kuittaamatta** |
-| `backup/ennen-siirtymat-20261114` | varmuuskopio | – |
-| `backup/ennen-lisaaika-20261115` | varmuuskopio (= siirtymähaara 8c425ba) | – |
+| `claude/aikapolku-yksikkomalli-2026-11-15` | **Uusin.** A1–A4, A2, yksikkömalli V1–V4, valinta/odotus/oma tila, yksikön yhteys, palautemuutokset, vaakatila ja tabletit, paikan laite (A5), tietosuoja T1–T6, ohjatun aloituksen laajennus, värikoodaus, kello, widget, materiaalit; 24.11. tietoturvakorjaukset ja dokumenttien ajantasaistus | Käännös ja yksikkötestit OK 16.11. (90b9084). 24.11. muutokset: **käännös PC:llä ajamatta**. **Puhelintestit kuittaamatta** |
+| `main` | Vain dokumentit 15.11. asti | Yhdistetään vasta puhelintestien jälkeen |
+| `varmuus/ennen-ajantasaistus-20261124` | Varmuuskopio ennen 24.11. muutoksia (13ba513) | – |
+| `varmuus/*`, `varmuuskopio/*`, `backup/*` | Aiemmat varmuuskopiot | Voi siivota mainiin yhdistämisen jälkeen |
 
-`main` ei vielä sisällä näitä koodimuutoksia (vain dokumentit). Kun puhelintestit on kuitattu: yhdistä lisäaikahaara mainiin (sisältää kaikki edelliset), täysi tarkistus `-taysi`, päivitä tutkielman tilat `Testattu`.
+## Avoimet puhelintestit (mitään ei ole kuitattu)
 
-## Avoimet puhelintestit
+Valmistelu: uusin APK (`aja-aikapolku.ps1 -branch claude/aikapolku-yksikkomalli-2026-11-15`), lukitus päälle, asiakkaan rooli. Automaattiset puhelintestit: `-laitetesti` (EnsinSittenLisaaika, PaivaohjelmaLisaaika, Muutoskortti, ProgramDay, Ennakkoaani, KuvaJaKello, Yhteys).
 
-- **Muutoskortti 1–15** (kohdat 11–14 vaativat illan ja seuraavan päivän). Tapahtumia tarvitaan: "Luo esittelypäivä" + omat huomisen tapahtumat.
-- **Siirtymät 1–15**: valmistelu ennakkovaroitus = 2 min ja lukitus päälle. Ajastin (varoitus, tauko pysäyttää, Jatka käynnistää, takaisin jättää pysäytetyksi, vaakatila), tapahtumakortti (tauko, ei tehdyssä), päiväohjelma (varoitus kuvan kanssa, piilotettu seuraava → vain "Pian vaihtuu"), asetus Ei, muutosnäkymän tauko.
-- **Lisäaika (A2) 1–12**: valmistelu Asetukset → Aika: ennakkovaroitus 2 min, lisäaika 2 min, kerran; lukitus päälle, asiakkaan rooli.
-  1) Ensin–Sitten 3 min: painiketta ei alussa. 2) 2 min jäljellä: Tarvitsen tauon ja Tarvitsen vielä hetken vierekkäin, kellotaulu ei hyppää.
-  3) Paina: "2 min lisää aikaa" 5 s, aika +2 min, ei PIN-kyselyä. 4) Uudelleen: viesti "Tarvitsen vielä hetken" + "Näytä viesti aikuiselle. Aika jatkuu.", aika jatkuu.
-  5) Jatka ja takaisin-ele sulkevat viestin. 6) Aika loppuu: valmis-näkymässä painike; asetus kahdesti → loppunut aika käynnistyy 2 min.
-  7) Vaakatila: painike tauon alla. 8) Päiväohjelma (esittelypäivä, Hampaiden pesu 1 min): painike viimeisellä puoliskolla ennakkovaroituksen alla, kaikki mahtuu ilman vieritystä.
-  9) Seuraava tehtävä: laskuri nollautuu. 10) Asetus Ei: heti viesti, aika ei muutu. 11) Ennakkovaroitus Ei: painike 2 viimeisen minuutin aikana. 12) Tarvitsen tauon pysäyttää ajan ilman PIN-koodia.
+1. **Muutoskortti A3–A4 (1–15)**, kohdat 11–14 vaativat illan ja seuraavan päivän. "Luo esittelypäivä" + omat huomisen tapahtumat.
+2. **Siirtymät A1 (1–15):** ennakkovaroitus 2 min; ajastin (varoitus, tauko pysäyttää, Jatka, vaakatila), tapahtumakortti, päiväohjelma, asetus Ei.
+3. **Lisäaika A2 (1–12):** Asetukset → Aika: ennakkovaroitus 2 min, lisäaika 2 min, kerran. Painike ilmestyy loppuvaiheessa, toinen painallus = viesti ohjaajalle ja aika jatkuu, asetus kahdesti, vaakatila, päiväohjelma mahtuu ilman vieritystä, Tarvitsen tauon ilman PIN-koodia.
+4. **Yksikkömalli:** ohjattu aloitus (yksikkö, alayksiköt, asukkaat, ruokailut, toiminnat, yhteiset asetukset, perusrutiinit), Tänään yksikössä, sijaintisääntö (asukas näkee vain oman paikkansa), loma ja poikkeuspäivät, kopioi muille.
+5. **Asukkaan oma ääni:** valinta kahdesta, Odotetaan, oma tila, En ymmärrä, Kerro ohjaajalle + viestijono (verkko pois → "Lähtee, kun yhteys palaa" → verkko takaisin).
+6. **Värikoodaus, kello korteissa, widget:** luokat ja merkit, asukaskohtainen pois, kello Nyt-kortissa, pieni ja leveä widget (päivittyy tapahtuman rajalla, napautus ei käynnistä alusta).
+7. **Tietosuoja:** paikan laite ilman näytön lukitusta → ohjaajatila estetty; lukitusnäytön ilmoitus ilman nimeä; vienti vaatii salasanan; ohjaajan näkymä piilossa sovellusvaihtajassa; automaattinen varmuuskopio kansioon ja palautus; Poista kaikki tiedot.
+8. **Vaakatila ja tabletti:** asiakkaan näkymät mahtuvat ilman vieritystä (paitsi koko päivän aikajana).
 
-## Seuraavaksi (sovittu järjestys)
+### Kahden laitteen siirtotesti (A5) – tarvitaan toinen Android-laite
 
-1. Lisäaikahaaran käännös ja testit PC:llä, puhelintestien kuittaus ja VIKA-korjaukset → yhdistäminen mainiin.
-2. A2 tehty 15.11. (oletus 3 min kerran, vahvistettava ohjaajilta pilotissa).
-3. **Yksikkömalli** (sovittu 15.11.): `docs/YKSIKKOMALLI_SUUNNITELMA.md`, vaiheet V1–V7. Korvaa A5:n (yksikön oma laite palvelimena lähiverkossa) ja sisältää G6:n ohjatun aloituksen (V4). Aloitetaan V1:stä lisäaikahaaran yhdistämisen jälkeen.
-4. A6 ruudunlukijan kuvaukset, A7 ohjaajan käyttöönottokortit, G4, B6 Oikeudet ja päätökset -kortti (voidaan tehdä yksikkömallin vaiheiden väliin).
-5. Pilotti. Rinnalla yhteydenotto Autismisäätiöön (avoimet kysymykset tutkielmassa).
+`kahden-puhelimen-testi.ps1 -vaihe asenna` (molemmat USB:llä, sama Wi-Fi). Sitten:
+1. Laite A: Yksikön yhteys → "Tämä laite on paikan laite"; luo yksikkö ja kaksi asukasta (Aino, Eero).
+2. Laite B (Ainon puhelin): Liitä paikkaan → sama koodi molemmilla → A:lla valitaan Aino.
+3. B saa Ainon päivän; Eeron tietoja ei näy missään.
+4. A: muuta Ainon tapahtumaa → B:ssä muutos noin minuutin sisällä; A näyttää "perillä klo …".
+5. B: käynnistä päiväohjelma, A: muuta ohjelmaa → B ei vaihdu kesken, vaihtuu ohjelman jälkeen.
+6. B: "Hae tiedot nyt" toimii; omat kuvat ja äänet siirtyvät, toisella kerralla vain uudet.
+7. B: Kerro ohjaajalle → viesti näkyy A:lla (tai ohjaajan puhelimella) ilmoituksena.
+8. B Wi-Fi pois (vain mobiilidata) → ei siirtoa, ei kaatumista; Wi-Fi takaisin → siirto jatkuu.
+9. A: poista liitos → B ei enää saa tietoja.
+10. `kahden-puhelimen-testi.ps1 -vaihe lokit` ja kerro, mitkä kohdat eivät toimineet ja mihin aikaan.
+
+## Seuraavaksi (sovittu 24.11.2026)
+
+**Uusia ominaisuuksia ei lisätä ennen kohtia 1–4.**
+
+1. 24.11. muutosten käännös ja testit PC:llä (`-taysi`), korjaukset.
+2. Puhelintestit (yllä) ja kahden laitteen siirtotesti → VIKA-korjaukset.
+3. Yhdistäminen mainiin, täysi tarkistus, tutkielman tilat `Testattu`.
+4. Uudet kuvakaappaukset (`-kuvat`) ja materiaalit (opas, esitys, muistiinpanot) niistä uudelleen.
+5. Sen jälkeen: A6 ruudunlukijan kuvaukset, A7 ohjaajan käyttöönottokortit, B6 Oikeudet ja päätökset -kortti, T7 Android 16:n lähiverkkolupa (ennen targetSdk-nostoa).
+6. Pilotti ja yhteydenotto Autismisäätiöön (avoimet kysymykset tutkielmassa).
+
+Ennen kauppaa (ei pilotille): versionCode, julkaisuallekirjoitus, R8 (minify) ja muut kielet.
 
 Laatuportin laajennukset (sovittu): kotinäkymä-sääntö, Ensin–Sitten-kulku, käsin tehtävien tarkistusten linkitys `docs/UX_TARKISTUSLISTA.md`:hen. Jokainen uusi asiakasnäkymä lisätään porttiin.
 
 ## Keskeiset päätökset (tarkemmin tutkielman Päätökset-lokissa)
 
-- Ei INTERNET-oikeutta, ei pilvitiliä (P9, X2). Yksiköiden välinen viestintä hylätty (X4, asiakastietolaki 703/2023).
+- Ei pilveä, ei internetiä, ei käyttäjätiliä (P9, X2). INTERNET-oikeus on käytössä vain lähiverkon salattuun siirtoon; vastaanotto hyväksyy vain lähiverkon yhteydet (24.11.).
+- Paikan laite (A5): asukkaan puhelin hakee vain omat tietonsa paikan laitteelta samassa verkossa; pilotissa paikallinen malli, EU-pilvi harkitaan myöhemmin.
+- Salaisuuksia ei koskaan tallenneta salaamatta (Keystore). Yksiköiden välinen viestintä hylätty (X4, asiakastietolaki 703/2023).
 - Päiväni (C7): asiakkaan oma yhteenveto, asiakkaan puhelimeen ei kosketa; kotiverkkovaihtoehto avoin kysymys. Pysyvä jakopäätös asiakkaalta/huoltajalta/edunvalvojalta B6-kortin kautta.
 - "Tarvitsen tauon" aina saatavilla ilman PIN-koodia kaikissa asiakkaan toimintonäkymissä.
+- Kotiversio (omaisnäkymä) omana sovelluksena samasta koodista pilotin jälkeen (`docs/KEHITYS_SUUNNITELMA.md`).

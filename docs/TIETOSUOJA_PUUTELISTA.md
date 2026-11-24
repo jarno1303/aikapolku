@@ -20,7 +20,7 @@ Versio 1.0 · 15.11.2026 · Laadittu sovelluksen koodin perusteella. Tämä ei o
 
 ## 2. Kunnossa
 
-- Ei pilvipalvelua eikä internetyhteyttä: laitteiden yhteys vain samassa lähiverkossa, salattuna.
+- Ei pilvipalvelua eikä internetyhteyttä: laitteiden yhteys vain samassa lähiverkossa, salattuna. Verkko-oikeus (INTERNET) on Androidin vaatimus myös lähiverkon yhteydelle; vastaanotto hyväksyy vain lähiverkon yhteydet (24.11.2026).
 - Androidin automaattinen varmuuskopio ja laitesiirto on poistettu käytöstä (15.11.2026).
 - Pariliitos kerran koodia vertaamalla; viestit salataan; toistetut ja vanhat viestit hylätään.
 - Oma tila on asiakkaan omaa tietoa, eikä se siirry mihinkään ilman asiakkaan painallusta.
@@ -51,6 +51,11 @@ Versio 1.0 · 15.11.2026 · Laadittu sovelluksen koodin perusteella. Tämä ei o
 - T8: testitila oletuksena pois; muistutus ohjaajan etusivulla, jos PIN-lukitus puuttuu.
 - Uusi: automaattinen salattu koko laitteen varmuuskopio kerran vuorokaudessa valittuun kansioon (7 uusinta) ja palautus.
 - Jäljellä: T7 (Android 16:n lähiverkkolupa) ennen laajempaa käyttöä.
+
+## 3c. Korjattu 24.11.2026
+- Vastaanotto vain lähiverkosta: yhteydet, jotka tulevat mobiilidatan tai internetin kautta, suljetaan heti (`LinkNetwork`). Sovellus pyytää Androidin verkko-oikeuden (INTERNET) vain lähiverkon siirtoa varten.
+- Viestirivien kokoraja: samassa verkossa oleva laite ei voi kaataa sovellusta lähettämällä loputonta riviä.
+- Salaisuuksia (laiteliitosten avaimet, automaattisen varmuuskopion salasana) ei koskaan tallenneta salaamatta: jos Keystore-salaus epäonnistuu, pariliitos tai varmuuskopion käyttöönotto epäonnistuu näkyvästi. Palautuksessa avaimet salataan tämän laitteen avaimella; jos se ei onnistu, liitokset tehdään uudelleen.
 
 ## 4. Dokumentaatio, joka tarvitaan ennen pilottia
 
