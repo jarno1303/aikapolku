@@ -38,7 +38,7 @@ class YhteysDeviceTest {
         val messages = CopyOnWriteArrayList<LinkMessage>()
         var code: String? = null
         override fun sender(id: String) = senders.firstOrNull { it.id == id }
-        override fun addSender(peer: Peer) { senders.add(peer) }
+        override fun addSender(peer: Peer): Boolean { senders.add(peer); return true }
         override fun confirmPair(name: String, code: String): Boolean { this.code = code; return true }
         override fun onMessage(message: LinkMessage) { messages.add(message) }
     }

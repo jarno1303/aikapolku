@@ -756,6 +756,7 @@
     <string name="autobackup_now">Tee varmuuskopio nyt</string>
     <string name="autobackup_done">Varmuuskopio tehty.</string>
     <string name="autobackup_error">Varmuuskopio epäonnistui. Tarkista, että kansio on käytettävissä (esim. muistikortti paikallaan).</string>
+    <string name="secret_store_failed">Salasanaa ei voitu tallentaa turvallisesti tähän laitteeseen, joten automaattista varmuuskopiota ei otettu käyttöön. Käynnistä laite uudelleen ja yritä uudestaan.</string>
     <string name="autobackup_disable">Poista automaattinen varmuuskopio käytöstä</string>
     <string name="device_restore">Palauta laitteen varmuuskopio</string>
     <string name="device_restore_text">Palautus korvaa kaikki tämän laitteen tiedot varmuuskopion tiedoilla. Sovellus käynnistyy uudelleen.</string>

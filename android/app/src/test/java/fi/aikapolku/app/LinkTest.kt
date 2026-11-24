@@ -62,7 +62,7 @@ class LinkTest {
         val messages = CopyOnWriteArrayList<LinkMessage>()
         var shownCode: String? = null
         override fun sender(id: String) = senders.firstOrNull { it.id == id }
-        override fun addSender(peer: Peer) { senders.add(peer) }
+        override fun addSender(peer: Peer): Boolean { senders.add(peer); return true }
         override fun confirmPair(name: String, code: String): Boolean { shownCode = code; return accept }
         override fun onMessage(message: LinkMessage) { messages.add(message) }
         var askedKnown: Set<String> = emptySet()

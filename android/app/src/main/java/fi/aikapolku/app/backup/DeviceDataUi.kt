@@ -120,8 +120,11 @@ internal fun DeviceDataSettings() {
             title = stringResource(R.string.autobackup_password_title),
             onDismiss = { pendingTree = null },
             onOk = { password ->
-                AutoBackup.configure(context, tree, password)
                 pendingTree = null
+                if (!AutoBackup.configure(context, tree, password)) {
+                    message = context.getString(R.string.secret_store_failed)
+                    return@PasswordTwiceDialog
+                }
                 busy = true
                 scope.launch {
                     val ok = withContext(Dispatchers.IO) { AutoBackup.runNow(context) }

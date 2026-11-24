@@ -227,7 +227,7 @@ private fun PairWithReceiver(me: Identity) {
                     scope.launch {
                         val peer = withContext(Dispatchers.IO) {
                             runCatching { LinkProtocol.pair(r.host, r.port, me) { c -> code = c } }.getOrNull()
-                                ?.also { LinkStore(context).addPeer(it) }
+                                ?.takeIf { LinkStore(context).addPeer(it) }
                         }
                         if (peer != null) {
                             status = context.getString(R.string.link_paired, peer.name)

@@ -57,7 +57,8 @@ internal object LinkProtocol {
         val identity: Identity
         /** Liitetty lähettäjä (asiakkaan laite) tunnuksella. */
         fun sender(id: String): Peer?
-        fun addSender(peer: Peer)
+        /** false = liitosta ei voitu tallentaa (avaimen salaus epäonnistui): pariliitos epäonnistuu. */
+        fun addSender(peer: Peer): Boolean
         /** Kysyy ohjaajalta (estävä, enintään [PAIR_TIMEOUT_MS]): liitetäänkö [name], koodi [code]. */
         fun confirmPair(name: String, code: String): Boolean
         fun onMessage(message: LinkMessage)
@@ -73,6 +74,33 @@ internal object LinkProtocol {
     }
 
     private fun Socket.reader() = BufferedReader(InputStreamReader(getInputStream(), Charsets.UTF_8))
+
+    /** Pyynnön ensimmäinen rivi (haku voi sisältää laitteella jo olevien kuvien tunnisteet). */
+    const val MAX_REQUEST_CHARS = 2 * 1024 * 1024
+    /** Pariliitoksen ja kuittausten rivit ovat lyhyitä. */
+    const val MAX_SMALL_CHARS = 64 * 1024
+    /** Asukkaan paketti kuvineen ja äänineen (salattuna ja tekstimuodossa). */
+    const val MAX_PACKAGE_CHARS = 64 * 1024 * 1024
+
+    /** Rivi oli pidempi kuin sallittu: yhteys katkaistaan, muistia ei varata enempää. */
+    class LineTooLongException : java.io.IOException("rivi liian pitkä")
+
+    /**
+     * Lukee yhden rivin enintään [max] merkkiä. Toisin kuin readLine, ei varaa muistia rajatta,
+     * jos toinen laite lähettää loputtoman rivin. null = yhteys päättyi ennen yhtään merkkiä.
+     */
+    internal fun readLineLimited(reader: BufferedReader, max: Int): String? {
+        val line = StringBuilder()
+        while (true) {
+            val c = reader.read()
+            if (c == -1) return if (line.isEmpty()) null else line.toString()
+            if (c == '\n'.code) break
+            if (line.length >= max) throw LineTooLongException()
+            line.append(c.toChar())
+        }
+        if (line.isNotEmpty() && line[line.length - 1] == '\r') line.setLength(line.length - 1)
+        return line.toString()
+    }
     private fun Socket.writer() = PrintWriter(OutputStreamWriter(getOutputStream(), Charsets.UTF_8), true)
 
     /** Ensimmäinen ja paljastusrivi on luettava nopeasti; odotus koskee vain ohjaajan päätöstä. */
@@ -104,7 +132,7 @@ internal object LinkProtocol {
             s.soTimeout = LINE_TIMEOUT_MS
             val reader = s.reader()
             val writer = s.writer()
-            val request = runCatching { JSONObject(reader.readLine() ?: return) }.getOrNull() ?: return
+            val request = runCatching { JSONObject(readLineLimited(reader, MAX_REQUEST_CHARS) ?: return) }.getOrNull() ?: return
             when (request.optString("t")) {
                 "pair" -> {
                     // 1) asiakas sitoutuu avaimeensa (tiiviste), 2) ohjaaja kertoo omansa,
@@ -120,15 +148,14 @@ internal object LinkProtocol {
                         JSONObject().put("t", "pub").put("id", host.identity.id).put("name", host.identity.name)
                             .put("pub", b64e.encodeToString(ownPub)).put("n", b64e.encodeToString(ownNonce)).toString()
                     )
-                    val reveal = runCatching { JSONObject(reader.readLine() ?: return) }.getOrNull() ?: return
+                    val reveal = runCatching { JSONObject(readLineLimited(reader, MAX_SMALL_CHARS) ?: return) }.getOrNull() ?: return
                     if (reveal.optString("t") != "reveal") return
                     val clientPub = runCatching { b64d.decode(reveal.optString("pub")) }.getOrNull() ?: return
                     val clientNonce = runCatching { b64d.decode(reveal.optString("n")) }.getOrNull() ?: return
                     if (!LinkCrypto.commitment(clientPub, clientNonce).contentEquals(commit)) return
                     val key = runCatching { LinkCrypto.sharedKey(pair, clientPub, host.identity.id, clientId) }.getOrNull() ?: return
                     val code = LinkCrypto.comparisonCode(clientPub, ownPub, clientNonce, ownNonce)
-                    val ok = host.confirmPair(clientName, code)
-                    if (ok) host.addSender(Peer(clientId, clientName, key, receiver = false))
+                    val ok = host.confirmPair(clientName, code) && host.addSender(Peer(clientId, clientName, key, receiver = false))
                     writer.println(JSONObject().put("t", "result").put("ok", ok).put("place", ok && host.isPlace).toString())
                 }
                 "pull" -> {
@@ -212,7 +239,7 @@ internal object LinkProtocol {
                 JSONObject().put("t", "pair").put("id", me.id).put("name", me.name)
                     .put("commit", b64e.encodeToString(LinkCrypto.commitment(ownPub, ownNonce))).toString()
             )
-            val pub = JSONObject(reader.readLine() ?: return null)
+            val pub = JSONObject(readLineLimited(reader, MAX_SMALL_CHARS) ?: return null)
             if (pub.optString("t") != "pub") return null
             val serverId = pub.optString("id")
             val serverPub = b64d.decode(pub.optString("pub"))
@@ -222,7 +249,7 @@ internal object LinkProtocol {
             )
             val key = LinkCrypto.sharedKey(pair, serverPub, me.id, serverId)
             onCode(LinkCrypto.comparisonCode(ownPub, serverPub, ownNonce, serverNonce))
-            val result = JSONObject(reader.readLine() ?: return null)
+            val result = JSONObject(readLineLimited(reader, MAX_SMALL_CHARS) ?: return null)
             if (result.optString("t") != "result" || !result.optBoolean("ok")) return null
             return Peer(serverId, pub.optString("name").take(60), key, receiver = true, host = host, port = port, place = result.optBoolean("place"))
         }
@@ -238,7 +265,7 @@ internal object LinkProtocol {
             s.writer().println(
                 JSONObject().put("t", "msg").put("id", me.id).put("n", nonceText).put("c", b64e.encodeToString(ciphertext)).toString()
             )
-            val reply = JSONObject(s.reader().readLine() ?: return false)
+            val reply = JSONObject(readLineLimited(s.reader(), MAX_SMALL_CHARS) ?: return false)
             if (reply.optString("t") != "ack") return false
             val ack = runCatching {
                 LinkCrypto.open(peer.key, b64d.decode(reply.optString("n")), b64d.decode(reply.optString("c")), peer.id.toByteArray())
@@ -266,7 +293,7 @@ internal object LinkProtocol {
             s.writer().println(
                 JSONObject().put("t", "pull").put("id", me.id).put("n", nonceText).put("c", b64e.encodeToString(ciphertext)).toString()
             )
-            val reply = JSONObject(s.reader().readLine() ?: return null)
+            val reply = JSONObject(readLineLimited(s.reader(), MAX_PACKAGE_CHARS) ?: return null)
             if (reply.optString("t") != "pkg") return null
             val plain = LinkCrypto.open(peer.key, b64d.decode(reply.optString("n")), b64d.decode(reply.optString("c")), peer.id.toByteArray())
                 ?: return null

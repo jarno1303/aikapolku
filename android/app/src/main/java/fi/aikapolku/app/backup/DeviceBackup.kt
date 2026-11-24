@@ -121,12 +121,7 @@ internal object DeviceBackup {
             editor.commit()
         }
         // Avaimet takaisin Keystoreen tämän laitteen avaimella.
-        val store = LinkStore(app)
-        val peers = store.peers()
-        if (peers.isNotEmpty()) {
-            peers.forEach { store.removePeer(it.id, it.receiver) }
-            peers.forEach { store.addPeer(it) }
-        }
+        LinkStore(app).resealAll()
     }
 
     private val SAFE_PREF = Regex("[A-Za-z0-9_.-]{1,120}")
@@ -180,9 +175,12 @@ internal object AutoBackup {
     fun lastError(context: Context): String = prefs(context).getString(KEY_ERROR, "") ?: ""
     fun enabled(context: Context): Boolean = folder(context) != null && prefs(context).contains(KEY_PW)
 
-    fun configure(context: Context, tree: Uri, password: String) {
-        prefs(context).edit().putString(KEY_TREE, tree.toString()).putString(KEY_PW, KeyVault.seal(password)).commit()
+    /** false = salasanaa ei voitu salata: automaattista kopiota ei otettu käyttöön (salasanaa ei tallenneta salaamatta). */
+    fun configure(context: Context, tree: Uri, password: String): Boolean {
+        val sealed = KeyVault.seal(password) ?: return false
+        prefs(context).edit().putString(KEY_TREE, tree.toString()).putString(KEY_PW, sealed).commit()
         revision++
+        return true
     }
 
     fun disable(context: Context) {

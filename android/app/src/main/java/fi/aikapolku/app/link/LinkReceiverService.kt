@@ -68,7 +68,7 @@ class LinkReceiverService : Service() {
             override val identity: Identity get() = store.identity
             override val isPlace: Boolean get() = store.placeEnabled
             override fun sender(id: String) = store.peers().firstOrNull { it.id == id && !it.receiver }
-            override fun addSender(peer: Peer) = store.addPeer(peer.copy(resident = chosenResident.get().orEmpty()))
+            override fun addSender(peer: Peer): Boolean = store.addPeer(peer.copy(resident = chosenResident.get().orEmpty()))
             override fun confirmPair(name: String, code: String): Boolean {
                 LinkNotify.pairRequest(app, name)
                 val resident = LinkPairing.request(name, code, LinkProtocol.PAIR_TIMEOUT_MS - 25_000L, place = store.placeEnabled)
@@ -93,6 +93,11 @@ class LinkReceiverService : Service() {
         thread(name = "aikapolku-link", isDaemon = true) {
             while (!socket.isClosed) {
                 val client = runCatching { socket.accept() }.getOrNull() ?: break
+                // Vain yksikön oma lähiverkko: mobiilidatan tai internetin kautta tulevat suljetaan heti.
+                if (!LinkNetwork.allowed(client.inetAddress, client.localAddress, LinkNetwork.snapshot(app))) {
+                    runCatching { client.close() }
+                    continue
+                }
                 runCatching { executor.execute { runCatching { LinkProtocol.serve(client, host) } } }
                     .onFailure { runCatching { client.close() } }
             }

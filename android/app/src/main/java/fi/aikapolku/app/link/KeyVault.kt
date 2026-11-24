@@ -10,7 +10,8 @@ import javax.crypto.spec.GCMParameterSpec
 /**
  * T1: salaisuudet (laiteliitosten avaimet, varmuuskopion salasana) Android Keystoren avaimella
  * salattuna. Keystoren avain ei koskaan poistu laitteen suojatusta tallennuksesta.
- * Jos Keystore ei ole käytettävissä (testit), arvo tallennetaan kuten ennen.
+ * Jos salaus epäonnistuu, arvoa ei tallenneta lainkaan (ei salaamatonta varakopiota).
+ * Vain testiympäristössä, jossa Keystorea ei ole, arvo jää salaamatta.
  */
 internal object KeyVault {
     private const val ALIAS = "aikapolku_vault_v1"
@@ -38,16 +39,31 @@ internal object KeyVault {
 
     fun isSealed(text: String): Boolean = text.startsWith(PREFIX)
 
-    /** Salattu teksti etuliitteellä; ilman Keystorea alkuperäinen. */
-    fun seal(plain: String): String {
-        val k = key() ?: return plain.also { runCatching { android.util.Log.w("AikaPolku", "Keystore ei käytettävissä: arvo salaamatta") } }
+    /**
+     * Onko Android Keystore tässä ympäristössä lainkaan olemassa. Oikeassa laitteessa aina on;
+     * puuttuu vain JVM- ja Robolectric-testeissä, joissa arvo saa jäädä salaamatta.
+     */
+    private val keystoreMissing: Boolean by lazy { java.security.Security.getProvider("AndroidKeyStore") == null }
+
+    /**
+     * Salattu teksti etuliitteellä. null = salaus epäonnistui laitteessa, jossa Keystore on:
+     * kutsuja ei saa tallentaa arvoa (salaisuutta ei koskaan tallenneta salaamatta oikeaan laitteeseen).
+     * Vain testiympäristössä ilman Keystorea palautetaan alkuperäinen.
+     */
+    fun seal(plain: String): String? {
+        if (keystoreMissing) return plain
+        val k = key() ?: return null.also { warn("Keystoren avain ei käytettävissä: arvoa ei tallenneta") }
         return runCatching {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.ENCRYPT_MODE, k)
             val iv = cipher.iv
             val sealed = cipher.doFinal(plain.toByteArray(Charsets.UTF_8))
             PREFIX + Base64.getEncoder().encodeToString(iv + sealed)
-        }.getOrDefault(plain)
+        }.onFailure { warn("Salaus epäonnistui: arvoa ei tallenneta") }.getOrNull()
+    }
+
+    private fun warn(text: String) {
+        runCatching { android.util.Log.w("AikaPolku", text) }
     }
 
     /** Avaa [seal]in tuloksen; vanha salaamaton arvo palautuu sellaisenaan. null = ei aukea. */

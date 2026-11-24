@@ -59,29 +59,52 @@ internal class LinkStore(context: Context) {
             return emptyList()
         }
         // Vanha salaamaton tallennus salataan heti (T1).
-        if (!KeyVault.isSealed(raw)) KeyVault.seal(raw).takeIf { it != raw }?.let { prefs.edit().putString(KEY_PEERS, it).apply() }
+        if (!KeyVault.isSealed(raw)) KeyVault.seal(raw)?.takeIf { it != raw }?.let { prefs.edit().putString(KEY_PEERS, it).apply() }
         return decode(plain)
     }
 
     /** Liitokset jouduttiin tekemään uudelleen (salausavain menetetty). */
     val peersLost: Boolean get() = prefs.contains(KEY_BROKEN)
 
-    private fun savePeers(list: List<Peer>, now: Boolean = true) {
-        val editor = prefs.edit().putString(KEY_PEERS, KeyVault.seal(encode(list)))
+    /**
+     * Tallentaa liitokset salattuina. false = salaus epäonnistui: mitään ei tallennettu ja
+     * edellinen (salattu) tila on ennallaan. Avaimia ei koskaan tallenneta salaamatta.
+     */
+    private fun savePeers(list: List<Peer>, now: Boolean = true): Boolean {
+        val sealed = KeyVault.seal(encode(list)) ?: return false
+        val editor = prefs.edit().putString(KEY_PEERS, sealed)
         if (now) editor.commit() else editor.apply()
+        return true
     }
 
+    /** false = liitosta ei voitu tallentaa (salaus epäonnistui); pariliitos on silloin epäonnistunut. */
     @Synchronized
-    fun addPeer(peer: Peer) {
+    fun addPeer(peer: Peer): Boolean {
         val list = peers().filterNot { it.id == peer.id && it.receiver == peer.receiver } + peer
-        savePeers(list)
+        val ok = savePeers(list)
         revision++
+        return ok
     }
 
     @Synchronized
-    fun removePeer(id: String, receiver: Boolean) {
-        savePeers(peers().filterNot { it.id == id && it.receiver == receiver })
+    fun removePeer(id: String, receiver: Boolean): Boolean {
+        val ok = savePeers(peers().filterNot { it.id == id && it.receiver == receiver })
         revision++
+        return ok
+    }
+
+    /**
+     * Palautuksen jälkeen: avaimet salataan tämän laitteen Keystoren avaimella. Jos salaus ei
+     * onnistu, salaamattomat avaimet poistetaan ja liitokset tehdään uudelleen.
+     */
+    @Synchronized
+    fun resealAll(): Boolean {
+        val list = peers()
+        if (list.isEmpty()) return true
+        if (savePeers(list)) return true
+        prefs.edit().remove(KEY_PEERS).putString(KEY_BROKEN, "").commit()
+        revision++
+        return false
     }
 
     @Synchronized
