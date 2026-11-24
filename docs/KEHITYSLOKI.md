@@ -519,3 +519,6 @@
 - Testi `LinkSecurityTest`.
 - Dokumentit: mainin dokumentit (HANDOFF, tutkielma v1.7, yksikkömallin suunnitelma) yhdistetty haaraan; tutkielma v1.8 (P9 tarkennettu: verkko-oikeus vain lähiverkon siirtoon; tilat 15.–16.11. töiden mukaan); tietosuojan puutelista; opas ja muistiinpanot (verkko-oikeus, mobiilidata); `tools/pc/kahden-puhelimen-testi.ps1` lisätty repoon.
 - Sovittu: ei uusia ominaisuuksia ennen puhelintestejä, kahden laitteen siirtotestiä ja yhdistämistä mainiin.
+- **Täysi tarkistus 24.11. klo 7.43:** käännös OK, uudet tietoturvatestit OK. Kaksi estettä, kumpikaan ei tämän päivän muutoksista:
+  - Lint: 3 × MissingPermission (LinkNotify, kaksi 15.11. alkaen, yksi tänään). Korjattu: ilmoitus vain luvan kanssa (`post`).
+  - R11 (`ClientScreenFitTest`): etusivun Lähimmät-tilassa NYT-kortti + kaksi seuraavaa ei mahtunut tavalliseen puhelimeen aamulla (toinen seuraava 51 dp ruudun alla). Testi oli mennyt läpi vain iltapäivisin, koska se käytti oikeaa kelloa. Sovittu korjaus: Lähimmät näyttää niin monta seuraavaa kuin mahtuu (viimeinen rivi mitataan näkyvää aluetta vastaan, mittaamaton rivi näkymätön → ei välähdystä); testin kello lukitaan aamuun (`data/AppClock.kt`). Uusi testi: tavallisella puhelimella näkyy 08.00, 09.00 jää pois.
