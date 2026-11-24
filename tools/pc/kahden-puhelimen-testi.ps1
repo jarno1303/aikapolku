@@ -1,4 +1,4 @@
-# AikaPolku: kahden puhelimen testi (paikan laite + asukkaan puhelin)
+﻿# AikaPolku: kahden puhelimen testi (paikan laite + asukkaan puhelin)
 #
 # Käyttö (molemmat puhelimet USB:llä PC:ssä, USB-virheenkorjaus sallittu):
 #   1) Asennus ja lokien nollaus:
@@ -42,17 +42,45 @@ function Nimi($sarja) {
 if ($vaihe -eq 'asenna') {
     $apk = "$env:USERPROFILE\Desktop\AikaPolku-APK\UUSIN-AikaPolku.apk"
     if (-not (Test-Path $apk)) { Write-Host "VIRHE: APK puuttuu ($apk). Aja ensin aja-aikapolku.ps1." -ForegroundColor Yellow; exit 1 }
+    $epaonnistui = @()
     foreach ($s in $laitteet) {
-        Write-Host "Asennetaan: $(Nimi $s)"
-        & $adb -s $s install -r $apk | Out-Host
+        $nimi = Nimi $s
+        Write-Host "Asennetaan: $nimi"
+        $ok = $false
+        foreach ($yritys in 1..2) {
+            # Koko vastaus talteen (myös virheteksti), jotta syy näkyy.
+            $vastaus = (& $adb -s $s install -r $apk 2>&1 | Out-String).Trim()
+            if ($vastaus -match 'Success') { $ok = $true; break }
+            Write-Host "  Asennus ei onnistunut (yritys $yritys): $vastaus" -ForegroundColor Yellow
+            if ($vastaus -match 'INSTALL_FAILED_UPDATE_INCOMPATIBLE|signatures do not match') {
+                Write-Host "  Syy: puhelimessa on eri allekirjoituksella tehty AikaPolku. Poista se puhelimesta ja aja asennus uudelleen." -ForegroundColor Yellow
+                break
+            }
+            if ($yritys -eq 1) {
+                Write-Host "  Avaa puhelimen näytön lukitus ja hyväksy asennus puhelimessa, jos se kysyy (OnePlus: 'Asenna USB:n kautta')." -ForegroundColor Cyan
+                Write-Host "  Yritetään uudelleen 15 sekunnin kuluttua..."
+                Start-Sleep -Seconds 15
+            }
+        }
+        if ($ok) { Write-Host "  Asennettu." -ForegroundColor Green } else { $epaonnistui += $nimi }
         # Lokit tyhjiksi ja suurempi puskuri, jotta koko testi mahtuu.
         & $adb -s $s logcat -G 8M 2>$null | Out-Null
         & $adb -s $s logcat -c 2>$null | Out-Null
-        $wifi = (& $adb -s $s shell dumpsys wifi 2>$null | Select-String -Pattern 'mWifiInfo SSID' | Select-Object -First 1 | Out-String).Trim()
-        Write-Host "  verkko: $wifi"
+        # Wi-Fi: uudemmissa Androideissa cmd wifi status, vanhemmissa dumpsys.
+        $ssid = (& $adb -s $s shell cmd wifi status 2>$null | Out-String)
+        $m = [regex]::Match($ssid, 'SSID:\s*"?([^",]+)"?')
+        if (-not $m.Success) {
+            $ssid = (& $adb -s $s shell dumpsys wifi 2>$null | Select-String -Pattern 'mWifiInfo SSID' | Select-Object -First 1 | Out-String)
+            $m = [regex]::Match($ssid, 'SSID:\s*"?([^",]+)"?')
+        }
+        if ($m.Success) { Write-Host "  Wi-Fi: $($m.Groups[1].Value)" } else { Write-Host "  Wi-Fi: ei yhteyttä tai ei saatu luettua – tarkista, että Wi-Fi on päällä" -ForegroundColor Yellow }
     }
     Write-Host ""
-    Write-Host "Valmis. Tarkista yltä, että molemmat ovat samassa wifissä (sama SSID). Tee testi listan mukaan ja kirjaa kohtien kellonajat." -ForegroundColor Green
+    if ($epaonnistui.Count -gt 0) {
+        Write-Host "Asennus epäonnistui: $($epaonnistui -join ', '). Kerro Claudelle yllä näkyvä virheteksti." -ForegroundColor Yellow
+        exit 1
+    }
+    Write-Host "Valmis. Tarkista yltä, että molemmissa on sama Wi-Fi. Tee testi listan mukaan ja kirjaa kohtien kellonajat." -ForegroundColor Green
     exit 0
 }
 
