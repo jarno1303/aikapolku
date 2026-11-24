@@ -43,6 +43,7 @@ import java.io.File
 import java.time.LocalDate
 import java.time.LocalTime
 import org.junit.Assert.assertEquals
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -61,17 +62,18 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class KaksiLaitettaPaikkaDeviceTest {
     private val ctx: Context get() = InstrumentationRegistry.getInstrumentation().targetContext
+    private var scenario: ActivityScenario<MainActivity>? = null
 
     @Test
     fun paikan_laite() {
+        assumeTrue("Ajetaan vain kahden laitteen testinä (-e kaksi true)", KaksiLaitetta.requested())
         val app = ctx.applicationContext
         val report = Report("PAIKAN LAITE")
         log("paikan laite: alku")
         PrefsSnapshot.restoreLeftover(app)
         PrefsSnapshot.save(app)
-        var scenario: ActivityScenario<MainActivity>? = null
         try {
-            scenario = run(app, report)
+            run(app, report)
         } catch (e: Throwable) {
             report.check("ajo keskeytyi", false, "${e.javaClass.simpleName}: ${e.message?.take(200)}")
         } finally {
@@ -90,7 +92,7 @@ class KaksiLaitettaPaikkaDeviceTest {
         assertEquals(report.text(), 0, report.failed)
     }
 
-    private fun run(app: Context, r: Report): ActivityScenario<MainActivity>? {
+    private fun run(app: Context, r: Report) {
         // --- Valmistelu ---
         val aino = ProfileStore.add(app, AINO).id
         val eero = ProfileStore.add(app, EERO).id
@@ -120,15 +122,16 @@ class KaksiLaitettaPaikkaDeviceTest {
         store.setName(PLACE_NAME)
         store.placeEnabled = true
         // Sovellus etualalle: vastaanottopalvelu on etualan palvelu.
-        val scenario = ActivityScenario.launch(MainActivity::class.java)
-        scenario.onActivity { it.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+        scenario = ActivityScenario.launch(MainActivity::class.java).also { s ->
+            s.onActivity { it.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+        }
         LinkReceiverService.start(app)
         r.note("valmis: Aino, Eero ja yksikkö; odotetaan asukkaan puhelimen liitospyyntöä")
 
         // --- 1. Liitos ---
         val asked = waitUntil(WAIT_PEER_MS, 500L) { LinkPairing.pending != null }
         r.check("1 liitospyyntö saapui", asked)
-        if (!asked) return scenario
+        if (!asked) return
         val request = LinkPairing.pending!!
         log("KOODI ${request.code}")
         r.note("koodi paikan laitteessa: ${request.code}")
@@ -136,12 +139,14 @@ class KaksiLaitettaPaikkaDeviceTest {
         LinkPairing.answer(true, aino)
         val paired = waitUntil(15_000L, 500L) { store.peers().any { !it.receiver && it.resident == aino } }
         r.check("1 liitos tallentui Ainolle", paired)
-        if (!paired) return scenario
+        if (!paired) return
         val phoneId = store.peers().first { !it.receiver && it.resident == aino }.id
 
         // --- 2. Ainon tiedot perillä ---
+        // Verrataan aina nykyiseen versioon (sovellus voi tallentaa oletusasetuksia myöhemmin).
+        fun deliveredNow() = PlaceStatus.delivered(app, aino)?.version == ResidentPackage.version(app, aino)
+        r.check("2 Ainon tiedot perillä", waitUntil(WAIT_STEP_MS) { deliveredNow() })
         val v1 = ResidentPackage.version(app, aino)
-        r.check("2 Ainon tiedot perillä", waitUntil(WAIT_STEP_MS) { PlaceStatus.delivered(app, aino)?.version == v1 })
 
         // --- 3. Muutos: uusi nimi ja uusi kuva; vain uusi kuva lähtee ---
         val photo2 = photo(app, "kuva2.png", KaksiLaitetta.COLOR_2)
@@ -161,7 +166,7 @@ class KaksiLaitettaPaikkaDeviceTest {
         r.check("3 versio muuttui", v2 != v1)
 
         // --- 4. Muutos perillä (puhelin odottaa ensin ohjelman loppuun) ---
-        r.check("4 muutos perillä", waitUntil(WAIT_STEP_MS * 2) { PlaceStatus.delivered(app, aino)?.version == v2 })
+        r.check("4 muutos perillä", waitUntil(WAIT_STEP_MS * 2) { deliveredNow() })
 
         // --- 6–7. Viestit ---
         r.check("6 asukkaan viesti saapui", waitUntil(WAIT_STEP_MS) { LinkInbox.today(app).any { it.text == MESSAGE_1 } })
@@ -176,6 +181,5 @@ class KaksiLaitettaPaikkaDeviceTest {
         r.check("8 liitos poistettu", store.removePeer(phoneId, receiver = false) && store.peers().none { it.id == phoneId })
         r.note("palvellaan vielä 2 min, jotta puhelin voi todeta poiston")
         Thread.sleep(120_000L)
-        return scenario
     }
 }

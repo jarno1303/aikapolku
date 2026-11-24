@@ -53,7 +53,7 @@ Valmistelu: uusin APK (`aja-aikapolku.ps1 -branch claude/aikapolku-yksikkomalli-
 ### Kahden laitteen siirtotesti (A5)
 
 **Automaattinen (24.11.2026):** molemmat laitteet USB:llä samassa Wi-Fissä, sitten
-`aja-aikapolku.ps1 -branch <haara> -kaksiLaitetta`. Kääntää sovelluksen ja testipaketin, tunnistaa tabletin paikan laitteeksi (tai `-paikka <sarjanumero>`), ajaa `KaksiLaitettaPaikkaDeviceTest`- ja `KaksiLaitettaAsukasDeviceTest`-testit yhtä aikaa ja kerää tulokset: `tarkistukset\<aika>\kaksi-laitetta.txt` (yhteenveto ja kohdat), `paikka-kohdat.txt`, `asukas-kohdat.txt`, logcatit. Laitteiden omat tiedot otetaan talteen ja palautetaan. Kattaa alla olevat kohdat 1–9 (ei näytön ulkoasua). JarnoL:n laitteet: tabletti BRP-NX1M (paikan laite), OnePlus 12R CPH2609 (asukkaan puhelin).
+`aja-aikapolku.ps1 -branch <haara> -kaksiLaitetta`. Kääntää sovelluksen ja testipaketin, tunnistaa tabletin paikan laitteeksi (tai `-paikka <sarjanumero>`), ajaa `KaksiLaitettaPaikkaDeviceTest`- ja `KaksiLaitettaAsukasDeviceTest`-testit yhtä aikaa ja kerää tulokset: `tarkistukset\<aika>\kaksi-laitetta.txt` (yhteenveto ja kohdat), `paikka-kohdat.txt`, `asukas-kohdat.txt`, logcatit. Laitteiden omat tiedot otetaan talteen ja palautetaan. Kattaa alla olevat kohdat 1–9 (ei näytön ulkoasua). JarnoL:n laitteet: tabletti BRP-NX1M (paikan laite), OnePlus 12R CPH2609 (asukkaan puhelin). Testit ohitetaan tavallisessa laitetestiajossa (vaativat `-e kaksi true`). Testin jälkeen paikan laitteen oma vastaanotto ja puhelimen haku käynnistyvät, kun sovellus avataan.
 
 **Käsin** (ulkoasun tarkistus):
 

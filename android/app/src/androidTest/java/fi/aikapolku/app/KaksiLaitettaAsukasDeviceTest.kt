@@ -35,6 +35,7 @@ import fi.aikapolku.app.programs.run.PrefsRunProgress
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -56,6 +57,7 @@ class KaksiLaitettaAsukasDeviceTest {
 
     @Test
     fun asukkaan_puhelin() {
+        assumeTrue("Ajetaan vain kahden laitteen testinä (-e kaksi true)", KaksiLaitetta.requested())
         val app = ctx.applicationContext
         val report = Report("ASUKKAAN PUHELIN")
         log("asukkaan puhelin: alku")
@@ -74,6 +76,8 @@ class KaksiLaitettaAsukasDeviceTest {
             Thread.sleep(1_000)
             PrefsSnapshot.restore(app)
             syncDir.listFiles()?.filter { it.name !in before }?.forEach { it.delete() }
+            // Muistutukset ja kotinäytön widget takaisin puhelimen omiin tietoihin.
+            runCatching { fi.aikapolku.app.week.EventReminders.reschedule(app) }
             ProfileSession.changed()
             log("asukkaan puhelin: tiedot palautettu")
         }
@@ -90,14 +94,19 @@ class KaksiLaitettaAsukasDeviceTest {
         }
     }
 
+    /** Onko Wi-Fi-yhteys (myös silloin, kun oletusverkko on mobiilidata). */
+    @Suppress("DEPRECATION")
     private fun onWifi(): Boolean {
         val cm = ctx.getSystemService(ConnectivityManager::class.java)
-        return cm.getNetworkCapabilities(cm.activeNetwork)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+        return cm.allNetworks.any { cm.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true }
     }
 
     /** Kaikki asetustiedostot tekstinä (vuototarkistus: Eeron tietoja ei saa olla). */
     private fun prefsText(app: Context): String =
-        File(app.applicationInfo.dataDir, "shared_prefs").listFiles()?.joinToString("\n") { runCatching { it.readText() }.getOrDefault("") }.orEmpty()
+        File(app.applicationInfo.dataDir, "shared_prefs").listFiles()
+            // Laiteliitosten salattu tieto ohitetaan (satunnainen base64 voisi sisältää "Eero").
+            ?.filterNot { it.name.startsWith(LinkStore.PREFS) }
+            ?.joinToString("\n") { runCatching { it.readText() }.getOrDefault("") }.orEmpty()
 
     private fun newFiles(syncDir: File, before: Set<String>) =
         syncDir.listFiles()?.count { it.name !in before && !it.name.endsWith(".tmp") } ?: 0

@@ -23,6 +23,8 @@ param(
 )
 
 $ErrorActionPreference = 'Continue'
+# Lokien ä ja ö oikein (adb:n tuloste UTF-8).
+try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
 $projekti = "$env:USERPROFILE\AndroidStudioProjects\AikaPolku"
 $paketti = 'fi.aikapolku.app'
 
@@ -118,6 +120,11 @@ if ($vaihe -eq 'automaatti') {
         & $adb devices -l
         exit 1
     }
+    if ($laitteet.Count -ne 2) {
+        Write-Host "VIRHE: kytke täsmälleen kaksi laitetta (nyt $($laitteet.Count))." -ForegroundColor Yellow
+        & $adb devices -l
+        exit 1
+    }
     $asukas = @($laitteet | Where-Object { $_ -ne $paikka })[0]
     Write-Host "Paikan laite:     $(Nimi $paikka)"
     Write-Host "Asukkaan puhelin: $(Nimi $asukas)"
@@ -131,7 +138,22 @@ if ($vaihe -eq 'automaatti') {
         }
         & $adb -s $s logcat -G 8M 2>$null | Out-Null
         & $adb -s $s logcat -c 2>$null | Out-Null
+    }
+    # Näytöt päälle ja auki koko testin ajaksi (palautetaan lopuksi).
+    $stayon = @{}
+    foreach ($s in @($paikka, $asukas)) {
+        $stayon[$s] = (& $adb -s $s shell settings get global stay_on_while_plugged_in 2>$null | Out-String).Trim()
+        & $adb -s $s shell svc power stayon usb 2>$null | Out-Null
         & $adb -s $s shell input keyevent KEYCODE_WAKEUP 2>$null | Out-Null
+        & $adb -s $s shell wm dismiss-keyguard 2>$null | Out-Null
+    }
+    Start-Sleep -Seconds 2
+    foreach ($s in @($paikka, $asukas)) {
+        $lukko = (& $adb -s $s shell dumpsys window 2>$null | Select-String -Pattern 'isKeyguardShowing=true|mKeyguardShowing=true|KeyguardShowing=true' -Quiet)
+        if ($lukko) {
+            Write-Host "Avaa näytön lukitus laitteessa $(Nimi $s) ja paina Enter." -ForegroundColor Cyan
+            [void](Read-Host)
+        }
     }
     $wPaikka = WiFi $paikka; $wAsukas = WiFi $asukas
     Write-Host "Wi-Fi: paikan laite '$wPaikka', asukkaan puhelin '$wAsukas'"
@@ -142,10 +164,10 @@ if ($vaihe -eq 'automaatti') {
     $runner = 'fi.aikapolku.app.test/androidx.test.runner.AndroidJUnitRunner'
     Write-Host "Testi käynnissä (enintään noin 20 min). Pidä laitteet USB:llä ja näytöt auki; älä käytä laitteita testin aikana."
     $alku = Get-Date
-    $pP = Start-Process -FilePath $adb -ArgumentList @('-s', $paikka, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'class', 'fi.aikapolku.app.KaksiLaitettaPaikkaDeviceTest', $runner) `
+    $pP = Start-Process -FilePath $adb -ArgumentList @('-s', $paikka, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'kaksi', 'true', '-e', 'class', 'fi.aikapolku.app.KaksiLaitettaPaikkaDeviceTest', $runner) `
         -RedirectStandardOutput "$kansio\paikka-instrument.txt" -RedirectStandardError "$kansio\paikka-virhe.txt" -NoNewWindow -PassThru
     Start-Sleep -Seconds 8
-    $pA = Start-Process -FilePath $adb -ArgumentList @('-s', $asukas, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'class', 'fi.aikapolku.app.KaksiLaitettaAsukasDeviceTest', $runner) `
+    $pA = Start-Process -FilePath $adb -ArgumentList @('-s', $asukas, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'kaksi', 'true', '-e', 'class', 'fi.aikapolku.app.KaksiLaitettaAsukasDeviceTest', $runner) `
         -RedirectStandardOutput "$kansio\asukas-instrument.txt" -RedirectStandardError "$kansio\asukas-virhe.txt" -NoNewWindow -PassThru
     $null = $pP.Handle; $null = $pA.Handle
     $raja = 25 * 60 * 1000
@@ -155,6 +177,11 @@ if ($vaihe -eq 'automaatti') {
     if (-not $okA) { try { $pA.Kill() } catch {} }
     if (-not $okP) { try { $pP.Kill() } catch {} }
     $kesto = [int]((Get-Date) - $alku).TotalSeconds
+    foreach ($s in @($paikka, $asukas)) {
+        $v = $stayon[$s]
+        if ($v -match '^\d+$') { & $adb -s $s shell settings put global stay_on_while_plugged_in $v 2>$null | Out-Null }
+        else { & $adb -s $s shell svc power stayon false 2>$null | Out-Null }
+    }
 
     foreach ($pari in @(@('paikka', $paikka), @('asukas', $asukas))) {
         & $adb -s $pari[1] logcat -d -v time -s AikaPolkuKaksi:* 2>$null | Out-File "$kansio\$($pari[0])-kohdat.txt" -Encoding utf8
@@ -188,27 +215,6 @@ if ($vaihe -eq 'automaatti') {
     if ($paikkaOk -and $asukasOk -and $koodiOk) { Write-Host "KAHDEN LAITTEEN TESTI OK. Tulokset: $kansio" -ForegroundColor Green; exit 0 }
     Write-Host "Kahden laitteen testissä virheitä. Kerro Claudelle, se lukee tulokset kansiosta $kansio" -ForegroundColor Yellow
     exit 1
-}
-
-# Lokit tyhjiksi ja suurempi puskuri, jotta koko testi mahtuu.
-        & $adb -s $s logcat -G 8M 2>$null | Out-Null
-        & $adb -s $s logcat -c 2>$null | Out-Null
-        # Wi-Fi: uudemmissa Androideissa cmd wifi status, vanhemmissa dumpsys.
-        $ssid = (& $adb -s $s shell cmd wifi status 2>$null | Out-String)
-        $m = [regex]::Match($ssid, 'SSID:\s*"?([^",]+)"?')
-        if (-not $m.Success) {
-            $ssid = (& $adb -s $s shell dumpsys wifi 2>$null | Select-String -Pattern 'mWifiInfo SSID' | Select-Object -First 1 | Out-String)
-            $m = [regex]::Match($ssid, 'SSID:\s*"?([^",]+)"?')
-        }
-        if ($m.Success) { Write-Host "  Wi-Fi: $($m.Groups[1].Value)" } else { Write-Host "  Wi-Fi: ei yhteyttä tai ei saatu luettua – tarkista, että Wi-Fi on päällä" -ForegroundColor Yellow }
-    }
-    Write-Host ""
-    if ($epaonnistui.Count -gt 0) {
-        Write-Host "Asennus epäonnistui: $($epaonnistui -join ', '). Kerro Claudelle yllä näkyvä virheteksti." -ForegroundColor Yellow
-        exit 1
-    }
-    Write-Host "Valmis. Tarkista yltä, että molemmissa on sama Wi-Fi. Tee testi listan mukaan ja kirjaa kohtien kellonajat." -ForegroundColor Green
-    exit 0
 }
 
 # Lokit

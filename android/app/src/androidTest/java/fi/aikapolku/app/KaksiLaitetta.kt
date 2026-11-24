@@ -38,6 +38,12 @@ internal object KaksiLaitetta {
 
     fun log(text: String) = Log.i(TAG, text)
 
+    /**
+     * Ajetaan vain, kun PC:n skripti antaa argumentin (-e kaksi true): tavallisessa kaikkien
+     * laitetestien ajossa nämä ohitetaan (ne odottaisivat toista laitetta).
+     */
+    fun requested(): Boolean = InstrumentationRegistry.getArguments().getString("kaksi") == "true"
+
     fun shell(command: String): String {
         val pfd = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
         return ParcelFileDescriptor.AutoCloseInputStream(pfd).use { String(it.readBytes()) }
@@ -57,7 +63,11 @@ internal object KaksiLaitetta {
     fun photo(context: Context, name: String, color: Int): String {
         val dir = File(context.filesDir, TEST_DIR).apply { mkdirs() }
         val file = File(dir, name)
-        val bitmap = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888).apply { eraseColor(color) }
+        val bitmap = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888).apply {
+            eraseColor(color)
+            // Yksi pikseli ajokohtaisesti: keskeytyneen ajon jäänteet eivät ole puhelimessa "jo tuttuja".
+            setPixel(0, 0, (System.nanoTime() and 0xFFFFFFL).toInt() or 0xFF000000.toInt())
+        }
         file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
         return file.absolutePath
     }
