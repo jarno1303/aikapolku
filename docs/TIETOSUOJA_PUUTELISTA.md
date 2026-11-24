@@ -53,9 +53,9 @@ Versio 1.0 · 15.11.2026 · Laadittu sovelluksen koodin perusteella. Tämä ei o
 - Jäljellä: T7 (Android 16:n lähiverkkolupa) ennen laajempaa käyttöä.
 
 ## 3c. Korjattu 24.11.2026
-- Vastaanotto vain lähiverkosta: yhteydet, jotka tulevat mobiilidatan tai internetin kautta, suljetaan heti (`LinkNetwork`). Sovellus pyytää Androidin verkko-oikeuden (INTERNET) vain lähiverkon siirtoa varten.
-- Viestirivien kokoraja: samassa verkossa oleva laite ei voi kaataa sovellusta lähettämällä loputonta riviä.
-- Salaisuuksia (laiteliitosten avaimet, automaattisen varmuuskopion salasana) ei koskaan tallenneta salaamatta: jos Keystore-salaus epäonnistuu, pariliitos tai varmuuskopion käyttöönotto epäonnistuu näkyvästi. Palautuksessa avaimet salataan tämän laitteen avaimella; jos se ei onnistu, liitokset tehdään uudelleen.
+- Vastaanotto vain lähiverkosta: yhteydet, jotka tulevat mobiilidatan, VPN:n tai internetin kautta, suljetaan heti (`LinkNetwork`). Sovellus pyytää Androidin verkko-oikeuden (INTERNET) vain lähiverkon siirtoa varten.
+- Viestirivien kokoraja ja kokonaisaikaraja: samassa verkossa oleva laite ei voi kaataa sovellusta loputtomalla rivillä eikä varata yhteyksiä hitaalla tiputtelulla.
+- Salaisuuksia (laiteliitosten avaimet, automaattisen varmuuskopion salasana) ei koskaan tallenneta salaamatta: jos Keystore-salaus epäonnistuu, pariliitos tai varmuuskopion käyttöönotto epäonnistuu näkyvästi. Palautuksessa avaimet salataan tämän laitteen avaimella ennen tallennusta; jos se ei onnistu, liitokset tehdään uudelleen.
 
 ## 4. Dokumentaatio, joka tarvitaan ennen pilottia
 

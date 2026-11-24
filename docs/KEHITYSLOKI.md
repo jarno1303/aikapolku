@@ -512,9 +512,10 @@
 
 ## 24.11.2026 – Ajantasaistus ja tietoturvakorjaukset
 - Varmuuskopio: `varmuus/ennen-ajantasaistus-20261124`.
-- **Vain lähiverkko:** vastaanotto (`LinkReceiverService`) sulkee yhteydet, jotka tulevat mobiilidatan tai internetin kautta (`link/LinkNetwork.kt`). Sallittu: Wi-Fi, Ethernet ja puhelimen jakama yhteyspiste (yksityiset osoitteet ja oman lähiverkon osoitealue, myös IPv6).
-- **Rivin kokoraja:** `LinkProtocol.readLineLimited` korvaa rajattoman `readLine`:n. Pyyntö enintään 2 M merkkiä, pariliitoksen ja kuittausten rivit 64 k, asukkaan paketti 64 M.
-- **Salaisuuksia ei tallenneta salaamatta:** `KeyVault.seal` palauttaa null, jos salaus epäonnistuu laitteessa (salaamaton arvo vain testiympäristössä, jossa Keystorea ei ole). Pariliitos epäonnistuu näkyvästi, automaattisen varmuuskopion käyttöönotto näyttää virheen, palautus salaa avaimet kerralla (`LinkStore.resealAll`).
+- **Vain lähiverkko:** vastaanotto (`LinkReceiverService`) sulkee yhteydet, jotka tulevat mobiilidatan, VPN:n tai internetin kautta (`link/LinkNetwork.kt`). Sallittu: Wi-Fi, Ethernet ja puhelimen jakama yhteyspiste (yksityiset osoitteet, oman lähiverkon osoitealue ja saapumisliitännän alue, myös IPv6).
+- **Rivin kokoraja:** `LinkProtocol.readLineLimited` korvaa rajattoman `readLine`:n. Pyyntö enintään 2 M merkkiä ja 30 s kokonaisaika (hidas tiputtelu ei varaa yhteyksiä), pariliitoksen ja kuittausten rivit 64 k, asukkaan paketti noin 28 M (johdettu median enimmäiskoosta 12 Mt). Yli 12 Mt:n yksittäinen tiedosto jätetään siirrosta (ei loputonta uudelleenhakua).
+- **Salaisuuksia ei tallenneta salaamatta:** `KeyVault.seal` palauttaa null, jos salaus epäonnistuu laitteessa (salaamaton arvo vain testiympäristössä, jossa Keystorea ei ole). Pariliitos epäonnistuu näkyvästi molemmissa laitteissa (ohjaajan puhelimessa ilmoitus), automaattisen varmuuskopion käyttöönotto näyttää virheen ja vapauttaa kansion luvan, palautus salaa avaimet ennen tallennusta (`LinkStore.restorePeers`), joten salaamaton arvo ei käy levyllä.
+- Tarkastaja kävi muutokset läpi kahdesti; löydökset korjattu (VPN, yhteyspisteen IPv6, paketin raja ja muisti, kokonaisaikaraja, palautus).
 - Testi `LinkSecurityTest`.
 - Dokumentit: mainin dokumentit (HANDOFF, tutkielma v1.7, yksikkömallin suunnitelma) yhdistetty haaraan; tutkielma v1.8 (P9 tarkennettu: verkko-oikeus vain lähiverkon siirtoon; tilat 15.–16.11. töiden mukaan); tietosuojan puutelista; opas ja muistiinpanot (verkko-oikeus, mobiilidata); `tools/pc/kahden-puhelimen-testi.ps1` lisätty repoon.
 - Sovittu: ei uusia ominaisuuksia ennen puhelintestejä, kahden laitteen siirtotestiä ja yhdistämistä mainiin.
