@@ -140,7 +140,11 @@ internal object ResidentPackage {
      * Paikan laitteella: asukkaan [profileId] paketti. [known] = tiivisteet, jotka asukkaan puhelin
      * jo omistaa. Salaus hoidetaan siirrossa (LinkProtocol), joten paketti itse on salaamaton zip.
      */
-    /** Kuvia ja ääniä enintään näin paljon yhdessä paketissa; loput seuraavalla haulla (muisti). */
+    /**
+     * Kuvia ja ääniä enintään näin paljon yhdessä paketissa; loput seuraavalla haulla (muisti).
+     * Myös yksittäisen tiedoston enimmäiskoko; siirron rivin kokoraja (LinkProtocol.MAX_PACKAGE_CHARS)
+     * lasketaan tästä.
+     */
     const val MAX_MEDIA_BYTES = 12L * 1024 * 1024
 
     fun build(context: Context, profileId: String, known: Set<String> = emptySet(), maxMedia: Long = MAX_MEDIA_BYTES): Built {
@@ -152,6 +156,13 @@ internal object ResidentPackage {
             if (value.isEmpty()) return value
             candidates.filter { MediaRefs.isReferenced(it, value) }.forEach { path ->
                 if (path !in names) {
+                    // Liian iso yksittäinen tiedosto ei mahdu siirtoon: sitä ei lähetetä eikä merkitä
+                    // puuttuvaksi (muuten asukkaan puhelin pyytäisi sitä loputtomasti). Viite tyhjenee.
+                    if (File(path).length() > MAX_MEDIA_BYTES) {
+                        names[path] = "x" + sha256(path.toByteArray())
+                        runCatching { android.util.Log.w("AikaPolku", "Liian iso tiedosto jätetään siirrosta: ${File(path).name}") }
+                        return@forEach
+                    }
                     val bytes = runCatching { File(path).readBytes() }.getOrNull() ?: return@forEach
                     val name = sha256(bytes) + extension(path)
                     names[path] = name

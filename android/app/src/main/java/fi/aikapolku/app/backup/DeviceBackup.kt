@@ -113,15 +113,22 @@ internal object DeviceBackup {
         prefNames(app).filter { it !in SKIPPED_PREFS }.forEach { name ->
             app.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().commit()
         }
+        // Liitosten avaimet ovat varmuuskopiossa avattuina: ne otetaan erikseen, jotta salaamaton
+        // arvo ei koskaan päädy levylle, ja salataan suoraan tämän laitteen Keystoren avaimella.
+        var restoredPeers: String? = null
         prefs.keys().forEach { name ->
             if (name in SKIPPED_PREFS || !SAFE_PREF.matches(name)) return@forEach
             val obj = prefs.optJSONObject(name) ?: return@forEach
+            if (name == LinkStore.PREFS) {
+                restoredPeers = obj.optJSONObject("peers")?.takeIf { it.optString("t") == "s" }?.optString("v")
+                obj.remove("peers")
+                obj.remove("peers_broken")
+            }
             val editor = app.getSharedPreferences(name, Context.MODE_PRIVATE).edit()
             BackupFormat.jsonToPrefs(obj, editor, ::text)
             editor.commit()
         }
-        // Avaimet takaisin Keystoreen tämän laitteen avaimella.
-        LinkStore(app).resealAll()
+        LinkStore(app).restorePeers(restoredPeers)
     }
 
     private val SAFE_PREF = Regex("[A-Za-z0-9_.-]{1,120}")

@@ -225,11 +225,14 @@ private fun PairWithReceiver(me: Identity) {
                     status = ""
                     found = null
                     scope.launch {
+                        var saveFailed = false
                         val peer = withContext(Dispatchers.IO) {
                             runCatching { LinkProtocol.pair(r.host, r.port, me) { c -> code = c } }.getOrNull()
-                                ?.takeIf { LinkStore(context).addPeer(it) }
+                                ?.takeIf { LinkStore(context).addPeer(it).also { ok -> saveFailed = !ok } }
                         }
-                        if (peer != null) {
+                        if (saveFailed) {
+                            status = context.getString(R.string.link_pair_save_failed)
+                        } else if (peer != null) {
                             status = context.getString(R.string.link_paired, peer.name)
                             // Paikan laite: omat tiedot heti (A5).
                             if (peer.place) PlaceSync.start(context)

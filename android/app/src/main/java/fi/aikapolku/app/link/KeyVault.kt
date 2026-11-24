@@ -50,7 +50,11 @@ internal object KeyVault {
      * kutsuja ei saa tallentaa arvoa (salaisuutta ei koskaan tallenneta salaamatta oikeaan laitteeseen).
      * Vain testiympäristössä ilman Keystorea palautetaan alkuperäinen.
      */
+    /** Vain testeihin: pakottaa salauksen epäonnistumaan (oikean laitteen virhepolku). */
+    @Volatile internal var failForTest = false
+
     fun seal(plain: String): String? {
+        if (failForTest) return null
         if (keystoreMissing) return plain
         val k = key() ?: return null.also { warn("Keystoren avain ei käytettävissä: arvoa ei tallenneta") }
         return runCatching {

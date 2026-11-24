@@ -79,8 +79,13 @@ internal object LinkProtocol {
     const val MAX_REQUEST_CHARS = 2 * 1024 * 1024
     /** Pariliitoksen ja kuittausten rivit ovat lyhyitä. */
     const val MAX_SMALL_CHARS = 64 * 1024
-    /** Asukkaan paketti kuvineen ja äänineen (salattuna ja tekstimuodossa). */
-    const val MAX_PACKAGE_CHARS = 64 * 1024 * 1024
+    /**
+     * Asukkaan paketti kuvineen ja äänineen: zip (media enintään ResidentPackage.MAX_MEDIA_BYTES + tiedot)
+     * → base64 JSONiin → AES-GCM → base64, eli noin 16/9 × zipin koko. Varaa 4 Mt tiedoille.
+     */
+    const val MAX_PACKAGE_CHARS = ((12L * 1024 * 1024 + 4L * 1024 * 1024) * 16 / 9).toInt()
+    /** Pyynnön ensimmäisen rivin kokonaisaika (hidas tiputtelu ei saa varata yhteyksiä loputtomasti). */
+    const val REQUEST_DEADLINE_MS = 30_000L
 
     /** Rivi oli pidempi kuin sallittu: yhteys katkaistaan, muistia ei varata enempää. */
     class LineTooLongException : java.io.IOException("rivi liian pitkä")
@@ -89,13 +94,16 @@ internal object LinkProtocol {
      * Lukee yhden rivin enintään [max] merkkiä. Toisin kuin readLine, ei varaa muistia rajatta,
      * jos toinen laite lähettää loputtoman rivin. null = yhteys päättyi ennen yhtään merkkiä.
      */
-    internal fun readLineLimited(reader: BufferedReader, max: Int): String? {
+    internal fun readLineLimited(reader: BufferedReader, max: Int, deadlineMs: Long = 0L, now: () -> Long = System::currentTimeMillis): String? {
         val line = StringBuilder()
+        val until = if (deadlineMs > 0) now() + deadlineMs else Long.MAX_VALUE
         while (true) {
             val c = reader.read()
             if (c == -1) return if (line.isEmpty()) null else line.toString()
             if (c == '\n'.code) break
-            if (line.length >= max) throw LineTooLongException()
+            // Rivinvaihdon \r ei kuulu rajaan (riville mahtuu täsmälleen [max] merkkiä + \r\n).
+            if (line.length >= max && !(c == '\r'.code && line.length == max)) throw LineTooLongException()
+            if (deadlineMs > 0 && now() > until) throw java.net.SocketTimeoutException("rivi liian hidas")
             line.append(c.toChar())
         }
         if (line.isNotEmpty() && line[line.length - 1] == '\r') line.setLength(line.length - 1)
@@ -132,7 +140,7 @@ internal object LinkProtocol {
             s.soTimeout = LINE_TIMEOUT_MS
             val reader = s.reader()
             val writer = s.writer()
-            val request = runCatching { JSONObject(readLineLimited(reader, MAX_REQUEST_CHARS) ?: return) }.getOrNull() ?: return
+            val request = runCatching { JSONObject(readLineLimited(reader, MAX_REQUEST_CHARS, REQUEST_DEADLINE_MS) ?: return) }.getOrNull() ?: return
             when (request.optString("t")) {
                 "pair" -> {
                     // 1) asiakas sitoutuu avaimeensa (tiiviste), 2) ohjaaja kertoo omansa,
@@ -148,7 +156,7 @@ internal object LinkProtocol {
                         JSONObject().put("t", "pub").put("id", host.identity.id).put("name", host.identity.name)
                             .put("pub", b64e.encodeToString(ownPub)).put("n", b64e.encodeToString(ownNonce)).toString()
                     )
-                    val reveal = runCatching { JSONObject(readLineLimited(reader, MAX_SMALL_CHARS) ?: return) }.getOrNull() ?: return
+                    val reveal = runCatching { JSONObject(readLineLimited(reader, MAX_SMALL_CHARS, REQUEST_DEADLINE_MS) ?: return) }.getOrNull() ?: return
                     if (reveal.optString("t") != "reveal") return
                     val clientPub = runCatching { b64d.decode(reveal.optString("pub")) }.getOrNull() ?: return
                     val clientNonce = runCatching { b64d.decode(reveal.optString("n")) }.getOrNull() ?: return

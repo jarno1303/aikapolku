@@ -122,6 +122,11 @@ internal fun DeviceDataSettings() {
             onOk = { password ->
                 pendingTree = null
                 if (!AutoBackup.configure(context, tree, password)) {
+                    runCatching {
+                        context.contentResolver.releasePersistableUriPermission(
+                            tree, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+                    }
                     message = context.getString(R.string.secret_store_failed)
                     return@PasswordTwiceDialog
                 }

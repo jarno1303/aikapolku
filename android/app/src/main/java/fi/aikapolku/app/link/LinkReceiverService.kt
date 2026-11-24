@@ -68,7 +68,8 @@ class LinkReceiverService : Service() {
             override val identity: Identity get() = store.identity
             override val isPlace: Boolean get() = store.placeEnabled
             override fun sender(id: String) = store.peers().firstOrNull { it.id == id && !it.receiver }
-            override fun addSender(peer: Peer): Boolean = store.addPeer(peer.copy(resident = chosenResident.get().orEmpty()))
+            override fun addSender(peer: Peer): Boolean =
+                store.addPeer(peer.copy(resident = chosenResident.get().orEmpty())).also { saved -> if (!saved) LinkNotify.pairSaveFailed(app) }
             override fun confirmPair(name: String, code: String): Boolean {
                 LinkNotify.pairRequest(app, name)
                 val resident = LinkPairing.request(name, code, LinkProtocol.PAIR_TIMEOUT_MS - 25_000L, place = store.placeEnabled)
@@ -94,7 +95,8 @@ class LinkReceiverService : Service() {
             while (!socket.isClosed) {
                 val client = runCatching { socket.accept() }.getOrNull() ?: break
                 // Vain yksikön oma lähiverkko: mobiilidatan tai internetin kautta tulevat suljetaan heti.
-                if (!LinkNetwork.allowed(client.inetAddress, client.localAddress, LinkNetwork.snapshot(app))) {
+                val local = client.localAddress
+                if (!LinkNetwork.allowed(client.inetAddress, local, LinkNetwork.snapshot(app), LinkNetwork.localPrefixes(local))) {
                     runCatching { client.close() }
                     continue
                 }
@@ -207,6 +209,22 @@ internal object LinkNotify {
             .setContentTitle(context.getString(R.string.link_pair_request_title))
             .setContentText(context.getString(R.string.link_pair_request_notify, name))
             .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(openApp(context))
+            .setAutoCancel(true)
+            .build()
+        runCatching { NotificationManagerCompat.from(context).notify(PAIR_ID, notification) }
+    }
+
+    /** Ohjaaja hyväksyi liitoksen, mutta avainta ei voitu tallentaa turvallisesti (Keystore). */
+    fun pairSaveFailed(context: Context) {
+        channels(context)
+        val text = context.getString(R.string.link_pair_save_failed)
+        val notification = NotificationCompat.Builder(context, CHANNEL_MESSAGES)
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentTitle(context.getString(R.string.link_pair_failed))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(openApp(context))
             .setAutoCancel(true)

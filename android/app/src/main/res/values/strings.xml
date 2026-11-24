@@ -340,6 +340,7 @@
     <string name="link_wait_accept">Odotetaan, että ohjaaja hyväksyy liitoksen omassa puhelimessaan…</string>
     <string name="link_paired">Liitetty: %1$s</string>
     <string name="link_pair_failed">Liitos ei onnistunut tai sitä ei hyväksytty.</string>
+    <string name="link_pair_save_failed">Liitosta ei voitu tallentaa turvallisesti tähän laitteeseen. Käynnistä laite uudelleen ja tee liitos uudestaan.</string>
     <string name="link_pair_request_title">Liitetäänkö laite?</string>
     <string name="link_pair_request_text">Laite %1$s haluaa lähettää asiakkaan viestejä tähän puhelimeen. Koodi:</string>
     <string name="link_pair_request_check">Hyväksy vain, jos asiakkaan laitteessa näkyy täsmälleen sama koodi.</string>

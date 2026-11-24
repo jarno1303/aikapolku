@@ -5,6 +5,7 @@ import fi.aikapolku.app.link.KeyVault
 import fi.aikapolku.app.link.LinkMessage
 import fi.aikapolku.app.link.LinkNetwork
 import fi.aikapolku.app.link.LinkProtocol
+import fi.aikapolku.app.link.LinkStore
 import fi.aikapolku.app.link.Peer
 import java.io.BufferedReader
 import java.io.StringReader
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -102,7 +104,7 @@ class LinkSecurityTest {
     // --- Vain lähiverkko ---
 
     private val wifi = LinkNetwork.Snapshot(
-        cellular = setOf(ip("100.70.1.2"), ip("10.150.3.4")),
+        denied = setOf(ip("100.70.1.2"), ip("10.150.3.4")),
         lan = listOf(LinkNetwork.Prefix(ip("192.168.1.20"), 24), LinkNetwork.Prefix(ip("2001:db8:1:2::20"), 64))
     )
 
@@ -146,11 +148,90 @@ class LinkSecurityTest {
     // --- Salaisuuksien tallennus ---
 
     @Test
-    fun `testiymparistossa ilman Keystorea arvo sailyy kayttokelpoisena`() {
-        // Oikeassa laitteessa Keystore on aina; jos salaus siellä epäonnistuu, seal palauttaa null
-        // eikä arvoa tallenneta. Testiympäristössä Keystorea ei ole, joten arvo kulkee läpi.
+    fun `salattu arvo aukeaa`() {
         val sealed = KeyVault.seal("salasana123")
-        assertEquals("salasana123", sealed)
+        assertNotNull(sealed)
         assertEquals("salasana123", KeyVault.open(sealed!!))
+    }
+
+    private val context get() = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+
+    @Test
+    fun `liitosta ei tallenneta jos salaus epaonnistuu`() {
+        val store = LinkStore(context)
+        val peer = Peer("puhelin", "Ainon puhelin", ByteArray(32) { 3 }, receiver = false)
+        try {
+            KeyVault.failForTest = true
+            assertFalse(store.addPeer(peer))
+            assertTrue("Mitään ei tallennettu", store.peers().isEmpty())
+        } finally {
+            KeyVault.failForTest = false
+        }
+        assertTrue(store.addPeer(peer))
+        assertEquals(1, store.peers().size)
+    }
+
+    @Test
+    fun `palautus ei jata avaimia salaamatta jos salaus epaonnistuu`() {
+        val store = LinkStore(context)
+        val plain = "[]"
+        try {
+            KeyVault.failForTest = true
+            assertFalse(store.restorePeers(plain))
+        } finally {
+            KeyVault.failForTest = false
+        }
+        assertTrue("Liitokset tehdään uudelleen", store.peersLost)
+        assertTrue(store.peers().isEmpty())
+        val raw = context.getSharedPreferences(LinkStore.PREFS, android.content.Context.MODE_PRIVATE).getString("peers", null)
+        assertNull("Salaamatonta luetteloa ei ole levyllä", raw)
+    }
+
+    // --- VPN, yhteyspiste ja aikarajat (tarkastajan havainnot) ---
+
+    @Test
+    fun `VPN-yhteys hylataan vaikka lahettaja olisi yksityinen`() {
+        val snap = wifi.copy(denied = wifi.denied + ip("10.8.0.2"), deniedInterfaces = setOf("tun0"))
+        // Saapui VPN:n osoitteeseen.
+        assertFalse(LinkNetwork.allowed(ip("10.8.0.5"), ip("10.8.0.2"), snap))
+        // Saapui VPN-liitäntään (tun0), vaikka osoite ei olisi listalla.
+        assertFalse(LinkNetwork.allowed(ip("192.168.50.3"), ip("192.168.50.2"), snap, LinkNetwork.LocalInterface("tun0")))
+        // Sama yhteys Wi-Fi-liitännässä hyväksytään.
+        assertTrue(LinkNetwork.allowed(ip("192.168.50.3"), ip("192.168.50.2"), snap, LinkNetwork.LocalInterface("wlan0")))
+    }
+
+    @Test
+    fun `yhteyspisteen IPv6-asiakas hyvaksytaan liitannan alueelta`() {
+        val hotspot = LinkNetwork.LocalInterface("ap0", listOf(LinkNetwork.Prefix(ip("2001:db8:77:1::1"), 64)))
+        val local = ip("2001:db8:77:1::1")
+        assertTrue(LinkNetwork.allowed(ip("2001:db8:77:1::abcd"), local, LinkNetwork.Snapshot(), hotspot))
+        assertFalse(LinkNetwork.allowed(ip("2001:db8:99:1::abcd"), local, LinkNetwork.Snapshot(), hotspot))
+    }
+
+    @Test
+    fun `hidas tiputtelu katkaistaan kokonaisajan jalkeen`() {
+        var clock = 0L
+        val slow = object : java.io.Reader() {
+            override fun read(cbuf: CharArray, off: Int, len: Int): Int { clock += 5_000; cbuf[off] = 'a'; return 1 }
+            override fun close() {}
+        }
+        try {
+            LinkProtocol.readLineLimited(BufferedReader(slow, 1), 1000, deadlineMs = 30_000L) { clock }
+            fail("Hidas rivi hyväksyttiin")
+        } catch (_: java.net.SocketTimeoutException) {
+        }
+    }
+
+    @Test
+    fun `rajan mittainen rivi CRLF-paatteella kelpaa`() {
+        assertEquals(1000, LinkProtocol.readLineLimited(BufferedReader(StringReader("z".repeat(1000) + "\r\n")), 1000)!!.length)
+    }
+
+    @Test
+    fun `paketin raja riittaa suurimmalle sallitulle paketille`() {
+        // 12 Mt mediaa + tiedot: zip → base64 → JSON → AES-GCM → base64 ≈ 16/9 × koko.
+        val worst = (fi.aikapolku.app.link.ResidentPackage.MAX_MEDIA_BYTES + 2L * 1024 * 1024) * 16 / 9
+        assertTrue(LinkProtocol.MAX_PACKAGE_CHARS > worst)
+        assertTrue("Raja ei ole tarpeettoman suuri (muisti)", LinkProtocol.MAX_PACKAGE_CHARS < 40 * 1024 * 1024)
     }
 }

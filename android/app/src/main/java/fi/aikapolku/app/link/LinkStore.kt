@@ -94,17 +94,18 @@ internal class LinkStore(context: Context) {
     }
 
     /**
-     * Palautuksen jälkeen: avaimet salataan tämän laitteen Keystoren avaimella. Jos salaus ei
-     * onnistu, salaamattomat avaimet poistetaan ja liitokset tehdään uudelleen.
+     * Palautus: varmuuskopiosta avattu liitosluettelo [plain] salataan suoraan tämän laitteen
+     * Keystoren avaimella ennen tallennusta (salaamaton arvo ei käy levyllä). Jos salaus ei
+     * onnistu, liitokset tehdään uudelleen.
      */
     @Synchronized
-    fun resealAll(): Boolean {
-        val list = peers()
-        if (list.isEmpty()) return true
-        if (savePeers(list)) return true
-        prefs.edit().remove(KEY_PEERS).putString(KEY_BROKEN, "").commit()
+    fun restorePeers(plain: String?): Boolean {
+        if (plain.isNullOrEmpty()) return true
+        val sealed = KeyVault.seal(plain)
+        if (sealed != null) prefs.edit().putString(KEY_PEERS, sealed).remove(KEY_BROKEN).commit()
+        else prefs.edit().remove(KEY_PEERS).putString(KEY_BROKEN, "").commit()
         revision++
-        return false
+        return sealed != null
     }
 
     @Synchronized
