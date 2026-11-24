@@ -50,7 +50,12 @@ Valmistelu: uusin APK (`aja-aikapolku.ps1 -branch claude/aikapolku-yksikkomalli-
 7. **Tietosuoja:** paikan laite ilman näytön lukitusta → ohjaajatila estetty; lukitusnäytön ilmoitus ilman nimeä; vienti vaatii salasanan; ohjaajan näkymä piilossa sovellusvaihtajassa; automaattinen varmuuskopio kansioon ja palautus; Poista kaikki tiedot.
 8. **Vaakatila ja tabletti:** asiakkaan näkymät mahtuvat ilman vieritystä (paitsi koko päivän aikajana).
 
-### Kahden laitteen siirtotesti (A5) – tarvitaan toinen Android-laite
+### Kahden laitteen siirtotesti (A5)
+
+**Automaattinen (24.11.2026):** molemmat laitteet USB:llä samassa Wi-Fissä, sitten
+`aja-aikapolku.ps1 -branch <haara> -kaksiLaitetta`. Kääntää sovelluksen ja testipaketin, tunnistaa tabletin paikan laitteeksi (tai `-paikka <sarjanumero>`), ajaa `KaksiLaitettaPaikkaDeviceTest`- ja `KaksiLaitettaAsukasDeviceTest`-testit yhtä aikaa ja kerää tulokset: `tarkistukset\<aika>\kaksi-laitetta.txt` (yhteenveto ja kohdat), `paikka-kohdat.txt`, `asukas-kohdat.txt`, logcatit. Laitteiden omat tiedot otetaan talteen ja palautetaan. Kattaa alla olevat kohdat 1–9 (ei näytön ulkoasua). JarnoL:n laitteet: tabletti BRP-NX1M (paikan laite), OnePlus 12R CPH2609 (asukkaan puhelin).
+
+**Käsin** (ulkoasun tarkistus):
 
 `kahden-puhelimen-testi.ps1 -vaihe asenna` (molemmat USB:llä, sama Wi-Fi). Sitten:
 1. Laite A: Yksikön yhteys → "Tämä laite on paikan laite"; luo yksikkö ja kaksi asukasta (Aino, Eero).

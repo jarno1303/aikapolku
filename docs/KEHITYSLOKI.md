@@ -523,3 +523,10 @@
   - Lint: 3 × MissingPermission (LinkNotify, kaksi 15.11. alkaen, yksi tänään). Korjattu: ilmoitus vain luvan kanssa (`post`).
   - R11 (`ClientScreenFitTest`): etusivun Lähimmät-tilassa NYT-kortti + kaksi seuraavaa ei mahtunut tavalliseen puhelimeen aamulla (toinen seuraava 51 dp ruudun alla). Testi oli mennyt läpi vain iltapäivisin, koska se käytti oikeaa kelloa. Sovittu korjaus: Lähimmät näyttää niin monta seuraavaa kuin mahtuu (viimeinen rivi mitataan näkyvää aluetta vastaan, mittaamaton rivi näkymätön → ei välähdystä); testin kello lukitaan aamuun (`data/AppClock.kt`). Uusi testi: tavallisella puhelimella näkyy 08.00, 09.00 jää pois.
 - **Uusi täysi tarkistus 24.11. klo 8.04 (3530241):** käännös, kaikki yksikkötestit ja lint (0 virhettä) OK.
+
+## 24.11.2026 – Kahden laitteen siirtotesti automaattiseksi
+- `aja-aikapolku.ps1 -kaksiLaitetta` → `kahden-puhelimen-testi.ps1 -vaihe automaatti`: asentaa sovelluksen ja testipaketin kahteen laitteeseen (tabletti = paikan laite) ja ajaa testit yhtä aikaa. Laitteet etenevät toistensa näkyvien tulosten mukaan (liitospyyntö, perillä-tila, saapunut viesti), eivät PC:n tahdistamina.
+- Paikan laite (`KaksiLaitettaPaikkaDeviceTest`): Aino ja Eero yksikössä, liitoksen hyväksyntä Ainolle, perillä-tila, muutos (uusi nimi ja kuva; vain uusi kuva lähtee), viestit, liitoksen poisto.
+- Asukkaan puhelin (`KaksiLaitettaAsukasDeviceTest`): haku verkosta, liitos, Ainon tiedot ja kuva, ei Eeron tietoja, käynnissä oleva ohjelma ei vaihdu kesken, viesti, Wi-Fi pois/takaisin (jono), poistettu liitos ei saa tietoja.
+- Koodit verrataan lokeista (sama kuusinumeroinen koodi molemmissa). Laitteiden omat tiedot talteen ja palautus (`PrefsSnapshot`, nyt yhteinen androidTest-tiedosto).
+- Asennus: virheen syy näkyviin, uusi yritys laitteen hyväksynnän jälkeen; Wi-Fi luetaan myös `cmd wifi status`ista; skriptit UTF-8 BOM:lla.
